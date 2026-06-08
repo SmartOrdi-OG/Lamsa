@@ -265,6 +265,31 @@
     border-radius: 10px;
   }
 
+  /* PLACEMENT SECTION */
+  .placement-section {
+    background: var(--black);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 16px;
+    margin-bottom: 16px;
+  }
+  .placement-title {
+    font-size: 13px; font-weight: 700;
+    color: var(--gold);
+    margin-bottom: 14px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid var(--border);
+  }
+  .placement-item {
+    display: flex; gap: 12px; align-items: flex-start;
+    padding: 12px 0;
+    border-bottom: 1px solid #1a1a1a;
+  }
+  .placement-item:last-child { border-bottom: none; }
+  .placement-icon { font-size: 22px; flex-shrink: 0; margin-top: 2px; }
+  .placement-body { flex: 1; }
+  .placement-name { font-size: 13px; font-weight: 700; color: var(--light); }
+
   /* CURRENCY GRID */
   .currency-grid {
     display: grid;
@@ -1261,8 +1286,9 @@
       <!-- PANEL 6: FURNITURE PLACEMENT -->
       <div class="panel" id="panel-6">
         <div class="panel-title" data-ar="توزيع الأثاث" data-en="Furniture Placement">Furniture Placement</div>
-        <div class="panel-sub" data-ar="حدد أين تريد وضع كل قطعة وما هي الأثاث المطلوبة" data-en="Specify where you want each piece and what furniture you need">حدد أين تريد وضع كل قطعة وما هي الأثاث المطلوبة</div>
+        <div class="panel-sub" data-ar="حدد بالضبط أين تريد كل قطعة — كلما كانت التفاصيل أدق، كان التصميم أفضل" data-en="Specify exactly where you want each piece — more details = better results">Specify exactly where you want each piece — more details = better results</div>
 
+        <!-- REQUIRED FURNITURE -->
         <div class="form-group" style="margin-bottom:20px;">
           <label data-en="Required Furniture" data-ar="الأثاث المطلوب">Required Furniture</label>
           <div class="chips">
@@ -1274,23 +1300,211 @@
             <div class="chip" onclick="toggleChip(this)" data-en="🪞 Mirror" data-ar="🪞 مرآة">🪞 Mirror</div>
             <div class="chip" onclick="toggleChip(this)" data-en="💡 Special Lighting" data-ar="💡 إضاءة خاصة">💡 Special Lighting</div>
             <div class="chip" onclick="toggleChip(this)" data-en="🧸 Play Area" data-ar="🧸 منطقة ألعاب">🧸 Play Area</div>
+            <div class="chip" onclick="toggleChip(this)" data-en="🖥️ TV Unit" data-ar="🖥️ طاولة تلفزيون">🖥️ TV Unit</div>
+            <div class="chip" onclick="toggleChip(this)" data-en="🌿 Plants" data-ar="🌿 نباتات">🌿 Plants</div>
+            <div class="chip" onclick="toggleChip(this)" data-en="🛁 Bathtub" data-ar="🛁 حوض استحمام">🛁 Bathtub</div>
+            <div class="chip" onclick="toggleChip(this)" data-en="🪟 Curtains" data-ar="🪟 ستائر">🪟 Curtains</div>
           </div>
         </div>
 
-        <div class="form-group" style="margin-bottom:20px;">
-          <label data-en="Bed Placement" data-ar="وضع السرير">Bed Placement</label>
+        <!-- DETAILED PLACEMENT -->
+        <div class="placement-section">
+          <div class="placement-title" data-en="📐 Detailed Placement" data-ar="📐 توزيع تفصيلي">📐 Detailed Placement</div>
+
+          <!-- BED -->
+          <div class="placement-item">
+            <div class="placement-icon">🛏️</div>
+            <div class="placement-body">
+              <div class="placement-name" data-en="Bed" data-ar="السرير">Bed</div>
+              <div class="chips" style="margin-top:8px;">
+                <div class="chip selected" onclick="selectPlacement(this,'bed')" data-en="North Wall" data-ar="جدار شمال" data-placement="bed">North Wall</div>
+                <div class="chip" onclick="selectPlacement(this,'bed')" data-en="South Wall" data-ar="جدار جنوب" data-placement="bed">South Wall</div>
+                <div class="chip" onclick="selectPlacement(this,'bed')" data-en="East Wall" data-ar="جدار شرق" data-placement="bed">East Wall</div>
+                <div class="chip" onclick="selectPlacement(this,'bed')" data-en="West Wall" data-ar="جدار غرب" data-placement="bed">West Wall</div>
+                <div class="chip" onclick="selectPlacement(this,'bed')" data-en="By Window" data-ar="قرب النافذة" data-placement="bed">By Window</div>
+                <div class="chip" onclick="selectPlacement(this,'bed')" data-en="Center" data-ar="الوسط" data-placement="bed">Center</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- WARDROBE -->
+          <div class="placement-item">
+            <div class="placement-icon">🗄️</div>
+            <div class="placement-body">
+              <div class="placement-name" data-en="Wardrobe" data-ar="الخزانة">Wardrobe</div>
+              <div class="chips" style="margin-top:8px;">
+                <div class="chip" onclick="selectPlacement(this,'wardrobe')" data-en="Near Door" data-ar="قرب الباب" data-placement="wardrobe">Near Door</div>
+                <div class="chip" onclick="selectPlacement(this,'wardrobe')" data-en="North Wall" data-ar="جدار شمال" data-placement="wardrobe">North Wall</div>
+                <div class="chip" onclick="selectPlacement(this,'wardrobe')" data-en="South Wall" data-ar="جدار جنوب" data-placement="wardrobe">South Wall</div>
+                <div class="chip" onclick="selectPlacement(this,'wardrobe')" data-en="East Wall" data-ar="جدار شرق" data-placement="wardrobe">East Wall</div>
+                <div class="chip" onclick="selectPlacement(this,'wardrobe')" data-en="West Wall" data-ar="جدار غرب" data-placement="wardrobe">West Wall</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- SOFA/SEATING -->
+          <div class="placement-item">
+            <div class="placement-icon">🛋️</div>
+            <div class="placement-body">
+              <div class="placement-name" data-en="Sofa / Seating Area" data-ar="الأريكة / ركن الجلوس">Sofa / Seating Area</div>
+              <div class="chips" style="margin-top:8px;">
+                <div class="chip" onclick="selectPlacement(this,'sofa')" data-en="By Window" data-ar="أمام النافذة" data-placement="sofa">By Window</div>
+                <div class="chip" onclick="selectPlacement(this,'sofa')" data-en="Corner" data-ar="الزاوية" data-placement="sofa">Corner</div>
+                <div class="chip" onclick="selectPlacement(this,'sofa')" data-en="Center" data-ar="الوسط" data-placement="sofa">Center</div>
+                <div class="chip" onclick="selectPlacement(this,'sofa')" data-en="Facing TV" data-ar="مقابل التلفزيون" data-placement="sofa">Facing TV</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- DESK -->
+          <div class="placement-item">
+            <div class="placement-icon">🪑</div>
+            <div class="placement-body">
+              <div class="placement-name" data-en="Desk / Work Area" data-ar="المكتب / منطقة العمل">Desk / Work Area</div>
+              <div class="chips" style="margin-top:8px;">
+                <div class="chip" onclick="selectPlacement(this,'desk')" data-en="By Window" data-ar="قرب النافذة" data-placement="desk">By Window</div>
+                <div class="chip" onclick="selectPlacement(this,'desk')" data-en="Corner" data-ar="الزاوية" data-placement="desk">Corner</div>
+                <div class="chip" onclick="selectPlacement(this,'desk')" data-en="North Wall" data-ar="جدار شمال" data-placement="desk">North Wall</div>
+                <div class="chip" onclick="selectPlacement(this,'desk')" data-en="South Wall" data-ar="جدار جنوب" data-placement="desk">South Wall</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- DETAILED ROOM SPECS -->
+        <div class="placement-section" style="margin-top:16px;">
+          <div class="placement-title" data-en="🏠 Room Details — You Decide Everything" data-ar="🏠 تفاصيل الغرفة — أنت تقرر كل شي">🏠 Room Details — You Decide Everything</div>
+
+          <!-- BED TYPE -->
+          <div class="placement-item">
+            <div class="placement-icon">🛏️</div>
+            <div class="placement-body">
+              <div class="placement-name" data-en="Bed Type" data-ar="نوع السرير">Bed Type</div>
+              <div class="chips" style="margin-top:8px;">
+                <div class="chip selected" onclick="selectPlacement(this,'bedtype')" data-en="Standard Bed" data-ar="سرير عادي" data-placement="bedtype">Standard Bed</div>
+                <div class="chip" onclick="selectPlacement(this,'bedtype')" data-en="Bunk Bed" data-ar="سرير بطابقين" data-placement="bedtype">Bunk Bed</div>
+                <div class="chip" onclick="selectPlacement(this,'bedtype')" data-en="Storage Bed" data-ar="سرير مع تخزين" data-placement="bedtype">Storage Bed</div>
+                <div class="chip" onclick="selectPlacement(this,'bedtype')" data-en="King Size" data-ar="كينج سايز" data-placement="bedtype">King Size</div>
+                <div class="chip" onclick="selectPlacement(this,'bedtype')" data-en="Sofa Bed" data-ar="سرير أريكة" data-placement="bedtype">Sofa Bed</div>
+                <div class="chip" onclick="selectPlacement(this,'bedtype')" data-en="Floor Mattress" data-ar="فرشة أرضية" data-placement="bedtype">Floor Mattress</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- WALL COLOR -->
+          <div class="placement-item">
+            <div class="placement-icon">🎨</div>
+            <div class="placement-body">
+              <div class="placement-name" data-en="Wall Color" data-ar="لون الجدران">Wall Color</div>
+              <div class="chips" style="margin-top:8px;">
+                <div class="chip selected" onclick="selectPlacement(this,'wallcolor')" data-en="White" data-ar="أبيض" data-placement="wallcolor">White</div>
+                <div class="chip" onclick="selectPlacement(this,'wallcolor')" data-en="Beige / Cream" data-ar="بيج / كريمي" data-placement="wallcolor">Beige / Cream</div>
+                <div class="chip" onclick="selectPlacement(this,'wallcolor')" data-en="Light Gray" data-ar="رمادي فاتح" data-placement="wallcolor">Light Gray</div>
+                <div class="chip" onclick="selectPlacement(this,'wallcolor')" data-en="Light Blue" data-ar="أزرق فاتح" data-placement="wallcolor">Light Blue</div>
+                <div class="chip" onclick="selectPlacement(this,'wallcolor')" data-en="Sage Green" data-ar="أخضر طبيعي" data-placement="wallcolor">Sage Green</div>
+                <div class="chip" onclick="selectPlacement(this,'wallcolor')" data-en="Dusty Pink" data-ar="وردي ناعم" data-placement="wallcolor">Dusty Pink</div>
+                <div class="chip" onclick="selectPlacement(this,'wallcolor')" data-en="Dark Navy" data-ar="كحلي غامق" data-placement="wallcolor">Dark Navy</div>
+                <div class="chip" onclick="selectPlacement(this,'wallcolor')" data-en="Terracotta" data-ar="تيراكوتا" data-placement="wallcolor">Terracotta</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- FLOOR TYPE -->
+          <div class="placement-item">
+            <div class="placement-icon">🪵</div>
+            <div class="placement-body">
+              <div class="placement-name" data-en="Floor Type" data-ar="نوع الأرضية">Floor Type</div>
+              <div class="chips" style="margin-top:8px;">
+                <div class="chip selected" onclick="selectPlacement(this,'floor')" data-en="Wood Parquet" data-ar="باركيه خشب" data-placement="floor">Wood Parquet</div>
+                <div class="chip" onclick="selectPlacement(this,'floor')" data-en="White Tiles" data-ar="سيراميك أبيض" data-placement="floor">White Tiles</div>
+                <div class="chip" onclick="selectPlacement(this,'floor')" data-en="Marble" data-ar="رخام" data-placement="floor">Marble</div>
+                <div class="chip" onclick="selectPlacement(this,'floor')" data-en="Carpet" data-ar="موكيت" data-placement="floor">Carpet</div>
+                <div class="chip" onclick="selectPlacement(this,'floor')" data-en="Concrete" data-ar="إسمنت مصقول" data-placement="floor">Concrete</div>
+                <div class="chip" onclick="selectPlacement(this,'floor')" data-en="Dark Wood" data-ar="خشب داكن" data-placement="floor">Dark Wood</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- LIGHTING -->
+          <div class="placement-item">
+            <div class="placement-icon">💡</div>
+            <div class="placement-body">
+              <div class="placement-name" data-en="Lighting Type" data-ar="نوع الإضاءة">Lighting Type</div>
+              <div class="chips" style="margin-top:8px;">
+                <div class="chip selected" onclick="selectPlacement(this,'lighting')" data-en="Warm White" data-ar="أبيض دافئ" data-placement="lighting">Warm White</div>
+                <div class="chip" onclick="selectPlacement(this,'lighting')" data-en="Cool White" data-ar="أبيض بارد" data-placement="lighting">Cool White</div>
+                <div class="chip" onclick="selectPlacement(this,'lighting')" data-en="Natural Light Only" data-ar="ضوء طبيعي فقط" data-placement="lighting">Natural Light Only</div>
+                <div class="chip" onclick="selectPlacement(this,'lighting')" data-en="LED Strip Lights" data-ar="أضواء LED" data-placement="lighting">LED Strip Lights</div>
+                <div class="chip" onclick="selectPlacement(this,'lighting')" data-en="Chandelier" data-ar="ثريا" data-placement="lighting">Chandelier</div>
+                <div class="chip" onclick="selectPlacement(this,'lighting')" data-en="Pendant Lights" data-ar="إضاءة معلقة" data-placement="lighting">Pendant Lights</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- CURTAINS -->
+          <div class="placement-item">
+            <div class="placement-icon">🪟</div>
+            <div class="placement-body">
+              <div class="placement-name" data-en="Curtain Type" data-ar="نوع الستائر">Curtain Type</div>
+              <div class="chips" style="margin-top:8px;">
+                <div class="chip selected" onclick="selectPlacement(this,'curtains')" data-en="Blackout Curtains" data-ar="ستارة بلاك أوت" data-placement="curtains">Blackout Curtains</div>
+                <div class="chip" onclick="selectPlacement(this,'curtains')" data-en="Sheer Curtains" data-ar="ستارة شفافة" data-placement="curtains">Sheer Curtains</div>
+                <div class="chip" onclick="selectPlacement(this,'curtains')" data-en="Double Layer" data-ar="طبقة مزدوجة" data-placement="curtains">Double Layer</div>
+                <div class="chip" onclick="selectPlacement(this,'curtains')" data-en="Roller Blind" data-ar="رول بلايند" data-placement="curtains">Roller Blind</div>
+                <div class="chip" onclick="selectPlacement(this,'curtains')" data-en="Wooden Shutters" data-ar="أبواب خشبية" data-placement="curtains">Wooden Shutters</div>
+                <div class="chip" onclick="selectPlacement(this,'curtains')" data-en="No Curtains" data-ar="بدون ستائر" data-placement="curtains">No Curtains</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- CEILING -->
+          <div class="placement-item">
+            <div class="placement-icon">🏛️</div>
+            <div class="placement-body">
+              <div class="placement-name" data-en="Ceiling Type" data-ar="نوع السقف">Ceiling Type</div>
+              <div class="chips" style="margin-top:8px;">
+                <div class="chip selected" onclick="selectPlacement(this,'ceiling')" data-en="Plain White" data-ar="أبيض عادي" data-placement="ceiling">Plain White</div>
+                <div class="chip" onclick="selectPlacement(this,'ceiling')" data-en="Gypsum / False Ceiling" data-ar="جبسون" data-placement="ceiling">Gypsum / False Ceiling</div>
+                <div class="chip" onclick="selectPlacement(this,'ceiling')" data-en="Wooden Beams" data-ar="عوارض خشبية" data-placement="ceiling">Wooden Beams</div>
+                <div class="chip" onclick="selectPlacement(this,'ceiling')" data-en="Coffered Ceiling" data-ar="سقف مزخرف" data-placement="ceiling">Coffered Ceiling</div>
+                <div class="chip" onclick="selectPlacement(this,'ceiling')" data-en="Vaulted" data-ar="مقوس" data-placement="ceiling">Vaulted</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- RUG -->
+          <div class="placement-item">
+            <div class="placement-icon">🟫</div>
+            <div class="placement-body">
+              <div class="placement-name" data-en="Rug / Carpet" data-ar="سجادة">Rug / Carpet</div>
+              <div class="chips" style="margin-top:8px;">
+                <div class="chip" onclick="selectPlacement(this,'rug')" data-en="No Rug" data-ar="بدون سجادة" data-placement="rug">No Rug</div>
+                <div class="chip selected" onclick="selectPlacement(this,'rug')" data-en="Large Area Rug" data-ar="سجادة كبيرة" data-placement="rug">Large Area Rug</div>
+                <div class="chip" onclick="selectPlacement(this,'rug')" data-en="Fluffy Rug" data-ar="سجادة ناعمة" data-placement="rug">Fluffy Rug</div>
+                <div class="chip" onclick="selectPlacement(this,'rug')" data-en="Persian Rug" data-ar="سجادة فارسية" data-placement="rug">Persian Rug</div>
+                <div class="chip" onclick="selectPlacement(this,'rug')" data-en="Geometric Pattern" data-ar="نقوش هندسية" data-placement="rug">Geometric Pattern</div>
+              </div>
+            </div>
+          </div>
+
+        </div>
+        <div class="form-group" style="margin-top:16px; margin-bottom:16px;">
+          <label data-en="Room Mood & Atmosphere" data-ar="أجواء الغرفة">Room Mood & Atmosphere</label>
           <div class="chips">
-            <div class="chip selected" onclick="toggleChip(this)" data-en="North Wall" data-ar="جدار شمال">North Wall</div>
-            <div class="chip" onclick="toggleChip(this)" data-en="South Wall" data-ar="جدار جنوب">South Wall</div>
-            <div class="chip" onclick="toggleChip(this)" data-en="East Wall" data-ar="جدار شرق">East Wall</div>
-            <div class="chip" onclick="toggleChip(this)" data-en="West Wall" data-ar="جدار غرب">West Wall</div>
-            <div class="chip" onclick="toggleChip(this)" data-en="Center of Room" data-ar="وسط الغرفة">Center of Room</div>
+            <div class="chip" onclick="toggleChip(this)" data-en="Cozy & Warm" data-ar="دافئ ومريح">Cozy & Warm</div>
+            <div class="chip" onclick="toggleChip(this)" data-en="Bright & Airy" data-ar="مضيء ومنفتح">Bright & Airy</div>
+            <div class="chip" onclick="toggleChip(this)" data-en="Romantic" data-ar="رومانسي">Romantic</div>
+            <div class="chip" onclick="toggleChip(this)" data-en="Minimalist" data-ar="بسيط ونظيف">Minimalist</div>
+            <div class="chip" onclick="toggleChip(this)" data-en="Luxury & Bold" data-ar="فاخر وجريء">Luxury & Bold</div>
+            <div class="chip" onclick="toggleChip(this)" data-en="Kid-Friendly" data-ar="مناسب للأطفال">Kid-Friendly</div>
           </div>
         </div>
 
-        <div class="form-group">
-          <label data-ar="تعليمات خاصة (اختياري)" data-en="Special instructions (optional)">تعليمات خاصة (اختياري)</label>
-          <textarea id="notesPlaceholder" placeholder="e.g. I want a bunk bed, wardrobe near the door, small seating corner by the window..."></textarea>
+        <!-- FREE DESCRIPTION -->
+        <div class="form-group" style="margin-bottom:16px;">
+          <label data-en="Describe Your Vision (optional)" data-ar="صف تصورك بحرية (اختياري)">Describe Your Vision (optional)</label>
+          <textarea id="notesPlaceholder" rows="4" placeholder="e.g. I want a bunk bed on the north wall, wardrobe behind the door, small reading corner by the window with a cozy armchair and floor lamp..."></textarea>
+          <p style="font-size:11px;color:var(--gray);margin-top:6px;" data-en="The more details you add, the better the AI result" data-ar="كلما أضفت تفاصيل أكثر، كان التصميم أفضل">The more details you add, the better the AI result</p>
         </div>
 
         <!-- ADVANCED OPTIONS -->
@@ -1299,7 +1513,7 @@
 
           <!-- NUMBER OF DESIGNS -->
           <div class="form-group" style="margin-bottom: 16px;">
-            <label data-ar="عدد التصاميم المطلوبة" data-en="Number of designs to generate">Number of Designs</label>
+            <label data-ar="عدد التصاميم المطلوبة" data-en="Number of Designs">Number of Designs</label>
             <div class="design-count-selector">
               <div class="count-option selected" onclick="selectCount(this, 1)">
                 <div class="count-num">1</div>
@@ -1321,7 +1535,7 @@
 
           <!-- BEFORE/AFTER -->
           <div class="form-group">
-            <label data-ar="مقارنة قبل وبعد" data-en="Before & After Comparison">Before & After</label>
+            <label data-ar="مقارنة قبل وبعد" data-en="Before & After">Before & After</label>
             <div class="toggle-row">
               <div class="toggle-wrap" onclick="toggleBeforeAfter(this)">
                 <div class="toggle-switch" id="beforeAfterToggle"></div>
@@ -1925,6 +2139,13 @@
     designCount = num;
   }
 
+  function selectPlacement(el, type) {
+    // Only one selection per furniture type
+    var siblings = document.querySelectorAll('[data-placement="' + type + '"]');
+    siblings.forEach(function(s) { s.classList.remove('selected'); });
+    el.classList.add('selected');
+  }
+
   function toggleBeforeAfter(el) {
     beforeAfterOn = !beforeAfterOn;
     el.classList.toggle('on', beforeAfterOn);
@@ -1933,7 +2154,7 @@
 
   // ===== FAL.AI API KEY =====
   // ضع الـ API key هنا بين علامات التنصيص
-  var FAL_API_KEY = '47d6b162-d0ed-4dbb-921e-15c4b7df1b52:4a4a5cae69f172323267be39b0e14559';
+  var FAL_API_KEY = 'YOUR_FAL_API_KEY_HERE';
 
   function generate() {
     // Check if image uploaded
@@ -1942,10 +2163,11 @@
       return;
     }
 
-  
-      
-      
-
+    // Check API key
+    if (FAL_API_KEY === 'YOUR_FAL_API_KEY_HERE') {
+      alert('Please add your fal.ai API key to the code!');
+      return;
+    }
 
     var resultArea = document.getElementById('resultArea');
     resultArea.classList.add('show');
@@ -1968,20 +2190,72 @@
 
     var budget = document.getElementById('budgetDisplay').textContent;
     var roomType = document.querySelector('#panel-2 select') ? document.querySelector('#panel-2 select').value : 'bedroom';
-    var notes3 = document.querySelector('#panel-3 textarea') ? document.querySelector('#panel-3 textarea').value : '';
-    var notes6 = document.querySelector('#panel-6 textarea') ? document.querySelector('#panel-6 textarea').value : '';
-    var allNotes = [notes3, notes6].filter(function(n){ return n && n.trim(); }).join(', ');
+    var notes = document.querySelector('#panel-6 textarea') ? document.querySelector('#panel-6 textarea').value : '';
 
     var styleText = selectedStyles.length > 0 ? selectedStyles.join(', ') : 'modern contemporary';
     var colorText = selectedColors.length > 0 ? selectedColors.join(', ') : 'neutral warm tones';
 
-    var prompt = 'Completely redesign and transform this ' + roomType + ' interior. ' +
-      'Apply a full ' + styleText + ' style redesign — change the furniture, walls, layout, and decor completely. ' +
-      'Use a ' + colorText + ' color palette throughout. ' +
-      'Do NOT keep the original furniture or colors — replace everything with new design. ' +
-      (allNotes ? 'Important specific requirements: ' + allNotes + '. ' : '') +
-      'Budget: ' + budget + '. ' +
-      'Result must be a photorealistic interior design render, 8K quality, professional architectural photography, dramatic transformation.';
+    // Get selected furniture
+    var selectedFurniture = [];
+    document.querySelectorAll('#panel-6 .chip.selected').forEach(function(el) {
+      selectedFurniture.push(el.getAttribute('data-en') || el.textContent.trim());
+    });
+
+    // Get all room specs
+    var specs = {};
+    ['bedtype','wallcolor','floor','lighting','curtains','ceiling','rug'].forEach(function(type) {
+      var selected = document.querySelector('[data-placement="' + type + '"].selected');
+      if (selected) specs[type] = selected.getAttribute('data-en') || selected.textContent.trim();
+    });
+
+    // Get placement details
+    var placements = {};
+    ['bed', 'wardrobe', 'sofa', 'desk'].forEach(function(type) {
+      var selected = document.querySelector('[data-placement="' + type + '"].selected');
+      if (selected) placements[type] = selected.getAttribute('data-en') || selected.textContent.trim();
+    });
+
+    // Get mood
+    var moods = [];
+    document.querySelectorAll('#panel-6 .chips .chip.selected').forEach(function(el) {
+      var txt = el.getAttribute('data-en') || el.textContent.trim();
+      if (['Cozy & Warm','Bright & Airy','Romantic','Minimalist','Luxury & Bold','Kid-Friendly'].includes(txt)) {
+        moods.push(txt);
+      }
+    });
+
+    // Build placement text
+    var placementText = '';
+    if (placements.bed) placementText += 'Place the bed on the ' + placements.bed + '. ';
+    if (placements.wardrobe) placementText += 'Place the wardrobe ' + placements.wardrobe + '. ';
+    if (placements.sofa) placementText += 'Place the sofa ' + placements.sofa + '. ';
+    if (placements.desk) placementText += 'Place the desk ' + placements.desk + '. ';
+
+    var moodText = moods.length > 0 ? 'Room atmosphere: ' + moods.join(', ') + '. ' : '';
+
+    var furnitureText = selectedFurniture.length > 0 ? selectedFurniture.join(', ') : 'bed, wardrobe, desk';
+
+    var prompt = 'STRICT INTERIOR DESIGN TRANSFORMATION of this exact room. ' +
+      'YOU MUST FOLLOW ALL REQUIREMENTS EXACTLY - NO IMPROVISATION: ' +
+      '1. KEEP the exact same room structure: walls, windows, doors, ceiling, floor positions - DO NOT CHANGE THEM. ' +
+      '2. STYLE: ' + styleText + ' interior design style ONLY. ' +
+      '3. FURNITURE (MANDATORY): ' + furnitureText + '. ' +
+      (specs.bedtype ? '4. BED TYPE (EXACT): ' + specs.bedtype + ' - use this exact bed type, no other. ' : '') +
+      (placementText ? '5. EXACT PLACEMENT: ' + placementText : '') +
+      (specs.wallcolor ? '6. WALL COLOR (EXACT): Paint all walls ' + specs.wallcolor + '. ' : '') +
+      (specs.floor ? '7. FLOOR (EXACT): ' + specs.floor + ' flooring. ' : '') +
+      (specs.lighting ? '8. LIGHTING (EXACT): ' + specs.lighting + ' lighting. ' : '') +
+      (specs.curtains ? '9. CURTAINS (EXACT): ' + specs.curtains + ' on all windows. ' : '') +
+      (specs.ceiling ? '10. CEILING (EXACT): ' + specs.ceiling + ' ceiling design. ' : '') +
+      (specs.rug ? '11. RUG (EXACT): ' + specs.rug + ' on the floor. ' : '') +
+      '12. COLOR PALETTE: ' + colorText + ' tones for furniture and decor. ' +
+      '13. ROOM TYPE: ' + roomType + '. ' +
+      (moodText ? '14. ATMOSPHERE: ' + moodText : '') +
+      (notes ? '15. EXTRA REQUIREMENTS (MANDATORY): ' + notes + '. ' : '') +
+      'QUALITY: Photorealistic architectural interior photography, ' +
+      'professional magazine lighting, ultra-sharp 8K resolution, ' +
+      'luxury interior design aesthetic, no people, no text, no watermarks, ' +
+      'perfect composition like Architectural Digest magazine.';
 
     // Convert first image to base64
     var reader = new FileReader();
@@ -1999,9 +2273,10 @@
           prompt: prompt,
           image_url: imageDataUrl,
           num_images: designCount,
-          guidance_scale: 7,
-          num_inference_steps: 35,
-          image_size: 'landscape_16_9'
+          guidance_scale: 7.5,
+          num_inference_steps: 50,
+          image_size: 'landscape_16_9',
+          safety_tolerance: '2'
         })
       })
       .then(function(res) { return res.json(); })
@@ -2013,7 +2288,28 @@
           var imgWrap = document.getElementById('resultImg');
           imgWrap.innerHTML = '';
 
-          // Show before/after or just after
+          // Download helper function
+          function createDownloadBtn(url, filename) {
+            var btn = document.createElement('a');
+            btn.href = url;
+            btn.download = filename;
+            btn.target = '_blank';
+            btn.style.cssText = 'display:block;text-align:center;background:var(--gold);color:var(--black);' +
+              'padding:12px;border-radius:10px;font-weight:900;font-size:14px;text-decoration:none;' +
+              'margin:10px 0;transition:all 0.2s;';
+            btn.textContent = '⬇ ' + (currentLang === 'ar' ? 'تحميل التصميم' :
+              currentLang === 'de' ? 'Design herunterladen' :
+              currentLang === 'es' ? 'Descargar diseño' :
+              currentLang === 'fr' ? 'Télécharger le design' :
+              currentLang === 'it' ? 'Scarica il design' :
+              currentLang === 'tr' ? 'Tasarımı indir' :
+              currentLang === 'ru' ? 'Skachat dizayn' :
+              'Download Design');
+            btn.onmouseover = function() { this.style.background = 'var(--gold-light)'; };
+            btn.onmouseout = function() { this.style.background = 'var(--gold)'; };
+            return btn;
+          }
+
           if (beforeAfterOn) {
             var beforeAfterDiv = document.createElement('div');
             beforeAfterDiv.style.cssText = 'display:grid;grid-template-columns:1fr 1fr;gap:10px;width:100%;';
@@ -2029,13 +2325,15 @@
             beforeAfterDiv.appendChild(beforeDiv);
             beforeAfterDiv.appendChild(afterDiv);
             imgWrap.appendChild(beforeAfterDiv);
+            imgWrap.appendChild(createDownloadBtn(data.images[0].url, 'lamsa-design.jpg'));
+
           } else {
-            // Show generated images
             data.images.forEach(function(img, i) {
               var imgEl = document.createElement('img');
               imgEl.src = img.url;
-              imgEl.style.cssText = 'width:100%;border-radius:10px;margin-bottom:' + (i < data.images.length-1 ? '10px' : '0');
+              imgEl.style.cssText = 'width:100%;border-radius:10px;margin-bottom:10px;';
               imgWrap.appendChild(imgEl);
+              imgWrap.appendChild(createDownloadBtn(img.url, 'lamsa-design-' + (i+1) + '.jpg'));
             });
           }
         } else {
