@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="ar" dir="rtl" id="html-root">
+<html lang="en" dir="ltr" id="html-root">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -356,6 +356,51 @@
 
   @keyframes fadeUp { from { opacity:0; transform:translateY(20px); } to { opacity:1; transform:translateY(0); } }
 
+  /* LANG TOGGLE */
+  .lang-toggle-wrap {
+    position: fixed;
+    top: 16px;
+    left: 16px;
+    z-index: 999;
+  }
+  .lang-selected {
+    background: rgba(22,22,22,0.9);
+    backdrop-filter: blur(10px);
+    border: 1px solid var(--border);
+    color: var(--light);
+    padding: 8px 12px;
+    border-radius: 8px;
+    font-size: 13px; font-weight: 700;
+    cursor: pointer;
+    display: flex; align-items: center; gap: 6px;
+    transition: all 0.2s;
+    font-family: 'Tajawal', sans-serif;
+  }
+  .lang-selected:hover { border-color: var(--gold); color: var(--gold); }
+  .lang-menu {
+    display: none;
+    position: absolute;
+    top: calc(100% + 6px);
+    left: 0;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    overflow: hidden;
+    min-width: 130px;
+    z-index: 200;
+    box-shadow: 0 8px 30px rgba(0,0,0,0.4);
+  }
+  .lang-menu.open { display: block; }
+  .lang-option {
+    padding: 10px 14px;
+    font-size: 13px;
+    cursor: pointer;
+    color: var(--light);
+    transition: all 0.15s;
+  }
+  .lang-option:hover { background: var(--gold-dim); color: var(--gold); }
+  .lang-option.active { color: var(--gold); font-weight: 700; }
+
   /* RESPONSIVE */
   @media (max-width: 700px) {
     body { flex-direction: column; overflow: auto; }
@@ -368,6 +413,25 @@
 </style>
 </head>
 <body>
+
+<!-- LANG TOGGLE -->
+<div class="lang-toggle-wrap">
+  <button class="lang-selected" onclick="toggleLangMenu()">
+    <span id="langFlag">🇸🇦</span>
+    <span id="langCode">ع</span>
+    <span>▾</span>
+  </button>
+  <div class="lang-menu" id="langMenu">
+    <div class="lang-option" onclick="setLang('ar')">🇸🇦 العربية</div>
+    <div class="lang-option active" onclick="setLang('en')">🇬🇧 English</div>
+    <div class="lang-option" onclick="setLang('de')">🇩🇪 Deutsch</div>
+    <div class="lang-option" onclick="setLang('es')">🇪🇸 Español</div>
+    <div class="lang-option" onclick="setLang('tr')">🇹🇷 Türkçe</div>
+    <div class="lang-option" onclick="setLang('fr')">🇫🇷 Français</div>
+    <div class="lang-option" onclick="setLang('it')">🇮🇹 Italiano</div>
+    <div class="lang-option" onclick="setLang('ru')">🇷🇺 Русский</div>
+  </div>
+</div>
 
 <!-- LEFT PANEL -->
 <div class="left-panel">
@@ -649,6 +713,269 @@
   function goToApp() {
     window.location.href = 'lamsa-bilingual.html';
   }
+
+  // LANG SYSTEM
+  const translations = {
+    ar: {
+      title: 'لمستي | تسجيل الدخول',
+      leftTitle: 'صمّم بيتك<br><span class="gold">بلمستك</span> الخاصة',
+      leftSub: 'أول منصة تصميم داخلي بالذكاء الاصطناعي — بأربع لغات، لكل بيت، في كل مكان.',
+      tabLogin: 'تسجيل الدخول', tabRegister: 'حساب جديد',
+      googleBtn: 'متابعة مع Google', appleBtn: 'متابعة مع Apple',
+      orText: 'أو',
+      userLabel: 'اسم المستخدم أو الإيميل', userPlaceholder: 'اسم المستخدم أو الإيميل',
+      passLabel: 'كلمة المرور', passPlaceholder: 'كلمة المرور',
+      forgotPass: 'نسيت كلمة المرور؟',
+      loginBtn: 'تسجيل الدخول ✦',
+      usernameLabel: 'اسم المستخدم', usernamePlaceholder: 'اختر اسم مستخدم مميز',
+      emailLabel: 'البريد الإلكتروني',
+      regPassLabel: 'كلمة المرور', regPassPlaceholder: '8 أحرف على الأقل',
+      countryLabel: '🌍 اختر دولتك', countrySearch: 'ابحث عن دولتك...',
+      registerBtn: 'إنشاء الحساب ✦',
+      terms: 'بالتسجيل، أنت توافق على', termsLink: 'شروط الاستخدام', andText: 'و', privacyLink: 'سياسة الخصوصية',
+      successTitle: 'أهلاً بك في لمستي!', successSub: 'تم إنشاء حسابك بنجاح. ابدأ الآن بتصميم غرفتك الأولى.',
+      successBtn: 'ابدأ التصميم 🎨',
+      flag: '🇸🇦', code: 'ع', dir: 'rtl', lang: 'ar'
+    },
+    en: {
+      title: 'Lamsa | Sign In',
+      leftTitle: 'Design Your Home<br>With Your <span class="gold">Touch</span>',
+      leftSub: 'First AI interior design platform — in four languages, for every home, everywhere.',
+      tabLogin: 'Sign In', tabRegister: 'New Account',
+      googleBtn: 'Continue with Google', appleBtn: 'Continue with Apple',
+      orText: 'or',
+      userLabel: 'Username or Email', userPlaceholder: 'Username or Email',
+      passLabel: 'Password', passPlaceholder: 'Password',
+      forgotPass: 'Forgot password?',
+      loginBtn: 'Sign In ✦',
+      usernameLabel: 'Username', usernamePlaceholder: 'Choose a unique username',
+      emailLabel: 'Email Address',
+      regPassLabel: 'Password', regPassPlaceholder: 'At least 8 characters',
+      countryLabel: '🌍 Select Your Country', countrySearch: 'Search your country...',
+      registerBtn: 'Create Account ✦',
+      terms: 'By registering, you agree to', termsLink: 'Terms of Service', andText: 'and', privacyLink: 'Privacy Policy',
+      successTitle: 'Welcome to Lamsa!', successSub: 'Your account was created. Start designing your first room.',
+      successBtn: 'Start Designing 🎨',
+      flag: '🇬🇧', code: 'EN', dir: 'ltr', lang: 'en'
+    },
+    de: {
+      title: 'Lamsa | Anmelden',
+      leftTitle: 'Gestalte dein Zuhause<br>Mit deiner <span class="gold">Note</span>',
+      leftSub: 'Erste KI-Innendesignplattform — in vier Sprachen, für jedes Zuhause, überall.',
+      tabLogin: 'Anmelden', tabRegister: 'Neues Konto',
+      googleBtn: 'Mit Google fortfahren', appleBtn: 'Mit Apple fortfahren',
+      orText: 'oder',
+      userLabel: 'Benutzername oder E-Mail', userPlaceholder: 'Benutzername oder E-Mail',
+      passLabel: 'Passwort', passPlaceholder: 'Passwort',
+      forgotPass: 'Passwort vergessen?',
+      loginBtn: 'Anmelden ✦',
+      usernameLabel: 'Benutzername', usernamePlaceholder: 'Wähle einen Benutzernamen',
+      emailLabel: 'E-Mail-Adresse',
+      regPassLabel: 'Passwort', regPassPlaceholder: 'Mindestens 8 Zeichen',
+      countryLabel: '🌍 Land auswählen', countrySearch: 'Land suchen...',
+      registerBtn: 'Konto erstellen ✦',
+      terms: 'Mit der Registrierung stimmst du zu', termsLink: 'Nutzungsbedingungen', andText: 'und', privacyLink: 'Datenschutz',
+      successTitle: 'Willkommen bei Lamsa!', successSub: 'Dein Konto wurde erstellt. Beginne jetzt mit dem Design.',
+      successBtn: 'Design starten 🎨',
+      flag: '🇩🇪', code: 'DE', dir: 'ltr', lang: 'de'
+    },
+    es: {
+      title: 'Lamsa | Iniciar sesión',
+      leftTitle: 'Diseña tu hogar<br>Con tu <span class="gold">toque</span>',
+      leftSub: 'Primera plataforma de diseño interior con IA — en 8 idiomas, para cada hogar, en todas partes.',
+      tabLogin: 'Iniciar sesión', tabRegister: 'Nueva cuenta',
+      googleBtn: 'Continuar con Google', appleBtn: 'Continuar con Apple',
+      orText: 'o',
+      userLabel: 'Usuario o correo', userPlaceholder: 'Usuario o correo electrónico',
+      passLabel: 'Contraseña', passPlaceholder: 'Contraseña',
+      forgotPass: '¿Olvidaste tu contraseña?',
+      loginBtn: 'Iniciar sesión ✦',
+      usernameLabel: 'Nombre de usuario', usernamePlaceholder: 'Elige un nombre único',
+      emailLabel: 'Correo electrónico',
+      regPassLabel: 'Contraseña', regPassPlaceholder: 'Mínimo 8 caracteres',
+      countryLabel: '🌍 Selecciona tu país', countrySearch: 'Buscar país...',
+      registerBtn: 'Crear cuenta ✦',
+      terms: 'Al registrarte, aceptas', termsLink: 'Términos de uso', andText: 'y', privacyLink: 'Política de privacidad',
+      successTitle: '¡Bienvenido a Lamsa!', successSub: 'Cuenta creada. Comienza a diseñar tu primera habitación.',
+      successBtn: 'Empezar a diseñar 🎨',
+      flag: '🇪🇸', code: 'ES', dir: 'ltr', lang: 'es'
+    },
+    tr: {
+      title: 'Lamsa | Giris Yap',
+      leftTitle: 'Evinizi Tasarlayin<br><span class="gold">Kendi</span> Dokunusunuzla',
+      leftSub: 'Ilk yapay zeka ic tasarim platformu — 8 dilde, her ev icin, her yerde.',
+      tabLogin: 'Giris Yap', tabRegister: 'Yeni Hesap',
+      googleBtn: 'Google ile devam et', appleBtn: 'Apple ile devam et',
+      orText: 'veya',
+      userLabel: 'Kullanici adi veya E-posta', userPlaceholder: 'Kullanici adi veya E-posta',
+      passLabel: 'Sifre', passPlaceholder: 'Sifre',
+      forgotPass: 'Sifreni mi unuttun?',
+      loginBtn: 'Giris Yap ✦',
+      usernameLabel: 'Kullanici adi', usernamePlaceholder: 'Benzersiz bir kullanici adi sec',
+      emailLabel: 'E-posta adresi',
+      regPassLabel: 'Sifre', regPassPlaceholder: 'En az 8 karakter',
+      countryLabel: '🌍 Ulkeni sec', countrySearch: 'Ulke ara...',
+      registerBtn: 'Hesap olustur ✦',
+      terms: 'Kaydolarak kabul etmis olursunuz', termsLink: 'Kullanim Kosullari', andText: 've', privacyLink: 'Gizlilik Politikasi',
+      successTitle: "Lamsa'ya Hosgeldiniz!", successSub: 'Hesabiniz olusturuldu. Ilk odanizi tasarlamaya baslayin.',
+      successBtn: 'Tasarima Basla 🎨',
+      flag: '🇹🇷', code: 'TR', dir: 'ltr', lang: 'tr'
+    },
+    fr: {
+      title: 'Lamsa | Connexion',
+      leftTitle: 'Concevez votre maison<br>Avec votre <span class="gold">touche</span>',
+      leftSub: 'Premiere plateforme de design interieur IA — en 8 langues, pour chaque maison, partout.',
+      tabLogin: 'Connexion', tabRegister: 'Nouveau compte',
+      googleBtn: 'Continuer avec Google', appleBtn: 'Continuer avec Apple',
+      orText: 'ou',
+      userLabel: 'Nom utilisateur ou email', userPlaceholder: 'Nom utilisateur ou email',
+      passLabel: 'Mot de passe', passPlaceholder: 'Mot de passe',
+      forgotPass: 'Mot de passe oublie?',
+      loginBtn: 'Se connecter ✦',
+      usernameLabel: "Nom d'utilisateur", usernamePlaceholder: 'Choisissez un nom unique',
+      emailLabel: 'Adresse email',
+      regPassLabel: 'Mot de passe', regPassPlaceholder: 'Au moins 8 caracteres',
+      countryLabel: '🌍 Selectionnez votre pays', countrySearch: 'Rechercher un pays...',
+      registerBtn: 'Creer un compte ✦',
+      terms: 'En vous inscrivant, vous acceptez', termsLink: "Conditions d'utilisation", andText: 'et', privacyLink: 'Politique de confidentialite',
+      successTitle: 'Bienvenue sur Lamsa!', successSub: 'Compte cree. Commencez a concevoir votre premiere piece.',
+      successBtn: 'Commencer a concevoir 🎨',
+      flag: '🇫🇷', code: 'FR', dir: 'ltr', lang: 'fr'
+    },
+    it: {
+      title: 'Lamsa | Accedi',
+      leftTitle: 'Progetta la tua casa<br>Con il tuo <span class="gold">tocco</span>',
+      leftSub: 'Prima piattaforma di interior design IA — in 8 lingue, per ogni casa, ovunque.',
+      tabLogin: 'Accedi', tabRegister: 'Nuovo account',
+      googleBtn: 'Continua con Google', appleBtn: 'Continua con Apple',
+      orText: 'o',
+      userLabel: 'Nome utente o email', userPlaceholder: 'Nome utente o email',
+      passLabel: 'Password', passPlaceholder: 'Password',
+      forgotPass: 'Password dimenticata?',
+      loginBtn: 'Accedi ✦',
+      usernameLabel: 'Nome utente', usernamePlaceholder: 'Scegli un nome univoco',
+      emailLabel: 'Indirizzo email',
+      regPassLabel: 'Password', regPassPlaceholder: 'Almeno 8 caratteri',
+      countryLabel: '🌍 Seleziona il tuo paese', countrySearch: 'Cerca paese...',
+      registerBtn: 'Crea account ✦',
+      terms: 'Registrandoti, accetti', termsLink: 'Termini di servizio', andText: 'e', privacyLink: 'Informativa sulla privacy',
+      successTitle: 'Benvenuto su Lamsa!', successSub: 'Account creato. Inizia a progettare la tua prima stanza.',
+      successBtn: 'Inizia a progettare 🎨',
+      flag: '🇮🇹', code: 'IT', dir: 'ltr', lang: 'it'
+    },
+    ru: {
+      title: 'Lamsa | Vkhod',
+      leftTitle: 'Oformite svoy dom<br>So svoim <span class="gold">stilem</span>',
+      leftSub: 'Pervaya platforma dizayna na II — na 8 yazykakh, dlya kazhdogo doma, vezde.',
+      tabLogin: 'Vkhod', tabRegister: 'Novyy akkaunt',
+      googleBtn: 'Prodolzhit s Google', appleBtn: 'Prodolzhit s Apple',
+      orText: 'ili',
+      userLabel: 'Imya polzovatelya ili email', userPlaceholder: 'Imya polzovatelya ili email',
+      passLabel: 'Parol', passPlaceholder: 'Parol',
+      forgotPass: 'Zabyli parol?',
+      loginBtn: 'Voyti ✦',
+      usernameLabel: 'Imya polzovatelya', usernamePlaceholder: 'Vyberte unikalnoe imya',
+      emailLabel: 'Adres elektonnoy pochty',
+      regPassLabel: 'Parol', regPassPlaceholder: 'Minimum 8 simvolov',
+      countryLabel: '🌍 Vyberte vashu stranu', countrySearch: 'Poisk strany...',
+      registerBtn: 'Sozdat akkaunt ✦',
+      terms: 'Registriruyas, vy soglashaetes s', termsLink: 'Usloviyami ispolzovaniya', andText: 'i', privacyLink: 'Politikoy konfidentsialnosti',
+      successTitle: 'Dobro pozhalovat v Lamsa!', successSub: 'Akkaunt sozdan. Nachните proektirovat vashu pervuyu komnatu.',
+      successBtn: 'Nachat proektirovanie 🎨',
+      flag: '🇷🇺', code: 'RU', dir: 'ltr', lang: 'ru'
+    }
+  };
+
+  let langMenuOpen = false;
+  let currentLang = 'en';
+
+  function toggleLangMenu() {
+    langMenuOpen = !langMenuOpen;
+    document.getElementById('langMenu').classList.toggle('open', langMenuOpen);
+  }
+
+  document.addEventListener('click', (e) => {
+    if (!e.target.closest('.lang-toggle-wrap')) {
+      langMenuOpen = false;
+      document.getElementById('langMenu').classList.remove('open');
+    }
+  });
+
+  function setLang(lang) {
+    currentLang = lang;
+    langMenuOpen = false;
+    document.getElementById('langMenu').classList.remove('open');
+    const t = translations[lang] || translations['en'];
+    const html = document.getElementById('html-root');
+    html.setAttribute('lang', t.lang);
+    html.setAttribute('dir', t.dir);
+    document.body.style.fontFamily = lang === 'ar' ? "'Tajawal', sans-serif" : "'Playfair Display', 'Tajawal', sans-serif";
+    document.getElementById('langFlag').textContent = t.flag;
+    document.getElementById('langCode').textContent = t.code;
+
+    document.querySelectorAll('.lang-option').forEach(o => o.classList.remove('active'));
+    document.querySelectorAll('.lang-option').forEach(o => {
+      if (o.getAttribute('onclick') === `setLang('${lang}')`) o.classList.add('active');
+    });
+
+    document.title = t.title;
+    document.querySelector('.left-title').innerHTML = t.leftTitle;
+    document.querySelector('.left-sub').textContent = t.leftSub;
+    document.getElementById('tab-login').textContent = t.tabLogin;
+    document.getElementById('tab-register').textContent = t.tabRegister;
+    document.querySelector('.divider-text').textContent = t.orText;
+
+    // Update login form
+    const loginForm = document.getElementById('loginForm');
+    if (loginForm) {
+      const labels = loginForm.querySelectorAll('label');
+      if (labels[0]) labels[0].textContent = t.userLabel;
+      if (labels[1]) labels[1].textContent = t.passLabel;
+      const inputs = loginForm.querySelectorAll('input');
+      if (inputs[0]) inputs[0].placeholder = t.userPlaceholder;
+      if (inputs[1]) inputs[1].placeholder = t.passPlaceholder;
+      const forgotLink = loginForm.querySelector('a');
+      if (forgotLink) forgotLink.textContent = t.forgotPass;
+      const submitBtn = loginForm.querySelector('.submit-btn');
+      if (submitBtn) submitBtn.textContent = t.loginBtn;
+    }
+
+    // Update register form
+    const regForm = document.getElementById('registerForm');
+    if (regForm) {
+      const labels = regForm.querySelectorAll('label');
+      if (labels[0]) labels[0].textContent = t.usernameLabel;
+      if (labels[1]) labels[1].textContent = t.emailLabel;
+      if (labels[2]) labels[2].textContent = t.regPassLabel;
+      if (labels[3]) labels[3].textContent = t.countryLabel;
+      const inputs = regForm.querySelectorAll('input[type=text], input[type=email], input[type=password]');
+      if (inputs[0]) inputs[0].placeholder = t.usernamePlaceholder;
+      if (inputs[2]) inputs[2].placeholder = t.regPassPlaceholder;
+      const countrySearchEl = regForm.querySelector('.country-search');
+      if (countrySearchEl) countrySearchEl.placeholder = t.countrySearch;
+      const regBtn = regForm.querySelector('.submit-btn');
+      if (regBtn) regBtn.textContent = t.registerBtn;
+    }
+
+    // Update Google/Apple buttons
+    const googleBtn = document.querySelector('.google-btn');
+    if (googleBtn) googleBtn.lastChild.textContent = ' ' + t.googleBtn;
+    const appleBtn = document.querySelector('.apple-btn');
+    if (appleBtn) appleBtn.lastChild.textContent = ' ' + t.appleBtn;
+
+    // Update success box
+    const successTitle = document.querySelector('.success-title');
+    if (successTitle) successTitle.textContent = t.successTitle;
+    const successSub = document.querySelector('.success-sub');
+    if (successSub) successSub.textContent = t.successSub;
+    const successBtn = document.querySelector('.success-btn');
+    if (successBtn) successBtn.textContent = t.successBtn;
+  }
+
+  // Set English on load
+  window.addEventListener('DOMContentLoaded', function() {
+    setLang('en');
+  });
 </script>
 </body>
 </html>
