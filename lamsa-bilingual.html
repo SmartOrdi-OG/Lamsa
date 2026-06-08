@@ -1931,10 +1931,122 @@
     document.getElementById('beforeAfterLabel').textContent = beforeAfterOn ? 'On — Before & After' : 'Off — New design only';
   }
 
+  // ===== FAL.AI API KEY =====
+  // ضع الـ API key هنا بين علامات التنصيص
+  var FAL_API_KEY = 'YOUR_FAL_API_KEY_HERE';
+
   function generate() {
+    // Check if image uploaded
+    if (uploadedFiles.length === 0) {
+      alert(currentLang === 'ar' ? 'الرجاء رفع صورة الغرفة أولاً!' : 'Please upload a room photo first!');
+      return;
+    }
+
+    // Check API key
+    if (FAL_API_KEY === 'YOUR_FAL_API_KEY_HERE') {
+      alert('Please add your fal.ai API key to the code!');
+      return;
+    }
+
     var resultArea = document.getElementById('resultArea');
     resultArea.classList.add('show');
     resultArea.scrollIntoView({ behavior: 'smooth', block: 'center' });
+
+    // Show loading
+    document.getElementById('loadingDots').classList.add('show');
+    document.getElementById('resultPlaceholder').style.display = 'block';
+
+    // Build prompt from user selections
+    var selectedStyles = [];
+    document.querySelectorAll('.layout-card.selected .lc-name').forEach(function(el) {
+      selectedStyles.push(el.getAttribute('data-en') || el.textContent);
+    });
+
+    var selectedColors = [];
+    document.querySelectorAll('#panel-5 .chip.selected').forEach(function(el) {
+      selectedColors.push(el.getAttribute('data-en') || el.textContent);
+    });
+
+    var budget = document.getElementById('budgetDisplay').textContent;
+    var roomType = document.querySelector('#panel-2 select') ? document.querySelector('#panel-2 select').value : 'bedroom';
+    var notes = document.querySelector('#panel-6 textarea') ? document.querySelector('#panel-6 textarea').value : '';
+
+    var styleText = selectedStyles.length > 0 ? selectedStyles.join(', ') : 'modern contemporary';
+    var colorText = selectedColors.length > 0 ? selectedColors.join(', ') : 'neutral warm tones';
+
+    var prompt = 'Professional interior design transformation, ' + styleText + ' style, ' +
+      colorText + ' color palette, ' + roomType + ', budget ' + budget +
+      ', photorealistic, high quality, 8K, architectural photography' +
+      (notes ? ', ' + notes : '');
+
+    // Convert first image to base64
+    var reader = new FileReader();
+    reader.onload = function(e) {
+      var imageDataUrl = e.target.result;
+
+      // Call fal.ai FLUX.1 Kontext Pro
+      fetch('https://fal.run/fal-ai/flux-pro/kontext', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Key ' + FAL_API_KEY
+        },
+        body: JSON.stringify({
+          prompt: prompt,
+          image_url: imageDataUrl,
+          num_images: designCount,
+          guidance_scale: 3.5,
+          num_inference_steps: 28,
+          image_size: 'landscape_16_9'
+        })
+      })
+      .then(function(res) { return res.json(); })
+      .then(function(data) {
+        document.getElementById('loadingDots').classList.remove('show');
+        document.getElementById('resultPlaceholder').style.display = 'none';
+
+        if (data.images && data.images.length > 0) {
+          var imgWrap = document.getElementById('resultImg');
+          imgWrap.innerHTML = '';
+
+          // Show before/after or just after
+          if (beforeAfterOn) {
+            var beforeAfterDiv = document.createElement('div');
+            beforeAfterDiv.style.cssText = 'display:grid;grid-template-columns:1fr 1fr;gap:10px;width:100%;';
+
+            var beforeDiv = document.createElement('div');
+            beforeDiv.innerHTML = '<p style="color:var(--gray);font-size:12px;text-align:center;margin-bottom:6px;">Before</p>' +
+              '<img src="' + imageDataUrl + '" style="width:100%;border-radius:10px;object-fit:cover;">';
+
+            var afterDiv = document.createElement('div');
+            afterDiv.innerHTML = '<p style="color:var(--gold);font-size:12px;text-align:center;margin-bottom:6px;">After ✦</p>' +
+              '<img src="' + data.images[0].url + '" style="width:100%;border-radius:10px;object-fit:cover;">';
+
+            beforeAfterDiv.appendChild(beforeDiv);
+            beforeAfterDiv.appendChild(afterDiv);
+            imgWrap.appendChild(beforeAfterDiv);
+          } else {
+            // Show generated images
+            data.images.forEach(function(img, i) {
+              var imgEl = document.createElement('img');
+              imgEl.src = img.url;
+              imgEl.style.cssText = 'width:100%;border-radius:10px;margin-bottom:' + (i < data.images.length-1 ? '10px' : '0');
+              imgWrap.appendChild(imgEl);
+            });
+          }
+        } else {
+          document.getElementById('resultPlaceholder').style.display = 'block';
+          document.getElementById('resultPlaceholder').innerHTML = '<div class="rp-icon">❌</div><p>Error generating image. Please try again.</p>';
+        }
+      })
+      .catch(function(err) {
+        document.getElementById('loadingDots').classList.remove('show');
+        document.getElementById('resultPlaceholder').style.display = 'block';
+        document.getElementById('resultPlaceholder').innerHTML = '<div class="rp-icon">❌</div><p>Connection error. Please check your API key.</p>';
+        console.error('fal.ai error:', err);
+      });
+    };
+    reader.readAsDataURL(uploadedFiles[0]);
   }
 
   function scrollToForm() {
