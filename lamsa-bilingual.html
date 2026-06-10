@@ -154,6 +154,16 @@
     font-size: 10px; padding: 3px 6px;
     text-align: center;
   }
+  /* ANGLE SELECT ON THUMB */
+  .preview-thumb .angle-select {
+    position: absolute; bottom: 0; left: 0; right: 0;
+    background: rgba(0,0,0,0.78);
+    border: none; color: var(--gold);
+    font-size: 10px; font-family: 'Tajawal', sans-serif; font-weight: 700;
+    padding: 4px 6px; cursor: pointer; outline: none;
+    width: 100%; text-align: center;
+  }
+  .preview-thumb .angle-select option { background: var(--dark); color: var(--white); }
   .upload-tips {
     display: flex; flex-wrap: wrap; gap: 8px;
     margin-top: 14px;
@@ -166,6 +176,19 @@
     font-size: 11px; color: var(--gray);
     display: flex; align-items: center; gap: 5px;
   }
+
+
+  /* ===== 2D FLOOR PLAN ===== */
+  .floorplan-wrap { margin-top: 20px; }
+  .floorplan-toolbar { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 12px; }
+  .fp-btn { background: var(--card); border: 1px solid var(--border); color: var(--light); padding: 7px 14px; border-radius: 8px; font-size: 12px; font-weight: 700; cursor: pointer; font-family: 'Tajawal', sans-serif; transition: all 0.2s; }
+  .fp-btn:hover, .fp-btn.active { border-color: var(--gold); color: var(--gold); background: var(--gold-dim); }
+  .fp-canvas-wrap { position: relative; border: 1px solid var(--border); border-radius: 12px; overflow: hidden; background: #0d0d0d; }
+  #floorCanvas { display: block; cursor: crosshair; width: 100%; }
+  .fp-hint { font-size: 11px; color: var(--gray); margin-top: 8px; text-align: center; }
+  .fp-legend { display: flex; gap: 14px; flex-wrap: wrap; margin-top: 10px; }
+  .fp-leg-item { display: flex; align-items: center; gap: 6px; font-size: 11px; color: var(--gray); }
+  .fp-leg-dot { width: 12px; height: 12px; border-radius: 3px; }
 
   /* ADVANCED BOX */
   .advanced-box {
@@ -909,8 +932,8 @@
       <div class="stat-label" data-ar="وقت التصميم" data-en="Design Time">Design Time</div>
     </div>
     <div class="stat">
-      <div class="stat-num">AR/EN</div>
-      <div class="stat-label" data-ar="عربي وإنجليزي" data-en="Arabic & English">Arabic & English</div>
+      <div class="stat-num">8</div>
+      <div class="stat-label" data-ar="لغات عالمية" data-en="Languages">Languages</div>
     </div>
   </div>
 </section>
@@ -992,7 +1015,7 @@
         <div class="form-grid">
           <div class="form-group">
             <label data-en="Room Type" data-ar="نوع الغرفة">Room Type</label>
-            <select>
+            <select onchange="renderFurnitureChips()">
               <option value="bedroom" data-en="Bedroom" data-ar="غرفة نوم">Bedroom</option>
               <option value="living" data-en="Living Room" data-ar="صالة جلوس">Living Room</option>
               <option value="kitchen" data-en="Kitchen" data-ar="مطبخ">Kitchen</option>
@@ -1013,17 +1036,27 @@
             <label data-en="Width (m)" data-ar="العرض (م)">Width (m)</label>
             <input type="number" placeholder="e.g. 4" step="0.5">
           </div>
-          <div class="form-group full">
-            <label data-en="Window & Door Location" data-ar="موقع النافذة والباب">Window & Door Location</label>
-            <div class="chips">
-              <div class="chip selected" onclick="toggleChip(this)" data-en="North Window" data-ar="نافذة شمال">نافذة شمال</div>
-              <div class="chip" onclick="toggleChip(this)" data-en="South Window" data-ar="نافذة جنوب">South Window</div>
-              <div class="chip" onclick="toggleChip(this)" data-en="East Window" data-ar="نافذة شرق">East Window</div>
-              <div class="chip" onclick="toggleChip(this)" data-en="West Window" data-ar="نافذة غرب">West Window</div>
-              <div class="chip" onclick="toggleChip(this)" data-en="North Door" data-ar="باب شمال">North Door</div>
-              <div class="chip" onclick="toggleChip(this)" data-en="South Door" data-ar="باب جنوب">South Door</div>
-            </div>
+        </div>
+
+        <!-- FIX 2: 2D FLOOR PLAN -->
+        <div class="floorplan-wrap">
+          <label style="margin-bottom:10px;display:block;" data-en="🗺️ Floor Plan — Click walls to place windows & doors" data-ar="🗺️ المخطط — اضغط على الجدران لإضافة نوافذ وأبواب">🗺️ Floor Plan — Click walls to place windows & doors</label>
+          <div class="floorplan-toolbar">
+            <button class="fp-btn active" id="btnWindow" onclick="setFpTool('window')">🪟 <span data-en="Window" data-ar="نافذة">Window</span></button>
+            <button class="fp-btn" id="btnDoor" onclick="setFpTool('door')">🚪 <span data-en="Door" data-ar="باب">Door</span></button>
+            <button class="fp-btn" id="btnErase" onclick="setFpTool('erase')">🗑 <span data-en="Erase" data-ar="حذف">Erase</span></button>
+            <button class="fp-btn" onclick="clearFp()">✕ <span data-en="Clear All" data-ar="مسح الكل">Clear All</span></button>
           </div>
+          <div class="fp-canvas-wrap">
+            <canvas id="floorCanvas" height="250"></canvas>
+          </div>
+          <p class="fp-hint" data-en="Click on any wall to place the selected element. Measurements shown in meters." data-ar="اضغط على أي جدار لوضع العنصر المحدد. الأرقام بالأمتار.">Click on any wall to place the selected element.</p>
+          <div class="fp-legend">
+            <div class="fp-leg-item"><div class="fp-leg-dot" style="background:#4a90d9;"></div><span data-en="Window" data-ar="نافذة">Window</span></div>
+            <div class="fp-leg-item"><div class="fp-leg-dot" style="background:#e8a84c;"></div><span data-en="Door" data-ar="باب">Door</span></div>
+          </div>
+        </div>
+        <div class="form-grid" style="display:none;"><!-- placeholder to close the grid --></div
         </div>
 
         <div class="panel-nav">
@@ -1288,23 +1321,10 @@
         <div class="panel-title" data-ar="توزيع الأثاث" data-en="Furniture Placement">Furniture Placement</div>
         <div class="panel-sub" data-ar="حدد بالضبط أين تريد كل قطعة — كلما كانت التفاصيل أدق، كان التصميم أفضل" data-en="Specify exactly where you want each piece — more details = better results">Specify exactly where you want each piece — more details = better results</div>
 
-        <!-- REQUIRED FURNITURE -->
+        <!-- REQUIRED FURNITURE — FIX 4: dynamic per room type -->
         <div class="form-group" style="margin-bottom:20px;">
           <label data-en="Required Furniture" data-ar="الأثاث المطلوب">Required Furniture</label>
-          <div class="chips">
-            <div class="chip selected" onclick="toggleChip(this)" data-en="🛏️ Bed" data-ar="🛏️ سرير">🛏️ Bed</div>
-            <div class="chip selected" onclick="toggleChip(this)" data-en="🗄️ Wardrobe" data-ar="🗄️ خزانة">🗄️ Wardrobe</div>
-            <div class="chip" onclick="toggleChip(this)" data-en="🪑 Desk Chair" data-ar="🪑 كرسي مكتب">🪑 Desk Chair</div>
-            <div class="chip" onclick="toggleChip(this)" data-en="📚 Bookshelf" data-ar="📚 مكتبة">📚 Bookshelf</div>
-            <div class="chip" onclick="toggleChip(this)" data-en="🛋️ Sofa" data-ar="🛋️ أريكة">🛋️ Sofa</div>
-            <div class="chip" onclick="toggleChip(this)" data-en="🪞 Mirror" data-ar="🪞 مرآة">🪞 Mirror</div>
-            <div class="chip" onclick="toggleChip(this)" data-en="💡 Special Lighting" data-ar="💡 إضاءة خاصة">💡 Special Lighting</div>
-            <div class="chip" onclick="toggleChip(this)" data-en="🧸 Play Area" data-ar="🧸 منطقة ألعاب">🧸 Play Area</div>
-            <div class="chip" onclick="toggleChip(this)" data-en="🖥️ TV Unit" data-ar="🖥️ طاولة تلفزيون">🖥️ TV Unit</div>
-            <div class="chip" onclick="toggleChip(this)" data-en="🌿 Plants" data-ar="🌿 نباتات">🌿 Plants</div>
-            <div class="chip" onclick="toggleChip(this)" data-en="🛁 Bathtub" data-ar="🛁 حوض استحمام">🛁 Bathtub</div>
-            <div class="chip" onclick="toggleChip(this)" data-en="🪟 Curtains" data-ar="🪟 ستائر">🪟 Curtains</div>
-          </div>
+          <div class="chips" id="furnitureChips"></div>
         </div>
 
         <!-- DETAILED PLACEMENT -->
@@ -1558,8 +1578,11 @@
 
         <button class="generate-btn" onclick="generate()">
           <span data-ar="✦ أنشئ تصميمي الآن" data-en="✦ Generate My Design Now">✦ Generate My Design Now</span>
-          <span class="gen-sub" data-ar="الذكاء الاصطناعي سيولد صورة واقعية لغرفتك" data-en="AI will generate a realistic image of your room">AI will generate a realistic image of your room</span>
+          <span class="gen-sub" id="genSubText" data-ar="الذكاء الاصطناعي سيولد صورة واقعية لغرفتك" data-en="AI will generate a realistic image of your room">AI will generate a realistic image of your room</span>
         </button>
+        <div id="freeTrialBadge" style="text-align:center;margin-top:10px;font-size:12px;color:var(--gold);">
+          ✦ 1 free design included — no credit card needed
+        </div>
       </div>
 
     </div>
@@ -1754,6 +1777,26 @@
       'Saudi Riyal': 'Saudi Riyal', 'UAE Dirham': 'Dirham', 'Kuwaiti Dinar': 'Dinar',
       'Qatari Riyal': 'Katar Riyal', 'Omani Riyal': 'Oman Riyal', 'Bahraini Dinar': 'Dinar',
       'Syrian Pound': 'Syrisches Pfund', 'Lebanese Pound': 'Libanesisches Pfund', 'Egyptian Pound': 'Ägyptisches Pfund',
+      'Standard Bed': 'Standardbett', 'Bunk Bed': 'Etagenbett', 'Storage Bed': 'Bett mit Stauraum',
+      'King Size': 'Kingsize', 'Sofa Bed': 'Schlafsofa', 'Floor Mattress': 'Bodenmatratze',
+      'White': 'Weiß', 'Beige / Cream': 'Beige / Creme', 'Light Gray': 'Hellgrau',
+      'Light Blue': 'Hellblau', 'Sage Green': 'Salbeigrün', 'Dusty Pink': 'Altrosa',
+      'Dark Navy': 'Dunkelblau', 'Terracotta': 'Terrakotta',
+      'Wood Parquet': 'Holzparkett', 'White Tiles': 'Weiße Fliesen', 'Marble': 'Marmor',
+      'Carpet': 'Teppichboden', 'Concrete': 'Polierter Beton', 'Dark Wood': 'Dunkles Holz',
+      'Warm White': 'Warmweiß', 'Cool White': 'Kaltweiß', 'Natural Light Only': 'Nur natürliches Licht',
+      'LED Strip Lights': 'LED-Streifen', 'Chandelier': 'Kronleuchter', 'Pendant Lights': 'Hängeleuchten',
+      'Blackout Curtains': 'Verdunkelungsvorhänge', 'Sheer Curtains': 'Transparente Vorhänge',
+      'Double Layer': 'Doppelschicht', 'Roller Blind': 'Rollo', 'Wooden Shutters': 'Holzläden', 'No Curtains': 'Keine Vorhänge',
+      'Plain White': 'Einfach Weiß', 'Gypsum / False Ceiling': 'Gipsdecke', 'Wooden Beams': 'Holzbalken',
+      'Coffered Ceiling': 'Kassettendecke', 'Vaulted': 'Gewölbt',
+      'No Rug': 'Kein Teppich', 'Large Area Rug': 'Großer Teppich', 'Fluffy Rug': 'Flauschiger Teppich',
+      'Persian Rug': 'Perserteppich', 'Geometric Pattern': 'Geometrisches Muster',
+      'Cozy & Warm': 'Gemütlich & Warm', 'Bright & Airy': 'Hell & Luftig', 'Romantic': 'Romantisch',
+      'Minimalist': 'Minimalistisch', 'Luxury & Bold': 'Luxuriös & Mutig', 'Kid-Friendly': 'Kinderfreundlich',
+      'Room Mood & Atmosphere': 'Raumstimmung & Atmosphäre',
+      'Describe Your Vision (optional)': 'Beschreibe deine Vision (optional)',
+      'The more details you add, the better the AI result': 'Mehr Details = besseres KI-Ergebnis',
     },
     es: {
       'Start Free': 'Comenzar gratis',
@@ -1780,6 +1823,23 @@
       'Design your home with your personal touch · Powered by AI': 'Disena tu hogar con tu toque · IA',
       'Privacy Policy': 'Privacidad', 'Terms of Service': 'Terminos de uso', 'Cookie Policy': 'Cookies',
       'Room Type': 'Tipo de habitación', 'Area (sqm)': 'Área (m²)', 'Length (m)': 'Largo (m)', 'Width (m)': 'Ancho (m)', 'Window & Door Location': 'Ventanas y puertas', 'Number of People': 'Número de personas', 'Bedroom': 'Dormitorio', 'Living Room': 'Sala de estar', 'Kitchen': 'Cocina', 'Kids Room': 'Cuarto de niños', 'Home Office': 'Oficina', 'Dining Room': 'Comedor', 'None': 'Ninguno', 'North Window': 'Ventana norte', 'South Window': 'Ventana sur', 'East Window': 'Ventana este', 'West Window': 'Ventana oeste', 'North Door': 'Puerta norte', 'South Door': 'Puerta sur', '🛏️ Bed': '🛏️ Cama', '🗄️ Wardrobe': '🗄️ Armario', '📚 Bookshelf': '📚 Estante', '🛋️ Sofa': '🛋️ Sofá', '🪞 Mirror': '🪞 Espejo', '🧸 Play Area': '🧸 Zona de juegos', 'North Wall': 'Pared norte', 'South Wall': 'Pared sur', 'East Wall': 'Pared este', 'West Wall': 'Pared oeste', 'Center of Room': 'Centro de la habitación', 'Modern': 'Moderno', 'Minimal': 'Minimalista', 'Scandinavian': 'Escandinavo', 'Moroccan': 'Marroquí', 'Japanese / Zen': 'Japonés / Zen', 'Room Information': 'Información de la habitación', 'Who Will Use The Room?': 'Quién usará la habitación', 'Furniture Budget': 'Presupuesto de muebles', 'Preferred Style': 'Estilo preferido', 'Furniture Placement': 'Distribución de muebles', '✦ Generate My Design Now': '✦ Crear mi diseño ahora', '✦ Your New Design': '✦ Tu nuevo diseño', 'Generating your design...': 'Generando tu diseño...', 'Takes 15-30 seconds': 'Tarda 15-30 segundos',
+      'Standard Bed': 'Cama estándar', 'Bunk Bed': 'Litera', 'Storage Bed': 'Cama con almacenaje',
+      'King Size': 'King Size', 'Sofa Bed': 'Sofá cama', 'Floor Mattress': 'Colchón en el suelo',
+      'White': 'Blanco', 'Beige / Cream': 'Beige / Crema', 'Light Gray': 'Gris claro',
+      'Light Blue': 'Azul claro', 'Sage Green': 'Verde salvia', 'Dusty Pink': 'Rosa polvorienta',
+      'Dark Navy': 'Azul marino', 'Terracotta': 'Terracota',
+      'Wood Parquet': 'Parqué de madera', 'White Tiles': 'Azulejos blancos', 'Marble': 'Mármol',
+      'Carpet': 'Moqueta', 'Concrete': 'Hormigón pulido', 'Dark Wood': 'Madera oscura',
+      'Warm White': 'Blanco cálido', 'Cool White': 'Blanco frío', 'Natural Light Only': 'Solo luz natural',
+      'LED Strip Lights': 'Tiras LED', 'Chandelier': 'Araña', 'Pendant Lights': 'Lámparas colgantes',
+      'Blackout Curtains': 'Cortinas opacas', 'Sheer Curtains': 'Cortinas transparentes',
+      'Double Layer': 'Doble capa', 'Roller Blind': 'Persiana enrollable', 'Wooden Shutters': 'Contraventanas', 'No Curtains': 'Sin cortinas',
+      'Plain White': 'Blanco liso', 'Gypsum / False Ceiling': 'Techo de yeso', 'Wooden Beams': 'Vigas de madera',
+      'Coffered Ceiling': 'Techo artesonado', 'Vaulted': 'Abovedado',
+      'No Rug': 'Sin alfombra', 'Large Area Rug': 'Alfombra grande', 'Fluffy Rug': 'Alfombra esponjosa',
+      'Persian Rug': 'Alfombra persa', 'Geometric Pattern': 'Patrón geométrico',
+      'Cozy & Warm': 'Acogedor y cálido', 'Bright & Airy': 'Luminoso y aireado', 'Romantic': 'Romántico',
+      'Minimalist': 'Minimalista', 'Luxury & Bold': 'Lujoso y atrevido', 'Kid-Friendly': 'Apto para niños',
     },
     tr: {
       'Start Free': 'Ucretsiz Basla',
@@ -1806,6 +1866,23 @@
       'Design your home with your personal touch · Powered by AI': 'Evinizi kendi dokunusunuzla tasarlayin · Yapay Zeka',
       'Privacy Policy': 'Gizlilik', 'Terms of Service': 'Kullanim Kosullari', 'Cookie Policy': 'Cerez Politikasi',
       'Room Type': 'Oda tipi', 'Area (sqm)': 'Alan (m²)', 'Length (m)': 'Uzunluk (m)', 'Width (m)': 'Genislik (m)', 'Window & Door Location': 'Pencere ve kapi konumu', 'Number of People': 'Kisi sayisi', 'Bedroom': 'Yatak odasi', 'Living Room': 'Oturma odasi', 'Kitchen': 'Mutfak', 'Kids Room': 'Cocuk odasi', 'Home Office': 'Ofis', 'Dining Room': 'Yemek odasi', 'None': 'Yok', 'North Window': 'Kuzey pencere', 'South Window': 'Guney pencere', 'East Window': 'Dogu pencere', 'West Window': 'Bati pencere', 'North Door': 'Kuzey kapi', 'South Door': 'Guney kapi', '🛏️ Bed': '🛏️ Yatak', '🗄️ Wardrobe': '🗄️ Dolap', '📚 Bookshelf': '📚 Kitaplik', '🛋️ Sofa': '🛋️ Kanepe', '🪞 Mirror': '🪞 Ayna', '🧸 Play Area': '🧸 Oyun alani', 'North Wall': 'Kuzey duvar', 'South Wall': 'Guney duvar', 'East Wall': 'Dogu duvar', 'West Wall': 'Bati duvar', 'Center of Room': 'Oda merkezi', 'Modern': 'Modern', 'Minimal': 'Minimal', 'Scandinavian': 'Iskandinavya', 'Moroccan': 'Fas tarzi', 'Japanese / Zen': 'Japon / Zen', 'Room Information': 'Oda bilgileri', 'Who Will Use The Room?': 'Odayi kim kullanacak', 'Furniture Budget': 'Mobilya butcesi', 'Preferred Style': 'Tercih edilen stil', 'Furniture Placement': 'Mobilya yerlestirme', '✦ Generate My Design Now': '✦ Tasarimimi olustur', '✦ Your New Design': '✦ Yeni tasariminiz', 'Generating your design...': 'Tasariminiz olusturuluyor...', 'Takes 15-30 seconds': '15-30 saniye surer',
+      'Standard Bed': 'Standart yatak', 'Bunk Bed': 'Ranzali yatak', 'Storage Bed': 'Depolamali yatak',
+      'King Size': 'King size', 'Sofa Bed': 'Kanepe yatak', 'Floor Mattress': 'Yer yatagi',
+      'White': 'Beyaz', 'Beige / Cream': 'Bej / Krem', 'Light Gray': 'Acik gri',
+      'Light Blue': 'Acik mavi', 'Sage Green': 'Adacayi yesili', 'Dusty Pink': 'Toz pembe',
+      'Dark Navy': 'Lacivert', 'Terracotta': 'Toprak rengi',
+      'Wood Parquet': 'Ahsap parke', 'White Tiles': 'Beyaz fayans', 'Marble': 'Mermer',
+      'Carpet': 'Hali', 'Concrete': 'Cilali beton', 'Dark Wood': 'Koyu ahsap',
+      'Warm White': 'Sicak beyaz', 'Cool White': 'Soguk beyaz', 'Natural Light Only': 'Sadece dogal isik',
+      'LED Strip Lights': 'LED serit', 'Chandelier': 'Avize', 'Pendant Lights': 'Sarkıt',
+      'Blackout Curtains': 'Karatma perdesi', 'Sheer Curtains': 'Seffaf perde',
+      'Double Layer': 'Cift katman', 'Roller Blind': 'Stor perde', 'Wooden Shutters': 'Ahsap kepenkler', 'No Curtains': 'Perde yok',
+      'Plain White': 'Duz beyaz', 'Gypsum / False Ceiling': 'Alci tavan', 'Wooden Beams': 'Ahsap kirişler',
+      'Coffered Ceiling': 'Kasetli tavan', 'Vaulted': 'Tonozlu',
+      'No Rug': 'Hali yok', 'Large Area Rug': 'Buyuk hali', 'Fluffy Rug': 'Tuylü hali',
+      'Persian Rug': 'Fars halisi', 'Geometric Pattern': 'Geometrik desen',
+      'Cozy & Warm': 'Rahat ve sicak', 'Bright & Airy': 'Aydinlik ve ferah', 'Romantic': 'Romantik',
+      'Minimalist': 'Minimalist', 'Luxury & Bold': 'Lüks ve bold', 'Kid-Friendly': 'Cocuklara uygun',
     },
     fr: {
       'Start Free': 'Commencer gratuitement',
@@ -1832,6 +1909,23 @@
       'Design your home with your personal touch · Powered by AI': 'Concevez votre maison avec votre touche · IA',
       'Privacy Policy': 'Confidentialite', 'Terms of Service': 'Conditions', 'Cookie Policy': 'Cookies',
       'Room Type': 'Type de piece', 'Area (sqm)': 'Surface (m²)', 'Length (m)': 'Longueur (m)', 'Width (m)': 'Largeur (m)', 'Window & Door Location': 'Fenetres et portes', 'Number of People': 'Nombre de personnes', 'Bedroom': 'Chambre', 'Living Room': 'Salon', 'Kitchen': 'Cuisine', 'Kids Room': 'Chambre enfants', 'Home Office': 'Bureau', 'Dining Room': 'Salle a manger', 'None': 'Aucun', 'North Window': 'Fenetre nord', 'South Window': 'Fenetre sud', 'East Window': 'Fenetre est', 'West Window': 'Fenetre ouest', 'North Door': 'Porte nord', 'South Door': 'Porte sud', '🛏️ Bed': '🛏️ Lit', '🗄️ Wardrobe': '🗄️ Armoire', '📚 Bookshelf': '📚 Etagere', '🛋️ Sofa': '🛋️ Canape', '🪞 Mirror': '🪞 Miroir', '🧸 Play Area': '🧸 Espace jeux', 'North Wall': 'Mur nord', 'South Wall': 'Mur sud', 'East Wall': 'Mur est', 'West Wall': 'Mur ouest', 'Center of Room': 'Centre de la piece', 'Modern': 'Moderne', 'Minimal': 'Minimaliste', 'Scandinavian': 'Scandinave', 'Moroccan': 'Marocain', 'Japanese / Zen': 'Japonais / Zen', 'Room Information': 'Informations sur la piece', 'Who Will Use The Room?': 'Qui utilisera la piece', 'Furniture Budget': 'Budget meubles', 'Preferred Style': 'Style prefere', 'Furniture Placement': 'Disposition des meubles', '✦ Generate My Design Now': '✦ Creer mon design', '✦ Your New Design': '✦ Votre nouveau design', 'Generating your design...': 'Generation en cours...', 'Takes 15-30 seconds': 'Prend 15-30 secondes',
+      'Standard Bed': 'Lit standard', 'Bunk Bed': 'Lits superposes', 'Storage Bed': 'Lit avec rangement',
+      'King Size': 'Grand lit', 'Sofa Bed': 'Canape-lit', 'Floor Mattress': 'Matelas au sol',
+      'White': 'Blanc', 'Beige / Cream': 'Beige / Creme', 'Light Gray': 'Gris clair',
+      'Light Blue': 'Bleu clair', 'Sage Green': 'Vert sauge', 'Dusty Pink': 'Rose poudre',
+      'Dark Navy': 'Bleu marine', 'Terracotta': 'Terracotta',
+      'Wood Parquet': 'Parquet bois', 'White Tiles': 'Carrelage blanc', 'Marble': 'Marbre',
+      'Carpet': 'Moquette', 'Concrete': 'Beton poli', 'Dark Wood': 'Bois fonce',
+      'Warm White': 'Blanc chaud', 'Cool White': 'Blanc froid', 'Natural Light Only': 'Lumiere naturelle',
+      'LED Strip Lights': 'Ruban LED', 'Chandelier': 'Lustre', 'Pendant Lights': 'Suspensions',
+      'Blackout Curtains': 'Rideaux occultants', 'Sheer Curtains': 'Voilages',
+      'Double Layer': 'Double couche', 'Roller Blind': 'Store enrouleur', 'Wooden Shutters': 'Volets bois', 'No Curtains': 'Sans rideaux',
+      'Plain White': 'Blanc uni', 'Gypsum / False Ceiling': 'Faux plafond', 'Wooden Beams': 'Poutres bois',
+      'Coffered Ceiling': 'Plafond a caissons', 'Vaulted': 'Voute',
+      'No Rug': 'Sans tapis', 'Large Area Rug': 'Grand tapis', 'Fluffy Rug': 'Tapis moelleux',
+      'Persian Rug': 'Tapis persan', 'Geometric Pattern': 'Motif geometrique',
+      'Cozy & Warm': 'Douillet et chaud', 'Bright & Airy': 'Lumineux et aere', 'Romantic': 'Romantique',
+      'Minimalist': 'Minimaliste', 'Luxury & Bold': 'Luxueux et audacieux', 'Kid-Friendly': 'Adapte aux enfants',
     },
     it: {
       'Start Free': 'Inizia gratuitamente',
@@ -1858,6 +1952,23 @@
       'Design your home with your personal touch · Powered by AI': 'Progetta la tua casa con il tuo tocco · IA',
       'Privacy Policy': 'Privacy', 'Terms of Service': 'Termini', 'Cookie Policy': 'Cookie',
       'Room Type': 'Tipo di stanza', 'Area (sqm)': 'Area (m²)', 'Length (m)': 'Lunghezza (m)', 'Width (m)': 'Larghezza (m)', 'Window & Door Location': 'Finestre e porte', 'Number of People': 'Numero di persone', 'Bedroom': 'Camera da letto', 'Living Room': 'Soggiorno', 'Kitchen': 'Cucina', 'Kids Room': 'Camera bambini', 'Home Office': 'Ufficio', 'Dining Room': 'Sala da pranzo', 'None': 'Nessuno', 'North Window': 'Finestra nord', 'South Window': 'Finestra sud', 'East Window': 'Finestra est', 'West Window': 'Finestra ovest', 'North Door': 'Porta nord', 'South Door': 'Porta sud', '🛏️ Bed': '🛏️ Letto', '🗄️ Wardrobe': '🗄️ Armadio', '📚 Bookshelf': '📚 Libreria', '🛋️ Sofa': '🛋️ Divano', '🪞 Mirror': '🪞 Specchio', '🧸 Play Area': '🧸 Area giochi', 'North Wall': 'Parete nord', 'South Wall': 'Parete sud', 'East Wall': 'Parete est', 'West Wall': 'Parete ovest', 'Center of Room': 'Centro stanza', 'Modern': 'Moderno', 'Minimal': 'Minimale', 'Scandinavian': 'Scandinavo', 'Moroccan': 'Marocchino', 'Japanese / Zen': 'Giapponese / Zen', 'Room Information': 'Informazioni stanza', 'Who Will Use The Room?': 'Chi usera la stanza', 'Furniture Budget': 'Budget mobili', 'Preferred Style': 'Stile preferito', 'Furniture Placement': 'Disposizione mobili', '✦ Generate My Design Now': '✦ Crea il mio design', '✦ Your New Design': '✦ Il tuo nuovo design', 'Generating your design...': 'Generazione in corso...', 'Takes 15-30 seconds': 'Richiede 15-30 secondi',
+      'Standard Bed': 'Letto standard', 'Bunk Bed': 'Letto a castello', 'Storage Bed': 'Letto con contenitore',
+      'King Size': 'King size', 'Sofa Bed': 'Divano letto', 'Floor Mattress': 'Materasso a terra',
+      'White': 'Bianco', 'Beige / Cream': 'Beige / Crema', 'Light Gray': 'Grigio chiaro',
+      'Light Blue': 'Azzurro', 'Sage Green': 'Verde salvia', 'Dusty Pink': 'Rosa antico',
+      'Dark Navy': 'Blu scuro', 'Terracotta': 'Terracotta',
+      'Wood Parquet': 'Parquet legno', 'White Tiles': 'Piastrelle bianche', 'Marble': 'Marmo',
+      'Carpet': 'Moquette', 'Concrete': 'Cemento lucidato', 'Dark Wood': 'Legno scuro',
+      'Warm White': 'Bianco caldo', 'Cool White': 'Bianco freddo', 'Natural Light Only': 'Solo luce naturale',
+      'LED Strip Lights': 'Striscia LED', 'Chandelier': 'Lampadario', 'Pendant Lights': 'Lampade a sospensione',
+      'Blackout Curtains': 'Tende oscuranti', 'Sheer Curtains': 'Tende trasparenti',
+      'Double Layer': 'Doppio strato', 'Roller Blind': 'Tenda a rullo', 'Wooden Shutters': 'Persiane in legno', 'No Curtains': 'Senza tende',
+      'Plain White': 'Bianco semplice', 'Gypsum / False Ceiling': 'Controsoffitto', 'Wooden Beams': 'Travi in legno',
+      'Coffered Ceiling': 'Soffitto a cassettoni', 'Vaulted': 'A volta',
+      'No Rug': 'Nessun tappeto', 'Large Area Rug': 'Tappeto grande', 'Fluffy Rug': 'Tappeto morbido',
+      'Persian Rug': 'Tappeto persiano', 'Geometric Pattern': 'Motivo geometrico',
+      'Cozy & Warm': 'Accogliente e caldo', 'Bright & Airy': 'Luminoso e arioso', 'Romantic': 'Romantico',
+      'Minimalist': 'Minimalista', 'Luxury & Bold': 'Lussuoso e audace', 'Kid-Friendly': 'Adatto ai bambini',
     },
     ru: {
       'Start Free': 'Nachat besplatno',
@@ -1884,6 +1995,23 @@
       'Design your home with your personal touch · Powered by AI': 'Oformite dom po-svoyemu · II',
       'Privacy Policy': 'Konfidentsialnost', 'Terms of Service': 'Usloviya', 'Cookie Policy': 'Cookie',
       'Room Type': 'Tip komnaty', 'Area (sqm)': 'Ploshhad (kv.m)', 'Length (m)': 'Dlina (m)', 'Width (m)': 'Shirina (m)', 'Window & Door Location': 'Okna i dveri', 'Number of People': 'Kolichestvo lyudej', 'Bedroom': 'Spalnya', 'Living Room': 'Gostinaya', 'Kitchen': 'Kuxnya', 'Kids Room': 'Detskaya', 'Home Office': 'Kabinet', 'Dining Room': 'Stolovaya', 'None': 'Net', 'North Window': 'Severnoye okno', 'South Window': 'Yuzhnoye okno', 'East Window': 'Vostochnoye okno', 'West Window': 'Zapadnoye okno', 'North Door': 'Severnaya dver', 'South Door': 'Yuzhnaya dver', '🛏️ Bed': '🛏️ Krovat', '🗄️ Wardrobe': '🗄️ Shkaf', '📚 Bookshelf': '📚 Polka', '🛋️ Sofa': '🛋️ Divan', '🪞 Mirror': '🪞 Zerkalo', '🧸 Play Area': '🧸 Igrovaya zona', 'North Wall': 'Severnaya stena', 'South Wall': 'Yuzhnaya stena', 'East Wall': 'Vostochnaya stena', 'West Wall': 'Zapadnaya stena', 'Center of Room': 'Centr komnaty', 'Modern': 'Sovremennyj', 'Minimal': 'Minimalnyj', 'Scandinavian': 'Skandinavskij', 'Moroccan': 'Marokanskij', 'Japanese / Zen': 'Yaponskij / Zen', 'Room Information': 'Informaciya o komnate', 'Who Will Use The Room?': 'Kto budet ispolzovat komnatu', 'Furniture Budget': 'Byudzhet na mebel', 'Preferred Style': 'Predpochtitaemyj stil', 'Furniture Placement': 'Razmeshcheniye mebeli', '✦ Generate My Design Now': '✦ Sozdat moj dizajn', '✦ Your New Design': '✦ Vash novyj dizajn', 'Generating your design...': 'Dizajn sozdaetsya...', 'Takes 15-30 seconds': 'Zanimaet 15-30 sekund',
+      'Standard Bed': 'Obychnaya krovat', 'Bunk Bed': 'Yarusnaya krovat', 'Storage Bed': 'Krovat s khranilishchem',
+      'King Size': 'King size', 'Sofa Bed': 'Divan-krovat', 'Floor Mattress': 'Matras na polu',
+      'White': 'Belyj', 'Beige / Cream': 'Bej / Krem', 'Light Gray': 'Svetlo-seryj',
+      'Light Blue': 'Svetlo-sinij', 'Sage Green': 'Zelenoj shalvej', 'Dusty Pink': 'Pudrovyj',
+      'Dark Navy': 'Temno-sinij', 'Terracotta': 'Terrakota',
+      'Wood Parquet': 'Derevyannyj parket', 'White Tiles': 'Belaya plitka', 'Marble': 'Mramor',
+      'Carpet': 'Kover', 'Concrete': 'Polirovannyj beton', 'Dark Wood': 'Temnoe derevo',
+      'Warm White': 'Teplyj belyj', 'Cool White': 'Holodnyj belyj', 'Natural Light Only': 'Tolko estestvennyj svet',
+      'LED Strip Lights': 'LED lenta', 'Chandelier': 'Lyustra', 'Pendant Lights': 'Podvesnye svetilniki',
+      'Blackout Curtains': 'Shtory blokout', 'Sheer Curtains': 'Prozrachnye shtory',
+      'Double Layer': 'Dvojnoj sloj', 'Roller Blind': 'Ruloннaya штора', 'Wooden Shutters': 'Derevyannye stavni', 'No Curtains': 'Bez shtor',
+      'Plain White': 'Prostoj belyj', 'Gypsum / False Ceiling': 'Gipsokartonyj potolok', 'Wooden Beams': 'Derevyannye balki',
+      'Coffered Ceiling': 'Kofirovannyj potolok', 'Vaulted': 'Svodchatyj',
+      'No Rug': 'Bez kovra', 'Large Area Rug': 'Bolshoj kover', 'Fluffy Rug': 'Pushistyj kover',
+      'Persian Rug': 'Persidskij kover', 'Geometric Pattern': 'Geometricheskij uzor',
+      'Cozy & Warm': 'Uyutno i teplo', 'Bright & Airy': 'Svetlo i prostorno', 'Romantic': 'Romantichno',
+      'Minimalist': 'Minimalistichno', 'Luxury & Bold': 'Roskoshno i derzko', 'Kid-Friendly': 'Dlya detej',
     },
     ar: {
       'Start Free': 'ابدأ مجاناً',
@@ -2107,15 +2235,33 @@
 
   function handleUpload(input) { handleMultiUpload(input); }
 
+  // FIX 1: angle tracking array
+  var fileAngles = [];
+
   function renderPreviews() {
     var container = document.getElementById('multiPreview');
-    var labels = ['Front', 'Side', 'Corner', 'Window', 'Extra'];
+    var anglesEn = ['Front','Side','Corner','Window','Extra'];
+    var anglesAr = ['أمامية','جانبية','زاوية','نافذة','إضافية'];
+    var labels = currentLang === 'ar' ? anglesAr : anglesEn;
+
     container.innerHTML = uploadedFiles.map(function(f, i) {
       var url = URL.createObjectURL(f);
-      return '<div class="preview-thumb"><img src="' + url + '" alt="preview"><button class="rm-btn" onclick="removeThumb(' + i + ')">x</button><div class="thumb-label">' + (labels[i] || 'Photo ' + (i+1)) + '</div></div>';
+      if (fileAngles[i] === undefined) fileAngles[i] = Math.min(i, 4);
+      var options = labels.map(function(l, j) {
+        return '<option value="' + j + '"' + (fileAngles[i] === j ? ' selected' : '') + '>' + l + '</option>';
+      }).join('');
+      return '<div class="preview-thumb">'
+        + '<img src="' + url + '" alt="preview">'
+        + '<button class="rm-btn" onclick="removeThumb(' + i + ')">✕</button>'
+        + '<select class="angle-select" onchange="fileAngles[' + i + ']=parseInt(this.value)">' + options + '</select>'
+        + '</div>';
     }).join('');
+
     if (uploadedFiles.length < 5) {
-      container.innerHTML += '<div class="preview-thumb" style="border:2px dashed var(--border);display:flex;align-items:center;justify-content:center;cursor:pointer;" onclick="document.getElementById(\'fileInput\').click()"><span style="font-size:24px;color:var(--gray);">+</span></div>';
+      container.innerHTML += '<div class="preview-thumb" style="border:2px dashed var(--border);display:flex;align-items:center;justify-content:center;cursor:pointer;background:transparent;" onclick="document.getElementById(\'fileInput\').click()">'
+        + '<div style="text-align:center;"><div style="font-size:24px;color:var(--gray);">+</div>'
+        + '<div style="font-size:10px;color:var(--gray);margin-top:4px;">' + (currentLang==='ar'?'أضف صورة':'Add photo') + '</div></div>'
+        + '</div>';
     }
   }
 
@@ -2140,9 +2286,13 @@
   }
 
   function selectPlacement(el, type) {
-    // Only one selection per furniture type
-    var siblings = document.querySelectorAll('[data-placement="' + type + '"]');
-    siblings.forEach(function(s) { s.classList.remove('selected'); });
+    if (el.classList.contains('selected')) {
+      el.classList.remove('selected');
+      return;
+    }
+    document.querySelectorAll('[data-placement="' + type + '"]').forEach(function(s) {
+      s.classList.remove('selected');
+    });
     el.classList.add('selected');
   }
 
@@ -2152,22 +2302,67 @@
     document.getElementById('beforeAfterLabel').textContent = beforeAfterOn ? 'On — Before & After' : 'Off — New design only';
   }
 
-  // ===== FAL.AI API KEY =====
-  // ضع الـ API key هنا بين علامات التنصيص
-  var FAL_API_KEY = '47d6b162-d0ed-4dbb-921e-15c4b7df1b52:4a4a5cae69f172323267be39b0e14559';
+  // ===== FREE TRIAL SYSTEM =====
+  var FREE_LIMIT = 1;
+
+  function showUpgradeModal() {
+    var overlay = document.createElement('div');
+    overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.9);z-index:9999;display:flex;align-items:center;justify-content:center;padding:20px;';
+
+    var box = document.createElement('div');
+    box.style.cssText = 'background:#161616;border:1px solid #c9a84c;border-radius:20px;padding:32px 24px;max-width:400px;width:100%;text-align:center;';
+
+    var msgs = {
+      ar: { title: '🎨 استنفدت تصميمك المجاني!', sub: 'اشترك الآن للحصول على تصاميم غير محدودة', btn: 'اشترك الآن — €9/شهر', skip: 'لاحقاً' },
+      en: { title: '🎨 Free Design Used!', sub: 'Subscribe now for unlimited designs', btn: 'Subscribe Now — €9/mo', skip: 'Maybe Later' },
+      de: { title: '🎨 Kostenloses Design verwendet!', sub: 'Jetzt abonnieren für unbegrenzte Designs', btn: 'Jetzt abonnieren — €9/Monat', skip: 'Später' },
+      es: { title: '🎨 Diseño gratuito usado!', sub: 'Suscríbete para diseños ilimitados', btn: 'Suscribirse — €9/mes', skip: 'Más tarde' },
+      tr: { title: '🎨 Ucretsiz tasarim kullanildi!', sub: 'Sinırsız tasarim icin abone ol', btn: 'Abone Ol — €9/ay', skip: 'Sonra' },
+      fr: { title: '🎨 Design gratuit utilisé!', sub: 'Abonnez-vous pour des designs illimités', btn: "S'abonner — €9/mois", skip: 'Plus tard' },
+      it: { title: '🎨 Design gratuito usato!', sub: 'Abbonati per design illimitati', btn: 'Abbonati — €9/mese', skip: 'Dopo' },
+      ru: { title: '🎨 Besplatnyy dizayn ispolzovan!', sub: 'Podpishites dlya neogranichennykh dizaynov', btn: 'Podpisatsya — €9/mes', skip: 'Pozzhe' },
+    };
+    var m = msgs[currentLang] || msgs['en'];
+
+    box.innerHTML =
+      '<div style="font-size:42px;margin-bottom:16px;">✦</div>' +
+      '<div style="font-size:22px;font-weight:900;color:#c9a84c;margin-bottom:10px;">' + m.title + '</div>' +
+      '<div style="font-size:14px;color:#888;margin-bottom:24px;line-height:1.6;">' + m.sub + '</div>' +
+      '<div style="background:#111;border:1px solid #2a2a2a;border-radius:12px;padding:16px;margin-bottom:20px;">' +
+        '<div style="font-size:12px;color:#888;margin-bottom:8px;">Pro Plan</div>' +
+        '<div style="font-size:32px;font-weight:900;color:white;">€9<span style="font-size:14px;color:#888;">/mo</span></div>' +
+        '<div style="font-size:12px;color:#c9a84c;margin-top:6px;">✓ Unlimited designs · ✓ HD quality · ✓ Save & download</div>' +
+      '</div>' +
+      '<button onclick="window.location.href=\'#subscribe\'" style="width:100%;background:#c9a84c;color:#000;border:none;padding:14px;border-radius:10px;font-size:16px;font-weight:900;cursor:pointer;margin-bottom:10px;">' + m.btn + '</button>' +
+      '<button onclick="this.closest(\'div\').parentElement.remove()" style="width:100%;background:transparent;border:1px solid #2a2a2a;color:#888;padding:10px;border-radius:10px;font-size:13px;cursor:pointer;">' + m.skip + '</button>';
+
+    overlay.appendChild(box);
+    document.body.appendChild(overlay);
+  }
 
   function generate() {
-    // Check if image uploaded
     if (uploadedFiles.length === 0) {
       alert(currentLang === 'ar' ? 'الرجاء رفع صورة الغرفة أولاً!' : 'Please upload a room photo first!');
       return;
     }
 
-    
-    
-      
-      
-    
+    // Check free trial server-side before proceeding
+    fetch('/api/trial')
+      .then(function(r) { return r.json(); })
+      .then(function(trial) {
+        if (!trial.canGenerate) {
+          showUpgradeModal();
+          return;
+        }
+        doGenerate();
+      })
+      .catch(function() {
+        // If trial check fails, allow generation (fail open)
+        doGenerate();
+      });
+  }
+
+  function doGenerate() {
 
     var resultArea = document.getElementById('resultArea');
     resultArea.classList.add('show');
@@ -2235,43 +2430,55 @@
 
     var furnitureText = selectedFurniture.length > 0 ? selectedFurniture.join(', ') : 'bed, wardrobe, desk';
 
-    var prompt = 'STRICT INTERIOR DESIGN TRANSFORMATION of this exact room. ' +
-      'YOU MUST FOLLOW ALL REQUIREMENTS EXACTLY - NO IMPROVISATION: ' +
-      '1. KEEP the exact same room structure: walls, windows, doors, ceiling, floor positions - DO NOT CHANGE THEM. ' +
-      '2. STYLE: ' + styleText + ' interior design style ONLY. ' +
-      '3. FURNITURE (MANDATORY): ' + furnitureText + '. ' +
-      (specs.bedtype ? '4. BED TYPE (EXACT): ' + specs.bedtype + ' - use this exact bed type, no other. ' : '') +
-      (placementText ? '5. EXACT PLACEMENT: ' + placementText : '') +
-      (specs.wallcolor ? '6. WALL COLOR (EXACT): Paint all walls ' + specs.wallcolor + '. ' : '') +
-      (specs.floor ? '7. FLOOR (EXACT): ' + specs.floor + ' flooring. ' : '') +
-      (specs.lighting ? '8. LIGHTING (EXACT): ' + specs.lighting + ' lighting. ' : '') +
-      (specs.curtains ? '9. CURTAINS (EXACT): ' + specs.curtains + ' on all windows. ' : '') +
-      (specs.ceiling ? '10. CEILING (EXACT): ' + specs.ceiling + ' ceiling design. ' : '') +
-      (specs.rug ? '11. RUG (EXACT): ' + specs.rug + ' on the floor. ' : '') +
-      '12. COLOR PALETTE: ' + colorText + ' tones for furniture and decor. ' +
-      '13. ROOM TYPE: ' + roomType + '. ' +
-      (moodText ? '14. ATMOSPHERE: ' + moodText : '') +
-      (notes ? '15. EXTRA REQUIREMENTS (MANDATORY): ' + notes + '. ' : '') +
-      'QUALITY: Photorealistic architectural interior photography, ' +
-      'professional magazine lighting, ultra-sharp 8K resolution, ' +
-      'luxury interior design aesthetic, no people, no text, no watermarks, ' +
-      'perfect composition like Architectural Digest magazine.';
+    var fpInfo = typeof getFpDescription === 'function' ? getFpDescription() : '';
+    var prompt = 'INTERIOR DESIGN TRANSFORMATION - STRICT RULES: ' +
+      'ABSOLUTELY DO NOT CHANGE: window position, window size, door position, door size, wall structure, ceiling height, floor level, room shape or dimensions. ' +
+      'ONLY CHANGE: furniture, decor, colors, lighting, curtains, rugs, wall paint. ' +
+      '--- DESIGN REQUIREMENTS: ' +
+      'STYLE: ' + styleText + ' interior design ONLY. ' +
+      'FURNITURE (ADD EXACTLY THESE): ' + furnitureText + '. ' +
+      (specs.bedtype ? 'BED TYPE: ' + specs.bedtype + ' - no other bed type allowed. ' : '') +
+      (placementText ? 'EXACT FURNITURE PLACEMENT: ' + placementText : '') +
+      (specs.wallcolor ? 'WALL COLOR: ' + specs.wallcolor + ' - paint ALL walls this exact color. ' : '') +
+      (specs.floor ? 'FLOOR: Keep existing floor or replace with ' + specs.floor + '. ' : '') +
+      (specs.lighting ? 'LIGHTING: ' + specs.lighting + ' throughout the room. ' : '') +
+      (specs.curtains ? 'CURTAINS: Add ' + specs.curtains + ' on ALL windows. ' : '') +
+      (specs.ceiling ? 'CEILING: ' + specs.ceiling + ' design. ' : '') +
+      (specs.rug ? 'RUG: Place ' + specs.rug + ' in center of room. ' : '') +
+      'COLOR PALETTE: ' + colorText + ' tones. ' +
+      (fpInfo ? 'FLOOR PLAN: ' + fpInfo : 'ROOM TYPE: ' + roomType + '. ') +
+      (moodText ? 'ATMOSPHERE: ' + moodText : '') +
+      (notes ? 'EXTRA (MANDATORY): ' + notes + '. ' : '') +
+      '--- QUALITY: Photorealistic architectural photography, natural sunlight, soft shadows, ' +
+      'real-world furniture proportions, consistent color palette, real textures, ' +
+      'DSLR camera angle with slight depth of field, no AI artifacts, no blur. ' +
+      'Style like Architectural Digest or IKEA catalog photo. ' +
+      'AVOID: cartoon, unrealistic, over-saturated, distorted, floating objects, fantasy, glowing lights, AI artifacts.';
 
     // Convert first image to base64
     var reader = new FileReader();
     reader.onload = function(e) {
       var imageDataUrl = e.target.result;
 
+      // Upload image to fal storage first (base64 not accepted directly)
+      fetch('/api/upload', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ image_data: imageDataUrl, mime_type: uploadedFiles[0].type || 'image/jpeg' })
+      })
+      .then(function(r) { return r.json(); })
+      .then(function(uploadResult) {
+        var imageUrl = uploadResult.url || imageDataUrl;
+
       // Call fal.ai FLUX.1 Kontext Pro
-      fetch('https://fal.run/fal-ai/flux-pro/kontext', {
+      fetch('/api/generate', {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json',
-          'Authorization': 'Key ' + FAL_API_KEY
+          'Content-Type': 'application/json'
         },
         body: JSON.stringify({
           prompt: prompt,
-          image_url: imageDataUrl,
+          image_url: imageUrl,
           num_images: designCount,
           guidance_scale: 7.5,
           num_inference_steps: 50,
@@ -2344,8 +2551,15 @@
       .catch(function(err) {
         document.getElementById('loadingDots').classList.remove('show');
         document.getElementById('resultPlaceholder').style.display = 'block';
-        document.getElementById('resultPlaceholder').innerHTML = '<div class="rp-icon">❌</div><p>Connection error. Please check your API key.</p>';
+        document.getElementById('resultPlaceholder').innerHTML = '<div class="rp-icon">❌</div><p>Connection error. Please try again.</p>';
         console.error('fal.ai error:', err);
+      });
+      }) // close upload .then
+      .catch(function(uploadErr) {
+        document.getElementById('loadingDots').classList.remove('show');
+        document.getElementById('resultPlaceholder').style.display = 'block';
+        document.getElementById('resultPlaceholder').innerHTML = '<div class="rp-icon">❌</div><p>Image upload failed. Please try again.</p>';
+        console.error('upload error:', uploadErr);
       });
     };
     reader.readAsDataURL(uploadedFiles[0]);
@@ -2379,12 +2593,227 @@
   // Apply English on page load
   window.addEventListener('DOMContentLoaded', function() {
     setLang('en');
+    renderFurnitureChips();
+    initFloorPlan();
   });
+
+
+  // ===== FIX 4: Furniture per room type =====
+  var furnitureByRoom = {
+    bedroom: [
+      {en:'🛏️ Bed',ar:'🛏️ سرير',sel:true},{en:'🗄️ Wardrobe',ar:'🗄️ خزانة',sel:true},
+      {en:'🪞 Mirror',ar:'🪞 مرآة'},{en:'🪑 Desk Chair',ar:'🪑 كرسي مكتب'},
+      {en:'📚 Bookshelf',ar:'📚 مكتبة'},{en:'💡 Special Lighting',ar:'💡 إضاءة خاصة'},
+      {en:'🌿 Plants',ar:'🌿 نباتات'},{en:'🪟 Curtains',ar:'🪟 ستائر',sel:true},
+    ],
+    kids: [
+      {en:'🛏️ Bed',ar:'🛏️ سرير',sel:true},{en:'🗄️ Wardrobe',ar:'🗄️ خزانة',sel:true},
+      {en:'🧸 Play Area',ar:'🧸 منطقة ألعاب',sel:true},{en:'📚 Bookshelf',ar:'📚 مكتبة'},
+      {en:'🪑 Desk Chair',ar:'🪑 كرسي مكتب'},{en:'💡 Special Lighting',ar:'💡 إضاءة خاصة'},
+    ],
+    living: [
+      {en:'🛋️ Sofa',ar:'🛋️ أريكة',sel:true},{en:'🖥️ TV Unit',ar:'🖥️ طاولة تلفزيون',sel:true},
+      {en:'☕ Coffee Table',ar:'☕ طاولة قهوة',sel:true},{en:'📚 Bookshelf',ar:'📚 مكتبة'},
+      {en:'🌿 Plants',ar:'🌿 نباتات'},{en:'💡 Special Lighting',ar:'💡 إضاءة خاصة'},
+      {en:'🪞 Mirror',ar:'🪞 مرآة'},{en:'🪟 Curtains',ar:'🪟 ستائر',sel:true},
+    ],
+    kitchen: [
+      {en:'🍳 Kitchen Island',ar:'🍳 جزيرة المطبخ'},{en:'🪑 Bar Stools',ar:'🪑 كراسي بار'},
+      {en:'🌿 Plants',ar:'🌿 نباتات'},{en:'💡 Special Lighting',ar:'💡 إضاءة خاصة',sel:true},
+      {en:'🗄️ Storage Cabinet',ar:'🗄️ خزانة تخزين',sel:true},
+    ],
+    office: [
+      {en:'🖥️ Desk',ar:'🖥️ مكتب',sel:true},{en:'🪑 Office Chair',ar:'🪑 كرسي مكتبي',sel:true},
+      {en:'📚 Bookshelf',ar:'📚 مكتبة',sel:true},{en:'🗄️ Filing Cabinet',ar:'🗄️ خزانة ملفات'},
+      {en:'🛋️ Guest Sofa',ar:'🛋️ أريكة ضيوف'},{en:'💡 Special Lighting',ar:'💡 إضاءة خاصة',sel:true},
+      {en:'🌿 Plants',ar:'🌿 نباتات'},
+    ],
+    dining: [
+      {en:'🍽️ Dining Table',ar:'🍽️ طاولة طعام',sel:true},{en:'🪑 Dining Chairs',ar:'🪑 كراسي طعام',sel:true},
+      {en:'🗄️ Sideboard',ar:'🗄️ خزانة جانبية'},{en:'💡 Special Lighting',ar:'💡 إضاءة خاصة',sel:true},
+      {en:'🌿 Plants',ar:'🌿 نباتات'},{en:'🪞 Mirror',ar:'🪞 مرآة'},
+    ],
+  };
+
+  function renderFurnitureChips() {
+    var roomType = document.querySelector('#panel-2 select') ? document.querySelector('#panel-2 select').value : 'bedroom';
+    var items = furnitureByRoom[roomType] || furnitureByRoom.bedroom;
+    var container = document.getElementById('furnitureChips');
+    if (!container) return;
+    container.innerHTML = items.map(function(item) {
+      var label = currentLang === 'ar' ? item.ar : item.en;
+      var sel = item.sel ? ' selected' : '';
+      return '<div class="chip' + sel + '" onclick="toggleChip(this)" data-en="' + item.en + '" data-ar="' + item.ar + '">' + label + '</div>';
+    }).join('');
+  }
+
+
+  // ===== FIX 2: 2D FLOOR PLAN =====
+  var fpTool = 'window', fpElements = [];
+  var FP_PAD = 36, FP_HIT = 16;
+
+  function setFpTool(t) {
+    fpTool = t;
+    document.querySelectorAll('.fp-btn').forEach(function(b){b.classList.remove('active');});
+    var m={window:'btnWindow',door:'btnDoor',erase:'btnErase'};
+    if(m[t]) document.getElementById(m[t]).classList.add('active');
+  }
+
+  function clearFp() { fpElements=[]; drawFloorPlan(); }
+
+  function getRoomDims() {
+    var w = parseFloat(document.getElementById('lengthInput') ? document.getElementById('lengthInput').value : 0) || 5;
+    var h = parseFloat(document.getElementById('widthInput') ? document.getElementById('widthInput').value : 0) || 4;
+    return {w:w, h:h};
+  }
+
+  function drawFloorPlan() {
+    var canvas = document.getElementById('floorCanvas');
+    if (!canvas) return;
+    var ctx = canvas.getContext('2d');
+    var cw = canvas.width, ch = canvas.height;
+    var dims = getRoomDims();
+    var roomW = cw - FP_PAD*2, roomH = ch - FP_PAD*2;
+
+    ctx.clearRect(0,0,cw,ch);
+    ctx.fillStyle='#0d0d0d'; ctx.fillRect(0,0,cw,ch);
+    ctx.fillStyle='#161616'; ctx.fillRect(FP_PAD,FP_PAD,roomW,roomH);
+
+    // Grid
+    ctx.strokeStyle='rgba(201,168,76,0.06)'; ctx.lineWidth=1;
+    for(var i=0;i<=dims.w;i++){var x=FP_PAD+i*(roomW/dims.w);ctx.beginPath();ctx.moveTo(x,FP_PAD);ctx.lineTo(x,FP_PAD+roomH);ctx.stroke();}
+    for(var j=0;j<=dims.h;j++){var y=FP_PAD+j*(roomH/dims.h);ctx.beginPath();ctx.moveTo(FP_PAD,y);ctx.lineTo(FP_PAD+roomW,y);ctx.stroke();}
+
+    // Walls
+    ctx.strokeStyle='#c9a84c'; ctx.lineWidth=3;
+    ctx.strokeRect(FP_PAD,FP_PAD,roomW,roomH);
+
+    // Dimension labels
+    ctx.fillStyle='#888'; ctx.font='11px Tajawal,sans-serif'; ctx.textAlign='center';
+    ctx.fillText(dims.w+'m', FP_PAD+roomW/2, FP_PAD-10);
+    ctx.save(); ctx.translate(FP_PAD-14, FP_PAD+roomH/2); ctx.rotate(-Math.PI/2);
+    ctx.fillText(dims.h+'m', 0, 0); ctx.restore();
+
+    // Elements
+    fpElements.forEach(function(el) {
+      var size=28, color=el.type==='window'?'#4a90d9':'#e8a84c';
+      var x1,y1,ew,eh;
+      if(el.wall==='top'){x1=FP_PAD+el.pos*(roomW/dims.w)-size/2;y1=FP_PAD-4;ew=size;eh=8;}
+      else if(el.wall==='bottom'){x1=FP_PAD+el.pos*(roomW/dims.w)-size/2;y1=FP_PAD+roomH-4;ew=size;eh=8;}
+      else if(el.wall==='left'){x1=FP_PAD-4;y1=FP_PAD+el.pos*(roomH/dims.h)-size/2;ew=8;eh=size;}
+      else{x1=FP_PAD+roomW-4;y1=FP_PAD+el.pos*(roomH/dims.h)-size/2;ew=8;eh=size;}
+      ctx.fillStyle=color; ctx.fillRect(x1,y1,ew,eh);
+      ctx.fillStyle='#fff'; ctx.font='9px Tajawal,sans-serif'; ctx.textAlign='center';
+      var lx=el.wall==='left'||el.wall==='right' ? (el.wall==='left'?FP_PAD-16:FP_PAD+roomW+16) : x1+ew/2;
+      var ly=el.wall==='top'||el.wall==='bottom' ? (el.wall==='top'?FP_PAD-14:FP_PAD+roomH+16) : y1+eh/2+3;
+      ctx.fillText(el.pos.toFixed(1)+'m',lx,ly);
+    });
+  }
+
+  function onCanvasClick(e) {
+    var canvas=document.getElementById('floorCanvas');
+    var rect=canvas.getBoundingClientRect();
+    var scaleX=canvas.width/rect.width, scaleY=canvas.height/rect.height;
+    var px=(e.clientX-rect.left)*scaleX, py=(e.clientY-rect.top)*scaleY;
+    var cw=canvas.width, ch=canvas.height;
+    var roomW=cw-FP_PAD*2, roomH=ch-FP_PAD*2;
+    var dims=getRoomDims();
+
+    if(fpTool==='erase'){
+      var best=-1,bestD=999;
+      fpElements.forEach(function(el,i){
+        var cx,cy;
+        if(el.wall==='top'){cx=FP_PAD+el.pos*(roomW/dims.w);cy=FP_PAD;}
+        else if(el.wall==='bottom'){cx=FP_PAD+el.pos*(roomW/dims.w);cy=FP_PAD+roomH;}
+        else if(el.wall==='left'){cx=FP_PAD;cy=FP_PAD+el.pos*(roomH/dims.h);}
+        else{cx=FP_PAD+roomW;cy=FP_PAD+el.pos*(roomH/dims.h);}
+        var d=Math.sqrt((px-cx)*(px-cx)+(py-cy)*(py-cy));
+        if(d<bestD){bestD=d;best=i;}
+      });
+      if(best>=0&&bestD<32){fpElements.splice(best,1);drawFloorPlan();}
+      return;
+    }
+
+    var wall=null,pos=0;
+    if(Math.abs(py-FP_PAD)<FP_HIT&&px>FP_PAD&&px<FP_PAD+roomW){wall='top';pos=(px-FP_PAD)/(roomW/dims.w);}
+    else if(Math.abs(py-(FP_PAD+roomH))<FP_HIT&&px>FP_PAD&&px<FP_PAD+roomW){wall='bottom';pos=(px-FP_PAD)/(roomW/dims.w);}
+    else if(Math.abs(px-FP_PAD)<FP_HIT&&py>FP_PAD&&py<FP_PAD+roomH){wall='left';pos=(py-FP_PAD)/(roomH/dims.h);}
+    else if(Math.abs(px-(FP_PAD+roomW))<FP_HIT&&py>FP_PAD&&py<FP_PAD+roomH){wall='right';pos=(py-FP_PAD)/(roomH/dims.h);}
+
+    if(wall){
+      fpElements.push({type:fpTool,wall:wall,pos:Math.round(pos*4)/4});
+      drawFloorPlan();
+    }
+  }
+
+  function initFloorPlan() {
+    var canvas=document.getElementById('floorCanvas');
+    if(!canvas) return;
+    function resize(){
+      var w=canvas.parentElement.clientWidth||400;
+      canvas.width=w; canvas.height=Math.round(w*0.6);
+      drawFloorPlan();
+    }
+    canvas.addEventListener('click',onCanvasClick);
+    resize();
+    window.addEventListener('resize',resize);
+    // Update on dimension input
+    ['lengthInput','widthInput'].forEach(function(id){
+      var el=document.getElementById(id);
+      if(el) el.addEventListener('input',function(){setTimeout(drawFloorPlan,50);});
+    });
+  }
+
+  // Also include fpElements summary in generate prompt
+  function getFpDescription() {
+    if(fpElements.length===0) return '';
+    var dims=getRoomDims();
+    var desc='Room floor plan '+dims.w+'m x '+dims.h+'m. ';
+    var wins=fpElements.filter(function(e){return e.type==='window';});
+    var doors=fpElements.filter(function(e){return e.type==='door';});
+    if(wins.length>0) desc+='Windows on: '+wins.map(function(e){return e.wall+' wall at '+e.pos.toFixed(1)+'m';}).join(', ')+'. ';
+    if(doors.length>0) desc+='Doors on: '+doors.map(function(e){return e.wall+' wall at '+e.pos.toFixed(1)+'m';}).join(', ')+'. ';
+    return desc;
+  }
 
   var observer = new IntersectionObserver(function(entries) {
     entries.forEach(function(e) { if (e.isIntersecting) e.target.classList.add('visible'); });
   }, { threshold: 0.1 });
   document.querySelectorAll('.reveal').forEach(function(el) { observer.observe(el); });
+
+  // ===== DRAG & DROP =====
+  window.addEventListener('DOMContentLoaded', function() {
+    var zone = document.getElementById('uploadZone');
+    if (!zone) return;
+
+    zone.addEventListener('dragover', function(e) {
+      e.preventDefault();
+      e.stopPropagation();
+      zone.classList.add('dragover');
+    });
+
+    zone.addEventListener('dragleave', function(e) {
+      e.preventDefault();
+      e.stopPropagation();
+      zone.classList.remove('dragover');
+    });
+
+    zone.addEventListener('drop', function(e) {
+      e.preventDefault();
+      e.stopPropagation();
+      zone.classList.remove('dragover');
+
+      var files = Array.from(e.dataTransfer.files).filter(function(f) {
+        return f.type.startsWith('image/');
+      }).slice(0, 5);
+
+      if (files.length === 0) return;
+
+      uploadedFiles = files;
+      renderPreviews();
+      document.getElementById('uploadContent').style.display = 'none';
+    });
+  });
 </script>
 </body>
 </html>
