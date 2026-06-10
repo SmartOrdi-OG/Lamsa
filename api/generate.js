@@ -1,5 +1,3 @@
-const fetch = (...args) => import('node-fetch').then(({default: f}) => f(...args)).catch(() => globalThis.fetch(...args));
-
 module.exports = async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
 
@@ -33,7 +31,8 @@ module.exports = async function handler(req, res) {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'Authorization': `Key ${FAL_API_KEY}` },
       body: JSON.stringify({
-        prompt, image_url: finalImageUrl,
+        prompt,
+        image_url: finalImageUrl,
         num_images: num_images || 1,
         guidance_scale: guidance_scale || 7.5,
         num_inference_steps: num_inference_steps || 50,
@@ -44,6 +43,7 @@ module.exports = async function handler(req, res) {
 
     const data = await response.json();
     return res.status(200).json(data);
+
   } catch (err) {
     return res.status(500).json({ error: 'Generation failed', details: err.message });
   }
