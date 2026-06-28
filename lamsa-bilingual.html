@@ -181,9 +181,26 @@
   }
 
 
-  /* ===== 3D PLANNER EMBED ===== */
-  .planner-embed { margin-top: 16px; border: 1px solid var(--border); border-radius: 14px; overflow: hidden; width: 100%; }
-  .planner-embed iframe { display: block; width: 100%; height: 560px; border: none; }
+  /* ===== 3D PLANNER ===== */
+  .planner-btn-wrap { margin-top: 14px; }
+  .planner-open-btn {
+    display: flex; align-items: center; justify-content: center; gap: 10px;
+    width: 100%; padding: 18px; border-radius: 14px;
+    background: linear-gradient(135deg, #1a1200 0%, #2a1e00 100%);
+    border: 2px solid var(--gold); color: var(--gold);
+    font-size: 15px; font-weight: 700; cursor: pointer;
+    transition: all 0.2s; letter-spacing: 0.5px;
+  }
+  .planner-open-btn:hover { background: linear-gradient(135deg, #2a1e00, #3a2a00); box-shadow: 0 0 20px rgba(201,168,76,0.25); }
+  .planner-preview { margin-top: 10px; font-size: 11px; color: var(--sub); text-align: center; display: none; }
+  .planner-preview.show { display: block; }
+  /* Fullscreen modal */
+  #planner-modal {
+    display: none; position: fixed; inset: 0; z-index: 9999;
+    background: #000; flex-direction: column;
+  }
+  #planner-modal.open { display: flex; }
+  #planner-modal iframe { flex: 1; border: none; width: 100%; height: 100%; }
 
   /* ADVANCED BOX */
   .advanced-box {
@@ -1034,10 +1051,15 @@
           </div>
         </div>
 
-        <!-- 3D PLANNER EMBED -->
-        <label style="margin-bottom:10px;display:block;" data-en="🧊 3D Room Planner — Add furniture, doors & windows" data-ar="🧊 مخطط الغرفة ثلاثي الأبعاد — أضف الأثاث والأبواب والنوافذ">🧊 3D Room Planner — Add furniture, doors & windows</label>
-        <div class="planner-embed">
-          <iframe src="planner.html?embedded=1" id="plannerFrame" title="3D Room Planner" allow="accelerometer; autoplay" loading="lazy"></iframe>
+        <!-- 3D PLANNER BUTTON -->
+        <div class="planner-btn-wrap">
+          <button class="planner-open-btn" onclick="openPlanner()" data-en="🧊 Open 3D Room Planner" data-ar="🧊 فتح المخطط ثلاثي الأبعاد">🧊 Open 3D Room Planner</button>
+          <div class="planner-preview" id="plannerPreview"></div>
+        </div>
+
+        <!-- FULLSCREEN 3D MODAL -->
+        <div id="planner-modal">
+          <iframe id="plannerFrame" title="3D Room Planner" allow="accelerometer; autoplay"></iframe>
         </div>
         </div>
 
@@ -2195,6 +2217,31 @@
   function prev() { if (currentPanel > 1) goTo(currentPanel - 1); }
 
   function toggleChip(el) { el.classList.toggle('selected'); }
+
+  // ── 3D Planner fullscreen modal ──
+  function openPlanner() {
+    var roomSel = document.querySelector('#panel-2 select');
+    var roomType = roomSel ? roomSel.value : 'bedroom';
+    var frame = document.getElementById('plannerFrame');
+    frame.src = 'planner.html?room=' + roomType;
+    document.getElementById('planner-modal').classList.add('open');
+    document.body.style.overflow = 'hidden';
+  }
+  function closePlanner() {
+    document.getElementById('planner-modal').classList.remove('open');
+    document.body.style.overflow = '';
+  }
+  window.addEventListener('message', function(e) {
+    if (!e.data) return;
+    if (e.data.type === 'lamsa_planner_done') {
+      closePlanner();
+      if (e.data.description) {
+        var prev = document.getElementById('plannerPreview');
+        prev.textContent = '✓ 3D Layout saved: ' + e.data.description.substring(0,80) + (e.data.description.length>80?'…':'');
+        prev.classList.add('show');
+      }
+    }
+  });
 
   // Single-select for color chips in panel 5
   function selectColor(el) {
