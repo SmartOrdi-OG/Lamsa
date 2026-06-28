@@ -297,39 +297,35 @@ const MAT = {
 function buildRoom() {
   while(roomGroup.children.length) roomGroup.remove(roomGroup.children[0]);
 
-  const T = 0.12;
+  const T = 0.14;
 
   // Floor
-  const floor = new THREE.Mesh(new THREE.BoxGeometry(RW,0.08,RD), MAT.floor);
-  floor.position.y = -0.04;
+  const floor = new THREE.Mesh(new THREE.BoxGeometry(RW, 0.1, RD), MAT.floor);
+  floor.position.y = -0.05;
   floor.receiveShadow = true;
   floor.userData.isFloor = true;
   roomGroup.add(floor);
 
-  // Ceiling
-  const ceil = new THREE.Mesh(new THREE.BoxGeometry(RW,0.08,RD), MAT.ceil);
-  ceil.position.y = RH + 0.04;
-  roomGroup.add(ceil);
+  // Back wall only (North — at -Z)
+  const wN = new THREE.Mesh(new THREE.BoxGeometry(RW + T*2, RH, T), MAT.wall);
+  wN.position.set(0, RH/2, -RD/2 - T/2);
+  wN.receiveShadow = true; wN.castShadow = true;
+  roomGroup.add(wN);
 
-  // Walls
-  [
-    {p:[0,RH/2,-RD/2-T/2], s:[RW,RH,T]},          // North
-    {p:[0,RH/2, RD/2+T/2], s:[RW+T*2,RH,T]},       // South
-    {p:[-RW/2-T/2,RH/2,0], s:[T,RH,RD]},           // West
-    {p:[ RW/2+T/2,RH/2,0], s:[T,RH,RD]},           // East
-  ].forEach(w => {
-    const m = new THREE.Mesh(new THREE.BoxGeometry(...w.s), MAT.wall);
-    m.position.set(...w.p);
-    m.receiveShadow = true;
-    roomGroup.add(m);
-  });
+  // Left wall only (West — at -X)
+  const wW = new THREE.Mesh(new THREE.BoxGeometry(T, RH, RD), MAT.wall);
+  wW.position.set(-RW/2 - T/2, RH/2, 0);
+  wW.receiveShadow = true; wW.castShadow = true;
+  roomGroup.add(wW);
 
-  // Gold skirting board
+  // NO front wall, NO right wall, NO ceiling → open stage, camera looks in from front-right
+
+  // Gold skirting boards along floor
   [
-    {p:[0,0.025,-RD/2],   s:[RW,0.05,0.04]},
-    {p:[0,0.025, RD/2],   s:[RW,0.05,0.04]},
-    {p:[-RW/2,0.025,0],   s:[0.04,0.05,RD]},
-    {p:[ RW/2,0.025,0],   s:[0.04,0.05,RD]},
+    {p:[0,     0.03, -RD/2], s:[RW,     0.06, 0.05]},
+    {p:[0,     0.03,  RD/2], s:[RW,     0.06, 0.05]},
+    {p:[-RW/2, 0.03, 0],     s:[0.05,   0.06, RD  ]},
+    {p:[ RW/2, 0.03, 0],     s:[0.05,   0.06, RD  ]},
   ].forEach(t => {
     const m = new THREE.Mesh(new THREE.BoxGeometry(...t.s), MAT.gold);
     m.position.set(...t.p);
@@ -338,7 +334,7 @@ function buildRoom() {
 
   // Floor grid
   if(gridMesh) scene.remove(gridMesh);
-  gridMesh = new THREE.GridHelper(Math.max(RW,RD)*3, Math.max(RW,RD)*6, 0x2A2A2A, 0x1A1A1A);
+  gridMesh = new THREE.GridHelper(Math.max(RW,RD)*2, Math.max(RW,RD)*4, 0x3A2E1A, 0x281E08);
   gridMesh.position.y = 0.002;
   scene.add(gridMesh);
 
@@ -346,15 +342,14 @@ function buildRoom() {
 }
 
 function resetCam() {
-  const d = Math.sqrt(RW*RW+RD*RD);
-  // Camera inside the room, corner position looking at center
-  camera.position.set(RW*0.38, RH*0.72, RD*0.38);
-  camera.lookAt(-RW*0.25, RH*0.18, -RD*0.25);
-  controls.target.set(-RW*0.1, RH*0.12, -RD*0.1);
+  // Camera from outside the open front-right corner, looking diagonally into the room
+  camera.position.set(RW*0.85, RH*1.15, RD*0.95);
+  camera.lookAt(0, RH*0.3, 0);
+  controls.target.set(0, RH*0.2, 0);
   controls.update();
 
-  const asp = wrap.clientWidth / wrap.clientHeight;
-  const vs  = Math.max(RW, RD) * 0.65;
+  const asp = wrap.clientWidth / (wrap.clientHeight || 1);
+  const vs  = Math.max(RW, RD) * 0.75;
   topCam.left   = -vs*asp; topCam.right  =  vs*asp;
   topCam.top    =  vs;     topCam.bottom = -vs;
   topCam.updateProjectionMatrix();
