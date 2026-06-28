@@ -143,67 +143,67 @@ import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 // ═══════════════════════════════════════════════════════
 const CAT = {
   bedroom:[
-    {id:'bed_king',   name:'King Bed',      icon:'🛏️',w:2.0,d:2.1,h:0.55,c:0x6B4F2A,tc:0xC9A84C},
-    {id:'bed_double', name:'Double Bed',    icon:'🛏️',w:1.6,d:2.0,h:0.55,c:0x6B4F2A,tc:0xC9A84C},
-    {id:'bed_single', name:'Single Bed',    icon:'🛏️',w:0.9,d:2.0,h:0.55,c:0x6B4F2A,tc:0xC9A84C},
-    {id:'bunk_bed',   name:'Bunk Bed',      icon:'🛏️',w:1.0,d:2.0,h:1.7, c:0x5C3D1E,tc:0xA07848},
-    {id:'wardrobe',   name:'Wardrobe',      icon:'🗄️',w:1.8,d:0.6,h:2.1, c:0x2E1E10,tc:0x5C4030},
-    {id:'dresser',    name:'Dresser',       icon:'🗄️',w:1.1,d:0.45,h:0.9,c:0x3D2B1A,tc:0x5C4030},
-    {id:'desk',       name:'Study Desk',    icon:'🖥️',w:1.2,d:0.6,h:0.75,c:0x5A4A35,tc:0x7A6A50},
-    {id:'chair',      name:'Chair',         icon:'🪑',w:0.5,d:0.5,h:0.9, c:0x2A2A2A,tc:0x444444},
-    {id:'nightstand', name:'Nightstand',    icon:'🪴',w:0.5,d:0.4,h:0.55,c:0x3D2B1A,tc:0x5C4030},
-    {id:'mirror',     name:'Wall Mirror',   icon:'🪞',w:0.7,d:0.06,h:1.8,c:0x5A8AAA,tc:0xADD8E6},
-    {id:'bookshelf',  name:'Bookshelf',     icon:'📚',w:0.8,d:0.3,h:1.8, c:0x3D2B1A,tc:0xC9A84C},
-    {id:'plant',      name:'Plant',         icon:'🌿',w:0.4,d:0.4,h:1.0, c:0x2A6020,tc:0x3D8A35},
+    {id:'bed_king',   name:'King Bed',      icon:'🛏️',w:2.0,d:2.1,h:0.55,c:0xD4B896,tc:0xC9A84C},
+    {id:'bed_double', name:'Double Bed',    icon:'🛏️',w:1.6,d:2.0,h:0.55,c:0xD4B896,tc:0xC9A84C},
+    {id:'bed_single', name:'Single Bed',    icon:'🛏️',w:0.9,d:2.0,h:0.55,c:0xD4B896,tc:0xC9A84C},
+    {id:'bunk_bed',   name:'Bunk Bed',      icon:'🛏️',w:1.0,d:2.0,h:1.7, c:0xA07848,tc:0xC9A84C},
+    {id:'wardrobe',   name:'Wardrobe',      icon:'🗄️',w:1.8,d:0.6,h:2.1, c:0x7B5C3A,tc:0xAA8855},
+    {id:'dresser',    name:'Dresser',       icon:'🗄️',w:1.1,d:0.45,h:0.9,c:0x8B6F4E,tc:0xAA8855},
+    {id:'desk',       name:'Study Desk',    icon:'🖥️',w:1.2,d:0.6,h:0.75,c:0x9A7A5A,tc:0xBBA070},
+    {id:'chair',      name:'Chair',         icon:'🪑',w:0.5,d:0.5,h:0.9, c:0x6A5A7A,tc:0x9A8AAA},
+    {id:'nightstand', name:'Nightstand',    icon:'🪴',w:0.5,d:0.4,h:0.55,c:0x7B5C3A,tc:0xAA8855},
+    {id:'mirror',     name:'Wall Mirror',   icon:'🪞',w:0.7,d:0.06,h:1.8,c:0x7AAABB,tc:0xADD8E6},
+    {id:'bookshelf',  name:'Bookshelf',     icon:'📚',w:0.8,d:0.3,h:1.8, c:0x7B5C3A,tc:0xC9A84C},
+    {id:'plant',      name:'Plant',         icon:'🌿',w:0.4,d:0.4,h:1.0, c:0x3A8A30,tc:0x5AAA45},
   ],
   bathroom:[
-    {id:'bathtub',    name:'Bathtub',       icon:'🛁',w:1.7,d:0.8,h:0.55, c:0xD0D0D0,tc:0xF0F0F0},
-    {id:'shower',     name:'Shower Cabin',  icon:'🚿',w:0.9,d:0.9,h:2.1,  c:0x7AAFC8,tc:0xC8E8F8},
-    {id:'toilet',     name:'Toilet',        icon:'🚽',w:0.5,d:0.75,h:0.8, c:0xE0E0E0,tc:0xF8F8F8},
-    {id:'vanity_s',   name:'Single Vanity', icon:'🪥',w:0.8,d:0.5,h:0.85, c:0xC8C8C8,tc:0xEEEEEE},
-    {id:'vanity_d',   name:'Double Vanity', icon:'🪥',w:1.5,d:0.5,h:0.85, c:0xC8C8C8,tc:0xEEEEEE},
-    {id:'mirror_b',   name:'Wall Mirror',   icon:'🪞',w:0.9,d:0.06,h:0.85,c:0x5A8AAA,tc:0xADD8E6},
-    {id:'storage_b',  name:'Storage Cab.',  icon:'🗄️',w:0.5,d:0.3,h:1.8,  c:0xB8B8B8,tc:0xD8D8D8},
-    {id:'towel_rack', name:'Towel Rack',    icon:'🧴',w:0.6,d:0.08,h:1.2, c:0xA0A0A0,tc:0xC8C8C8},
-    {id:'plant_b',    name:'Plant',         icon:'🌿',w:0.3,d:0.3,h:0.7,  c:0x2A6020,tc:0x3D8A35},
+    {id:'bathtub',    name:'Bathtub',       icon:'🛁',w:1.7,d:0.8,h:0.55, c:0xF0EDE8,tc:0xFFFFFF},
+    {id:'shower',     name:'Shower Cabin',  icon:'🚿',w:0.9,d:0.9,h:2.1,  c:0x90C8E0,tc:0xC8EEF8},
+    {id:'toilet',     name:'Toilet',        icon:'🚽',w:0.5,d:0.75,h:0.8, c:0xF5F5F5,tc:0xFFFFFF},
+    {id:'vanity_s',   name:'Single Vanity', icon:'🪥',w:0.8,d:0.5,h:0.85, c:0xE8E4DE,tc:0xFFFFFF},
+    {id:'vanity_d',   name:'Double Vanity', icon:'🪥',w:1.5,d:0.5,h:0.85, c:0xE8E4DE,tc:0xFFFFFF},
+    {id:'mirror_b',   name:'Wall Mirror',   icon:'🪞',w:0.9,d:0.06,h:0.85,c:0x7AAABB,tc:0xADD8E6},
+    {id:'storage_b',  name:'Storage Cab.',  icon:'🗄️',w:0.5,d:0.3,h:1.8,  c:0xD0D0D8,tc:0xF0F0F8},
+    {id:'towel_rack', name:'Towel Rack',    icon:'🧴',w:0.6,d:0.08,h:1.2, c:0xC0C0CC,tc:0xDDDDEE},
+    {id:'plant_b',    name:'Plant',         icon:'🌿',w:0.3,d:0.3,h:0.7,  c:0x3A8A30,tc:0x5AAA45},
   ],
   living:[
-    {id:'sofa3',      name:'3-Seat Sofa',   icon:'🛋️',w:2.2,d:0.9,h:0.85, c:0x2A2A2A,tc:0x444444},
-    {id:'sofa2',      name:'2-Seat Sofa',   icon:'🛋️',w:1.7,d:0.85,h:0.85,c:0x2A2A2A,tc:0x444444},
-    {id:'armchair',   name:'Armchair',      icon:'🪑',w:0.9,d:0.85,h:0.9, c:0x333333,tc:0x555555},
-    {id:'coffee',     name:'Coffee Table',  icon:'☕',w:1.2,d:0.6,h:0.45, c:0x5C4033,tc:0x7D5A3C},
-    {id:'tv_unit',    name:'TV Unit',       icon:'🖥️',w:1.8,d:0.45,h:0.5, c:0x111111,tc:0x2A2A2A},
-    {id:'shelf_l',    name:'Bookshelf',     icon:'📚',w:1.0,d:0.3,h:1.8,  c:0x3D2B1A,tc:0xC9A84C},
-    {id:'side_tbl',   name:'Side Table',    icon:'🪣',w:0.5,d:0.5,h:0.55, c:0x5C4033,tc:0x7D5A3C},
-    {id:'floor_lamp', name:'Floor Lamp',    icon:'💡',w:0.25,d:0.25,h:1.6,c:0xC9A84C,tc:0xE8C97A},
-    {id:'plant_l',    name:'Large Plant',   icon:'🌿',w:0.6,d:0.6,h:1.5,  c:0x2A6020,tc:0x3D8A35},
-    {id:'rug',        name:'Area Rug',      icon:'🟫',w:2.0,d:1.5,h:0.025,c:0x8B6914,tc:0xC9A84C},
+    {id:'sofa3',      name:'3-Seat Sofa',   icon:'🛋️',w:2.2,d:0.9,h:0.85, c:0x5A7090,tc:0x8AAABB},
+    {id:'sofa2',      name:'2-Seat Sofa',   icon:'🛋️',w:1.7,d:0.85,h:0.85,c:0x5A7090,tc:0x8AAABB},
+    {id:'armchair',   name:'Armchair',      icon:'🪑',w:0.9,d:0.85,h:0.9, c:0x8A7060,tc:0xAA9080},
+    {id:'coffee',     name:'Coffee Table',  icon:'☕',w:1.2,d:0.6,h:0.45, c:0xA07040,tc:0xC09050},
+    {id:'tv_unit',    name:'TV Unit',       icon:'🖥️',w:1.8,d:0.45,h:0.5, c:0x404858,tc:0x606878},
+    {id:'shelf_l',    name:'Bookshelf',     icon:'📚',w:1.0,d:0.3,h:1.8,  c:0x7B5C3A,tc:0xC9A84C},
+    {id:'side_tbl',   name:'Side Table',    icon:'🪣',w:0.5,d:0.5,h:0.55, c:0xA07040,tc:0xC09050},
+    {id:'floor_lamp', name:'Floor Lamp',    icon:'💡',w:0.25,d:0.25,h:1.6,c:0xC9A84C,tc:0xF0D870},
+    {id:'plant_l',    name:'Large Plant',   icon:'🌿',w:0.6,d:0.6,h:1.5,  c:0x3A8A30,tc:0x5AAA45},
+    {id:'rug',        name:'Area Rug',      icon:'🟫',w:2.0,d:1.5,h:0.025,c:0xA07830,tc:0xC9A84C},
   ],
   kitchen:[
-    {id:'island',     name:'Kitchen Island',icon:'🍳',w:1.5,d:0.8,h:0.9,  c:0xD0D0D0,tc:0xEEEEEE},
-    {id:'bar_stool',  name:'Bar Stool',     icon:'🪑',w:0.4,d:0.4,h:1.0,  c:0x2A2A2A,tc:0x444444},
-    {id:'fridge',     name:'Fridge',        icon:'🧊',w:0.7,d:0.7,h:1.85, c:0xC0C0C0,tc:0xDDDDDD},
-    {id:'table_k',    name:'Small Table',   icon:'🍽️',w:1.0,d:1.0,h:0.75, c:0x5C4033,tc:0x7D5A3C},
-    {id:'cabinet_k',  name:'Cabinet',       icon:'🗄️',w:1.0,d:0.5,h:0.9,  c:0xCCCCCC,tc:0xE8E8E8},
-    {id:'plant_k',    name:'Plant',         icon:'🌿',w:0.3,d:0.3,h:0.6,  c:0x2A6020,tc:0x3D8A35},
+    {id:'island',     name:'Kitchen Island',icon:'🍳',w:1.5,d:0.8,h:0.9,  c:0xE8E4DC,tc:0xFFFFFF},
+    {id:'bar_stool',  name:'Bar Stool',     icon:'🪑',w:0.4,d:0.4,h:1.0,  c:0x7A6050,tc:0xAA8870},
+    {id:'fridge',     name:'Fridge',        icon:'🧊',w:0.7,d:0.7,h:1.85, c:0xC8CDD5,tc:0xE8EDF5},
+    {id:'table_k',    name:'Small Table',   icon:'🍽️',w:1.0,d:1.0,h:0.75, c:0xA07040,tc:0xC09050},
+    {id:'cabinet_k',  name:'Cabinet',       icon:'🗄️',w:1.0,d:0.5,h:0.9,  c:0xD8D4CC,tc:0xF0EDEA},
+    {id:'plant_k',    name:'Plant',         icon:'🌿',w:0.3,d:0.3,h:0.6,  c:0x3A8A30,tc:0x5AAA45},
   ],
   office:[
-    {id:'o_desk',     name:'Office Desk',   icon:'🖥️',w:1.6,d:0.7,h:0.75, c:0x5A4A35,tc:0x7A6A50},
-    {id:'o_chair',    name:'Office Chair',  icon:'🪑',w:0.6,d:0.6,h:1.1,  c:0x0A0A0A,tc:0x222222},
-    {id:'o_shelf',    name:'Bookshelf',     icon:'📚',w:1.0,d:0.3,h:2.0,  c:0x3D2B1A,tc:0xC9A84C},
-    {id:'o_filing',   name:'Filing Cab.',   icon:'🗄️',w:0.5,d:0.6,h:1.3,  c:0x3A3A3A,tc:0x555555},
-    {id:'o_sofa',     name:'Guest Sofa',    icon:'🛋️',w:1.5,d:0.8,h:0.8,  c:0x2A2A2A,tc:0x444444},
-    {id:'o_lamp',     name:'Floor Lamp',    icon:'💡',w:0.25,d:0.25,h:1.6,c:0xC9A84C,tc:0xE8C97A},
-    {id:'o_plant',    name:'Plant',         icon:'🌿',w:0.4,d:0.4,h:1.2,  c:0x2A6020,tc:0x3D8A35},
-    {id:'o_mtable',   name:'Meeting Table', icon:'🍽️',w:1.8,d:0.9,h:0.75, c:0x5C4033,tc:0x7D5A3C},
+    {id:'o_desk',     name:'Office Desk',   icon:'🖥️',w:1.6,d:0.7,h:0.75, c:0x9A7A5A,tc:0xBBA070},
+    {id:'o_chair',    name:'Office Chair',  icon:'🪑',w:0.6,d:0.6,h:1.1,  c:0x3A4A5A,tc:0x5A6A7A},
+    {id:'o_shelf',    name:'Bookshelf',     icon:'📚',w:1.0,d:0.3,h:2.0,  c:0x7B5C3A,tc:0xC9A84C},
+    {id:'o_filing',   name:'Filing Cab.',   icon:'🗄️',w:0.5,d:0.6,h:1.3,  c:0x788090,tc:0x9AA0B0},
+    {id:'o_sofa',     name:'Guest Sofa',    icon:'🛋️',w:1.5,d:0.8,h:0.8,  c:0x507060,tc:0x709080},
+    {id:'o_lamp',     name:'Floor Lamp',    icon:'💡',w:0.25,d:0.25,h:1.6,c:0xC9A84C,tc:0xF0D870},
+    {id:'o_plant',    name:'Plant',         icon:'🌿',w:0.4,d:0.4,h:1.2,  c:0x3A8A30,tc:0x5AAA45},
+    {id:'o_mtable',   name:'Meeting Table', icon:'🍽️',w:1.8,d:0.9,h:0.75, c:0xA07040,tc:0xC09050},
   ],
   dining:[
-    {id:'d_table',    name:'Dining Table',  icon:'🍽️',w:1.8,d:0.9,h:0.75, c:0x5C4033,tc:0x7D5A3C},
-    {id:'d_round',    name:'Round Table',   icon:'🍽️',w:1.2,d:1.2,h:0.75, c:0x5C4033,tc:0x7D5A3C},
-    {id:'d_chair',    name:'Dining Chair',  icon:'🪑',w:0.45,d:0.45,h:0.95,c:0x1A1A1A,tc:0x333333},
-    {id:'d_side',     name:'Sideboard',     icon:'🗄️',w:1.5,d:0.45,h:0.85,c:0x3D2B1A,tc:0x5C4030},
-    {id:'d_buffet',   name:'Buffet Cabinet',icon:'🗄️',w:1.8,d:0.5,h:0.9,  c:0x3D2B1A,tc:0x5C4030},
-    {id:'d_plant',    name:'Plant',         icon:'🌿',w:0.4,d:0.4,h:1.0,  c:0x2A6020,tc:0x3D8A35},
+    {id:'d_table',    name:'Dining Table',  icon:'🍽️',w:1.8,d:0.9,h:0.75, c:0x9B5032,tc:0xBB7050},
+    {id:'d_round',    name:'Round Table',   icon:'🍽️',w:1.2,d:1.2,h:0.75, c:0x9B5032,tc:0xBB7050},
+    {id:'d_chair',    name:'Dining Chair',  icon:'🪑',w:0.45,d:0.45,h:0.95,c:0x3A3558,tc:0x5A558A},
+    {id:'d_side',     name:'Sideboard',     icon:'🗄️',w:1.5,d:0.45,h:0.85,c:0x7B5C3A,tc:0xAA8855},
+    {id:'d_buffet',   name:'Buffet Cabinet',icon:'🗄️',w:1.8,d:0.5,h:0.9,  c:0x7B5C3A,tc:0xAA8855},
+    {id:'d_plant',    name:'Plant',         icon:'🌿',w:0.4,d:0.4,h:1.0,  c:0x3A8A30,tc:0x5AAA45},
   ],
   kids:[
     {id:'k_bed',      name:'Kids Bed',      icon:'🛏️',w:0.9,d:2.0,h:0.5,  c:0xCC4470,tc:0xFFAABB},
@@ -229,12 +229,11 @@ const renderer = new THREE.WebGLRenderer({canvas, antialias:true, alpha:false});
 renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
 renderer.shadowMap.enabled = true;
 renderer.shadowMap.type = THREE.PCFSoftShadowMap;
-renderer.toneMapping = THREE.ACESFilmicToneMapping;
-renderer.toneMappingExposure = 1.1;
+renderer.toneMapping = THREE.NoToneMapping;
 
 const scene = new THREE.Scene();
-scene.background = new THREE.Color(0x0d0d0d);
-scene.fog = new THREE.Fog(0x0d0d0d, 12, 30);
+scene.background = new THREE.Color(0x1a1a22);
+scene.fog = new THREE.Fog(0x1a1a22, 18, 40);
 
 // Perspective camera (3D view)
 const camera = new THREE.PerspectiveCamera(52, 1, 0.1, 100);
@@ -253,9 +252,9 @@ controls.maxDistance = 22;
 controls.maxPolarAngle = Math.PI / 2 - 0.02;
 
 // ── Lighting ──
-scene.add(new THREE.AmbientLight(0xffffff, 0.45));
+scene.add(new THREE.AmbientLight(0xffffff, 1.6));
 
-const sun = new THREE.DirectionalLight(0xffffff, 1.4);
+const sun = new THREE.DirectionalLight(0xfff8f0, 2.2);
 sun.position.set(6, 12, 6);
 sun.castShadow = true;
 sun.shadow.mapSize.set(2048,2048);
@@ -265,13 +264,17 @@ sun.shadow.camera.left = sun.shadow.camera.bottom = -12;
 sun.shadow.camera.right = sun.shadow.camera.top = 12;
 scene.add(sun);
 
-const fill = new THREE.DirectionalLight(0xC9A84C, 0.25);
+const fill = new THREE.DirectionalLight(0xC9A84C, 0.6);
 fill.position.set(-6, 4, -4);
 scene.add(fill);
 
-const back = new THREE.DirectionalLight(0x4488aa, 0.15);
-back.position.set(0, 3, 8);
-scene.add(back);
+const fill2 = new THREE.DirectionalLight(0xffffff, 1.0);
+fill2.position.set(0, 5, 8);
+scene.add(fill2);
+
+const pt = new THREE.PointLight(0xfff5e0, 1.2, 20);
+pt.position.set(0, 2.4, 0);
+scene.add(pt);
 
 // ── Groups ──
 const roomGroup = new THREE.Group();
@@ -285,9 +288,9 @@ let RW = 5, RD = 4, RH = 2.7;
 let gridMesh = null;
 
 const MAT = {
-  floor: new THREE.MeshStandardMaterial({color:0x1C1C1C, roughness:0.7, metalness:0.05}),
-  wall:  new THREE.MeshStandardMaterial({color:0x2A2A2A, roughness:0.85, metalness:0.0, side:THREE.FrontSide}),
-  ceil:  new THREE.MeshStandardMaterial({color:0x111111, roughness:0.9}),
+  floor: new THREE.MeshStandardMaterial({color:0x4A3C2C, roughness:0.75, metalness:0.04}),
+  wall:  new THREE.MeshStandardMaterial({color:0x6B6B75, roughness:0.8, metalness:0.0, side:THREE.FrontSide}),
+  ceil:  new THREE.MeshStandardMaterial({color:0x3A3A44, roughness:0.9}),
   gold:  new THREE.MeshStandardMaterial({color:0xC9A84C, roughness:0.3, metalness:0.8}),
 };
 
