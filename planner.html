@@ -976,7 +976,7 @@ function onTMove(e){e.preventDefault();onMove(e);}
 // ═══════════════════════════════════════════════════════════
 // CAMERA
 // ═══════════════════════════════════════════════════════════
-function viewPersp(){var d=Math.max(RW,RD)*.9;camera.position.set(d*.65,d*.9,d*.75);controls.target.set(0,.3,0);controls.maxPolarAngle=Math.PI/2-.01;controls.enableRotate=true;controls.update();}
+function viewPersp(){var d=Math.max(RW,RD)*1.1;camera.position.set(d*.7,d*.85,d*.9);controls.target.set(0,RH*.45,0);controls.maxPolarAngle=Math.PI/2-.01;controls.enableRotate=true;controls.update();}
 function viewTop(){var d=Math.max(RW,RD)*1.2;camera.position.set(0,d*1.5,0);controls.target.set(0,0,0);controls.maxPolarAngle=.01;controls.enableRotate=false;controls.update();}
 function zoomFit(){viewPersp();}
 window.viewPersp=viewPersp;window.viewTop=viewTop;window.zoomFit=zoomFit;
