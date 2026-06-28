@@ -1014,6 +1014,7 @@
               <option value="bedroom" data-en="Bedroom" data-ar="غرفة نوم">Bedroom</option>
               <option value="living" data-en="Living Room" data-ar="صالة جلوس">Living Room</option>
               <option value="kitchen" data-en="Kitchen" data-ar="مطبخ">Kitchen</option>
+              <option value="bathroom" data-en="Bathroom" data-ar="حمام">Bathroom</option>
               <option value="kids" data-en="Kids Room" data-ar="غرفة أطفال">Kids Room</option>
               <option value="office" data-en="Home Office" data-ar="مكتب منزلي">Home Office</option>
               <option value="dining" data-en="Dining Room" data-ar="غرفة طعام">Dining Room</option>
@@ -2362,7 +2363,7 @@
 
     // --- PANEL 2: Room info ---
     var roomType = document.querySelector('#panel-2 select') ? document.querySelector('#panel-2 select').value : 'bedroom';
-    var roomTypeLabel = { bedroom:'Bedroom', kids:'Kids Room', living:'Living Room', kitchen:'Kitchen', office:'Home Office', dining:'Dining Room' }[roomType] || roomType;
+    var roomTypeLabel = { bedroom:'Bedroom', kids:'Kids Room', living:'Living Room', kitchen:'Kitchen', office:'Home Office', dining:'Dining Room', bathroom:'Bathroom' }[roomType] || roomType;
     var panel2Inputs = document.querySelectorAll('#panel-2 input[type=number]');
     var roomArea   = panel2Inputs[0] ? panel2Inputs[0].value : '';
     var roomLength = panel2Inputs[1] ? panel2Inputs[1].value : '';
@@ -2435,14 +2436,16 @@
     var stylePromptText  = selectedStylePrompts.length > 0 ? selectedStylePrompts.join(', ') : 'modern contemporary interior design';
     var colorText        = selectedColors.length > 0 ? selectedColors.join(', ') : 'neutral warm tones';
     var isBedRoom        = (roomType === 'bedroom' || roomType === 'kids');
+    var isBathroom       = (roomType === 'bathroom');
 
     var fallbackFurniture = {
-      bedroom: 'bed, wardrobe, bedside tables, desk',
-      kids:    'bed, wardrobe, play area, study desk',
-      living:  'sofa, TV unit, coffee table, bookshelf',
-      kitchen: 'kitchen cabinets, countertop, kitchen island, bar stools',
-      office:  'desk, ergonomic office chair, bookshelf, filing cabinet',
-      dining:  'dining table, dining chairs, sideboard, pendant light'
+      bedroom:  'bed, wardrobe, bedside tables, desk',
+      kids:     'bed, wardrobe, play area, study desk',
+      living:   'sofa, TV unit, coffee table, bookshelf',
+      kitchen:  'kitchen cabinets, countertop, kitchen island, bar stools',
+      office:   'desk, ergonomic office chair, bookshelf, filing cabinet',
+      dining:   'dining table, dining chairs, sideboard, pendant light',
+      bathroom: 'walk-in shower with glass partition, freestanding bathtub, double vanity with undermount sinks, large wall mirror, floating storage cabinet, towel rack, toilet'
     };
     var furnitureText = selectedFurniture.length > 0 ? selectedFurniture.join(', ') : (fallbackFurniture[roomType] || fallbackFurniture.bedroom);
 
@@ -2507,16 +2510,22 @@
 
       // ── FURNITURE ──
       '\n\n=== FURNITURE ===' +
-      '\nREMOVE all existing furniture and loose objects from the photo.' +
-      '\nPlace ALL of the following items inside the room, correctly proportioned to the room size:' +
-      (isBedRoom ? '\n• ' + (bedCount === 2 ? 'TWO separate single beds (not a bunk bed, two individual beds)' : (specs.bedtype ? specs.bedtype : 'Standard bed with headboard')) : '') +
-      '\n• ' + furnitureText.split(', ').join('\n• ') +
+      (isBathroom
+        ? '\nThis is a BATHROOM. DO NOT place any beds, sofas, wardrobes, or bedroom/living room furniture.' +
+          '\nREMOVE all existing fixtures. Install ALL of the following bathroom fixtures:' +
+          '\n• ' + furnitureText.split(', ').join('\n• ') +
+          '\nAll fixtures must use water-resistant materials. Tile grout lines must look realistic and precise.'
+        : '\nREMOVE all existing furniture and loose objects from the photo.' +
+          '\nPlace ALL of the following items inside the room, correctly proportioned to the room size:' +
+          (isBedRoom ? '\n• ' + (bedCount === 2 ? 'TWO separate single beds (not a bunk bed, two individual beds)' : (specs.bedtype ? specs.bedtype : 'Standard bed with headboard')) : '') +
+          '\n• ' + furnitureText.split(', ').join('\n• ')
+      ) +
 
       // ── FURNITURE PLACEMENT ──
       '\n\n=== FURNITURE PLACEMENT ===' +
       (isBedRoom && placements.bed      ? '\n• Bed → position: ' + placements.bed      : '') +
       (isBedRoom && placements.wardrobe ? '\n• Wardrobe → position: ' + placements.wardrobe : '') +
-      (placements.sofa                  ? '\n• Sofa → position: ' + placements.sofa     : '') +
+      (!isBathroom && placements.sofa   ? '\n• Sofa → position: ' + placements.sofa     : '') +
       ((isBedRoom || roomType === 'office') && placements.desk ? '\n• Desk → position: ' + placements.desk : '') +
       (fpInfo ? '\n3D Planner layout: ' + fpInfo : '') +
 
@@ -2791,6 +2800,14 @@
       {en:'🗄️ Sideboard',ar:'🗄️ خزانة جانبية'},{en:'💡 Special Lighting',ar:'💡 إضاءة خاصة',sel:true},
       {en:'🌿 Plants',ar:'🌿 نباتات'},{en:'🪞 Mirror',ar:'🪞 مرآة'},
     ],
+    bathroom: [
+      {en:'🛁 Bathtub',ar:'🛁 حوض استحمام'},{en:'🚿 Shower',ar:'🚿 دش',sel:true},
+      {en:'🪥 Double Sink Vanity',ar:'🪥 حوض مزدوج',sel:true},{en:'🪥 Single Sink Vanity',ar:'🪥 حوض مفرد'},
+      {en:'🚽 Toilet',ar:'🚽 مرحاض',sel:true},{en:'🪞 Large Mirror',ar:'🪞 مرآة كبيرة',sel:true},
+      {en:'🗄️ Storage Cabinet',ar:'🗄️ خزانة تخزين'},{en:'🌿 Plants',ar:'🌿 نباتات'},
+      {en:'💡 Special Lighting',ar:'💡 إضاءة خاصة',sel:true},{en:'🧴 Towel Rack',ar:'🧴 علاقة مناشف',sel:true},
+      {en:'🧱 Feature Wall Tiles',ar:'🧱 بلاط ديكوري'},{en:'🪟 Frosted Window',ar:'🪟 نافذة مات'},
+    ],
   };
 
   // Spending priorities per room type (first item = default selected)
@@ -2817,6 +2834,11 @@
     ],
     dining: [
       {en:'Dining Table & Chairs',ar:'طاولة الطعام والكراسي',sel:true},{en:'Lighting',ar:'الإضاءة'},
+      {en:'Storage',ar:'التخزين'},{en:'Decor',ar:'الديكور'},
+    ],
+    bathroom: [
+      {en:'Shower & Bathtub',ar:'الدش والحوض',sel:true},{en:'Vanity & Sink',ar:'الحوض والطاولة'},
+      {en:'Lighting',ar:'الإضاءة',sel:true},{en:'Tiles & Surfaces',ar:'البلاط والأسطح'},
       {en:'Storage',ar:'التخزين'},{en:'Decor',ar:'الديكور'},
     ],
   };
