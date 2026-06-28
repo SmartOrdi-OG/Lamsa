@@ -249,7 +249,7 @@ controls.enableDamping = true;
 controls.dampingFactor = 0.07;
 controls.minDistance = 0.5;
 controls.maxDistance = 22;
-controls.maxPolarAngle = Math.PI / 2 - 0.01;
+controls.maxPolarAngle = Math.PI / 2 - 0.05;
 
 // ── Lighting ──
 scene.add(new THREE.AmbientLight(0xffffff, 1.6));
@@ -306,19 +306,19 @@ function buildRoom() {
   floor.userData.isFloor = true;
   roomGroup.add(floor);
 
-  // Back wall only (North — at -Z)
-  const wN = new THREE.Mesh(new THREE.BoxGeometry(RW + T*2, RH, T), MAT.wall);
-  wN.position.set(0, RH/2, -RD/2 - T/2);
-  wN.receiveShadow = true; wN.castShadow = true;
-  roomGroup.add(wN);
-
-  // Left wall only (West — at -X)
-  const wW = new THREE.Mesh(new THREE.BoxGeometry(T, RH, RD), MAT.wall);
-  wW.position.set(-RW/2 - T/2, RH/2, 0);
-  wW.receiveShadow = true; wW.castShadow = true;
-  roomGroup.add(wW);
-
-  // NO front wall, NO right wall, NO ceiling → open stage, camera looks in from front-right
+  // All 4 walls — no ceiling, camera looks in from above
+  [
+    {p:[0,         RH/2, -RD/2-T/2], s:[RW+T*2, RH, T]}, // North
+    {p:[0,         RH/2,  RD/2+T/2], s:[RW+T*2, RH, T]}, // South
+    {p:[-RW/2-T/2, RH/2,  0],        s:[T, RH, RD]},      // West
+    {p:[ RW/2+T/2, RH/2,  0],        s:[T, RH, RD]},      // East
+  ].forEach(w => {
+    const m = new THREE.Mesh(new THREE.BoxGeometry(...w.s), MAT.wall);
+    m.position.set(...w.p);
+    m.receiveShadow = true; m.castShadow = true;
+    roomGroup.add(m);
+  });
+  // NO ceiling — camera looks down from above
 
   // Gold skirting boards along floor
   [
@@ -342,10 +342,11 @@ function buildRoom() {
 }
 
 function resetCam() {
-  // Camera from outside the open front-right corner, looking diagonally into the room
-  camera.position.set(RW*0.85, RH*1.15, RD*0.95);
-  camera.lookAt(0, RH*0.3, 0);
-  controls.target.set(0, RH*0.2, 0);
+  // Camera high above, looking steeply down into the open-top room
+  const d = Math.max(RW, RD);
+  camera.position.set(d*0.6, d*1.4, d*0.9);
+  camera.lookAt(0, 0, 0);
+  controls.target.set(0, 0, 0);
   controls.update();
 
   const asp = wrap.clientWidth / (wrap.clientHeight || 1);
