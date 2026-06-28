@@ -883,7 +883,9 @@ function placeItem(def,x,z,rot){
   mesh.position.set(x,0,z);mesh.rotation.y=rot||0;
   furnGrp.add(mesh);
   var item={def:def,mesh:mesh,rot:rot||0};
-  placed.push(item);selectItem(item);cancelPlace();saveState();return item;
+  placed.push(item);
+  enforceBounds(item);
+  selectItem(item);cancelPlace();saveState();return item;
 }
 function cancelPlace(){
   placing=null;
@@ -914,10 +916,10 @@ function clearSelect(){
 // ═══════════════════════════════════════════════════════════
 // ACTIONS
 // ═══════════════════════════════════════════════════════════
-function rotSel(deg){if(!sel)return;sel.rot=(sel.rot+(deg||90)*Math.PI/180)%(Math.PI*2);sel.mesh.rotation.y=sel.rot;updateOutline();saveState();}
+function rotSel(deg){if(!sel)return;sel.rot=(sel.rot+(deg||90)*Math.PI/180)%(Math.PI*2);sel.mesh.rotation.y=sel.rot;enforceBounds(sel);updateOutline();saveState();}
 function dupSel(){if(!sel)return;placeItem(sel.def,sel.mesh.position.x+.3,sel.mesh.position.z+.3,sel.rot);}
 function delSel(){if(!sel)return;furnGrp.remove(sel.mesh);placed.splice(placed.indexOf(sel),1);clearSelect();saveState();}
-function nudge(axis,amt){if(!sel)return;sel.mesh.position[axis]+=amt;updateOutline();saveState();}
+function nudge(axis,amt){if(!sel)return;sel.mesh.position[axis]+=amt;enforceBounds(sel);updateOutline();saveState();}
 function clearAll(){if(!placed.length)return;if(!confirm('Remove all furniture?'))return;placed.slice().forEach(function(i){furnGrp.remove(i.mesh);});placed.length=0;clearSelect();saveState();}
 function updateOutline(){if(sel&&selOutline){var b=new THREE.Box3().setFromObject(sel.mesh);selOutline.position.copy(b.getCenter(new THREE.Vector3()));selOutline.rotation.y=sel.rot;}}
 window.rotSel=rotSel;window.dupSel=dupSel;window.delSel=delSel;window.nudge=nudge;window.clearAll=clearAll;
@@ -929,12 +931,23 @@ function getEP(e){if(e.touches&&e.touches.length)return{clientX:e.touches[0].cli
 function setMouse(e){var ep=getEP(e);var r=renderer.domElement.getBoundingClientRect();return new THREE.Vector2(((ep.clientX-r.left)/r.width)*2-1,-((ep.clientY-r.top)/r.height)*2+1);}
 function getFloor(mouse){raycaster.setFromCamera(mouse,camera);var pt=new THREE.Vector3();return raycaster.ray.intersectPlane(floorPlane,pt)?pt:null;}
 function snap(v){return Math.round(v*10)/10;}
-function clamp(x,z,def){
-  var hw=def?(def.w||0)/2:0, hd=def?(def.d||0)/2:0;
+function clamp(x,z,def,rot){
+  var r=rot||0,swapped=Math.abs(Math.sin(r))>0.7;
+  var hw=(def?(swapped?def.d:def.w)||0:0)/2;
+  var hd=(def?(swapped?def.w:def.d)||0:0)/2;
   return{
-    x:Math.max(-RW/2+hw+.05, Math.min(RW/2-hw-.05, x)),
-    z:Math.max(-RD/2+hd+.05, Math.min(RD/2-hd-.05, z))
+    x:Math.max(-RW/2+hw+.02, Math.min(RW/2-hw-.02, x)),
+    z:Math.max(-RD/2+hd+.02, Math.min(RD/2-hd-.02, z))
   };
+}
+function enforceBounds(item){
+  if(!item||!item.mesh)return;
+  var b=new THREE.Box3().setFromObject(item.mesh);
+  var m=0.02;
+  if(b.min.x<-RW/2+m) item.mesh.position.x+=(-RW/2+m-b.min.x);
+  if(b.max.x> RW/2-m) item.mesh.position.x-=(b.max.x-(RW/2-m));
+  if(b.min.z<-RD/2+m) item.mesh.position.z+=(-RD/2+m-b.min.z);
+  if(b.max.z> RD/2-m) item.mesh.position.z-=(b.max.z-(RD/2-m));
 }
 
 function pickScene(mouse){
@@ -974,7 +987,7 @@ function onDown(e){
 function onMove(e){
   var mouse=setMouse(e);
   if(placing){var fp=getFloor(mouse);if(fp){if(!ghostMesh){ghostMesh=makeMesh(placing,true);furnGrp.add(ghostMesh);}var cp=clamp(snap(fp.x),snap(fp.z),placing);ghostMesh.position.set(cp.x,0,cp.z);}return;}
-  if(dragging&&dragItem){var fp=getFloor(mouse);if(fp){var cp=clamp(snap(fp.x-dragOX),snap(fp.z-dragOZ),dragItem.def);dragItem.mesh.position.x=cp.x;dragItem.mesh.position.z=cp.z;updateOutline();}e.preventDefault();}
+  if(dragging&&dragItem){var fp=getFloor(mouse);if(fp){dragItem.mesh.position.x=snap(fp.x-dragOX);dragItem.mesh.position.z=snap(fp.z-dragOZ);enforceBounds(dragItem);updateOutline();}e.preventDefault();}
 }
 function onUp(){if(dragging){dragging=false;dragItem=null;controls.enabled=true;renderer.domElement.style.cursor='default';saveState();}}
 function onTDown(e){e.preventDefault();onDown(e);}
