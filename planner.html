@@ -105,12 +105,9 @@ canvas{display:block;width:100%;height:100%;}
 </div>
 </div>
 
-<script type="importmap">
-{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.161.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.161.0/examples/jsm/"}}
-</script>
-<script type="module">
-import * as THREE from 'three';
-import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/build/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+<script>
 
 // ═══════════════════════════════════════
 // CATALOG — icon, name, size in meters
@@ -516,7 +513,7 @@ const renderer = new THREE.WebGLRenderer({canvas, antialias:true});
 renderer.setPixelRatio(Math.min(devicePixelRatio,2));
 renderer.shadowMap.enabled = true;
 renderer.shadowMap.type = THREE.PCFSoftShadowMap;
-renderer.outputColorSpace = THREE.SRGBColorSpace;
+renderer.outputEncoding = THREE.sRGBEncoding;
 
 const scene = new THREE.Scene();
 scene.background = new THREE.Color(0x12121A);
@@ -526,7 +523,7 @@ const camera = new THREE.PerspectiveCamera(50, 1, 0.1, 80);
 const topCam  = new THREE.OrthographicCamera(-8,8,8,-8,0.1,100);
 topCam.position.set(0,20,0); topCam.lookAt(0,0,0);
 
-const controls = new OrbitControls(camera, renderer.domElement);
+const controls = new THREE.OrbitControls(camera, renderer.domElement);
 controls.enableDamping = true;
 controls.dampingFactor = 0.06;
 controls.minDistance = 0.5;
@@ -930,7 +927,7 @@ resize();
 animate();
 
 window.addEventListener('message',e=>{
-  if(e.data?.type==='lamsa_set_room') buildItems(e.data.roomType);
+  if(e.data && e.data.type==='lamsa_set_room') buildItems(e.data.roomType);
 });
 </script>
 </body>
