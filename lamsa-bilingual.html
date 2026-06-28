@@ -181,17 +181,9 @@
   }
 
 
-  /* ===== 2D FLOOR PLAN ===== */
-  .floorplan-wrap { margin-top: 20px; }
-  .floorplan-toolbar { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 12px; }
-  .fp-btn { background: var(--card); border: 1px solid var(--border); color: var(--light); padding: 7px 14px; border-radius: 8px; font-size: 12px; font-weight: 700; cursor: pointer; font-family: 'Tajawal', sans-serif; transition: all 0.2s; }
-  .fp-btn:hover, .fp-btn.active { border-color: var(--gold); color: var(--gold); background: var(--gold-dim); }
-  .fp-canvas-wrap { position: relative; border: 1px solid var(--border); border-radius: 12px; overflow: hidden; background: #0d0d0d; }
-  #floorCanvas { display: block; cursor: crosshair; width: 100%; }
-  .fp-hint { font-size: 11px; color: var(--gray); margin-top: 8px; text-align: center; }
-  .fp-legend { display: flex; gap: 14px; flex-wrap: wrap; margin-top: 10px; }
-  .fp-leg-item { display: flex; align-items: center; gap: 6px; font-size: 11px; color: var(--gray); }
-  .fp-leg-dot { width: 12px; height: 12px; border-radius: 3px; }
+  /* ===== 3D PLANNER EMBED ===== */
+  .planner-embed { margin-top: 16px; border: 1px solid var(--border); border-radius: 14px; overflow: hidden; width: 100%; }
+  .planner-embed iframe { display: block; width: 100%; height: 560px; border: none; }
 
   /* ADVANCED BOX */
   .advanced-box {
@@ -1041,30 +1033,11 @@
           </div>
         </div>
 
-        <!-- FIX 2: 2D FLOOR PLAN -->
-        <div class="floorplan-wrap">
-          <label style="margin-bottom:10px;display:block;" data-en="🗺️ Floor Plan — Click walls to place windows & doors" data-ar="🗺️ المخطط — اضغط على الجدران لإضافة نوافذ وأبواب">🗺️ Floor Plan — Click walls to place windows & doors</label>
-          <div class="floorplan-toolbar">
-            <button class="fp-btn active" id="btnWindow" onclick="setFpTool('window')">🪟 <span data-en="Window" data-ar="نافذة">Window</span></button>
-            <button class="fp-btn" id="btnDoor" onclick="setFpTool('door')">🚪 <span data-en="Door" data-ar="باب">Door</span></button>
-            <button class="fp-btn" id="btnErase" onclick="setFpTool('erase')">🗑 <span data-en="Erase" data-ar="حذف">Erase</span></button>
-            <button class="fp-btn" onclick="clearFp()">✕ <span data-en="Clear All" data-ar="مسح الكل">Clear All</span></button>
-            <button class="fp-btn" id="btn3d" onclick="toggleFp3D()">🧊 <span data-en="3D View" data-ar="عرض 3D">3D View</span></button>
-          </div>
-          <div class="fp-canvas-wrap">
-            <canvas id="floorCanvas" height="250"></canvas>
-          </div>
-          <div class="fp-canvas-wrap" id="fp3dWrap" style="display:none;position:relative;">
-            <canvas id="fp3dCanvas" style="display:block;width:100%;touch-action:none;cursor:grab;"></canvas>
-            <p style="position:absolute;bottom:8px;left:0;right:0;text-align:center;color:#888;font-size:11px;pointer-events:none;" data-en="Drag to rotate · Pinch/scroll to zoom" data-ar="اسحب للتدوير · قرّب بإصبعين">Drag to rotate · Pinch/scroll to zoom</p>
-          </div>
-          <p class="fp-hint" data-en="Click on any wall to place the selected element. Measurements shown in meters." data-ar="اضغط على أي جدار لوضع العنصر المحدد. الأرقام بالأمتار.">Click on any wall to place the selected element.</p>
-          <div class="fp-legend">
-            <div class="fp-leg-item"><div class="fp-leg-dot" style="background:#4a90d9;"></div><span data-en="Window" data-ar="نافذة">Window</span></div>
-            <div class="fp-leg-item"><div class="fp-leg-dot" style="background:#e8a84c;"></div><span data-en="Door" data-ar="باب">Door</span></div>
-          </div>
+        <!-- 3D PLANNER EMBED -->
+        <label style="margin-bottom:10px;display:block;" data-en="🧊 3D Room Planner — Add furniture, doors & windows" data-ar="🧊 مخطط الغرفة ثلاثي الأبعاد — أضف الأثاث والأبواب والنوافذ">🧊 3D Room Planner — Add furniture, doors & windows</label>
+        <div class="planner-embed">
+          <iframe src="planner.html?embedded=1" id="plannerFrame" title="3D Room Planner" allow="accelerometer; autoplay" loading="lazy"></iframe>
         </div>
-        <div class="form-grid" style="display:none;"><!-- placeholder to close the grid --></div>
         </div>
 
         <div class="panel-nav">
@@ -2733,7 +2706,6 @@
     setLang('en');
     renderFurnitureChips();
     renderPriorityChips();
-    initFloorPlan();
   });
 
 
@@ -2832,313 +2804,23 @@
   }
 
 
-  // ===== FIX 2: 2D FLOOR PLAN =====
-  var fpTool = 'window', fpElements = [];
-  var FP_PAD = 36, FP_HIT = 16;
-
-  function setFpTool(t) {
-    fpTool = t;
-    document.querySelectorAll('.fp-btn').forEach(function(b){b.classList.remove('active');});
-    var m={window:'btnWindow',door:'btnDoor',erase:'btnErase'};
-    if(m[t]) document.getElementById(m[t]).classList.add('active');
-  }
-
-  function clearFp() { fpElements=[]; drawFloorPlan(); }
-
-  function getRoomDims() {
-    var w = parseFloat(document.getElementById('lengthInput') ? document.getElementById('lengthInput').value : 0) || 5;
-    var h = parseFloat(document.getElementById('widthInput') ? document.getElementById('widthInput').value : 0) || 4;
-    return {w:w, h:h};
-  }
-
-  function drawFloorPlan() {
-    var canvas = document.getElementById('floorCanvas');
-    if (!canvas) return;
-    var ctx = canvas.getContext('2d');
-    var cw = canvas.width, ch = canvas.height;
-    var dims = getRoomDims();
-    var roomW = cw - FP_PAD*2, roomH = ch - FP_PAD*2;
-
-    ctx.clearRect(0,0,cw,ch);
-    ctx.fillStyle='#0d0d0d'; ctx.fillRect(0,0,cw,ch);
-    ctx.fillStyle='#161616'; ctx.fillRect(FP_PAD,FP_PAD,roomW,roomH);
-
-    // Grid
-    ctx.strokeStyle='rgba(201,168,76,0.06)'; ctx.lineWidth=1;
-    for(var i=0;i<=dims.w;i++){var x=FP_PAD+i*(roomW/dims.w);ctx.beginPath();ctx.moveTo(x,FP_PAD);ctx.lineTo(x,FP_PAD+roomH);ctx.stroke();}
-    for(var j=0;j<=dims.h;j++){var y=FP_PAD+j*(roomH/dims.h);ctx.beginPath();ctx.moveTo(FP_PAD,y);ctx.lineTo(FP_PAD+roomW,y);ctx.stroke();}
-
-    // Walls
-    ctx.strokeStyle='#c9a84c'; ctx.lineWidth=3;
-    ctx.strokeRect(FP_PAD,FP_PAD,roomW,roomH);
-
-    // Dimension labels
-    ctx.fillStyle='#888'; ctx.font='11px Tajawal,sans-serif'; ctx.textAlign='center';
-    ctx.fillText(dims.w+'m', FP_PAD+roomW/2, FP_PAD-10);
-    ctx.save(); ctx.translate(FP_PAD-14, FP_PAD+roomH/2); ctx.rotate(-Math.PI/2);
-    ctx.fillText(dims.h+'m', 0, 0); ctx.restore();
-
-    // Elements
-    fpElements.forEach(function(el) {
-      var size=28, color=el.type==='window'?'#4a90d9':'#e8a84c';
-      var x1,y1,ew,eh;
-      if(el.wall==='top'){x1=FP_PAD+el.pos*(roomW/dims.w)-size/2;y1=FP_PAD-4;ew=size;eh=8;}
-      else if(el.wall==='bottom'){x1=FP_PAD+el.pos*(roomW/dims.w)-size/2;y1=FP_PAD+roomH-4;ew=size;eh=8;}
-      else if(el.wall==='left'){x1=FP_PAD-4;y1=FP_PAD+el.pos*(roomH/dims.h)-size/2;ew=8;eh=size;}
-      else{x1=FP_PAD+roomW-4;y1=FP_PAD+el.pos*(roomH/dims.h)-size/2;ew=8;eh=size;}
-      ctx.fillStyle=color; ctx.fillRect(x1,y1,ew,eh);
-      ctx.fillStyle='#fff'; ctx.font='9px Tajawal,sans-serif'; ctx.textAlign='center';
-      var lx=el.wall==='left'||el.wall==='right' ? (el.wall==='left'?FP_PAD-16:FP_PAD+roomW+16) : x1+ew/2;
-      var ly=el.wall==='top'||el.wall==='bottom' ? (el.wall==='top'?FP_PAD-14:FP_PAD+roomH+16) : y1+eh/2+3;
-      ctx.fillText(el.pos.toFixed(1)+'m',lx,ly);
-    });
-  }
-
-  function onCanvasClick(e) {
-    var canvas=document.getElementById('floorCanvas');
-    var rect=canvas.getBoundingClientRect();
-    var scaleX=canvas.width/rect.width, scaleY=canvas.height/rect.height;
-    var px=(e.clientX-rect.left)*scaleX, py=(e.clientY-rect.top)*scaleY;
-    var cw=canvas.width, ch=canvas.height;
-    var roomW=cw-FP_PAD*2, roomH=ch-FP_PAD*2;
-    var dims=getRoomDims();
-
-    if(fpTool==='erase'){
-      var best=-1,bestD=999;
-      fpElements.forEach(function(el,i){
-        var cx,cy;
-        if(el.wall==='top'){cx=FP_PAD+el.pos*(roomW/dims.w);cy=FP_PAD;}
-        else if(el.wall==='bottom'){cx=FP_PAD+el.pos*(roomW/dims.w);cy=FP_PAD+roomH;}
-        else if(el.wall==='left'){cx=FP_PAD;cy=FP_PAD+el.pos*(roomH/dims.h);}
-        else{cx=FP_PAD+roomW;cy=FP_PAD+el.pos*(roomH/dims.h);}
-        var d=Math.sqrt((px-cx)*(px-cx)+(py-cy)*(py-cy));
-        if(d<bestD){bestD=d;best=i;}
-      });
-      if(best>=0&&bestD<32){fpElements.splice(best,1);drawFloorPlan();}
-      return;
-    }
-
-    var wall=null,pos=0;
-    if(Math.abs(py-FP_PAD)<FP_HIT&&px>FP_PAD&&px<FP_PAD+roomW){wall='top';pos=(px-FP_PAD)/(roomW/dims.w);}
-    else if(Math.abs(py-(FP_PAD+roomH))<FP_HIT&&px>FP_PAD&&px<FP_PAD+roomW){wall='bottom';pos=(px-FP_PAD)/(roomW/dims.w);}
-    else if(Math.abs(px-FP_PAD)<FP_HIT&&py>FP_PAD&&py<FP_PAD+roomH){wall='left';pos=(py-FP_PAD)/(roomH/dims.h);}
-    else if(Math.abs(px-(FP_PAD+roomW))<FP_HIT&&py>FP_PAD&&py<FP_PAD+roomH){wall='right';pos=(py-FP_PAD)/(roomH/dims.h);}
-
-    if(wall){
-      fpElements.push({type:fpTool,wall:wall,pos:Math.round(pos*4)/4});
-      drawFloorPlan();
-    }
-  }
-
-  function initFloorPlan() {
-    var canvas=document.getElementById('floorCanvas');
-    if(!canvas) return;
-    function resize(){
-      var w=canvas.parentElement.clientWidth||400;
-      canvas.width=w; canvas.height=Math.round(w*0.6);
-      drawFloorPlan();
-    }
-    canvas.addEventListener('click',onCanvasClick);
-    resize();
-    window.addEventListener('resize',resize);
-    // Update on dimension input
-    ['lengthInput','widthInput'].forEach(function(id){
-      var el=document.getElementById(id);
-      if(el) el.addEventListener('input',function(){setTimeout(drawFloorPlan,50);});
-    });
-  }
-
-  // ============ 3D FLOOR PLAN VIEW ============
-  var fp3dOn = false, fp3dScene = null, fp3dRenderer = null, fp3dCamera = null;
-  var fp3dTheta = Math.PI/4, fp3dPhi = Math.PI/3.2, fp3dDist = 9, fp3dAnim = null;
-
-  function toggleFp3D() {
-    fp3dOn = !fp3dOn;
-    var wrap = document.getElementById('fp3dWrap');
-    var btn = document.getElementById('btn3d');
-    wrap.style.display = fp3dOn ? 'block' : 'none';
-    if (btn) btn.classList.toggle('active', fp3dOn);
-    if (fp3dOn) {
-      if (typeof THREE === 'undefined') {
-        var s = document.createElement('script');
-        s.src = 'https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js';
-        s.onload = function(){ initFp3D(); };
-        document.head.appendChild(s);
-      } else {
-        initFp3D();
-      }
-    } else if (fp3dAnim) {
-      cancelAnimationFrame(fp3dAnim);
-      fp3dAnim = null;
-    }
-  }
-
-  function initFp3D() {
-    var canvas = document.getElementById('fp3dCanvas');
-    var w = canvas.parentElement.clientWidth || 400;
-    var h = Math.round(w * 0.7);
-    canvas.width = w; canvas.height = h;
-
-    if (!fp3dRenderer) {
-      fp3dRenderer = new THREE.WebGLRenderer({ canvas: canvas, antialias: true });
-      attachFp3DControls(canvas);
-    }
-    fp3dRenderer.setSize(w, h, false);
-
-    fp3dCamera = new THREE.PerspectiveCamera(50, w/h, 0.1, 100);
-    buildFp3DScene();
-    renderFp3DLoop();
-  }
-
-  function buildFp3DScene() {
-    var dims = getRoomDims();
-    var W = dims.w, L = dims.h, H = 2.7, T = 0.12; // width, length, wall height, thickness
-    fp3dScene = new THREE.Scene();
-    fp3dScene.background = new THREE.Color(0x0d0d0d);
-
-    // Lights
-    fp3dScene.add(new THREE.AmbientLight(0xffffff, 0.55));
-    var sun = new THREE.DirectionalLight(0xfff3d6, 0.8);
-    sun.position.set(6, 10, 4);
-    fp3dScene.add(sun);
-
-    // Floor
-    var floor = new THREE.Mesh(
-      new THREE.BoxGeometry(W, 0.08, L),
-      new THREE.MeshStandardMaterial({ color: 0xb08850, roughness: 0.8 })
-    );
-    floor.position.y = -0.04;
-    fp3dScene.add(floor);
-
-    var wallMat = new THREE.MeshStandardMaterial({ color: 0xe8e2d5, roughness: 0.95 });
-    var winMat = new THREE.MeshStandardMaterial({ color: 0x4a90d9, transparent: true, opacity: 0.55, roughness: 0.1 });
-    var doorMat = new THREE.MeshStandardMaterial({ color: 0x8a5a28, roughness: 0.7 });
-
-    // Wall builder: along = wall length in meters; els on that wall
-    // walls: top (z=-L/2, along x), bottom (z=+L/2), left (x=-W/2, along z), right (x=+W/2)
-    function buildWall(wallName, along) {
-      var els = fpElements.filter(function(e){ return e.wall === wallName; })
-        .sort(function(a,b){ return a.pos - b.pos; });
-      var group = new THREE.Group();
-      var WIN_W = 1.2, DOOR_W = 0.9, WIN_H = 1.3, WIN_Y = 1.0, DOOR_H = 2.05;
-      var cursor = 0;
-
-      function addSegment(from, to) {
-        var len = to - from;
-        if (len <= 0.01) return;
-        var seg = new THREE.Mesh(new THREE.BoxGeometry(len, H, T), wallMat);
-        seg.position.set(from + len/2 - along/2, H/2, 0);
-        group.add(seg);
-      }
-
-      els.forEach(function(el) {
-        var ew = el.type === 'window' ? WIN_W : DOOR_W;
-        var from = Math.max(0, Math.min(along - ew, el.pos - ew/2));
-        addSegment(cursor, from);
-        if (el.type === 'window') {
-          // wall below + above window, glass in middle
-          var below = new THREE.Mesh(new THREE.BoxGeometry(ew, WIN_Y, T), wallMat);
-          below.position.set(from + ew/2 - along/2, WIN_Y/2, 0);
-          group.add(below);
-          var glass = new THREE.Mesh(new THREE.BoxGeometry(ew, WIN_H, T*0.5), winMat);
-          glass.position.set(from + ew/2 - along/2, WIN_Y + WIN_H/2, 0);
-          group.add(glass);
-          var above = new THREE.Mesh(new THREE.BoxGeometry(ew, H - WIN_Y - WIN_H, T), wallMat);
-          above.position.set(from + ew/2 - along/2, WIN_Y + WIN_H + (H - WIN_Y - WIN_H)/2, 0);
-          group.add(above);
-        } else {
-          // door panel + wall above
-          var door = new THREE.Mesh(new THREE.BoxGeometry(ew, DOOR_H, T*0.6), doorMat);
-          door.position.set(from + ew/2 - along/2, DOOR_H/2, 0);
-          group.add(door);
-          var above2 = new THREE.Mesh(new THREE.BoxGeometry(ew, H - DOOR_H, T), wallMat);
-          above2.position.set(from + ew/2 - along/2, DOOR_H + (H - DOOR_H)/2, 0);
-          group.add(above2);
-        }
-        cursor = from + ew;
-      });
-      addSegment(cursor, along);
-      return group;
-    }
-
-    var topW = buildWall('top', W);    topW.position.set(0, 0, -L/2); fp3dScene.add(topW);
-    var botW = buildWall('bottom', W); botW.position.set(0, 0, L/2);  botW.rotation.y = Math.PI; fp3dScene.add(botW);
-    var lefW = buildWall('left', L);   lefW.position.set(-W/2, 0, 0); lefW.rotation.y = Math.PI/2; fp3dScene.add(lefW);
-    var rigW = buildWall('right', L);  rigW.position.set(W/2, 0, 0);  rigW.rotation.y = -Math.PI/2; fp3dScene.add(rigW);
-
-    fp3dDist = Math.max(W, L) * 1.6 + 2;
-  }
-
-  function renderFp3DLoop() {
-    if (!fp3dOn) return;
-    var dims = getRoomDims();
-    var cx = 0, cy = 1.1, cz = 0;
-    fp3dCamera.position.set(
-      cx + fp3dDist * Math.sin(fp3dPhi) * Math.cos(fp3dTheta),
-      cy + fp3dDist * Math.cos(fp3dPhi),
-      cz + fp3dDist * Math.sin(fp3dPhi) * Math.sin(fp3dTheta)
-    );
-    fp3dCamera.lookAt(cx, cy, cz);
-    fp3dRenderer.render(fp3dScene, fp3dCamera);
-    fp3dAnim = requestAnimationFrame(renderFp3DLoop);
-  }
-
-  function attachFp3DControls(canvas) {
-    var dragging = false, lastX = 0, lastY = 0, pinchDist = 0;
-
-    canvas.addEventListener('mousedown', function(e){ dragging = true; lastX = e.clientX; lastY = e.clientY; });
-    window.addEventListener('mousemove', function(e){
-      if (!dragging) return;
-      fp3dTheta += (e.clientX - lastX) * 0.008;
-      fp3dPhi = Math.min(Math.PI/2.05, Math.max(0.25, fp3dPhi - (e.clientY - lastY) * 0.006));
-      lastX = e.clientX; lastY = e.clientY;
-    });
-    window.addEventListener('mouseup', function(){ dragging = false; });
-    canvas.addEventListener('wheel', function(e){
-      e.preventDefault();
-      fp3dDist = Math.min(30, Math.max(3, fp3dDist + e.deltaY * 0.01));
-    }, { passive: false });
-
-    canvas.addEventListener('touchstart', function(e){
-      if (e.touches.length === 1) { dragging = true; lastX = e.touches[0].clientX; lastY = e.touches[0].clientY; }
-      else if (e.touches.length === 2) {
-        dragging = false;
-        pinchDist = Math.hypot(e.touches[0].clientX - e.touches[1].clientX, e.touches[0].clientY - e.touches[1].clientY);
-      }
-    }, { passive: true });
-    canvas.addEventListener('touchmove', function(e){
-      e.preventDefault();
-      if (e.touches.length === 1 && dragging) {
-        fp3dTheta += (e.touches[0].clientX - lastX) * 0.01;
-        fp3dPhi = Math.min(Math.PI/2.05, Math.max(0.25, fp3dPhi - (e.touches[0].clientY - lastY) * 0.008));
-        lastX = e.touches[0].clientX; lastY = e.touches[0].clientY;
-      } else if (e.touches.length === 2) {
-        var d = Math.hypot(e.touches[0].clientX - e.touches[1].clientX, e.touches[0].clientY - e.touches[1].clientY);
-        fp3dDist = Math.min(30, Math.max(3, fp3dDist * (pinchDist / d)));
-        pinchDist = d;
-      }
-    }, { passive: false });
-    canvas.addEventListener('touchend', function(){ dragging = false; });
-  }
-
-  // Refresh 3D when plan changes while 3D view is open
-  var _origDrawFloorPlan = drawFloorPlan;
-  drawFloorPlan = function() {
-    _origDrawFloorPlan();
-    if (fp3dOn && typeof THREE !== 'undefined' && fp3dRenderer) buildFp3DScene();
-  };
-
-  // Also include fpElements summary in generate prompt
   function getFpDescription() {
-    if(fpElements.length===0) return '';
-    var dims=getRoomDims();
-    var desc='Room floor plan '+dims.w+'m x '+dims.h+'m. ';
-    var wins=fpElements.filter(function(e){return e.type==='window';});
-    var doors=fpElements.filter(function(e){return e.type==='door';});
-    if(wins.length>0) desc+='Windows on: '+wins.map(function(e){return e.wall+' wall at '+e.pos.toFixed(1)+'m';}).join(', ')+'. ';
-    if(doors.length>0) desc+='Doors on: '+doors.map(function(e){return e.wall+' wall at '+e.pos.toFixed(1)+'m';}).join(', ')+'. ';
-    return desc;
+    try {
+      var pd = JSON.parse(localStorage.getItem('lamsa_planner') || '{}');
+      if (!pd.items || pd.items.length === 0) return '';
+      var desc = 'Room layout ' + (pd.roomW || 5) + 'm x ' + (pd.roomL || 4) + 'm (' + (pd.roomType || 'bedroom') + '). ';
+      var wins = pd.items.filter(function(i){ return i.name === 'Window'; });
+      var doors = pd.items.filter(function(i){ return i.name === 'Door'; });
+      var furn = pd.items.filter(function(i){ return i.name !== 'Window' && i.name !== 'Door'; });
+      if (wins.length > 0) desc += wins.length + ' window(s). ';
+      if (doors.length > 0) desc += doors.length + ' door(s). ';
+      if (furn.length > 0) desc += 'Furniture: ' + furn.map(function(i){ return i.name; }).join(', ') + '. ';
+      return desc;
+    } catch(e) { return ''; }
   }
+
+  function clearFp() {}
+
 
   var observer = new IntersectionObserver(function(entries) {
     entries.forEach(function(e) { if (e.isIntersecting) e.target.classList.add('visible'); });

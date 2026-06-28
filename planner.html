@@ -91,7 +91,7 @@ body{background:var(--dark);color:var(--text);font-family:'Segoe UI',Tajawal,san
 </head>
 <body>
 
-<!-- Header -->
+<!-- Header (hidden when embedded in bilingual app via ?embedded=1) -->
 <div id="header">
   <div class="logo">✦ LAMSA 3D</div>
   <div class="actions">
@@ -1654,9 +1654,12 @@ function loadPlannerData() {
 loadPlannerData();
 
 // Save and back
+var isEmbedded = new URLSearchParams(location.search).get('embedded') === '1';
+if (isEmbedded) document.getElementById('header').style.display = 'none';
+
 window.saveAndBack = function() {
   savePlannerData();
-  window.history.back();
+  if (!isEmbedded) window.history.back();
 };
 
 // Done button — save and go back
