@@ -2624,27 +2624,14 @@
       img.src = objUrl;
     }
 
-    compressImage(uploadedFiles[0], 1536, 0.9, function(imageDataUrl) {
-
-      // Upload image to fal storage first (base64 not accepted directly)
-      fetch('/api/upload', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ image_data: imageDataUrl, mime_type: uploadedFiles[0].type || 'image/jpeg' })
-      })
-      .then(function(r) { return r.json(); })
-      .then(function(uploadResult) {
-        var imageUrl = uploadResult.url || imageDataUrl;
-
+    function callGenerate(imageUrl) {
       // Call fal.ai FLUX.1 Kontext Pro
       fetch('/api/generate', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           prompt: prompt,
-          image_url: imageUrl,
+          image_url: imageUrl || undefined,
           num_images: designCount,
           guidance_scale: 7.5,
           num_inference_steps: 40,
@@ -2769,14 +2756,31 @@
         document.getElementById('resultPlaceholder').innerHTML = '<div class="rp-icon">❌</div><p>Connection error. Please try again.</p>';
         console.error('fal.ai error:', err);
       });
-      }) // close upload .then
-      .catch(function(uploadErr) {
-        document.getElementById('loadingDots').classList.remove('show');
-        document.getElementById('resultPlaceholder').style.display = 'block';
-        document.getElementById('resultPlaceholder').innerHTML = '<div class="rp-icon">❌</div><p>Image upload failed. Please try again.</p>';
-        console.error('upload error:', uploadErr);
+    } // close callGenerate
+
+    if (uploadedFiles.length > 0) {
+      compressImage(uploadedFiles[0], 1536, 0.9, function(imageDataUrl) {
+        // Upload image to fal storage first (base64 not accepted directly)
+        fetch('/api/upload', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ image_data: imageDataUrl, mime_type: uploadedFiles[0].type || 'image/jpeg' })
+        })
+        .then(function(r) { return r.json(); })
+        .then(function(uploadResult) {
+          callGenerate(uploadResult.url || imageDataUrl);
+        })
+        .catch(function(uploadErr) {
+          document.getElementById('loadingDots').classList.remove('show');
+          document.getElementById('resultPlaceholder').style.display = 'block';
+          document.getElementById('resultPlaceholder').innerHTML = '<div class="rp-icon">❌</div><p>Image upload failed. Please try again.</p>';
+          console.error('upload error:', uploadErr);
+        });
       });
-    }); // close compressImage callback
+    } else {
+      // No photo — planner-only mode, generate from prompt only
+      callGenerate(null);
+    }
   }
 
   function scrollToForm() {
