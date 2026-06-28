@@ -874,11 +874,6 @@ function buildRoom(){
     roomGrp.add(wm);wallMeshes.push(wm);wallMats.push(mat);
   });
 
-  // ── CEILING ──
-  var ceilM=new THREE.MeshStandardMaterial({color:0xF8F5EE,roughness:.95,metalness:0,side:THREE.BackSide});
-  var ceil=new THREE.Mesh(new THREE.PlaneGeometry(RW,RD),ceilM);
-  ceil.rotation.x=Math.PI/2;ceil.position.y=RH;ceil.receiveShadow=true;
-  roomGrp.add(ceil);
 
   // ── GOLD SKIRTING ──
   var skM=new THREE.MeshStandardMaterial({color:0xC9A84C,roughness:.22,metalness:.55});
