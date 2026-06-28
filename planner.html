@@ -764,7 +764,7 @@ var curRoom='bedroom';
 // TEXTURES
 // ═══════════════════════════════════════════════════════════
 function makeWoodTex(){
-  var c=document.createElement('canvas');c.width=1024;c.height=1024;
+  var c=document.createElement('canvas');c.width=512;c.height=512;
   var ctx=c.getContext('2d');
   // Rich honey-oak base with plank variation
   var plankColors=['#C8955A','#D4A060','#C09050','#BE8E48','#D09858','#C69050'];
@@ -811,6 +811,19 @@ function shiftColor(hex,amt){
   r=Math.min(255,r+amt);g=Math.min(255,g+amt);b=Math.min(255,b+amt);
   return'#'+r.toString(16).padStart(2,'0')+g.toString(16).padStart(2,'0')+b.toString(16).padStart(2,'0');
 }
+// Properly free GPU resources to avoid context loss from memory exhaustion
+function disposeObj(obj){
+  obj.traverse(function(o){
+    if(o.geometry)o.geometry.dispose();
+    if(o.material){
+      var mats=Array.isArray(o.material)?o.material:[o.material];
+      mats.forEach(function(m){
+        Object.keys(m).forEach(function(k){if(m[k]&&m[k].isTexture)m[k].dispose();});
+        m.dispose();
+      });
+    }
+  });
+}
 function makeWallTexCanvas(type,color){
   var c=document.createElement('canvas');c.width=512;c.height=512;
   var ctx=c.getContext('2d');
@@ -847,8 +860,8 @@ function makeWallTexCanvas(type,color){
 // BUILD ROOM
 // ═══════════════════════════════════════════════════════════
 function buildRoom(){
-  while(roomGrp.children.length)roomGrp.remove(roomGrp.children[0]);
-  // Remove previous room lights from scene
+  // Dispose then remove all old room objects to free GPU memory
+  roomGrp.children.slice().forEach(function(o){disposeObj(o);roomGrp.remove(o);});
   scene.children.slice().forEach(function(o){if(o.userData.roomLight)scene.remove(o);});
   wallMeshes=[];wallMats=[];
 
@@ -1007,9 +1020,9 @@ function clearSelect(){
 // ═══════════════════════════════════════════════════════════
 function rotSel(deg){if(!sel)return;sel.rot=(sel.rot+(deg||90)*Math.PI/180)%(Math.PI*2);sel.mesh.rotation.y=sel.rot;enforceBounds(sel);updateOutline();saveState();}
 function dupSel(){if(!sel)return;placeItem(sel.def,sel.mesh.position.x+.3,sel.mesh.position.z+.3,sel.rot);}
-function delSel(){if(!sel)return;furnGrp.remove(sel.mesh);placed.splice(placed.indexOf(sel),1);clearSelect();saveState();}
+function delSel(){if(!sel)return;furnGrp.remove(sel.mesh);disposeObj(sel.mesh);placed.splice(placed.indexOf(sel),1);clearSelect();saveState();}
 function nudge(axis,amt){if(!sel)return;sel.mesh.position[axis]+=amt;enforceBounds(sel);updateOutline();saveState();}
-function clearAll(){if(!placed.length)return;if(!confirm('Remove all furniture?'))return;placed.slice().forEach(function(i){furnGrp.remove(i.mesh);});placed.length=0;clearSelect();saveState();}
+function clearAll(){if(!placed.length)return;if(!confirm('Remove all furniture?'))return;placed.slice().forEach(function(i){furnGrp.remove(i.mesh);disposeObj(i.mesh);});placed.length=0;clearSelect();saveState();}
 function updateOutline(){if(sel&&selOutline){var b=new THREE.Box3().setFromObject(sel.mesh);selOutline.position.copy(b.getCenter(new THREE.Vector3()));selOutline.rotation.y=sel.rot;}}
 window.rotSel=rotSel;window.dupSel=dupSel;window.delSel=delSel;window.nudge=nudge;window.clearAll=clearAll;
 
@@ -1092,7 +1105,7 @@ window.viewPersp=viewPersp;window.viewTop=viewTop;window.zoomFit=zoomFit;
 
 function resizeRenderer(){var cw=document.getElementById('cw');var w=cw.clientWidth||window.innerWidth-200;var h=cw.clientHeight||window.innerHeight-50;renderer.setSize(w,h);camera.aspect=w/h;camera.updateProjectionMatrix();}
 
-function animate(){requestAnimationFrame(animate);controls.update();renderer.render(scene,camera);}
+function animate(){window._lamsaAF=requestAnimationFrame(animate);controls.update();renderer.render(scene,camera);}
 
 // ═══════════════════════════════════════════════════════════
 // SAVE / LOAD
@@ -1230,6 +1243,17 @@ function init3D(){
   roomGrp=new THREE.Group();scene.add(roomGrp);
   furnGrp=new THREE.Group();scene.add(furnGrp);
   buildRoom();loadState();resizeRenderer();viewPersp();animate();
+  // Handle WebGL context loss (GPU memory exhaustion) — prevent default so Three.js can recover
+  canvas.addEventListener('webglcontextlost',function(e){
+    e.preventDefault();
+    cancelAnimationFrame(window._lamsaAF);
+    console.warn('WebGL context lost — waiting for restore');
+  },false);
+  canvas.addEventListener('webglcontextrestored',function(){
+    console.warn('WebGL context restored — reinitialising');
+    // Rebuild lights & scene after context restore
+    buildRoom();resizeRenderer();viewPersp();animate();
+  },false);
   canvas.addEventListener('mousedown',onDown);
   canvas.addEventListener('mousemove',onMove);
   canvas.addEventListener('mouseup',onUp);
