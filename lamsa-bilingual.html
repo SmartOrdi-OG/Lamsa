@@ -2356,144 +2356,191 @@
     document.getElementById('loadingDots').classList.add('show');
     document.getElementById('resultPlaceholder').style.display = 'block';
 
-    // Build prompt from user selections
-    var selectedStyles = [];
-    document.querySelectorAll('.layout-card.selected .lc-name').forEach(function(el) {
-      selectedStyles.push(el.getAttribute('data-en') || el.textContent);
+    // ═══════════════════════════════════════════════
+    // COLLECT ALL FORM DATA
+    // ═══════════════════════════════════════════════
+
+    // --- PANEL 2: Room info ---
+    var roomType = document.querySelector('#panel-2 select') ? document.querySelector('#panel-2 select').value : 'bedroom';
+    var roomTypeLabel = { bedroom:'Bedroom', kids:'Kids Room', living:'Living Room', kitchen:'Kitchen', office:'Home Office', dining:'Dining Room' }[roomType] || roomType;
+    var panel2Inputs = document.querySelectorAll('#panel-2 input[type=number]');
+    var roomArea   = panel2Inputs[0] ? panel2Inputs[0].value : '';
+    var roomLength = panel2Inputs[1] ? panel2Inputs[1].value : '';
+    var roomWidth  = panel2Inputs[2] ? panel2Inputs[2].value : '';
+
+    // --- PANEL 3: Residents ---
+    var residents = [];
+    document.querySelectorAll('#panel-3 .chip.selected').forEach(function(el) {
+      residents.push(el.getAttribute('data-en') || el.textContent.trim());
     });
+    var numPeople = '';
+    var specialNeeds = '';
+    var residentNotes = '';
+    var panel3Inputs = document.querySelectorAll('#panel-3 input[type=number]');
+    if (panel3Inputs[0]) numPeople = panel3Inputs[0].value;
+    var panel3Select = document.querySelector('#panel-3 select');
+    if (panel3Select) specialNeeds = panel3Select.options[panel3Select.selectedIndex].getAttribute('data-en') || panel3Select.options[panel3Select.selectedIndex].text;
+    var panel3Textarea = document.querySelector('#panel-3 textarea');
+    if (panel3Textarea) residentNotes = panel3Textarea.value.trim();
 
-    var selectedColors = [];
-    document.querySelectorAll('#panel-5 .chip.selected').forEach(function(el) {
-      selectedColors.push(el.getAttribute('data-en') || el.textContent);
-    });
-
-    var budget = document.getElementById('budgetDisplay').textContent;
-
-    // Get spending priorities
+    // --- PANEL 4: Budget ---
+    var budget = document.getElementById('budgetDisplay') ? document.getElementById('budgetDisplay').textContent : '';
     var priorities = [];
     document.querySelectorAll('#priorityChips .chip.selected').forEach(function(el) {
       priorities.push(el.getAttribute('data-en') || el.textContent.trim());
     });
-    var roomType = document.querySelector('#panel-2 select') ? document.querySelector('#panel-2 select').value : 'bedroom';
-    var notes = document.querySelector('#panel-6 textarea') ? document.querySelector('#panel-6 textarea').value : '';
 
-    var styleText = selectedStyles.length > 0 ? selectedStyles.join(', ') : 'modern contemporary';
-    var colorText = selectedColors.length > 0 ? selectedColors.join(', ') : 'neutral warm tones';
+    // --- PANEL 5: Style & Colors ---
+    var selectedStyles = [];
+    var selectedStylePrompts = [];
+    document.querySelectorAll('.layout-card.selected').forEach(function(card) {
+      var name = card.querySelector('.lc-name');
+      if (name) selectedStyles.push(name.getAttribute('data-en') || name.textContent.trim());
+      if (card.getAttribute('data-prompt')) selectedStylePrompts.push(card.getAttribute('data-prompt'));
+    });
+    var selectedColors = [];
+    document.querySelectorAll('#panel-5 .chip.selected').forEach(function(el) {
+      selectedColors.push(el.getAttribute('data-en') || el.textContent.trim());
+    });
 
-    // Get selected furniture
+    // --- PANEL 6: Furniture, Specs, Placement, Mood, Notes ---
     var selectedFurniture = [];
-    document.querySelectorAll('#panel-6 .chip.selected').forEach(function(el) {
+    document.querySelectorAll('#furnitureChips .chip.selected').forEach(function(el) {
       selectedFurniture.push(el.getAttribute('data-en') || el.textContent.trim());
     });
 
-    // Get all room specs
     var specs = {};
     ['bedtype','wallcolor','floor','lighting','curtains','ceiling','rug'].forEach(function(type) {
-      var selected = document.querySelector('[data-placement="' + type + '"].selected');
-      if (selected) specs[type] = selected.getAttribute('data-en') || selected.textContent.trim();
+      var sel = document.querySelector('[data-placement="' + type + '"].selected');
+      if (sel) specs[type] = sel.getAttribute('data-en') || sel.textContent.trim();
     });
 
-    // Get placement details
     var placements = {};
-    ['bed', 'wardrobe', 'sofa', 'desk'].forEach(function(type) {
-      var selected = document.querySelector('[data-placement="' + type + '"].selected');
-      if (selected) placements[type] = selected.getAttribute('data-en') || selected.textContent.trim();
+    ['bed','wardrobe','sofa','desk'].forEach(function(type) {
+      var sel = document.querySelector('[data-placement="' + type + '"].selected');
+      if (sel) placements[type] = sel.getAttribute('data-en') || sel.textContent.trim();
     });
 
-    // Get mood
     var moods = [];
+    var moodOptions = ['Cozy & Warm','Bright & Airy','Romantic','Minimalist','Luxury & Bold','Kid-Friendly'];
     document.querySelectorAll('#panel-6 .chips .chip.selected').forEach(function(el) {
       var txt = el.getAttribute('data-en') || el.textContent.trim();
-      if (['Cozy & Warm','Bright & Airy','Romantic','Minimalist','Luxury & Bold','Kid-Friendly'].includes(txt)) {
-        moods.push(txt);
-      }
+      if (moodOptions.includes(txt)) moods.push(txt);
     });
 
-    // Build placement text
-    var placementText = '';
-    if (placements.bed) placementText += 'Place the bed on the ' + placements.bed + '. ';
-    if (placements.wardrobe) placementText += 'Place the wardrobe ' + placements.wardrobe + '. ';
-    if (placements.sofa) placementText += 'Place the sofa ' + placements.sofa + '. ';
-    if (placements.desk) placementText += 'Place the desk ' + placements.desk + '. ';
+    var notes = document.querySelector('#panel-6 textarea') ? document.querySelector('#panel-6 textarea').value.trim() : '';
 
-    var moodText = moods.length > 0 ? 'Room atmosphere: ' + moods.join(', ') + '. ' : '';
+    // ─── Derived values ───
+    var styleText        = selectedStyles.length > 0 ? selectedStyles.join(' + ') : 'modern contemporary';
+    var stylePromptText  = selectedStylePrompts.length > 0 ? selectedStylePrompts.join(', ') : 'modern contemporary interior design';
+    var colorText        = selectedColors.length > 0 ? selectedColors.join(', ') : 'neutral warm tones';
+    var isBedRoom        = (roomType === 'bedroom' || roomType === 'kids');
 
-    // Room-type awareness: beds only belong in bedrooms/kids rooms
-    var isBedRoom = (roomType === 'bedroom' || roomType === 'kids');
     var fallbackFurniture = {
-      bedroom: 'bed, wardrobe, desk',
-      kids: 'bed, wardrobe, play area',
-      living: 'sofa, TV unit, coffee table',
-      kitchen: 'kitchen cabinets, countertop, kitchen island',
-      office: 'desk, office chair, bookshelf',
-      dining: 'dining table, dining chairs, sideboard'
+      bedroom: 'bed, wardrobe, bedside tables, desk',
+      kids:    'bed, wardrobe, play area, study desk',
+      living:  'sofa, TV unit, coffee table, bookshelf',
+      kitchen: 'kitchen cabinets, countertop, kitchen island, bar stools',
+      office:  'desk, ergonomic office chair, bookshelf, filing cabinet',
+      dining:  'dining table, dining chairs, sideboard, pendant light'
     };
     var furnitureText = selectedFurniture.length > 0 ? selectedFurniture.join(', ') : (fallbackFurniture[roomType] || fallbackFurniture.bedroom);
 
-    var fpInfo = typeof getFpDescription === 'function' ? getFpDescription() : '';
-    // Build rug instruction
+    // Count beds from notes
+    var bedCount = 1;
+    if (notes && (notes.includes('سريرين') || notes.includes('two beds') || notes.includes('2 beds') || notes.includes('منفصلين'))) bedCount = 2;
+    if (residentNotes && (residentNotes.includes('سريرين') || residentNotes.includes('two beds') || residentNotes.includes('2 beds'))) bedCount = 2;
+
+    // Rug instruction
     var rugInstruction = '';
     if (specs.rug) {
-      var noRug = specs.rug === 'No Rug' ||
-                  specs.rug.toLowerCase().includes('no rug') ||
-                  specs.rug.includes('بدون سجادة') ||
-                  specs.rug.includes('بدون') ||
-                  specs.rug.includes('Kein Teppich') ||
-                  specs.rug.includes('Sin alfombra') ||
-                  specs.rug.includes('Sans tapis') ||
-                  specs.rug.includes('Nessun tappeto') ||
-                  specs.rug.includes('Hali yok') ||
-                  specs.rug.includes('Bez kovra');
-      if (noRug) {
-        rugInstruction = 'RUG/CARPET: ABSOLUTELY NONE. Zero rugs, zero carpets, zero mats on the floor. The floor must be completely bare. If you place any rug it is WRONG. ';
-      } else {
-        rugInstruction = 'RUG: Place exactly one ' + specs.rug + ' in the center of the room. ';
-      }
+      var noRug = /no rug|ohne teppich|sans tapis|sin alfombra|kein teppich|nessun tappeto|hali yok|bez kovra/i.test(specs.rug)
+                  || specs.rug.includes('بدون سجادة') || specs.rug.includes('بدون');
+      rugInstruction = noRug
+        ? 'RUG/CARPET: ABSOLUTELY NONE — zero rugs, zero mats. Floor must be completely bare. '
+        : 'RUG: Place exactly one ' + specs.rug + ' in the center of the room. ';
+    }
+    if (notes && /بدون سجادة|no rug|ohne teppich/i.test(notes)) {
+      rugInstruction = 'RUG/CARPET: ABSOLUTELY NONE. Bare floor only. ';
     }
 
-    // Also check notes for no rug mention
-    if (notes && (notes.includes('بدون سجادة') || notes.includes('no rug') || notes.includes('ohne Teppich'))) {
-      rugInstruction = 'RUG/CARPET: ABSOLUTELY NONE. Zero rugs. Bare floor only. ';
-    }
+    var fpInfo = typeof getFpDescription === 'function' ? getFpDescription() : '';
 
-    // Count beds requested
-    var bedCount = 1;
-    if (notes && (notes.includes('سريرين') || notes.includes('two beds') || notes.includes('2 beds') || notes.includes('منفصلين'))) {
-      bedCount = 2;
-    }
-
+    // ═══════════════════════════════════════════════
+    // BUILD COMPREHENSIVE AI PROMPT
+    // ═══════════════════════════════════════════════
     var prompt =
-      'You are editing THIS SPECIFIC PHOTO. The output must show the SAME room from the SAME angle with the SAME structure.' +
-      ' CRITICAL — DO NOT ADD OR REMOVE: windows, doors, walls. Use ONLY what exists in the input photo.' +
-      ' DO NOT CHANGE: room shape, room proportions, ceiling height, number of windows, number of doors, camera perspective.' +
-      ' This is a ' + roomType + ' — do NOT place furniture that belongs to a different room type.' +
-      '\n\nMANDATORY DESIGN CHANGES — apply ALL of these exactly:' +
+      // ── CORE INSTRUCTION ──
+      'You are a professional interior designer applying a full redesign to THIS SPECIFIC PHOTO.' +
+      ' The output must show the SAME room from the SAME camera angle and perspective.' +
+      ' STRICTLY PRESERVE: room shape, wall count, ceiling height, number of windows, number of doors, room proportions.' +
+      ' DO NOT add, move, or remove architectural elements (windows, doors, walls, structural beams).' +
+      ' This is a ' + roomTypeLabel + ' — only use furniture appropriate for this room type.' +
 
-      '\n\nSTYLE: ' + styleText + ' — apply this style to every single element.' +
+      // ── ROOM CONTEXT ──
+      '\n\n=== ROOM CONTEXT ===' +
+      '\nRoom Type: ' + roomTypeLabel +
+      (roomArea   ? '\nRoom Area: ' + roomArea + ' m²'    : '') +
+      (roomLength ? '\nRoom Length: ' + roomLength + ' m' : '') +
+      (roomWidth  ? '\nRoom Width: '  + roomWidth  + ' m' : '') +
+      (numPeople  ? '\nNumber of occupants: ' + numPeople  : '') +
+      (residents.length > 0 ? '\nWho uses this room: ' + residents.join(', ') : '') +
+      (specialNeeds && specialNeeds !== 'None' ? '\nSpecial accessibility needs: ' + specialNeeds + ' — design must accommodate this.' : '') +
+      (residentNotes ? '\nOccupant notes: ' + residentNotes : '') +
 
-      (specs.wallcolor ? '\nWALL COLOR: Paint every wall ' + specs.wallcolor + '. This is non-negotiable.' : '') +
-      (specs.floor ? '\nFLOOR: Replace floor with ' + specs.floor + ' material.' : '') +
-      (specs.ceiling ? '\nCEILING: Apply ' + specs.ceiling + ' ceiling design.' : '') +
-      (specs.lighting ? '\nLIGHTING FIXTURE: Install ' + specs.lighting + ' as the main light source.' : '') +
-      (specs.curtains ? '\nWINDOW TREATMENT: Install ' + specs.curtains + ' on every window.' : '') +
+      // ── DESIGN STYLE ──
+      '\n\n=== DESIGN STYLE ===' +
+      '\nPrimary style(s): ' + styleText +
+      '\nStyle description: ' + stylePromptText +
+      '\nApply this style to EVERY element: furniture silhouettes, materials, textures, decorative details, hardware finishes, and accessories.' +
+
+      // ── SURFACES ──
+      '\n\n=== SURFACES & FINISHES ===' +
+      (specs.wallcolor ? '\nWALL COLOR: Paint ALL walls ' + specs.wallcolor + '. This is mandatory — every single wall.' : '') +
+      (specs.floor     ? '\nFLOOR: Replace existing floor with ' + specs.floor + '. Cover the entire floor area.' : '') +
+      (specs.ceiling   ? '\nCEILING: Apply ' + specs.ceiling + ' ceiling treatment to the full ceiling.' : '') +
+      (specs.curtains  ? '\nWINDOW TREATMENT: Install ' + specs.curtains + ' on every window visible in the room.' : '') +
       rugInstruction +
 
-      '\n\nFURNITURE — REMOVE all existing furniture and objects from the photo, then place ALL of these items in the room:' +
-      (isBedRoom ? '\n- ' + (bedCount === 2 ? 'TWO separate single beds' : (specs.bedtype || 'Standard bed')) : '') +
-      '\n- ' + furnitureText.split(', ').join('\n- ') +
+      // ── LIGHTING ──
+      (specs.lighting  ? '\n\n=== LIGHTING ===\nMain light source: ' + specs.lighting + '. Make it prominent and visible. Ensure lighting color temperature matches the style.' : '') +
 
-      (isBedRoom && placements.bed ? '\nBed placement: ' + placements.bed : '') +
-      (isBedRoom && placements.wardrobe ? '\nWardrobe placement: ' + placements.wardrobe : '') +
-      ((isBedRoom || roomType === 'office') && placements.desk ? '\nDesk placement: ' + placements.desk : '') +
+      // ── FURNITURE ──
+      '\n\n=== FURNITURE ===' +
+      '\nREMOVE all existing furniture and loose objects from the photo.' +
+      '\nPlace ALL of the following items inside the room, correctly proportioned to the room size:' +
+      (isBedRoom ? '\n• ' + (bedCount === 2 ? 'TWO separate single beds (not a bunk bed, two individual beds)' : (specs.bedtype ? specs.bedtype : 'Standard bed with headboard')) : '') +
+      '\n• ' + furnitureText.split(', ').join('\n• ') +
 
-      '\n\nCOLOR PALETTE: ' + colorText + ' tones throughout.' +
-      (moods.length > 0 ? '\nATMOSPHERE: ' + moods.join(', ') + '.' : '') +
-      (priorities.length > 0 ? '\nSPENDING PRIORITY — these elements must be the visual highlight of the room, premium and eye-catching quality: ' + priorities.join(', ') + '.' : '') +
-      (notes ? '\nSPECIAL INSTRUCTIONS (highest priority — must follow): ' + notes : '') +
+      // ── FURNITURE PLACEMENT ──
+      '\n\n=== FURNITURE PLACEMENT ===' +
+      (isBedRoom && placements.bed      ? '\n• Bed → position: ' + placements.bed      : '') +
+      (isBedRoom && placements.wardrobe ? '\n• Wardrobe → position: ' + placements.wardrobe : '') +
+      (placements.sofa                  ? '\n• Sofa → position: ' + placements.sofa     : '') +
+      ((isBedRoom || roomType === 'office') && placements.desk ? '\n• Desk → position: ' + placements.desk : '') +
+      (fpInfo ? '\n3D Planner layout: ' + fpInfo : '') +
 
-      '\n\nPHOTO QUALITY: Photorealistic architectural photography. Natural light. Sharp details.' +
-      ' Architectural Digest magazine quality. Real furniture proportions.' +
-      ' AVOID: changing room geometry, adding rooms, changing window count, cartoon look, AI artifacts.';
+      // ── COLOR & ATMOSPHERE ──
+      '\n\n=== COLOR PALETTE & ATMOSPHERE ===' +
+      '\nColor scheme: ' + colorText + ' tones throughout — walls, textiles, furniture, and accessories.' +
+      (moods.length > 0 ? '\nRoom mood/atmosphere: ' + moods.join(', ') + '. Every design decision should reinforce this mood.' : '') +
+
+      // ── BUDGET & PRIORITY ──
+      (budget || priorities.length > 0 ? '\n\n=== BUDGET & QUALITY FOCUS ===' : '') +
+      (budget ? '\nFurniture budget: ' + budget + ' — reflect this budget level in material quality and furniture tier.' : '') +
+      (priorities.length > 0 ? '\nSpending priority — these elements must look PREMIUM, high-end, and be the visual centerpiece of the room: ' + priorities.join(', ') + '.' : '') +
+
+      // ── USER VISION ──
+      (notes ? '\n\n=== USER VISION (HIGHEST PRIORITY — MUST FOLLOW EXACTLY) ===\n' + notes : '') +
+
+      // ── OUTPUT QUALITY ──
+      '\n\n=== OUTPUT QUALITY REQUIREMENTS ===' +
+      '\n• Photorealistic architectural photography — like Architectural Digest or Dezeen magazine.' +
+      '\n• Natural and artificial lighting blended realistically.' +
+      '\n• Sharp focus, correct perspective, accurate shadows and reflections.' +
+      '\n• Real furniture proportions — nothing oversized or undersized for the room dimensions.' +
+      '\n• Visible styling details: throw pillows, plants, books, art, small decor objects that match the chosen style.' +
+      '\n\nAVOID: changing room geometry, altering window/door count, adding extra rooms, cartoon or illustration look, visible AI artifacts, floating furniture, wrong scale objects.';
 
     // Compress image before upload (max 1280px, JPEG) — much faster upload & generation
     function compressImage(file, maxSize, quality, callback) {
