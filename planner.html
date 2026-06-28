@@ -139,14 +139,14 @@ canvas{display:block;width:100%;height:100%}
 <script>
 (function(){
   var srcs=[
+    'js/three.min.js',
     'https://cdn.jsdelivr.net/npm/three@0.128.0/build/three.min.js',
-    'https://unpkg.com/three@0.128.0/build/three.min.js',
-    'js/three.min.js'
+    'https://unpkg.com/three@0.128.0/build/three.min.js'
   ];
   var ocs=[
+    'js/OrbitControls.js',
     'https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js',
-    'https://unpkg.com/three@0.128.0/examples/js/controls/OrbitControls.js',
-    'js/OrbitControls.js'
+    'https://unpkg.com/three@0.128.0/examples/js/controls/OrbitControls.js'
   ];
   function load(url,ok,err){var s=document.createElement('script');s.src=url;s.onload=ok;s.onerror=err;document.head.appendChild(s);}
   function tryThree(i){
