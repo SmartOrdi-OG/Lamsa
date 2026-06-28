@@ -929,6 +929,13 @@ function getEP(e){if(e.touches&&e.touches.length)return{clientX:e.touches[0].cli
 function setMouse(e){var ep=getEP(e);var r=renderer.domElement.getBoundingClientRect();return new THREE.Vector2(((ep.clientX-r.left)/r.width)*2-1,-((ep.clientY-r.top)/r.height)*2+1);}
 function getFloor(mouse){raycaster.setFromCamera(mouse,camera);var pt=new THREE.Vector3();return raycaster.ray.intersectPlane(floorPlane,pt)?pt:null;}
 function snap(v){return Math.round(v*10)/10;}
+function clamp(x,z,def){
+  var hw=def?(def.w||0)/2:0, hd=def?(def.d||0)/2:0;
+  return{
+    x:Math.max(-RW/2+hw+.05, Math.min(RW/2-hw-.05, x)),
+    z:Math.max(-RD/2+hd+.05, Math.min(RD/2-hd-.05, z))
+  };
+}
 
 function pickScene(mouse){
   raycaster.setFromCamera(mouse,camera);
@@ -946,7 +953,7 @@ function pickScene(mouse){
 function onDown(e){
   if(e.button!==undefined&&e.button!==0)return;
   var mouse=setMouse(e);
-  if(placing){var fp=getFloor(mouse);if(fp){placeItem(placing,snap(fp.x),snap(fp.z),0);}return;}
+  if(placing){var fp=getFloor(mouse);if(fp){var cp=clamp(snap(fp.x),snap(fp.z),placing);placeItem(placing,cp.x,cp.z,0);}return;}
   var hit=pickScene(mouse);
   if(hit){
     if(hit.type==='furn'){
@@ -966,8 +973,8 @@ function onDown(e){
 }
 function onMove(e){
   var mouse=setMouse(e);
-  if(placing){var fp=getFloor(mouse);if(fp){if(!ghostMesh){ghostMesh=makeMesh(placing,true);furnGrp.add(ghostMesh);}ghostMesh.position.set(snap(fp.x),0,snap(fp.z));}return;}
-  if(dragging&&dragItem){var fp=getFloor(mouse);if(fp){dragItem.mesh.position.x=snap(fp.x-dragOX);dragItem.mesh.position.z=snap(fp.z-dragOZ);updateOutline();}e.preventDefault();}
+  if(placing){var fp=getFloor(mouse);if(fp){if(!ghostMesh){ghostMesh=makeMesh(placing,true);furnGrp.add(ghostMesh);}var cp=clamp(snap(fp.x),snap(fp.z),placing);ghostMesh.position.set(cp.x,0,cp.z);}return;}
+  if(dragging&&dragItem){var fp=getFloor(mouse);if(fp){var cp=clamp(snap(fp.x-dragOX),snap(fp.z-dragOZ),dragItem.def);dragItem.mesh.position.x=cp.x;dragItem.mesh.position.z=cp.z;updateOutline();}e.preventDefault();}
 }
 function onUp(){if(dragging){dragging=false;dragItem=null;controls.enabled=true;renderer.domElement.style.cursor='default';saveState();}}
 function onTDown(e){e.preventDefault();onDown(e);}
