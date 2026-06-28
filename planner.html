@@ -1137,13 +1137,30 @@ function init3D(){
   setTimeout(function(){document.getElementById('overlay').classList.add('gone');document.getElementById('app').classList.add('show');},300);
 }
 
+window.onerror=function(msg,src,line,col,err){
+  document.getElementById('overlay').innerHTML='<div class="ovtitle" style="color:#E06060">⚠ JS Error</div><div class="overr">'+msg+'<br><small>'+(src||'')+(line?':'+line:'')+'</small></div><button class="retry" onclick="location.reload()">↺ Retry</button>';
+  document.getElementById('overlay').classList.remove('gone');
+};
+
 document.addEventListener('three_ready',function(){
   if(typeof THREE==='undefined'||typeof THREE.OrbitControls==='undefined'){
-    document.getElementById('overlay').innerHTML='<div class="ovtitle" style="color:#E06060">⚠ Error</div><div class="overr">3D engine failed to initialize. Please check your internet connection.</div><button class="retry" onclick="location.reload()">↺ Retry</button>';
+    document.getElementById('overlay').innerHTML='<div class="ovtitle" style="color:#E06060">⚠ Error</div><div class="overr">3D engine failed to initialize.<br>THREE='+(typeof THREE)+' OC='+(typeof THREE!=='undefined'?typeof THREE.OrbitControls:'n/a')+'</div><button class="retry" onclick="location.reload()">↺ Retry</button>';
     return;
   }
-  init3D();
+  try{
+    init3D();
+  }catch(e){
+    document.getElementById('overlay').innerHTML='<div class="ovtitle" style="color:#E06060">⚠ Init Error</div><div class="overr">'+e.message+'</div><button class="retry" onclick="location.reload()">↺ Retry</button>';
+  }
 });
+
+// Timeout: if still loading after 12s, show message
+setTimeout(function(){
+  var ov=document.getElementById('overlay');
+  if(ov&&!ov.classList.contains('gone')){
+    ov.innerHTML='<div class="ovtitle" style="color:#E5A000">⏳ Slow Load</div><div class="overr">Scripts are taking long to load. Try clicking Retry or check your internet connection.</div><button class="retry" onclick="location.reload()">↺ Retry</button>';
+  }
+},12000);
 </script>
 </body>
 </html>
