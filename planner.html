@@ -247,9 +247,9 @@ topCam.lookAt(0,0,0);
 const controls = new OrbitControls(camera, renderer.domElement);
 controls.enableDamping = true;
 controls.dampingFactor = 0.07;
-controls.minDistance = 1.5;
+controls.minDistance = 0.5;
 controls.maxDistance = 22;
-controls.maxPolarAngle = Math.PI / 2 - 0.02;
+controls.maxPolarAngle = Math.PI / 2 - 0.01;
 
 // ── Lighting ──
 scene.add(new THREE.AmbientLight(0xffffff, 1.6));
@@ -289,7 +289,7 @@ let gridMesh = null;
 
 const MAT = {
   floor: new THREE.MeshStandardMaterial({color:0x4A3C2C, roughness:0.75, metalness:0.04}),
-  wall:  new THREE.MeshStandardMaterial({color:0x6B6B75, roughness:0.8, metalness:0.0, side:THREE.FrontSide}),
+  wall:  new THREE.MeshStandardMaterial({color:0x6B6B75, roughness:0.8, metalness:0.0, side:THREE.DoubleSide}),
   ceil:  new THREE.MeshStandardMaterial({color:0x3A3A44, roughness:0.9}),
   gold:  new THREE.MeshStandardMaterial({color:0xC9A84C, roughness:0.3, metalness:0.8}),
 };
@@ -347,9 +347,10 @@ function buildRoom() {
 
 function resetCam() {
   const d = Math.sqrt(RW*RW+RD*RD);
-  camera.position.set(RW*0.55, d*0.65, RD*1.05);
-  camera.lookAt(0, RH/3, 0);
-  controls.target.set(0, RH/3, 0);
+  // Camera inside the room, corner position looking at center
+  camera.position.set(RW*0.38, RH*0.72, RD*0.38);
+  camera.lookAt(-RW*0.25, RH*0.18, -RD*0.25);
+  controls.target.set(-RW*0.1, RH*0.12, -RD*0.1);
   controls.update();
 
   const asp = wrap.clientWidth / wrap.clientHeight;
