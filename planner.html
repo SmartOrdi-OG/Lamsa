@@ -764,17 +764,52 @@ var curRoom='bedroom';
 // TEXTURES
 // ═══════════════════════════════════════════════════════════
 function makeWoodTex(){
-  var c=document.createElement('canvas');c.width=512;c.height=512;
+  var c=document.createElement('canvas');c.width=1024;c.height=1024;
   var ctx=c.getContext('2d');
-  var g=ctx.createLinearGradient(0,0,512,0);
-  g.addColorStop(0,'#C09050');g.addColorStop(.4,'#D4A860');g.addColorStop(.7,'#C89850');g.addColorStop(1,'#B88840');
-  ctx.fillStyle=g;ctx.fillRect(0,0,512,512);
-  var pw=512/7;
-  for(var x=0;x<=7;x++){ctx.fillStyle='rgba(0,0,0,0.22)';ctx.fillRect(x*pw-1,0,2,512);}
-  ctx.strokeStyle='rgba(0,0,0,0.06)';ctx.lineWidth=1;
-  for(var i=0;i<300;i++){var gx=Math.random()*512,gy=Math.random()*512,gl=15+Math.random()*60;ctx.beginPath();ctx.moveTo(gx,gy);ctx.bezierCurveTo(gx+3,gy+gl*.3,gx-3,gy+gl*.7,gx,gy+gl);ctx.stroke();}
-  for(var k=0;k<6;k++){var kx=Math.random()*512,ky=Math.random()*512;var rg=ctx.createRadialGradient(kx,ky,0,kx,ky,18);rg.addColorStop(0,'rgba(60,30,10,0.35)');rg.addColorStop(1,'rgba(60,30,10,0)');ctx.fillStyle=rg;ctx.fillRect(kx-24,ky-24,48,48);}
-  var tex=new THREE.CanvasTexture(c);tex.wrapS=tex.wrapT=THREE.RepeatWrapping;tex.repeat.set(5,4);return tex;
+  // Rich honey-oak base with plank variation
+  var plankColors=['#C8955A','#D4A060','#C09050','#BE8E48','#D09858','#C69050'];
+  var pw=1024/8; // 8 planks across
+  for(var p=0;p<8;p++){
+    var col=plankColors[p%plankColors.length];
+    var pg=ctx.createLinearGradient(p*pw,0,(p+1)*pw,0);
+    pg.addColorStop(0,col);pg.addColorStop(.5,shiftColor(col,15));pg.addColorStop(1,col);
+    ctx.fillStyle=pg;ctx.fillRect(p*pw,0,pw,1024);
+  }
+  // Plank dividers
+  ctx.strokeStyle='rgba(0,0,0,0.28)';ctx.lineWidth=2.5;
+  for(var x=0;x<=8;x++){ctx.beginPath();ctx.moveTo(x*pw,0);ctx.lineTo(x*pw,1024);ctx.stroke();}
+  // Horizontal joints (staggered)
+  ctx.strokeStyle='rgba(0,0,0,0.18)';ctx.lineWidth=1.5;
+  var jl=[0,256,512,768,1024];
+  for(var j=0;j<jl.length;j++){ctx.beginPath();ctx.moveTo(0,jl[j]);ctx.lineTo(1024,jl[j]);ctx.stroke();}
+  // Fine grain lines per plank
+  ctx.lineWidth=0.8;
+  for(var gi=0;gi<600;gi++){
+    var gp=Math.floor(Math.random()*8);
+    var gx2=gp*pw+Math.random()*pw, gy2=Math.random()*1024, gl=20+Math.random()*80;
+    var gy2e=Math.min(1024,gy2+gl);
+    // Keep within plank boundaries
+    ctx.strokeStyle='rgba(0,0,0,'+(0.04+Math.random()*.06)+')';
+    ctx.beginPath();ctx.moveTo(gx2,gy2);
+    ctx.bezierCurveTo(gx2+2,gy2+gl*.3,gx2-2,gy2+gl*.7,gx2+Math.random()*4-2,gy2e);ctx.stroke();
+  }
+  // Knots
+  for(var k=0;k<10;k++){
+    var kp=Math.floor(Math.random()*8);
+    var kx=kp*pw+pw*.2+Math.random()*pw*.6, ky=Math.random()*1024;
+    var kr=8+Math.random()*12;
+    var rg=ctx.createRadialGradient(kx,ky,0,kx,ky,kr);
+    rg.addColorStop(0,'rgba(50,25,5,0.5)');rg.addColorStop(.5,'rgba(50,25,5,0.2)');rg.addColorStop(1,'rgba(50,25,5,0)');
+    ctx.fillStyle=rg;ctx.fillRect(kx-kr,ky-kr,kr*2,kr*2);
+  }
+  // Subtle varnish highlight
+  ctx.fillStyle='rgba(255,220,120,0.04)';ctx.fillRect(0,0,1024,1024);
+  var tex=new THREE.CanvasTexture(c);tex.wrapS=tex.wrapT=THREE.RepeatWrapping;tex.repeat.set(4,3);return tex;
+}
+function shiftColor(hex,amt){
+  var r=parseInt(hex.slice(1,3),16),g=parseInt(hex.slice(3,5),16),b=parseInt(hex.slice(5,7),16);
+  r=Math.min(255,r+amt);g=Math.min(255,g+amt);b=Math.min(255,b+amt);
+  return'#'+r.toString(16).padStart(2,'0')+g.toString(16).padStart(2,'0')+b.toString(16).padStart(2,'0');
 }
 function makeWallTexCanvas(type,color){
   var c=document.createElement('canvas');c.width=512;c.height=512;
@@ -813,14 +848,17 @@ function makeWallTexCanvas(type,color){
 // ═══════════════════════════════════════════════════════════
 function buildRoom(){
   while(roomGrp.children.length)roomGrp.remove(roomGrp.children[0]);
+  // Remove previous room lights from scene
+  scene.children.slice().forEach(function(o){if(o.userData.roomLight)scene.remove(o);});
   wallMeshes=[];wallMats=[];
 
-  var wTex=makeWoodTex();
-  var floorM=new THREE.MeshStandardMaterial({map:wTex,roughness:.55,metalness:.02});
+  // ── FLOOR ──
+  var floorM=new THREE.MeshStandardMaterial({map:makeWoodTex(),roughness:.42,metalness:.04});
   var floor=new THREE.Mesh(new THREE.PlaneGeometry(RW,RD),floorM);
   floor.rotation.x=-Math.PI/2;floor.receiveShadow=true;floor.userData.isFloor=true;
   roomGrp.add(floor);
 
+  // ── WALLS ──
   var wallDefs=[
     {w:RW,h:RH,x:0,y:RH/2,z:-RD/2,ry:0},
     {w:RW,h:RH,x:0,y:RH/2,z:RD/2,ry:Math.PI},
@@ -828,23 +866,79 @@ function buildRoom(){
     {w:RD,h:RH,x:RW/2,y:RH/2,z:0,ry:-Math.PI/2},
   ];
   wallDefs.forEach(function(wd){
-    var mat=new THREE.MeshStandardMaterial({roughness:.88,metalness:0,side:THREE.DoubleSide});
-    mat.map=makeWallTexCanvas('plain','#F5F2EC');mat.needsUpdate=true;
+    var mat=new THREE.MeshStandardMaterial({roughness:.9,metalness:0,side:THREE.DoubleSide});
+    mat.map=makeWallTexCanvas('plain','#F4F0E8');mat.needsUpdate=true;
     var wm=new THREE.Mesh(new THREE.PlaneGeometry(wd.w,wd.h),mat);
     wm.position.set(wd.x,wd.y,wd.z);wm.rotation.y=wd.ry;
     wm.receiveShadow=true;wm.userData.isWall=true;
     roomGrp.add(wm);wallMeshes.push(wm);wallMats.push(mat);
   });
 
-  var skM=new THREE.MeshStandardMaterial({color:0xC9A84C,roughness:.25,metalness:.5});
+  // ── CEILING ──
+  var ceilM=new THREE.MeshStandardMaterial({color:0xF8F5EE,roughness:.95,metalness:0,side:THREE.BackSide});
+  var ceil=new THREE.Mesh(new THREE.PlaneGeometry(RW,RD),ceilM);
+  ceil.rotation.x=Math.PI/2;ceil.position.y=RH;ceil.receiveShadow=true;
+  roomGrp.add(ceil);
+
+  // ── GOLD SKIRTING ──
+  var skM=new THREE.MeshStandardMaterial({color:0xC9A84C,roughness:.22,metalness:.55});
   var skH=.09,skD=.025;
-  [{g:new THREE.BoxGeometry(RW,skH,skD),x:0,y:skH/2,z:-RD/2+skD/2},{g:new THREE.BoxGeometry(RW,skH,skD),x:0,y:skH/2,z:RD/2-skD/2},{g:new THREE.BoxGeometry(skD,skH,RD),x:-RW/2+skD/2,y:skH/2,z:0},{g:new THREE.BoxGeometry(skD,skH,RD),x:RW/2-skD/2,y:skH/2,z:0}].forEach(function(s){var m=new THREE.Mesh(s.g,skM);m.position.set(s.x,s.y,s.z);m.castShadow=true;roomGrp.add(m);});
+  [{g:new THREE.BoxGeometry(RW,skH,skD),x:0,y:skH/2,z:-RD/2+skD/2},
+   {g:new THREE.BoxGeometry(RW,skH,skD),x:0,y:skH/2,z:RD/2-skD/2},
+   {g:new THREE.BoxGeometry(skD,skH,RD),x:-RW/2+skD/2,y:skH/2,z:0},
+   {g:new THREE.BoxGeometry(skD,skH,RD),x:RW/2-skD/2,y:skH/2,z:0}
+  ].forEach(function(s){var m=new THREE.Mesh(s.g,skM);m.position.set(s.x,s.y,s.z);m.castShadow=true;roomGrp.add(m);});
 
-  var cmM=new THREE.MeshStandardMaterial({color:0xEEE8DC,roughness:.5});var cmH=.07;
-  [{g:new THREE.BoxGeometry(RW+.02,cmH,skD),x:0,y:RH-cmH/2,z:-RD/2},{g:new THREE.BoxGeometry(RW+.02,cmH,skD),x:0,y:RH-cmH/2,z:RD/2},{g:new THREE.BoxGeometry(skD,cmH,RD),x:-RW/2,y:RH-cmH/2,z:0},{g:new THREE.BoxGeometry(skD,cmH,RD),x:RW/2,y:RH-cmH/2,z:0}].forEach(function(s){var m=new THREE.Mesh(s.g,cmM);m.position.set(s.x,s.y,s.z);roomGrp.add(m);});
+  // ── CROWN MOLDING ──
+  var cmM=new THREE.MeshStandardMaterial({color:0xEEE8DC,roughness:.55});var cmH=.075;
+  [{g:new THREE.BoxGeometry(RW+.02,cmH,skD),x:0,y:RH-cmH/2,z:-RD/2},
+   {g:new THREE.BoxGeometry(RW+.02,cmH,skD),x:0,y:RH-cmH/2,z:RD/2},
+   {g:new THREE.BoxGeometry(skD,cmH,RD),x:-RW/2,y:RH-cmH/2,z:0},
+   {g:new THREE.BoxGeometry(skD,cmH,RD),x:RW/2,y:RH-cmH/2,z:0}
+  ].forEach(function(s){var m=new THREE.Mesh(s.g,cmM);m.position.set(s.x,s.y,s.z);roomGrp.add(m);});
 
-  var grid=new THREE.GridHelper(Math.max(RW,RD)*2,Math.max(RW,RD)*2,0xC9A84C,0x252530);
-  grid.material.opacity=.07;grid.material.transparent=true;grid.position.y=.002;roomGrp.add(grid);
+  // ── RECESSED CEILING LIGHTS ──
+  var nlx=Math.max(1,Math.round(RW/2.2)),nlz=Math.max(1,Math.round(RD/2.2));
+  var glowEM=new THREE.MeshStandardMaterial({color:0xFFFCF5,emissive:0xFFEDD0,emissiveIntensity:4,roughness:.05});
+  var ringM=new THREE.MeshStandardMaterial({color:0xD8D4CC,roughness:.25,metalness:.7});
+  for(var lxi=0;lxi<nlx;lxi++){
+    for(var lzi=0;lzi<nlz;lzi++){
+      var lpx=-RW/2+(lxi+.5)*(RW/nlx);
+      var lpz=-RD/2+(lzi+.5)*(RD/nlz);
+      // Housing ring
+      try{
+        var ring=new THREE.Mesh(new THREE.TorusGeometry(.13,.025,8,24),ringM);
+        ring.rotation.x=Math.PI/2;ring.position.set(lpx,RH-.015,lpz);roomGrp.add(ring);
+      }catch(ex){}
+      // Glow disc
+      var gd=new THREE.Mesh(new THREE.CircleGeometry(.11,20),glowEM);
+      gd.rotation.x=Math.PI/2;gd.position.set(lpx,RH-.02,lpz);roomGrp.add(gd);
+      // Actual point light
+      var lpt=new THREE.PointLight(0xFFF8E8,1.6,Math.max(RW,RD)*1.4);
+      lpt.position.set(lpx,RH-.12,lpz);lpt.userData.roomLight=true;scene.add(lpt);
+    }
+  }
+
+  // ── WINDOW (back wall) ──
+  var winW=Math.min(RW*.38,1.5),winH=1.1,winY=RH*.6;
+  var wfM=new THREE.MeshStandardMaterial({color:0xE0DCE0,roughness:.45,metalness:.15});
+  // outer frame
+  var wfr=new THREE.Mesh(new THREE.BoxGeometry(winW+.14,winH+.14,.06),wfM);
+  wfr.position.set(0,winY,-RD/2+.03);roomGrp.add(wfr);
+  // glass
+  var wgM=new THREE.MeshStandardMaterial({color:0xB0D0F0,emissive:0x4080C0,emissiveIntensity:.35,roughness:.04,metalness:.1,transparent:true,opacity:.55,side:THREE.DoubleSide});
+  var wg=new THREE.Mesh(new THREE.PlaneGeometry(winW,winH),wgM);
+  wg.position.set(0,winY,-RD/2+.06);roomGrp.add(wg);
+  // cross bars
+  [new THREE.Mesh(new THREE.BoxGeometry(winW,.035,.04),wfM),new THREE.Mesh(new THREE.BoxGeometry(.035,winH,.04),wfM)].forEach(function(b){b.position.set(0,winY,-RD/2+.08);roomGrp.add(b);});
+  // sill
+  var sill=new THREE.Mesh(new THREE.BoxGeometry(winW+.2,.05,.18),wfM);sill.position.set(0,winY-winH/2-.025,-RD/2+.09);roomGrp.add(sill);
+  // daylight from window
+  var wl=new THREE.PointLight(0xC8DCFF,2.2,RW*1.8);wl.position.set(0,winY,.2);wl.userData.roomLight=true;scene.add(wl);
+
+  // ── FLOOR GRID (subtle) ──
+  var grid=new THREE.GridHelper(Math.max(RW,RD)*2,Math.max(RW,RD)*2,0xC9A84C,0x2A2520);
+  grid.material.opacity=.05;grid.material.transparent=true;grid.position.y=.002;roomGrp.add(grid);
 }
 
 // ═══════════════════════════════════════════════════════════
@@ -1120,20 +1214,24 @@ window.applyRoom=applyRoom;
 // ═══════════════════════════════════════════════════════════
 function init3D(){
   var canvas=document.getElementById('c');
-  renderer=new THREE.WebGLRenderer({canvas:canvas,antialias:true,alpha:false});
+  renderer=new THREE.WebGLRenderer({canvas:canvas,antialias:true,alpha:false,powerPreference:'high-performance'});
   renderer.setPixelRatio(Math.min(window.devicePixelRatio,2));
   renderer.shadowMap.enabled=true;renderer.shadowMap.type=THREE.PCFSoftShadowMap;
-  renderer.outputEncoding=THREE.sRGBEncoding;renderer.toneMapping=THREE.NoToneMapping;renderer.setClearColor(0x0D0D14,1);
-  scene=new THREE.Scene();scene.fog=new THREE.FogExp2(0x0D0D14,.035);
-  camera=new THREE.PerspectiveCamera(50,1,.05,80);
+  renderer.outputEncoding=THREE.sRGBEncoding;
+  renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=0.85;
+  renderer.setClearColor(0x0D0D14,1);
+  scene=new THREE.Scene();scene.fog=new THREE.FogExp2(0x0D0D14,.025);
+  camera=new THREE.PerspectiveCamera(48,1,.05,80);
   controls=new THREE.OrbitControls(camera,canvas);
-  controls.enableDamping=true;controls.dampingFactor=.1;controls.minDistance=1;controls.maxDistance=25;controls.maxPolarAngle=Math.PI/2-.01;
+  controls.enableDamping=true;controls.dampingFactor=.08;controls.minDistance=1;controls.maxDistance=28;controls.maxPolarAngle=Math.PI/2-.005;
   raycaster=new THREE.Raycaster();floorPlane=new THREE.Plane(new THREE.Vector3(0,1,0),0);
-  // Lights
-  scene.add(new THREE.HemisphereLight(0xFFF8F0,0x403020,1.0));
-  var dir=new THREE.DirectionalLight(0xFFF5E8,2.2);dir.position.set(6,10,5);dir.castShadow=true;dir.shadow.mapSize.set(2048,2048);dir.shadow.camera.near=.5;dir.shadow.camera.far=50;dir.shadow.camera.left=-10;dir.shadow.camera.right=10;dir.shadow.camera.top=10;dir.shadow.camera.bottom=-10;dir.shadow.bias=-.001;scene.add(dir);
-  scene.add(new THREE.DirectionalLight(0xD0E0FF,.6)).position.set(-5,5,-4);
-  var pt=new THREE.PointLight(0xFFEED0,1.2,12);pt.position.set(0,2.5,0);scene.add(pt);
+  // Base lights — room lights are added dynamically in buildRoom()
+  scene.add(new THREE.HemisphereLight(0xFFF5E8,0x302818,0.6));
+  var dir=new THREE.DirectionalLight(0xFFF8F0,1.4);dir.position.set(5,9,4);dir.castShadow=true;
+  dir.shadow.mapSize.set(2048,2048);dir.shadow.camera.near=.5;dir.shadow.camera.far=50;
+  dir.shadow.camera.left=-12;dir.shadow.camera.right=12;dir.shadow.camera.top=12;dir.shadow.camera.bottom=-12;dir.shadow.bias=-.0008;scene.add(dir);
+  // Soft fill light (cool, from opposite side)
+  var fill=new THREE.DirectionalLight(0xD0E8FF,0.45);fill.position.set(-4,4,-3);scene.add(fill);
   roomGrp=new THREE.Group();scene.add(roomGrp);
   furnGrp=new THREE.Group();scene.add(furnGrp);
   buildRoom();loadState();resizeRenderer();viewPersp();animate();
