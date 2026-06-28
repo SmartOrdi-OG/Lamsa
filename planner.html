@@ -304,16 +304,16 @@ MAKERS.lsofa=function(def){
   var g=new THREE.Group(),c=def.col||{},w=def.w,d=def.d;
   var fM=M(c.fr||0x2A384C,.8),cM=M(c.cu||0x38485C,.85),lM=M(c.lg||0x5A3A18,.5,.1);
   // main part
-  put(g,BOX(w,.25,d*.45,cM),0,.2,-(d*.5-.d*.225));
+  put(g,BOX(w,.25,d*.45,cM),0,.2,-(d*.5-d*.225));
   put(g,BOX(w,.44,.14,fM),0,.12+.22,-(d*.5-.07));
-  put(g,BOX(.14,.36,d*.45,fM),-(w/2-.07),.15,-(d*.5-.d*.225));
+  put(g,BOX(.14,.36,d*.45,fM),-(w/2-.07),.15,-(d*.5-d*.225));
   // chaise part (perpendicular)
-  put(g,BOX(w*.42,.25,d*.55,cM),-(w/2-.w*.42*.5),.2,d*.5-d*.275);
+  put(g,BOX(w*.42,.25,d*.55,cM),-(w/2-w*.42*.5),.2,d*.5-d*.275);
   put(g,BOX(.14,.36,d*.55,fM),-(w/2-.07),.15,d*.5-d*.275);
   // back of chaise
-  put(g,BOX(w*.42,.44,.14,fM),-(w/2-.w*.42*.5),.12+.22,d*.5-.07);
+  put(g,BOX(w*.42,.44,.14,fM),-(w/2-w*.42*.5),.12+.22,d*.5-.07);
   // arm right
-  put(g,BOX(.14,.36,d*.45,fM),w/2-.07,.15,-(d*.5-.d*.225));
+  put(g,BOX(.14,.36,d*.45,fM),w/2-.07,.15,-(d*.5-d*.225));
   put(g,BOX(.06,.08,.06,lM),-(w/2-.1),.02,-(d/2-.1));
   put(g,BOX(.06,.08,.06,lM),w/2-.1,.02,-(d/2-.1));
   put(g,BOX(.06,.08,.06,lM),-(w/2-.1),.02,d/2-.1);
