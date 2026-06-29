@@ -956,12 +956,14 @@ window.applyWallColor=function(hex){
   if(selectedWall===null)return;
   var col=hex||'#F5F2EC';
   var texType=document.querySelector('#wallpanel select').value||'plain';
+  if(wallMats[selectedWall].map)wallMats[selectedWall].map.dispose();
   wallMats[selectedWall].map=makeWallTexCanvas(texType,col);
   wallMats[selectedWall].needsUpdate=true;
 };
 window.applyWallTex=function(type){
   if(selectedWall===null)return;
   var col=document.getElementById('wc-color').value||'#F5F2EC';
+  if(wallMats[selectedWall].map)wallMats[selectedWall].map.dispose();
   wallMats[selectedWall].map=makeWallTexCanvas(type,col);
   wallMats[selectedWall].needsUpdate=true;
 };
@@ -1092,8 +1094,8 @@ function onMove(e){
   if(dragging&&dragItem){var fp=getFloor(mouse);if(fp){dragItem.mesh.position.x=snap(fp.x-dragOX);dragItem.mesh.position.z=snap(fp.z-dragOZ);enforceBounds(dragItem);updateOutline();}e.preventDefault();}
 }
 function onUp(){if(dragging){dragging=false;dragItem=null;controls.enabled=true;renderer.domElement.style.cursor='default';saveState();}}
-function onTDown(e){e.preventDefault();onDown(e);}
-function onTMove(e){e.preventDefault();onMove(e);}
+function onTDown(e){if(e.cancelable)e.preventDefault();onDown(e);}
+function onTMove(e){if(e.cancelable)e.preventDefault();onMove(e);}
 
 // ═══════════════════════════════════════════════════════════
 // CAMERA
@@ -1250,9 +1252,10 @@ function init3D(){
     console.warn('WebGL context lost — waiting for restore');
   },false);
   canvas.addEventListener('webglcontextrestored',function(){
-    console.warn('WebGL context restored — reinitialising');
-    // Rebuild lights & scene after context restore
-    buildRoom();resizeRenderer();viewPersp();animate();
+    console.warn('WebGL context restored — restarting loop');
+    // Three.js re-uploads all GPU resources automatically on next render.
+    // Do NOT call disposeObj here — old context objects are already invalid.
+    animate();
   },false);
   canvas.addEventListener('mousedown',onDown);
   canvas.addEventListener('mousemove',onMove);
