@@ -2231,10 +2231,23 @@
     document.getElementById('planner-modal').classList.remove('open');
     document.body.style.overflow = '';
   }
+  var plannerResult = null; // stores last planner data from postMessage
+
   window.addEventListener('message', function(e) {
     if (!e.data) return;
     if (e.data.type === 'lamsa_planner_done') {
       closePlanner();
+      plannerResult = e.data; // save for use in generate()
+      // Sync the room type dropdown to match what was planned
+      if (e.data.roomType) {
+        var roomSel = document.querySelector('#panel-2 select');
+        if (roomSel && e.data.roomType !== roomSel.value) {
+          roomSel.value = e.data.roomType;
+          // Refresh furniture/priority chips if those functions exist
+          if (typeof renderFurnitureChips === 'function') renderFurnitureChips();
+          if (typeof renderPriorityChips === 'function') renderPriorityChips();
+        }
+      }
       if (e.data.description) {
         var prev = document.getElementById('plannerPreview');
         prev.textContent = '✓ 3D Layout saved: ' + e.data.description.substring(0,80) + (e.data.description.length>80?'…':'');
@@ -2381,8 +2394,13 @@
     // Check planner data
     var hasPlannerData = false;
     try {
-      var pd = JSON.parse(localStorage.getItem('lamsa_planner') || '{}');
-      hasPlannerData = pd.items && pd.items.length > 0;
+      // Check both 3D planner (new) and legacy key
+      if (plannerResult && plannerResult.description) {
+        hasPlannerData = true;
+      } else {
+        var pd3d = JSON.parse(localStorage.getItem('lamsa_planner3d') || '{}');
+        hasPlannerData = pd3d.items && pd3d.items.length > 0;
+      }
     } catch(e){}
 
     if (uploadedFiles.length === 0 && !hasPlannerData) {
@@ -2926,16 +2944,19 @@
 
   function getFpDescription() {
     try {
-      var pd = JSON.parse(localStorage.getItem('lamsa_planner') || '{}');
+      // Use live postMessage result if available (most accurate — includes room type + furniture names)
+      if (plannerResult && plannerResult.description) {
+        var rt = plannerResult.roomType || 'room';
+        var rw = plannerResult.roomW ? plannerResult.roomW.toFixed(1) + 'm' : '';
+        var rd = plannerResult.roomD ? plannerResult.roomD.toFixed(1) + 'm' : '';
+        var dims = (rw && rd) ? ' (' + rw + ' x ' + rd + ')' : '';
+        return '3D room layout' + dims + ' [' + rt + ']: ' + plannerResult.description;
+      }
+      // Fallback: read from 3D planner localStorage
+      var pd = JSON.parse(localStorage.getItem('lamsa_planner3d') || '{}');
       if (!pd.items || pd.items.length === 0) return '';
-      var desc = 'Room layout ' + (pd.roomW || 5) + 'm x ' + (pd.roomL || 4) + 'm (' + (pd.roomType || 'bedroom') + '). ';
-      var wins = pd.items.filter(function(i){ return i.name === 'Window'; });
-      var doors = pd.items.filter(function(i){ return i.name === 'Door'; });
-      var furn = pd.items.filter(function(i){ return i.name !== 'Window' && i.name !== 'Door'; });
-      if (wins.length > 0) desc += wins.length + ' window(s). ';
-      if (doors.length > 0) desc += doors.length + ' door(s). ';
-      if (furn.length > 0) desc += 'Furniture: ' + furn.map(function(i){ return i.name; }).join(', ') + '. ';
-      return desc;
+      var rt2 = pd.rt || 'room';
+      return '3D room layout ' + (pd.RW||5).toFixed(1) + 'm x ' + (pd.RD||4).toFixed(1) + 'm [' + rt2 + ']: ' + pd.items.length + ' furniture items placed.';
     } catch(e) { return ''; }
   }
 

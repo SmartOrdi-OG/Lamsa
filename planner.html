@@ -1125,7 +1125,7 @@ function loadState(){
   }catch(ex){buildItems('bedroom');}
 }
 function describe(){if(!placed.length)return'';return placed.map(function(i){var x=i.mesh.position.x,z=i.mesh.position.z;var p='center';if(z<-RD*.3)p='north';else if(z>RD*.3)p='south';else if(x<-RW*.3)p='west wall';else if(x>RW*.3)p='east wall';return i.def.n+' ('+p+')';}).join(', ');}
-window.donePlan=function(){saveState();try{parent.postMessage({type:'lamsa_planner_done',description:describe()},'*');}catch(ex){}if(parent===window)history.back();};
+window.donePlan=function(){saveState();try{parent.postMessage({type:'lamsa_planner_done',description:describe(),roomType:curRoom,roomW:RW,roomD:RD},'*');}catch(ex){}if(parent===window)history.back();};
 
 // ═══════════════════════════════════════════════════════════
 // SIDEBAR
