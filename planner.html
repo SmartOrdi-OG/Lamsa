@@ -51,7 +51,7 @@ html,body{width:100%;height:100%;overflow:hidden;background:var(--dark);color:va
 .cswatch{width:22px;height:22px;border-radius:5px;border:2px solid transparent;cursor:pointer;transition:border-color .15s}
 .cswatch:hover,.cswatch.on{border-color:var(--gold)}
 #cw{flex:1;position:relative;background:#0D0D14;overflow:hidden}
-canvas{display:block;width:100%;height:100%}
+canvas{display:block;width:100%;height:100%;touch-action:none}
 #selbar{position:absolute;bottom:12px;left:50%;transform:translateX(-50%);background:rgba(7,7,15,.96);border:1px solid var(--bd);border-radius:11px;padding:8px 13px;display:none;gap:7px;align-items:center;backdrop-filter:blur(10px);flex-wrap:wrap;max-width:90vw}
 #selbar.show{display:flex}
 #selnm{color:var(--gold);font-weight:700;font-size:12px}
@@ -1094,8 +1094,8 @@ function onMove(e){
   if(dragging&&dragItem){var fp=getFloor(mouse);if(fp){dragItem.mesh.position.x=snap(fp.x-dragOX);dragItem.mesh.position.z=snap(fp.z-dragOZ);enforceBounds(dragItem);updateOutline();}e.preventDefault();}
 }
 function onUp(){if(dragging){dragging=false;dragItem=null;controls.enabled=true;renderer.domElement.style.cursor='default';saveState();}}
-function onTDown(e){if(e.cancelable)e.preventDefault();onDown(e);}
-function onTMove(e){if(e.cancelable)e.preventDefault();onMove(e);}
+function onTDown(e){e.preventDefault();onDown(e);}
+function onTMove(e){e.preventDefault();onMove(e);}
 
 // ═══════════════════════════════════════════════════════════
 // CAMERA
