@@ -69,6 +69,19 @@ canvas{display:block;width:100%;height:100%;touch-action:none}
 #wallpanel label{font-size:10px;color:var(--sub);display:block;margin-bottom:3px}
 #wallpanel input[type=color]{width:100%;height:26px;border:1px solid var(--bd);border-radius:5px;cursor:pointer;background:transparent}
 #wallpanel input[type=range]{width:100%;margin-bottom:6px}
+
+/* ── MOBILE LAYOUT: canvas full-width on top, sidebar strip below ── */
+@media(max-width:640px){
+  #body{flex-direction:column}
+  #sb{width:100%;height:200px;border-right:none;border-top:1px solid var(--bd);flex-direction:row;overflow:hidden}
+  .sbtabs{flex-direction:column;width:70px;border-bottom:none;border-right:1px solid var(--bd);flex-shrink:0}
+  .sbtab{padding:10px 4px;font-size:9px}
+  .sbinner{flex:1;overflow-x:hidden;overflow-y:scroll;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;touch-action:pan-y}
+  #cw{flex:1;min-height:0}
+  #hdr{padding:5px 8px;gap:4px}
+  .hbtn{padding:4px 8px;font-size:10px}
+  .logo{font-size:10px}
+}
 </style>
 </head>
 <body>
