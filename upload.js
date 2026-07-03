@@ -11,27 +11,38 @@ export default async function handler(req, res) {
     const base64 = image_data.includes(',') ? image_data.split(',')[1] : image_data;
     const uint8Array = new Uint8Array(Buffer.from(base64, 'base64'));
 
-    const uploadRes = await fetch('https://rest.fal.ai/storage/upload', {
+    const initiateRes = await fetch('https://rest.fal.ai/storage/upload/initiate?storage_type=fal-cdn-v3', {
       method: 'POST',
       headers: {
         'Authorization': `Key ${FAL_API_KEY}`,
-        'Content-Type': mime_type
+        'Content-Type': 'application/json'
       },
+      body: JSON.stringify({ content_type: mime_type, file_name: 'room.jpg' })
+    });
+
+    if (!initiateRes.ok) {
+      const err = await initiateRes.text();
+      console.error('FAL upload initiate error:', initiateRes.status, err);
+      return res.status(initiateRes.status).json({ error: 'FAL upload initiate failed', details: err });
+    }
+
+    const { upload_url, file_url } = await initiateRes.json();
+
+    const putRes = await fetch(upload_url, {
+      method: 'PUT',
+      headers: { 'Content-Type': mime_type },
       body: uint8Array
     });
 
-    if (!uploadRes.ok) {
-      const err = await uploadRes.text();
-      console.error('FAL upload error:', uploadRes.status, err);
-      return res.status(uploadRes.status).json({ error: 'FAL upload failed', details: err });
+    if (!putRes.ok) {
+      const err = await putRes.text();
+      console.error('FAL upload PUT error:', putRes.status, err);
+      return res.status(putRes.status).json({ error: 'FAL upload failed', details: err });
     }
 
-    const data = await uploadRes.json();
-    const url = data.url || data.file_url || data.access_url;
+    if (!file_url) return res.status(500).json({ error: 'No file_url in response' });
 
-    if (!url) return res.status(500).json({ error: 'No URL in response', data });
-
-    return res.status(200).json({ url });
+    return res.status(200).json({ url: file_url });
 
   } catch (err) {
     console.error('Upload error:', err.message);
