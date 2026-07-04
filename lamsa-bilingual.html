@@ -1013,6 +1013,18 @@
           <div class="tip-item">🪟 <span data-ar="جهة النافذة" data-en="Window side">جهة النافذة</span></div>
         </div>
 
+        <!-- REARRANGE ONLY -->
+        <div class="form-group">
+          <label data-ar="إعادة ترتيب الأثاث الحالي فقط" data-en="Rearrange existing furniture only">Rearrange existing furniture only</label>
+          <div class="toggle-row">
+            <div class="toggle-wrap" onclick="toggleRearrangeOnly(this)">
+              <div class="toggle-switch" id="rearrangeToggle"></div>
+            </div>
+            <span class="toggle-label" id="rearrangeLabel" data-ar="إيقاف — إعادة تصميم كاملة" data-en="Off — Full redesign">Off — Full redesign</span>
+          </div>
+          <p class="toggle-hint" data-ar="عند التفعيل: يتم فقط إعادة ترتيب نفس قطع الأثاث الموجودة، بدون تغيير شكلها أو إضافة/حذف أي قطعة" data-en="When enabled: only rearranges the same existing furniture — no changes to appearance, no additions or removals">Only rearranges existing furniture, keeping it identical</p>
+        </div>
+
         <div class="panel-nav">
           <div></div>
           <button class="btn-next" onclick="next()" data-ar="التالي ←" data-en="Next →">Next →</button>
@@ -2202,6 +2214,15 @@
   let uploadedFiles = [];
   let designCount = 1;
   let beforeAfterOn = false;
+  let rearrangeOnly = false;
+
+  function toggleRearrangeOnly(el) {
+    rearrangeOnly = !rearrangeOnly;
+    el.classList.toggle('on', rearrangeOnly);
+    document.getElementById('rearrangeLabel').textContent = rearrangeOnly
+      ? (currentLang === 'ar' ? 'تفعيل — إعادة ترتيب فقط' : 'On — Rearrange only')
+      : (currentLang === 'ar' ? 'إيقاف — إعادة تصميم كاملة' : 'Off — Full redesign');
+  }
 
   function goTo(n) {
     document.getElementById('panel-' + currentPanel).classList.remove('active');
@@ -2535,9 +2556,34 @@
     var fpInfo = typeof getFpDescription === 'function' ? getFpDescription() : '';
 
     // ═══════════════════════════════════════════════
-    // BUILD COMPREHENSIVE AI PROMPT
+    // REARRANGE-ONLY PROMPT (existing furniture, new layout)
     // ═══════════════════════════════════════════════
-    var prompt =
+    var rearrangePrompt =
+      'You are a professional interior designer. The user has uploaded a photo of their room with existing furniture already in place.' +
+      '\n\nYour task: REARRANGE the existing furniture ONLY to create a beautiful, functional, and professional interior design layout.' +
+      '\n\nABSOLUTE RULES — NEVER VIOLATE:' +
+      '\n1. FURNITURE IS IDENTICAL: Every piece of furniture must remain exactly the same — same color, same material, same texture, same size, same style. Zero changes to appearance.' +
+      '\n2. SAME ROOM: Walls, floor, ceiling, windows, doors stay exactly as they are. No changes to architecture.' +
+      '\n3. SAME CAMERA ANGLE: Keep the exact same perspective and viewpoint.' +
+      '\n4. NO ADDITIONS: Do not add any new furniture, plants, accessories, or decorations that were not in the original photo.' +
+      '\n5. NO REMOVALS: All existing furniture pieces must appear in the result.' +
+      '\n\nREARRANGEMENT GOALS:' +
+      '\n- Create clear, comfortable pathways through the room' +
+      '\n- Place seating to face the natural focal point (TV, window, fireplace)' +
+      '\n- Balance furniture distribution — avoid crowding one side' +
+      '\n- Create functional zones (seating area, workspace, etc.)' +
+      '\n- Maintain breathing space around each piece' +
+      '\n- Follow the golden ratio for visual harmony' +
+      '\n\nOUTPUT QUALITY:' +
+      '\n- Photorealistic, same lighting conditions as original' +
+      '\n- Professional interior design magazine quality' +
+      '\n- Natural shadows matching furniture positions' +
+      '\n- Architectural Digest standard';
+
+    // ═══════════════════════════════════════════════
+    // BUILD COMPREHENSIVE AI PROMPT (full redesign)
+    // ═══════════════════════════════════════════════
+    var redesignPrompt =
       // ── CORE INSTRUCTION ──
       'You are a professional interior designer applying a full redesign to THIS SPECIFIC PHOTO.' +
       ' The output must show the SAME room from the SAME camera angle and perspective.' +
@@ -2615,6 +2661,8 @@
       '\n• Real furniture proportions — nothing oversized or undersized for the room dimensions.' +
       '\n• Visible styling details: throw pillows, plants, books, art, small decor objects that match the chosen style.' +
       '\n\nAVOID: changing room geometry, altering window/door count, adding extra rooms, cartoon or illustration look, visible AI artifacts, floating furniture, wrong scale objects.';
+
+    var prompt = rearrangeOnly ? rearrangePrompt : redesignPrompt;
 
     // Compress image before upload (max 1280px, JPEG) — much faster upload & generation
     function compressImage(file, maxSize, quality, callback) {
