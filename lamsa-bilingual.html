@@ -192,8 +192,27 @@
     transition: all 0.2s; letter-spacing: 0.5px;
   }
   .planner-open-btn:hover { background: linear-gradient(135deg, #2a1e00, #3a2a00); box-shadow: 0 0 20px rgba(201,168,76,0.25); }
-  .planner-preview { margin-top: 10px; font-size: 11px; color: var(--sub); text-align: center; display: none; }
-  .planner-preview.show { display: block; }
+  .planner-preview { font-size: 11px; color: var(--sub); text-align: center; flex: 1; }
+  .planner-preview-row {
+    margin-top: 10px;
+    display: none;
+    align-items: center; justify-content: center; gap: 10px;
+  }
+  .planner-preview-row.show { display: flex; }
+  .planner-clear-btn {
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--gray);
+    font-family: 'Tajawal', sans-serif;
+    font-size: 11px; font-weight: 700;
+    padding: 4px 10px;
+    border-radius: 20px;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: all 0.2s;
+    flex-shrink: 0;
+  }
+  .planner-clear-btn:hover { border-color: var(--gold); color: var(--gold); }
   /* Fullscreen modal */
   #planner-modal {
     display: none; position: fixed; inset: 0; z-index: 9999;
@@ -1027,7 +1046,7 @@
         <div class="form-grid">
           <div class="form-group">
             <label data-en="Room Type" data-ar="نوع الغرفة">Room Type</label>
-            <select onchange="renderFurnitureChips();renderPriorityChips()">
+            <select id="roomTypeSelect" onchange="onRoomTypeChange()">
               <option value="bedroom" data-en="Bedroom" data-ar="غرفة نوم">Bedroom</option>
               <option value="living" data-en="Living Room" data-ar="صالة جلوس">Living Room</option>
               <option value="kitchen" data-en="Kitchen" data-ar="مطبخ">Kitchen</option>
@@ -1054,7 +1073,10 @@
         <!-- 3D PLANNER BUTTON -->
         <div class="planner-btn-wrap">
           <button class="planner-open-btn" onclick="openPlanner()" data-en="🧊 Open 3D Room Planner" data-ar="🧊 فتح المخطط ثلاثي الأبعاد">🧊 Open 3D Room Planner</button>
-          <div class="planner-preview" id="plannerPreview"></div>
+          <div class="planner-preview-row" id="plannerPreviewRow">
+            <div class="planner-preview" id="plannerPreview"></div>
+            <button type="button" class="planner-clear-btn" onclick="clearFp()" data-en="✕ Clear" data-ar="✕ مسح">✕ Clear</button>
+          </div>
         </div>
 
         <!-- FULLSCREEN 3D MODAL -->
@@ -1325,74 +1347,20 @@
         <div class="panel-title" data-ar="توزيع الأثاث" data-en="Furniture Placement">Furniture Placement</div>
         <div class="panel-sub" data-ar="حدد بالضبط أين تريد كل قطعة — كلما كانت التفاصيل أدق، كان التصميم أفضل" data-en="Specify exactly where you want each piece — more details = better results">Specify exactly where you want each piece — more details = better results</div>
 
-        <!-- REQUIRED FURNITURE — FIX 4: dynamic per room type -->
+        <!-- DESIGN MODE -->
         <div class="form-group" style="margin-bottom:20px;">
-          <label data-en="Required Furniture" data-ar="الأثاث المطلوب">Required Furniture</label>
-          <div class="chips" id="furnitureChips"></div>
-        </div>
-
-        <!-- DETAILED PLACEMENT -->
-        <div class="placement-section">
-          <div class="placement-title" data-en="📐 Detailed Placement" data-ar="📐 توزيع تفصيلي">📐 Detailed Placement</div>
-
-          <!-- BED -->
-          <div class="placement-item">
-            <div class="placement-icon">🛏️</div>
-            <div class="placement-body">
-              <div class="placement-name" data-en="Bed" data-ar="السرير">Bed</div>
-              <div class="chips" style="margin-top:8px;">
-                <div class="chip selected" onclick="selectPlacement(this,'bed')" data-en="North Wall" data-ar="جدار شمال" data-placement="bed">North Wall</div>
-                <div class="chip" onclick="selectPlacement(this,'bed')" data-en="South Wall" data-ar="جدار جنوب" data-placement="bed">South Wall</div>
-                <div class="chip" onclick="selectPlacement(this,'bed')" data-en="East Wall" data-ar="جدار شرق" data-placement="bed">East Wall</div>
-                <div class="chip" onclick="selectPlacement(this,'bed')" data-en="West Wall" data-ar="جدار غرب" data-placement="bed">West Wall</div>
-                <div class="chip" onclick="selectPlacement(this,'bed')" data-en="By Window" data-ar="قرب النافذة" data-placement="bed">By Window</div>
-                <div class="chip" onclick="selectPlacement(this,'bed')" data-en="Center" data-ar="الوسط" data-placement="bed">Center</div>
-              </div>
+          <label data-en="Design Mode" data-ar="نمط التصميم">Design Mode</label>
+          <div class="design-count-selector" id="designModeSelector" style="grid-template-columns: repeat(2, 1fr);">
+            <div class="count-option selected" onclick="selectDesignMode(this,'redesign')" data-mode="redesign">
+              <div class="count-num" style="font-size:22px;">🎨</div>
+              <div class="count-label" data-en="Full Redesign" data-ar="تصميم كامل">Full Redesign</div>
+            </div>
+            <div class="count-option" onclick="selectDesignMode(this,'rearrange')" data-mode="rearrange">
+              <div class="count-num" style="font-size:22px;">🔄</div>
+              <div class="count-label" data-en="Rearrange Only" data-ar="إعادة ترتيب فقط">Rearrange Only</div>
             </div>
           </div>
-
-          <!-- WARDROBE -->
-          <div class="placement-item">
-            <div class="placement-icon">🗄️</div>
-            <div class="placement-body">
-              <div class="placement-name" data-en="Wardrobe" data-ar="الخزانة">Wardrobe</div>
-              <div class="chips" style="margin-top:8px;">
-                <div class="chip" onclick="selectPlacement(this,'wardrobe')" data-en="Near Door" data-ar="قرب الباب" data-placement="wardrobe">Near Door</div>
-                <div class="chip" onclick="selectPlacement(this,'wardrobe')" data-en="North Wall" data-ar="جدار شمال" data-placement="wardrobe">North Wall</div>
-                <div class="chip" onclick="selectPlacement(this,'wardrobe')" data-en="South Wall" data-ar="جدار جنوب" data-placement="wardrobe">South Wall</div>
-                <div class="chip" onclick="selectPlacement(this,'wardrobe')" data-en="East Wall" data-ar="جدار شرق" data-placement="wardrobe">East Wall</div>
-                <div class="chip" onclick="selectPlacement(this,'wardrobe')" data-en="West Wall" data-ar="جدار غرب" data-placement="wardrobe">West Wall</div>
-              </div>
-            </div>
-          </div>
-
-          <!-- SOFA/SEATING -->
-          <div class="placement-item">
-            <div class="placement-icon">🛋️</div>
-            <div class="placement-body">
-              <div class="placement-name" data-en="Sofa / Seating Area" data-ar="الأريكة / ركن الجلوس">Sofa / Seating Area</div>
-              <div class="chips" style="margin-top:8px;">
-                <div class="chip" onclick="selectPlacement(this,'sofa')" data-en="By Window" data-ar="أمام النافذة" data-placement="sofa">By Window</div>
-                <div class="chip" onclick="selectPlacement(this,'sofa')" data-en="Corner" data-ar="الزاوية" data-placement="sofa">Corner</div>
-                <div class="chip" onclick="selectPlacement(this,'sofa')" data-en="Center" data-ar="الوسط" data-placement="sofa">Center</div>
-                <div class="chip" onclick="selectPlacement(this,'sofa')" data-en="Facing TV" data-ar="مقابل التلفزيون" data-placement="sofa">Facing TV</div>
-              </div>
-            </div>
-          </div>
-
-          <!-- DESK -->
-          <div class="placement-item">
-            <div class="placement-icon">🪑</div>
-            <div class="placement-body">
-              <div class="placement-name" data-en="Desk / Work Area" data-ar="المكتب / منطقة العمل">Desk / Work Area</div>
-              <div class="chips" style="margin-top:8px;">
-                <div class="chip" onclick="selectPlacement(this,'desk')" data-en="By Window" data-ar="قرب النافذة" data-placement="desk">By Window</div>
-                <div class="chip" onclick="selectPlacement(this,'desk')" data-en="Corner" data-ar="الزاوية" data-placement="desk">Corner</div>
-                <div class="chip" onclick="selectPlacement(this,'desk')" data-en="North Wall" data-ar="جدار شمال" data-placement="desk">North Wall</div>
-                <div class="chip" onclick="selectPlacement(this,'desk')" data-en="South Wall" data-ar="جدار جنوب" data-placement="desk">South Wall</div>
-              </div>
-            </div>
-          </div>
+          <p class="toggle-hint" data-en="Rearrange Only keeps your existing furniture exactly as-is — same color, material and size — and only repositions it for a better layout. Style, colors and new furniture selections below are ignored in this mode." data-ar="إعادة الترتيب فقط تُبقي أثاثك الحالي كما هو تمامًا (نفس اللون والخامة والحجم) وتعيد ترتيبه فقط لتوزيع أفضل. يتم تجاهل اختيارات الستايل والألوان والأثاث الجديد أدناه في هذا النمط.">Rearrange Only keeps your existing furniture exactly as-is and only repositions it for a better layout. Style, colors and new furniture selections below are ignored in this mode.</p>
         </div>
 
         <!-- DETAILED ROOM SPECS -->
@@ -1595,7 +1563,10 @@
     <div class="result-area" id="resultArea">
       <div class="result-header">
         <div class="result-title" data-ar="✦ تصميمك الجديد" data-en="✦ Your New Design">✦ Your New Design</div>
-        <div class="result-badge">AI Generated</div>
+        <div style="display:flex;align-items:center;gap:10px;">
+          <div class="result-badge">AI Generated</div>
+          <button type="button" class="planner-clear-btn" onclick="startNewDesign()" data-en="↺ Start New Design" data-ar="↺ تصميم جديد">↺ Start New Design</button>
+        </div>
       </div>
       <div class="result-img-wrap" id="resultImg">
         <div class="result-placeholder" id="resultPlaceholder">
@@ -1718,7 +1689,6 @@
       'Window & Door Location': 'Fenster & Türposition', 'Number of People': 'Personenanzahl',
       'Special Needs': 'Besondere Bedürfnisse', 'Additional Notes': 'Zusätzliche Notizen',
       'Spending Priority': 'Ausgabenpriorität', 'Preferred Colors': 'Bevorzugte Farben',
-      'Required Furniture': 'Benötigte Möbel', 'Bed Placement': 'Bettposition',
       'Special Instructions (optional)': 'Besondere Anweisungen (optional)',
       'Bedroom': 'Schlafzimmer', 'Living Room': 'Wohnzimmer', 'Kitchen': 'Küche',
       'Kids Room': 'Kinderzimmer', 'Home Office': 'Büro', 'Dining Room': 'Esszimmer', 'Bathroom': 'Badezimmer',
@@ -1772,6 +1742,8 @@
       'Choose the overall design style — you can pick more than one': 'Designstil wählen — mehrere Auswahlen möglich',
       'Furniture Placement': 'Möbelanordnung',
       'Specify where you want each piece and what furniture you need': 'Bestimmen Sie wo jedes Möbelstück stehen soll',
+      'Design Mode': 'Design-Modus', 'Full Redesign': 'Komplettes Redesign', 'Rearrange Only': 'Nur neu anordnen',
+      'Rearrange Only keeps your existing furniture exactly as-is and only repositions it for a better layout. Style, colors and new furniture selections below are ignored in this mode.': 'Nur neu anordnen behält Ihre vorhandenen Möbel exakt wie sie sind (gleiche Farbe, Material und Größe) und positioniert sie nur neu für eine bessere Raumaufteilung. Stil-, Farb- und neue Möbelauswahlen unten werden in diesem Modus ignoriert.',
       '✦ Generate My Design Now': '✦ Design jetzt erstellen',
       'AI will generate a realistic image of your room': 'Die KI erstellt ein realistisches Bild Ihres Zimmers',
       '✦ Your New Design': '✦ Ihr neues Design',
@@ -1827,6 +1799,8 @@
       'Design your home with your personal touch · Powered by AI': 'Disena tu hogar con tu toque · IA',
       'Privacy Policy': 'Privacidad', 'Terms of Service': 'Terminos de uso', 'Cookie Policy': 'Cookies',
       'Room Type': 'Tipo de habitación', 'Area (sqm)': 'Área (m²)', 'Length (m)': 'Largo (m)', 'Width (m)': 'Ancho (m)', 'Window & Door Location': 'Ventanas y puertas', 'Number of People': 'Número de personas', 'Bedroom': 'Dormitorio', 'Living Room': 'Sala de estar', 'Kitchen': 'Cocina', 'Kids Room': 'Cuarto de niños', 'Home Office': 'Oficina', 'Dining Room': 'Comedor', 'Bathroom': 'Baño', 'None': 'Ninguno', 'North Window': 'Ventana norte', 'South Window': 'Ventana sur', 'East Window': 'Ventana este', 'West Window': 'Ventana oeste', 'North Door': 'Puerta norte', 'South Door': 'Puerta sur', '🛏️ Bed': '🛏️ Cama', '🗄️ Wardrobe': '🗄️ Armario', '📚 Bookshelf': '📚 Estante', '🛋️ Sofa': '🛋️ Sofá', '🪞 Mirror': '🪞 Espejo', '🧸 Play Area': '🧸 Zona de juegos', 'North Wall': 'Pared norte', 'South Wall': 'Pared sur', 'East Wall': 'Pared este', 'West Wall': 'Pared oeste', 'Center of Room': 'Centro de la habitación', 'Modern': 'Moderno', 'Minimal': 'Minimalista', 'Scandinavian': 'Escandinavo', 'Moroccan': 'Marroquí', 'Japanese / Zen': 'Japonés / Zen', 'Room Information': 'Información de la habitación', 'Who Will Use The Room?': 'Quién usará la habitación', 'Furniture Budget': 'Presupuesto de muebles', 'Preferred Style': 'Estilo preferido', 'Furniture Placement': 'Distribución de muebles', '✦ Generate My Design Now': '✦ Crear mi diseño ahora', '✦ Your New Design': '✦ Tu nuevo diseño', 'Generating your design...': 'Generando tu diseño...', 'Takes 15-30 seconds': 'Tarda 15-30 segundos',
+      'Design Mode': 'Modo de diseño', 'Full Redesign': 'Rediseño completo', 'Rearrange Only': 'Solo reorganizar',
+      'Rearrange Only keeps your existing furniture exactly as-is and only repositions it for a better layout. Style, colors and new furniture selections below are ignored in this mode.': 'Solo reorganizar mantiene tus muebles actuales exactamente igual (mismo color, material y tamaño) y solo los reposiciona para una mejor distribución. El estilo, los colores y la selección de muebles nuevos de abajo se ignoran en este modo.',
       'Standard Bed': 'Cama estándar', 'Bunk Bed': 'Litera', 'Storage Bed': 'Cama con almacenaje',
       'King Size': 'King Size', 'Sofa Bed': 'Sofá cama', 'Floor Mattress': 'Colchón en el suelo',
       'White': 'Blanco', 'Beige / Cream': 'Beige / Crema', 'Light Gray': 'Gris claro',
@@ -1870,6 +1844,8 @@
       'Design your home with your personal touch · Powered by AI': 'Evinizi kendi dokunusunuzla tasarlayin · Yapay Zeka',
       'Privacy Policy': 'Gizlilik', 'Terms of Service': 'Kullanim Kosullari', 'Cookie Policy': 'Cerez Politikasi',
       'Room Type': 'Oda tipi', 'Area (sqm)': 'Alan (m²)', 'Length (m)': 'Uzunluk (m)', 'Width (m)': 'Genislik (m)', 'Window & Door Location': 'Pencere ve kapi konumu', 'Number of People': 'Kisi sayisi', 'Bedroom': 'Yatak odasi', 'Living Room': 'Oturma odasi', 'Kitchen': 'Mutfak', 'Kids Room': 'Cocuk odasi', 'Home Office': 'Ofis', 'Dining Room': 'Yemek odasi', 'Bathroom': 'Banyo', 'None': 'Yok', 'North Window': 'Kuzey pencere', 'South Window': 'Guney pencere', 'East Window': 'Dogu pencere', 'West Window': 'Bati pencere', 'North Door': 'Kuzey kapi', 'South Door': 'Guney kapi', '🛏️ Bed': '🛏️ Yatak', '🗄️ Wardrobe': '🗄️ Dolap', '📚 Bookshelf': '📚 Kitaplik', '🛋️ Sofa': '🛋️ Kanepe', '🪞 Mirror': '🪞 Ayna', '🧸 Play Area': '🧸 Oyun alani', 'North Wall': 'Kuzey duvar', 'South Wall': 'Guney duvar', 'East Wall': 'Dogu duvar', 'West Wall': 'Bati duvar', 'Center of Room': 'Oda merkezi', 'Modern': 'Modern', 'Minimal': 'Minimal', 'Scandinavian': 'Iskandinavya', 'Moroccan': 'Fas tarzi', 'Japanese / Zen': 'Japon / Zen', 'Room Information': 'Oda bilgileri', 'Who Will Use The Room?': 'Odayi kim kullanacak', 'Furniture Budget': 'Mobilya butcesi', 'Preferred Style': 'Tercih edilen stil', 'Furniture Placement': 'Mobilya yerlestirme', '✦ Generate My Design Now': '✦ Tasarimimi olustur', '✦ Your New Design': '✦ Yeni tasariminiz', 'Generating your design...': 'Tasariminiz olusturuluyor...', 'Takes 15-30 seconds': '15-30 saniye surer',
+      'Design Mode': 'Tasarim Modu', 'Full Redesign': 'Tam Yeniden Tasarim', 'Rearrange Only': 'Sadece Yeniden Duzenle',
+      'Rearrange Only keeps your existing furniture exactly as-is and only repositions it for a better layout. Style, colors and new furniture selections below are ignored in this mode.': 'Sadece Yeniden Duzenle, mevcut mobilyalarinizi oldugu gibi (ayni renk, malzeme ve boyut) korur ve sadece daha iyi bir yerlesim icin yeniden konumlandirir. Bu modda asagidaki stil, renk ve yeni mobilya secimleri dikkate alinmaz.',
       'Standard Bed': 'Standart yatak', 'Bunk Bed': 'Ranzali yatak', 'Storage Bed': 'Depolamali yatak',
       'King Size': 'King size', 'Sofa Bed': 'Kanepe yatak', 'Floor Mattress': 'Yer yatagi',
       'White': 'Beyaz', 'Beige / Cream': 'Bej / Krem', 'Light Gray': 'Acik gri',
@@ -1913,6 +1889,8 @@
       'Design your home with your personal touch · Powered by AI': 'Concevez votre maison avec votre touche · IA',
       'Privacy Policy': 'Confidentialite', 'Terms of Service': 'Conditions', 'Cookie Policy': 'Cookies',
       'Room Type': 'Type de piece', 'Area (sqm)': 'Surface (m²)', 'Length (m)': 'Longueur (m)', 'Width (m)': 'Largeur (m)', 'Window & Door Location': 'Fenetres et portes', 'Number of People': 'Nombre de personnes', 'Bedroom': 'Chambre', 'Living Room': 'Salon', 'Kitchen': 'Cuisine', 'Kids Room': 'Chambre enfants', 'Home Office': 'Bureau', 'Dining Room': 'Salle a manger', 'Bathroom': 'Salle de bain', 'None': 'Aucun', 'North Window': 'Fenetre nord', 'South Window': 'Fenetre sud', 'East Window': 'Fenetre est', 'West Window': 'Fenetre ouest', 'North Door': 'Porte nord', 'South Door': 'Porte sud', '🛏️ Bed': '🛏️ Lit', '🗄️ Wardrobe': '🗄️ Armoire', '📚 Bookshelf': '📚 Etagere', '🛋️ Sofa': '🛋️ Canape', '🪞 Mirror': '🪞 Miroir', '🧸 Play Area': '🧸 Espace jeux', 'North Wall': 'Mur nord', 'South Wall': 'Mur sud', 'East Wall': 'Mur est', 'West Wall': 'Mur ouest', 'Center of Room': 'Centre de la piece', 'Modern': 'Moderne', 'Minimal': 'Minimaliste', 'Scandinavian': 'Scandinave', 'Moroccan': 'Marocain', 'Japanese / Zen': 'Japonais / Zen', 'Room Information': 'Informations sur la piece', 'Who Will Use The Room?': 'Qui utilisera la piece', 'Furniture Budget': 'Budget meubles', 'Preferred Style': 'Style prefere', 'Furniture Placement': 'Disposition des meubles', '✦ Generate My Design Now': '✦ Creer mon design', '✦ Your New Design': '✦ Votre nouveau design', 'Generating your design...': 'Generation en cours...', 'Takes 15-30 seconds': 'Prend 15-30 secondes',
+      'Design Mode': 'Mode de conception', 'Full Redesign': 'Refonte complète', 'Rearrange Only': 'Réarranger seulement',
+      'Rearrange Only keeps your existing furniture exactly as-is and only repositions it for a better layout. Style, colors and new furniture selections below are ignored in this mode.': 'Réarranger seulement conserve vos meubles actuels exactement tels quels (même couleur, matériau et taille) et les repositionne seulement pour un meilleur agencement. Le style, les couleurs et les nouvelles sélections de meubles ci-dessous sont ignorés dans ce mode.',
       'Standard Bed': 'Lit standard', 'Bunk Bed': 'Lits superposes', 'Storage Bed': 'Lit avec rangement',
       'King Size': 'Grand lit', 'Sofa Bed': 'Canape-lit', 'Floor Mattress': 'Matelas au sol',
       'White': 'Blanc', 'Beige / Cream': 'Beige / Creme', 'Light Gray': 'Gris clair',
@@ -1956,6 +1934,8 @@
       'Design your home with your personal touch · Powered by AI': 'Progetta la tua casa con il tuo tocco · IA',
       'Privacy Policy': 'Privacy', 'Terms of Service': 'Termini', 'Cookie Policy': 'Cookie',
       'Room Type': 'Tipo di stanza', 'Area (sqm)': 'Area (m²)', 'Length (m)': 'Lunghezza (m)', 'Width (m)': 'Larghezza (m)', 'Window & Door Location': 'Finestre e porte', 'Number of People': 'Numero di persone', 'Bedroom': 'Camera da letto', 'Living Room': 'Soggiorno', 'Kitchen': 'Cucina', 'Kids Room': 'Camera bambini', 'Home Office': 'Ufficio', 'Dining Room': 'Sala da pranzo', 'Bathroom': 'Bagno', 'None': 'Nessuno', 'North Window': 'Finestra nord', 'South Window': 'Finestra sud', 'East Window': 'Finestra est', 'West Window': 'Finestra ovest', 'North Door': 'Porta nord', 'South Door': 'Porta sud', '🛏️ Bed': '🛏️ Letto', '🗄️ Wardrobe': '🗄️ Armadio', '📚 Bookshelf': '📚 Libreria', '🛋️ Sofa': '🛋️ Divano', '🪞 Mirror': '🪞 Specchio', '🧸 Play Area': '🧸 Area giochi', 'North Wall': 'Parete nord', 'South Wall': 'Parete sud', 'East Wall': 'Parete est', 'West Wall': 'Parete ovest', 'Center of Room': 'Centro stanza', 'Modern': 'Moderno', 'Minimal': 'Minimale', 'Scandinavian': 'Scandinavo', 'Moroccan': 'Marocchino', 'Japanese / Zen': 'Giapponese / Zen', 'Room Information': 'Informazioni stanza', 'Who Will Use The Room?': 'Chi usera la stanza', 'Furniture Budget': 'Budget mobili', 'Preferred Style': 'Stile preferito', 'Furniture Placement': 'Disposizione mobili', '✦ Generate My Design Now': '✦ Crea il mio design', '✦ Your New Design': '✦ Il tuo nuovo design', 'Generating your design...': 'Generazione in corso...', 'Takes 15-30 seconds': 'Richiede 15-30 secondi',
+      'Design Mode': 'Modalità di design', 'Full Redesign': 'Redesign completo', 'Rearrange Only': 'Solo riorganizzazione',
+      'Rearrange Only keeps your existing furniture exactly as-is and only repositions it for a better layout. Style, colors and new furniture selections below are ignored in this mode.': 'Solo riorganizzazione mantiene i tuoi mobili attuali esattamente come sono (stesso colore, materiale e dimensione) e li riposiziona solo per una disposizione migliore. Stile, colori e le nuove selezioni di mobili qui sotto vengono ignorati in questa modalità.',
       'Standard Bed': 'Letto standard', 'Bunk Bed': 'Letto a castello', 'Storage Bed': 'Letto con contenitore',
       'King Size': 'King size', 'Sofa Bed': 'Divano letto', 'Floor Mattress': 'Materasso a terra',
       'White': 'Bianco', 'Beige / Cream': 'Beige / Crema', 'Light Gray': 'Grigio chiaro',
@@ -1999,6 +1979,8 @@
       'Design your home with your personal touch · Powered by AI': 'Oformite dom po-svoyemu · II',
       'Privacy Policy': 'Konfidentsialnost', 'Terms of Service': 'Usloviya', 'Cookie Policy': 'Cookie',
       'Room Type': 'Tip komnaty', 'Area (sqm)': 'Ploshhad (kv.m)', 'Length (m)': 'Dlina (m)', 'Width (m)': 'Shirina (m)', 'Window & Door Location': 'Okna i dveri', 'Number of People': 'Kolichestvo lyudej', 'Bedroom': 'Spalnya', 'Living Room': 'Gostinaya', 'Kitchen': 'Kuxnya', 'Kids Room': 'Detskaya', 'Home Office': 'Kabinet', 'Dining Room': 'Stolovaya', 'Bathroom': 'Vanna komnata', 'None': 'Net', 'North Window': 'Severnoye okno', 'South Window': 'Yuzhnoye okno', 'East Window': 'Vostochnoye okno', 'West Window': 'Zapadnoye okno', 'North Door': 'Severnaya dver', 'South Door': 'Yuzhnaya dver', '🛏️ Bed': '🛏️ Krovat', '🗄️ Wardrobe': '🗄️ Shkaf', '📚 Bookshelf': '📚 Polka', '🛋️ Sofa': '🛋️ Divan', '🪞 Mirror': '🪞 Zerkalo', '🧸 Play Area': '🧸 Igrovaya zona', 'North Wall': 'Severnaya stena', 'South Wall': 'Yuzhnaya stena', 'East Wall': 'Vostochnaya stena', 'West Wall': 'Zapadnaya stena', 'Center of Room': 'Centr komnaty', 'Modern': 'Sovremennyj', 'Minimal': 'Minimalnyj', 'Scandinavian': 'Skandinavskij', 'Moroccan': 'Marokanskij', 'Japanese / Zen': 'Yaponskij / Zen', 'Room Information': 'Informaciya o komnate', 'Who Will Use The Room?': 'Kto budet ispolzovat komnatu', 'Furniture Budget': 'Byudzhet na mebel', 'Preferred Style': 'Predpochtitaemyj stil', 'Furniture Placement': 'Razmeshcheniye mebeli', '✦ Generate My Design Now': '✦ Sozdat moj dizajn', '✦ Your New Design': '✦ Vash novyj dizajn', 'Generating your design...': 'Dizajn sozdaetsya...', 'Takes 15-30 seconds': 'Zanimaet 15-30 sekund',
+      'Design Mode': 'Rezhim dizayna', 'Full Redesign': 'Polnyj redizajn', 'Rearrange Only': 'Tolko pereraspolozhenie',
+      'Rearrange Only keeps your existing furniture exactly as-is and only repositions it for a better layout. Style, colors and new furniture selections below are ignored in this mode.': 'Rezhim "Tolko pereraspolozhenie" sokhranyaet vashu tekushchuyu mebel tochno takoy zhe (tot zhe tsvet, material i razmer) i tolko izmenyaet yeyo raspolozheniye dlya luchshey planirovki. Stil, tsveta i vybor novoy mebeli nizhe v etom rezhime ignoriruyutsya.',
       'Standard Bed': 'Obychnaya krovat', 'Bunk Bed': 'Yarusnaya krovat', 'Storage Bed': 'Krovat s khranilishchem',
       'King Size': 'King size', 'Sofa Bed': 'Divan-krovat', 'Floor Mattress': 'Matras na polu',
       'White': 'Belyj', 'Beige / Cream': 'Bej / Krem', 'Light Gray': 'Svetlo-seryj',
@@ -2070,7 +2052,6 @@
       'Window & Door Location': 'موقع النافذة والباب', 'Number of People': 'عدد الأشخاص',
       'Special Needs': 'احتياجات خاصة', 'Additional Notes': 'ملاحظات إضافية',
       'Spending Priority': 'أولوية الإنفاق', 'Preferred Colors': 'الألوان المفضلة',
-      'Required Furniture': 'الأثاث المطلوب', 'Bed Placement': 'وضع السرير',
       'Special Instructions (optional)': 'تعليمات خاصة (اختياري)',
       'Bedroom': 'غرفة نوم', 'Living Room': 'صالة جلوس', 'Kitchen': 'مطبخ',
       'Kids Room': 'غرفة أطفال', 'Home Office': 'مكتب منزلي', 'Dining Room': 'غرفة طعام', 'Bathroom': 'حمام',
@@ -2202,6 +2183,9 @@
   let uploadedFiles = [];
   let designCount = 1;
   let beforeAfterOn = false;
+  let designMode = 'redesign'; // 'redesign' = full AI redesign, 'rearrange' = reposition existing furniture only
+  var formPanelsSnapshot = null; // pristine panel markup, captured once on load — used by startNewDesign()
+  var resultAreaSnapshot = null; // pristine result-area markup (doGenerate replaces its contents with the generated image)
 
   function goTo(n) {
     document.getElementById('panel-' + currentPanel).classList.remove('active');
@@ -2211,6 +2195,10 @@
     document.getElementById('panel-' + currentPanel).classList.add('active');
     document.querySelectorAll('.progress-step')[currentPanel - 1].classList.add('active');
     document.querySelectorAll('.progress-step')[currentPanel - 1].classList.remove('done');
+
+    // BUG 4 fix: panel navigation must never leave scrolling locked
+    document.body.style.overflow = '';
+    document.documentElement.style.overflow = '';
   }
 
   function next() { if (currentPanel < 6) goTo(currentPanel + 1); }
@@ -2218,9 +2206,20 @@
 
   function toggleChip(el) { el.classList.toggle('selected'); }
 
+  // BUG 1 fix: single place that guarantees the body is never left scroll-locked
+  function resetBodyScrollLock() {
+    document.body.style.position = '';
+    document.body.style.overflow = '';
+    document.body.style.top = '';
+    document.body.style.left = '';
+    document.body.style.right = '';
+    document.body.style.bottom = '';
+    document.documentElement.style.overflow = '';
+  }
+
   // ── 3D Planner fullscreen modal ──
   function openPlanner() {
-    var roomSel = document.querySelector('#panel-2 select');
+    var roomSel = document.getElementById('roomTypeSelect');
     var roomType = roomSel ? roomSel.value : 'bedroom';
     var frame = document.getElementById('plannerFrame');
     frame.src = 'planner.html?room=' + roomType;
@@ -2229,8 +2228,14 @@
   }
   function closePlanner() {
     document.getElementById('planner-modal').classList.remove('open');
-    document.body.style.overflow = '';
+    resetBodyScrollLock();
   }
+
+  // BUG 1 fix: bfcache restores (back/forward) can resurrect a stale scroll-locked body
+  window.addEventListener('pageshow', function(e) {
+    if (e.persisted) resetBodyScrollLock();
+  });
+
   var plannerResult = null; // stores last planner data from postMessage
 
   window.addEventListener('message', function(e) {
@@ -2243,15 +2248,12 @@
         var roomSel = document.querySelector('#panel-2 select');
         if (roomSel && e.data.roomType !== roomSel.value) {
           roomSel.value = e.data.roomType;
-          // Refresh furniture/priority chips if those functions exist
-          if (typeof renderFurnitureChips === 'function') renderFurnitureChips();
-          if (typeof renderPriorityChips === 'function') renderPriorityChips();
         }
       }
       if (e.data.description) {
         var prev = document.getElementById('plannerPreview');
         prev.textContent = '✓ 3D Layout saved: ' + e.data.description.substring(0,80) + (e.data.description.length>80?'…':'');
-        prev.classList.add('show');
+        document.getElementById('plannerPreviewRow').classList.add('show');
       }
     }
   });
@@ -2327,6 +2329,12 @@
     document.getElementById('uploadContent').style.display = 'block';
     document.getElementById('multiPreview').innerHTML = '';
     document.getElementById('fileInput').value = '';
+  }
+
+  function selectDesignMode(el, mode) {
+    document.querySelectorAll('#designModeSelector .count-option').forEach(function(o) { o.classList.remove('selected'); });
+    el.classList.add('selected');
+    designMode = mode;
   }
 
   function selectCount(el, num) {
@@ -2469,22 +2477,11 @@
       selectedColors.push(el.getAttribute('data-en') || el.textContent.trim());
     });
 
-    // --- PANEL 6: Furniture, Specs, Placement, Mood, Notes ---
-    var selectedFurniture = [];
-    document.querySelectorAll('#furnitureChips .chip.selected').forEach(function(el) {
-      selectedFurniture.push(el.getAttribute('data-en') || el.textContent.trim());
-    });
-
+    // --- PANEL 6: Specs, Mood, Notes ---
     var specs = {};
     ['bedtype','wallcolor','floor','lighting','curtains','ceiling','rug'].forEach(function(type) {
       var sel = document.querySelector('[data-placement="' + type + '"].selected');
       if (sel) specs[type] = sel.getAttribute('data-en') || sel.textContent.trim();
-    });
-
-    var placements = {};
-    ['bed','wardrobe','sofa','desk'].forEach(function(type) {
-      var sel = document.querySelector('[data-placement="' + type + '"].selected');
-      if (sel) placements[type] = sel.getAttribute('data-en') || sel.textContent.trim();
     });
 
     var moods = [];
@@ -2512,7 +2509,7 @@
       dining:   'dining table, dining chairs, sideboard, pendant light',
       bathroom: 'walk-in shower with glass partition, freestanding bathtub, double vanity with undermount sinks, large wall mirror, floating storage cabinet, towel rack, toilet'
     };
-    var furnitureText = selectedFurniture.length > 0 ? selectedFurniture.join(', ') : (fallbackFurniture[roomType] || fallbackFurniture.bedroom);
+    var furnitureText = fallbackFurniture[roomType] || fallbackFurniture.bedroom;
 
     // Count beds from notes
     var bedCount = 1;
@@ -2537,7 +2534,7 @@
     // ═══════════════════════════════════════════════
     // BUILD COMPREHENSIVE AI PROMPT
     // ═══════════════════════════════════════════════
-    var prompt =
+    var redesignPrompt =
       // ── CORE INSTRUCTION ──
       'You are a professional interior designer applying a full redesign to THIS SPECIFIC PHOTO.' +
       ' The output must show the SAME room from the SAME camera angle and perspective.' +
@@ -2587,12 +2584,7 @@
       ) +
 
       // ── FURNITURE PLACEMENT ──
-      '\n\n=== FURNITURE PLACEMENT ===' +
-      (isBedRoom && placements.bed      ? '\n• Bed → position: ' + placements.bed      : '') +
-      (isBedRoom && placements.wardrobe ? '\n• Wardrobe → position: ' + placements.wardrobe : '') +
-      (!isBathroom && placements.sofa   ? '\n• Sofa → position: ' + placements.sofa     : '') +
-      ((isBedRoom || roomType === 'office') && placements.desk ? '\n• Desk → position: ' + placements.desk : '') +
-      (fpInfo ? '\n3D Planner layout: ' + fpInfo : '') +
+      (fpInfo ? '\n\n=== FURNITURE PLACEMENT ===\n3D Planner layout: ' + fpInfo : '') +
 
       // ── COLOR & ATMOSPHERE ──
       '\n\n=== COLOR PALETTE & ATMOSPHERE ===' +
@@ -2615,6 +2607,38 @@
       '\n• Real furniture proportions — nothing oversized or undersized for the room dimensions.' +
       '\n• Visible styling details: throw pillows, plants, books, art, small decor objects that match the chosen style.' +
       '\n\nAVOID: changing room geometry, altering window/door count, adding extra rooms, cartoon or illustration look, visible AI artifacts, floating furniture, wrong scale objects.';
+
+    // ── REARRANGE-ONLY PROMPT ──
+    // Keeps every existing furniture piece exactly as photographed and only changes its position/layout.
+    var rearrangePrompt =
+      'You are a professional interior designer. The user has uploaded a photo of their room with existing furniture already in place.' +
+
+      '\n\nYour task: REARRANGE the existing furniture ONLY to create a beautiful, functional, and professional interior design layout.' +
+
+      '\n\nABSOLUTE RULES — NEVER VIOLATE:' +
+      '\n1. FURNITURE IS IDENTICAL: Every piece of furniture must remain exactly the same — same color, same material, same texture, same size, same style. Zero changes to appearance.' +
+      '\n2. SAME ROOM: Walls, floor, ceiling, windows, doors stay exactly as they are. No changes to architecture.' +
+      '\n3. SAME CAMERA ANGLE: Keep the exact same perspective and viewpoint.' +
+      '\n4. NO ADDITIONS: Do not add any new furniture, plants, accessories, or decorations that were not in the original photo.' +
+      '\n5. NO REMOVALS: All existing furniture pieces must appear in the result.' +
+
+      '\n\nREARRANGEMENT GOALS:' +
+      '\n- Create clear, comfortable pathways through the room' +
+      '\n- Place seating to face the natural focal point (TV, window, fireplace)' +
+      '\n- Balance furniture distribution — avoid crowding one side' +
+      '\n- Create functional zones (seating area, workspace, etc.)' +
+      '\n- Maintain breathing space around each piece' +
+      '\n- Follow the golden ratio for visual harmony' +
+
+      '\n\nOUTPUT QUALITY:' +
+      '\n- Photorealistic, same lighting conditions as original' +
+      '\n- Professional interior design magazine quality' +
+      '\n- Natural shadows matching furniture positions' +
+      '\n- Architectural Digest standard' +
+
+      (notes ? '\n\n=== USER VISION (HIGHEST PRIORITY — MUST FOLLOW EXACTLY) ===\n' + notes : '');
+
+    var prompt = (designMode === 'rearrange') ? rearrangePrompt : redesignPrompt;
 
     // Compress image before upload (max 1280px, JPEG) — much faster upload & generation
     function compressImage(file, maxSize, quality, callback) {
@@ -2829,116 +2853,40 @@
   // Apply English on page load
   window.addEventListener('DOMContentLoaded', function() {
     setLang('en');
-    renderFurnitureChips();
-    renderPriorityChips();
+    refreshPlannerPreviewFromStorage();
+    formPanelsSnapshot = document.querySelector('.form-panels').innerHTML;
+    resultAreaSnapshot = document.getElementById('resultArea').innerHTML;
   });
 
+  // BUG 3 fix: wipe every panel selection and go back to a clean panel 1
+  function startNewDesign() {
+    if (formPanelsSnapshot !== null) {
+      document.querySelector('.form-panels').innerHTML = formPanelsSnapshot;
+    }
 
-  // ===== FIX 4: Furniture per room type =====
-  var furnitureByRoom = {
-    bedroom: [
-      {en:'🛏️ Bed',ar:'🛏️ سرير',sel:true},{en:'🗄️ Wardrobe',ar:'🗄️ خزانة',sel:true},
-      {en:'🪞 Mirror',ar:'🪞 مرآة'},{en:'🪑 Desk Chair',ar:'🪑 كرسي مكتب'},
-      {en:'📚 Bookshelf',ar:'📚 مكتبة'},{en:'💡 Special Lighting',ar:'💡 إضاءة خاصة'},
-      {en:'🌿 Plants',ar:'🌿 نباتات'},{en:'🪟 Curtains',ar:'🪟 ستائر',sel:true},{en:'🛋️ Single Sofa',ar:'🛋️ صوفا مفردة'},{en:'🛋️ Corner Sofa',ar:'🛋️ صوفا زاوية'},
-    ],
-    kids: [
-      {en:'🛏️ Bed',ar:'🛏️ سرير',sel:true},{en:'🗄️ Wardrobe',ar:'🗄️ خزانة',sel:true},
-      {en:'🧸 Play Area',ar:'🧸 منطقة ألعاب',sel:true},{en:'📚 Bookshelf',ar:'📚 مكتبة'},
-      {en:'🪑 Desk Chair',ar:'🪑 كرسي مكتب'},{en:'💡 Special Lighting',ar:'💡 إضاءة خاصة'},
-    ],
-    living: [
-      {en:'🛋️ Sofa',ar:'🛋️ أريكة',sel:true},{en:'🖥️ TV Unit',ar:'🖥️ طاولة تلفزيون',sel:true},
-      {en:'☕ Coffee Table',ar:'☕ طاولة قهوة',sel:true},{en:'📚 Bookshelf',ar:'📚 مكتبة'},
-      {en:'🌿 Plants',ar:'🌿 نباتات'},{en:'💡 Special Lighting',ar:'💡 إضاءة خاصة'},
-      {en:'🪞 Mirror',ar:'🪞 مرآة'},{en:'🪟 Curtains',ar:'🪟 ستائر',sel:true},
-    ],
-    kitchen: [
-      {en:'🍳 Kitchen Island',ar:'🍳 جزيرة المطبخ'},{en:'🪑 Bar Stools',ar:'🪑 كراسي بار'},
-      {en:'🌿 Plants',ar:'🌿 نباتات'},{en:'💡 Special Lighting',ar:'💡 إضاءة خاصة',sel:true},
-      {en:'🗄️ Storage Cabinet',ar:'🗄️ خزانة تخزين',sel:true},
-    ],
-    office: [
-      {en:'🖥️ Desk',ar:'🖥️ مكتب',sel:true},{en:'🪑 Office Chair',ar:'🪑 كرسي مكتبي',sel:true},
-      {en:'📚 Bookshelf',ar:'📚 مكتبة',sel:true},{en:'🗄️ Filing Cabinet',ar:'🗄️ خزانة ملفات'},
-      {en:'🛋️ Guest Sofa',ar:'🛋️ أريكة ضيوف'},{en:'💡 Special Lighting',ar:'💡 إضاءة خاصة',sel:true},
-      {en:'🌿 Plants',ar:'🌿 نباتات'},
-    ],
-    dining: [
-      {en:'🍽️ Dining Table',ar:'🍽️ طاولة طعام',sel:true},{en:'🪑 Dining Chairs',ar:'🪑 كراسي طعام',sel:true},
-      {en:'🗄️ Sideboard',ar:'🗄️ خزانة جانبية'},{en:'💡 Special Lighting',ar:'💡 إضاءة خاصة',sel:true},
-      {en:'🌿 Plants',ar:'🌿 نباتات'},{en:'🪞 Mirror',ar:'🪞 مرآة'},
-    ],
-    bathroom: [
-      {en:'🛁 Bathtub',ar:'🛁 حوض استحمام'},{en:'🚿 Shower',ar:'🚿 دش',sel:true},
-      {en:'🪥 Double Sink Vanity',ar:'🪥 حوض مزدوج',sel:true},{en:'🪥 Single Sink Vanity',ar:'🪥 حوض مفرد'},
-      {en:'🚽 Toilet',ar:'🚽 مرحاض',sel:true},{en:'🪞 Large Mirror',ar:'🪞 مرآة كبيرة',sel:true},
-      {en:'🗄️ Storage Cabinet',ar:'🗄️ خزانة تخزين'},{en:'🌿 Plants',ar:'🌿 نباتات'},
-      {en:'💡 Special Lighting',ar:'💡 إضاءة خاصة',sel:true},{en:'🧴 Towel Rack',ar:'🧴 علاقة مناشف',sel:true},
-      {en:'🧱 Feature Wall Tiles',ar:'🧱 بلاط ديكوري'},{en:'🪟 Frosted Window',ar:'🪟 نافذة مات'},
-    ],
-  };
+    currentPanel = 1;
+    currency = 'EUR';
+    uploadedFiles = [];
+    fileAngles = [];
+    designCount = 1;
+    beforeAfterOn = false;
+    designMode = 'redesign';
+    plannerResult = null;
+    clearFp();
 
-  // Spending priorities per room type (first item = default selected)
-  var priorityByRoom = {
-    bedroom: [
-      {en:'Bed & Sleep',ar:'السرير والنوم',sel:true},{en:'Storage',ar:'التخزين'},
-      {en:'Lighting',ar:'الإضاءة'},{en:'Decor',ar:'الديكور'},{en:'Seating',ar:'الجلوس'},
-    ],
-    kids: [
-      {en:'Bed & Sleep',ar:'السرير والنوم',sel:true},{en:'Play Area',ar:'منطقة اللعب'},
-      {en:'Storage',ar:'التخزين'},{en:'Lighting',ar:'الإضاءة'},{en:'Decor',ar:'الديكور'},
-    ],
-    living: [
-      {en:'Seating',ar:'الجلوس',sel:true},{en:'Entertainment',ar:'الترفيه'},
-      {en:'Lighting',ar:'الإضاءة'},{en:'Decor',ar:'الديكور'},{en:'Storage',ar:'التخزين'},
-    ],
-    kitchen: [
-      {en:'Cabinets & Storage',ar:'الخزائن والتخزين',sel:true},{en:'Countertops',ar:'أسطح العمل'},
-      {en:'Appliances',ar:'الأجهزة'},{en:'Lighting',ar:'الإضاءة'},{en:'Decor',ar:'الديكور'},
-    ],
-    office: [
-      {en:'Desk & Work Area',ar:'المكتب ومنطقة العمل',sel:true},{en:'Seating',ar:'الجلوس'},
-      {en:'Storage',ar:'التخزين'},{en:'Lighting',ar:'الإضاءة'},{en:'Decor',ar:'الديكور'},
-    ],
-    dining: [
-      {en:'Dining Table & Chairs',ar:'طاولة الطعام والكراسي',sel:true},{en:'Lighting',ar:'الإضاءة'},
-      {en:'Storage',ar:'التخزين'},{en:'Decor',ar:'الديكور'},
-    ],
-    bathroom: [
-      {en:'Shower & Bathtub',ar:'الدش والحوض',sel:true},{en:'Vanity & Sink',ar:'الحوض والطاولة'},
-      {en:'Lighting',ar:'الإضاءة',sel:true},{en:'Tiles & Surfaces',ar:'البلاط والأسطح'},
-      {en:'Storage',ar:'التخزين'},{en:'Decor',ar:'الديكور'},
-    ],
-  };
+    document.getElementById('fileInput').value = '';
+    document.getElementById('multiPreview').innerHTML = '';
 
-  function renderPriorityChips() {
-    var wrap = document.getElementById('priorityChips');
-    if (!wrap) return;
-    var roomType = document.querySelector('#panel-2 select') ? document.querySelector('#panel-2 select').value : 'bedroom';
-    var items = priorityByRoom[roomType] || priorityByRoom.bedroom;
-    wrap.innerHTML = '';
-    items.forEach(function(it) {
-      var c = document.createElement('div');
-      c.className = 'chip' + (it.sel ? ' selected' : '');
-      c.setAttribute('onclick', 'toggleChip(this)');
-      c.setAttribute('data-en', it.en);
-      c.setAttribute('data-ar', it.ar);
-      c.textContent = (currentLang === 'ar') ? it.ar : it.en;
-      wrap.appendChild(c);
-    });
-  }
+    var resultArea = document.getElementById('resultArea');
+    if (resultAreaSnapshot !== null) resultArea.innerHTML = resultAreaSnapshot;
+    resultArea.classList.remove('show');
 
-  function renderFurnitureChips() {
-    var roomType = document.querySelector('#panel-2 select') ? document.querySelector('#panel-2 select').value : 'bedroom';
-    var items = furnitureByRoom[roomType] || furnitureByRoom.bedroom;
-    var container = document.getElementById('furnitureChips');
-    if (!container) return;
-    container.innerHTML = items.map(function(item) {
-      var label = currentLang === 'ar' ? item.ar : item.en;
-      var sel = item.sel ? ' selected' : '';
-      return '<div class="chip' + sel + '" onclick="toggleChip(this)" data-en="' + item.en + '" data-ar="' + item.ar + '">' + label + '</div>';
-    }).join('');
+    document.querySelectorAll('.progress-step').forEach(function(s) { s.classList.remove('active', 'done'); });
+    document.querySelectorAll('.progress-step')[0].classList.add('active');
+
+    resetBodyScrollLock();
+    setLang(currentLang);
+    document.getElementById('form-section').scrollIntoView({ behavior: 'smooth' });
   }
 
 
@@ -2960,7 +2908,39 @@
     } catch(e) { return ''; }
   }
 
-  function clearFp() {}
+  // BUG 2 fix: fully clear a stale/previous 3D planner session
+  function clearFp() {
+    try { localStorage.removeItem('lamsa_planner3d'); } catch(e) {}
+    plannerResult = null;
+    var row = document.getElementById('plannerPreviewRow');
+    var prev = document.getElementById('plannerPreview');
+    if (row) row.classList.remove('show');
+    if (prev) prev.textContent = '';
+  }
+
+  // BUG 2 fix: switching room type invalidates any previously placed 3D furniture
+  function onRoomTypeChange() {
+    clearFp();
+  }
+
+  // BUG 2 fix: only resurrect the planner summary if it still matches the selected room
+  function refreshPlannerPreviewFromStorage() {
+    try {
+      var pd = JSON.parse(localStorage.getItem('lamsa_planner3d') || 'null');
+      var roomSel = document.getElementById('roomTypeSelect');
+      var roomType = roomSel ? roomSel.value : 'bedroom';
+      var row = document.getElementById('plannerPreviewRow');
+      var prev = document.getElementById('plannerPreview');
+      if (!row || !prev) return;
+      if (pd && pd.items && pd.items.length > 0 && pd.rt === roomType) {
+        prev.textContent = '✓ 3D Layout saved: ' + pd.items.length + ' furniture items placed.';
+        row.classList.add('show');
+      } else {
+        row.classList.remove('show');
+        prev.textContent = '';
+      }
+    } catch(e) {}
+  }
 
 
   var observer = new IntersectionObserver(function(entries) {

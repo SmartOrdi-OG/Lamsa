@@ -178,6 +178,19 @@ canvas{display:block;width:100%;height:100%;touch-action:none}
 </script>
 
 <script>
+// BUG 1 fix: guard against this page ever being left with a locked-scroll body
+// (defensive — covers standalone use of this page outside the parent's iframe/modal)
+function resetPlannerBodyScrollLock(){
+  document.body.style.position='';
+  document.body.style.overflow='';
+  document.body.style.top='';
+  document.body.style.left='';
+  document.body.style.right='';
+  document.body.style.bottom='';
+  document.documentElement.style.overflow='';
+}
+window.addEventListener('pageshow',function(e){ if(e.persisted) resetPlannerBodyScrollLock(); });
+
 // ═══════════════════════════════════════════════════════════
 // CATALOG
 // ═══════════════════════════════════════════════════════════
