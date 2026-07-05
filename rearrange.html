@@ -66,6 +66,36 @@
   h1 { font-size: clamp(26px, 6vw, 36px); font-weight: 900; text-align: center; margin-bottom: 10px; }
   .sub { color: var(--gray); font-size: 14px; text-align: center; line-height: 1.6; margin-bottom: 36px; }
 
+  .mode-row {
+    display: flex; align-items: center; gap: 14px;
+    background: var(--dark);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 14px 16px;
+    margin-bottom: 20px;
+  }
+  .mode-toggle-wrap {
+    width: 44px; height: 24px;
+    background: var(--border);
+    border-radius: 12px;
+    position: relative;
+    cursor: pointer;
+    transition: background 0.3s;
+    flex-shrink: 0;
+  }
+  .mode-toggle-wrap.on { background: var(--gold); }
+  .mode-toggle-switch {
+    width: 18px; height: 18px;
+    background: white;
+    border-radius: 50%;
+    position: absolute;
+    top: 3px; left: 3px;
+    transition: transform 0.3s;
+  }
+  .mode-toggle-wrap.on .mode-toggle-switch { transform: translateX(20px); }
+  .mode-label-main { font-size: 14px; font-weight: 900; color: var(--white); }
+  .mode-label-sub { font-size: 12px; color: var(--gray); margin-top: 2px; }
+
   .upload-zone {
     border: 2px dashed var(--border);
     border-radius: 14px;
@@ -150,6 +180,16 @@
   <h1>✨ Rearrange My Room</h1>
   <p class="sub">Upload a photo of your room. We'll keep every piece of furniture exactly as it is and just find a better layout for it.</p>
 
+  <div class="mode-row">
+    <div class="mode-toggle-wrap" id="modeToggleWrap" onclick="toggleMode()">
+      <div class="mode-toggle-switch"></div>
+    </div>
+    <div>
+      <div class="mode-label-main" id="modeLabelMain">Rearrange Only</div>
+      <div class="mode-label-sub" id="modeLabelSub">Keep the exact same furniture — just find a better layout</div>
+    </div>
+  </div>
+
   <div class="upload-zone" id="uploadZone">
     <input type="file" accept="image/*" id="fileInput" onchange="handleUpload(this)">
     <div id="uploadContent">
@@ -185,6 +225,9 @@
 
 <script>
   var REARRANGE_PROMPT =
+    'CRITICAL: Do NOT add any new furniture. Do NOT change any existing furniture.\n' +
+    'Use ONLY what is visible in the original photo.\n' +
+    'The same sofa, same bed, same chairs, same items — just moved to new positions.\n\n' +
     'You are an expert interior designer tasked with DRAMATICALLY rearranging this room.\n\n' +
     'MANDATORY CHANGES - every single piece must move:\n' +
     '- The sofa/largest seating: move to completely opposite wall or perpendicular position\n' +
@@ -204,6 +247,23 @@
     'Furniture appearance stays 100% identical - same color, material, size.\n' +
     'Output: photorealistic, professional interior design result.';
 
+  var FULL_REDESIGN_PROMPT =
+    'You are a professional interior designer creating a complete redesign of this room.\n\n' +
+    'You may add, remove, or replace furniture and decor as needed to achieve a stunning, professional result.\n' +
+    'Feel free to suggest a new color palette, new furniture pieces, new lighting, and new decorative accents.\n\n' +
+    'DESIGN PRINCIPLES to apply:\n' +
+    '- Identify the room focal point (TV, window, fireplace) and design around it\n' +
+    '- All seating must face the focal point\n' +
+    '- Create 60-90cm clear walkways\n' +
+    '- No furniture blocking doors or windows\n' +
+    '- Balance visual weight left and right\n' +
+    '- Create intimate conversation groupings\n\n' +
+    'STRICTLY PRESERVE: room shape, wall count, ceiling height, number of windows, number of doors, room proportions, and camera angle.\n' +
+    'DO NOT add, move, or remove architectural elements (windows, doors, walls, structural beams).\n\n' +
+    'Output: photorealistic, professional interior design magazine quality result.';
+
+  var mode = 'rearrange'; // 'rearrange' = keep exact furniture, 'redesign' = AI can change furniture/style
+
   var uploadedFile = null;
 
   function handleUpload(input) {
@@ -214,6 +274,16 @@
     document.getElementById('uploadContent').style.display = 'none';
     document.getElementById('uploadPreview').style.display = 'block';
     document.getElementById('generateBtn').disabled = false;
+  }
+
+  function toggleMode() {
+    mode = (mode === 'rearrange') ? 'redesign' : 'rearrange';
+    document.getElementById('modeToggleWrap').classList.toggle('on', mode === 'redesign');
+    document.getElementById('modeLabelMain').textContent = mode === 'redesign' ? 'Full Redesign' : 'Rearrange Only';
+    document.getElementById('modeLabelSub').textContent = mode === 'redesign'
+      ? 'AI can suggest new furniture, colors, and style'
+      : 'Keep the exact same furniture — just find a better layout';
+    document.getElementById('generateBtn').textContent = mode === 'redesign' ? '✨ Redesign My Room' : '✨ Rearrange My Room';
   }
 
   function removeImage(e) {
@@ -318,12 +388,12 @@
     return wrap;
   }
 
-  function callGenerate(imageUrl) {
+  function callGenerate(imageUrl, prompt) {
     fetch('/api/generate', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        prompt: REARRANGE_PROMPT,
+        prompt: prompt,
         image_url: imageUrl,
         num_images: 1,
         guidance_scale: 3.5,
@@ -368,6 +438,8 @@
     ph.innerHTML = '<div class="rp-icon">🎨</div><p>Generating your new layout...</p><small>Takes 15-30 seconds</small>';
     document.getElementById('loadingDots').classList.add('show');
 
+    var promptToUse = (mode === 'redesign') ? FULL_REDESIGN_PROMPT : REARRANGE_PROMPT;
+
     compressImage(uploadedFile, 1536, 0.9, function(imageDataUrl) {
       fetch('/api/upload', {
         method: 'POST',
@@ -376,7 +448,7 @@
       })
       .then(function(r) { return r.json(); })
       .then(function(uploadResult) {
-        callGenerate(uploadResult.url || imageDataUrl);
+        callGenerate(uploadResult.url || imageDataUrl, promptToUse);
       })
       .catch(function(err) {
         showError('Image upload failed. Please try again.');
