@@ -3,6 +3,17 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<script>
+  // Auth guard: bounce to login if no logged-in session is found
+  (function() {
+    try {
+      var user = JSON.parse(localStorage.getItem('lamsa_user') || 'null');
+      if (!user || !user.loggedIn) window.location.replace('lamsa-auth.html');
+    } catch (e) {
+      window.location.replace('lamsa-auth.html');
+    }
+  })();
+</script>
 <title>لمستي | Lamsa</title>
 <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;500;700;900&family=Playfair+Display:wght@400;700&display=swap" rel="stylesheet">
 <style>

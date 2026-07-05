@@ -546,7 +546,7 @@
           <label class="form-label">البريد الإلكتروني</label>
           <div class="input-wrap">
             <span class="input-icon">✉️</span>
-            <input type="email" class="form-input" placeholder="example@email.com" dir="ltr">
+            <input type="email" class="form-input" id="regEmail" placeholder="example@email.com" dir="ltr">
           </div>
         </div>
         <div class="form-group">
@@ -689,20 +689,55 @@
 
   // SOCIAL LOGIN
   function socialLogin(provider) {
+    try {
+      localStorage.setItem('lamsa_user', JSON.stringify({
+        username: provider === 'google' ? 'Google User' : 'Apple User',
+        loggedIn: true
+      }));
+    } catch(e){}
     showSuccess();
   }
 
   // LOGIN
   function handleLogin() {
+    var username = document.getElementById('loginUser').value.trim();
+    var password = document.getElementById('loginPass').value;
+
+    if (!username || !password) {
+      alert('Please enter username and password');
+      return;
+    }
+
+    try {
+      localStorage.setItem('lamsa_user', JSON.stringify({ username: username, loggedIn: true }));
+    } catch(e){}
+
     showSuccess();
   }
 
   // REGISTER
   function handleRegister() {
-    if (!selectedCountry) {
-      alert('الرجاء اختيار دولتك');
+    var username = document.getElementById('regUsername').value.trim();
+    var email = document.getElementById('regEmail').value.trim();
+    var password = document.getElementById('regPass').value;
+
+    if (!username || !email || !password) {
+      alert('Please fill all fields');
       return;
     }
+    if (password.length < 6) {
+      alert('Password too short');
+      return;
+    }
+    if (!selectedCountry) {
+      alert('Please select country');
+      return;
+    }
+
+    try {
+      localStorage.setItem('lamsa_user', JSON.stringify({ username: username, loggedIn: true }));
+    } catch(e){}
+
     showSuccess();
   }
 
@@ -724,15 +759,6 @@
       var titleEl = document.querySelector('.success-title');
       if(titleEl) titleEl.innerHTML = '👋 Welcome, <span style="color:var(--gold);">' + username + '!</span>';
     }
-
-    // Save to localStorage
-    try {
-      localStorage.setItem('lamsa_user', JSON.stringify({
-        username: username,
-        loggedIn: true,
-        time: Date.now()
-      }));
-    } catch(e){}
   }
 
   function goToApp() {
