@@ -84,6 +84,19 @@
 
   .nav-right { display: flex; align-items: center; gap: 10px; }
 
+  .nav-rearrange {
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--light);
+    padding: 6px 10px;
+    border-radius: 6px;
+    font-size: 12px; font-weight: 700;
+    text-decoration: none;
+    white-space: nowrap;
+    transition: all 0.2s;
+  }
+  .nav-rearrange:hover { border-color: var(--gold); color: var(--gold); }
+
   .lang-dropdown { position: relative; }
   .lang-selected {
     background: transparent;
@@ -922,6 +935,7 @@
     </div>
   </div>
   <div class="nav-right">
+    <a class="nav-rearrange" href="rearrange.html" data-en="✨ Quick Rearrange" data-ar="✨ إعادة ترتيب سريعة">✨ Quick Rearrange</a>
     <div class="lang-dropdown" id="langDropdown">
       <button class="lang-selected" onclick="toggleLangMenu()">
         <span id="langFlag">🇬🇧</span>
