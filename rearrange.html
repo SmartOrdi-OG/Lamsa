@@ -185,18 +185,24 @@
 
 <script>
   var REARRANGE_PROMPT =
-    'You are an expert interior designer. Analyze this room and rearrange the existing furniture using professional interior design principles:\n' +
-    '- Identify the focal point (TV, window, fireplace) and orient seating toward it\n' +
-    '- Create clear 60cm walkways between pieces\n' +
-    '- Place sofa/seating to face the focal point\n' +
-    '- Put bed headboard against solid wall, never under window\n' +
-    '- Center coffee table 45cm in front of sofa\n' +
-    '- Push tall pieces (wardrobe, shelf) flush against walls\n' +
-    '- Balance furniture distribution left and right\n' +
-    '- Group pieces to create functional conversation zones\n' +
-    'Keep ALL furniture identical — same color, material, size, style.\n' +
-    'Move every piece to a new optimized position.\n' +
-    'Result: professional interior design magazine quality photo.';
+    'You are an expert interior designer tasked with DRAMATICALLY rearranging this room.\n\n' +
+    'MANDATORY CHANGES - every single piece must move:\n' +
+    '- The sofa/largest seating: move to completely opposite wall or perpendicular position\n' +
+    '- The bed: move headboard to a different wall entirely\n' +
+    '- Coffee table: reposition to center of new seating arrangement\n' +
+    '- All chairs: rotate and reposition to face new focal point\n' +
+    '- Wardrobe/tall pieces: slide to different wall\n' +
+    '- TV unit: only move if space allows\n\n' +
+    'DESIGN PRINCIPLES to apply:\n' +
+    '- Identify the room focal point (TV, window, fireplace)\n' +
+    '- All seating must face the focal point\n' +
+    '- Create 60-90cm clear walkways\n' +
+    '- No furniture blocking doors or windows\n' +
+    '- Balance visual weight left and right\n' +
+    '- Create intimate conversation groupings\n\n' +
+    'The before and after must look COMPLETELY DIFFERENT in furniture layout.\n' +
+    'Furniture appearance stays 100% identical - same color, material, size.\n' +
+    'Output: photorealistic, professional interior design result.';
 
   var uploadedFile = null;
 
