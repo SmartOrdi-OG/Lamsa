@@ -4,7 +4,7 @@ export default async function handler(req, res) {
   const FAL_API_KEY = (process.env.FAL_API_KEY || '').trim().replace(/\s+/g, '');
   if (!FAL_API_KEY) return res.status(500).json({ error: 'FAL_API_KEY not configured' });
 
-  const { prompt, image_url, num_images = 1, guidance_scale = 3.5, num_inference_steps = 28 } = req.body;
+  const { prompt, image_url, num_images = 1, guidance_scale = 3.5, aspect_ratio = '16:9' } = req.body;
 
   if (!prompt) return res.status(400).json({ error: 'prompt is required' });
 
@@ -20,7 +20,7 @@ export default async function handler(req, res) {
         image_url: image_url || undefined,
         num_images,
         guidance_scale,
-        num_inference_steps,
+        aspect_ratio,
         output_format: 'jpeg',
         safety_tolerance: '2'
       })
