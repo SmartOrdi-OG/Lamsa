@@ -65,7 +65,10 @@ canvas{display:block;width:100%;height:100%;touch-action:none}
 .vbtn:hover{border-color:var(--gold);color:var(--gold)}
 #wallpanel{position:absolute;top:12px;left:12px;background:rgba(7,7,15,.9);border:1px solid var(--bd);border-radius:10px;padding:10px;width:160px;display:none;backdrop-filter:blur(8px)}
 #wallpanel.show{display:block}
-#wallpanel h4{color:var(--gold);font-size:11px;font-weight:700;margin-bottom:8px;letter-spacing:1px}
+#wallpanel .wp-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
+#wallpanel h4{color:var(--gold);font-size:11px;font-weight:700;letter-spacing:1px}
+#wallpanel .wp-close{background:none;border:none;color:var(--sub);font-size:13px;line-height:1;cursor:pointer;padding:2px 4px;flex-shrink:0}
+#wallpanel .wp-close:hover{color:var(--gold)}
 #wallpanel label{font-size:10px;color:var(--sub);display:block;margin-bottom:3px}
 #wallpanel input[type=color]{width:100%;height:26px;border:1px solid var(--bd);border-radius:5px;cursor:pointer;background:transparent}
 #wallpanel input[type=range]{width:100%;margin-bottom:6px}
@@ -132,7 +135,10 @@ canvas{display:block;width:100%;height:100%;touch-action:none}
       </div>
       <!-- Wall editor panel (appears when wall is clicked) -->
       <div id="wallpanel">
-        <h4>🧱 WALL EDITOR</h4>
+        <div class="wp-head">
+          <h4>🧱 WALL EDITOR</h4>
+          <button class="wp-close" onclick="closeWallPanel()" aria-label="Close" title="Close">✕</button>
+        </div>
         <label>Wall Color</label>
         <input type="color" id="wc-color" value="#F5F2EC" oninput="applyWallColor(this.value)">
         <label style="margin-top:6px">Texture</label>
@@ -143,7 +149,7 @@ canvas{display:block;width:100%;height:100%;touch-action:none}
           <option value="wood">Wood Panel</option>
           <option value="marble">Marble</option>
         </select>
-        <button class="abtn" style="margin-top:6px;font-size:10px;padding:6px" onclick="document.getElementById('wallpanel').classList.remove('show')">✓ Done</button>
+        <button class="abtn" style="margin-top:6px;font-size:10px;padding:6px" onclick="closeWallPanel()">✓ Done</button>
       </div>
     </div>
   </div>
@@ -281,6 +287,13 @@ var CAT={
 };
 var ALLCAT={};Object.values(CAT).forEach(function(arr){arr.forEach(function(d){ALLCAT[d.id]=d;});});
 var RLBL={bedroom:'🛏 Bedroom',living:'🛋 Living',kitchen:'🍳 Kitchen',bathroom:'🛁 Bathroom',office:'💻 Office',dining:'🍽 Dining',kids:'🧸 Kids',structure:'🏗 Structure'};
+
+// Universal wall fixtures — offered alongside furniture in every room type, not just under Structure
+var UNIVERSAL=[
+  {id:'door',  n:'Door',  e:'🚪',mk:'door',  w:0.9,d:0.12,h:2.1,col:{fr:0x5C3820,pn:0x7A5030}},
+  CAT.structure.find(function(d){return d.id==='window';})
+];
+UNIVERSAL.forEach(function(d){ALLCAT[d.id]=d;});
 
 // ═══════════════════════════════════════════════════════════
 // HELPERS
@@ -978,6 +991,9 @@ function buildRoom(){
 // ═══════════════════════════════════════════════════════════
 // WALL EDITING
 // ═══════════════════════════════════════════════════════════
+function openWallPanel(){document.getElementById('wallpanel').classList.add('show');}
+function closeWallPanel(){document.getElementById('wallpanel').classList.remove('show');selectedWall=null;}
+window.closeWallPanel=closeWallPanel;
 window.applyWallColor=function(hex){
   if(selectedWall===null)return;
   var col=hex||'#F5F2EC';
@@ -1079,6 +1095,25 @@ function enforceBounds(item){
   if(b.min.z<-RD/2+m) item.mesh.position.z+=(-RD/2+m-b.min.z);
   if(b.max.z> RD/2-m) item.mesh.position.z-=(b.max.z-(RD/2-m));
 }
+function isWallItem(def){return!!def&&(def.mk==='door'||def.mk==='window');}
+var WALL_SNAP_DIST=0.8;
+// For door/window items: if (x,z) is close to a wall, return the position+rotation that
+// hugs that wall flush; otherwise null (caller falls back to normal floor placement).
+function nearestWallSnap(x,z,def){
+  var hw=(def.w||0)/2,hd=(def.d||.1)/2,m=.02;
+  var opts=[
+    {dist:z-(-RD/2),        x:x,        z:-RD/2+hd, rot:0},
+    {dist:(RD/2)-z,         x:x,        z: RD/2-hd, rot:Math.PI},
+    {dist:x-(-RW/2),        x:-RW/2+hd, z:z,        rot:Math.PI/2},
+    {dist:(RW/2)-x,         x: RW/2-hd, z:z,        rot:-Math.PI/2}
+  ];
+  opts.sort(function(a,b){return a.dist-b.dist;});
+  var best=opts[0];
+  if(best.dist>WALL_SNAP_DIST||best.dist<0)return null;
+  if(best.rot===0||best.rot===Math.PI) best.x=Math.max(-RW/2+hw+m,Math.min(RW/2-hw-m,x));
+  else best.z=Math.max(-RD/2+hw+m,Math.min(RD/2-hw-m,z));
+  return{x:snap(best.x),z:snap(best.z),rot:best.rot};
+}
 
 function pickScene(mouse){
   raycaster.setFromCamera(mouse,camera);
@@ -1096,28 +1131,63 @@ function pickScene(mouse){
 function onDown(e){
   if(e.button!==undefined&&e.button!==0)return;
   var mouse=setMouse(e);
-  if(placing){var fp=getFloor(mouse);if(fp){var cp=clamp(snap(fp.x),snap(fp.z),placing);placeItem(placing,cp.x,cp.z,0);}return;}
+  if(placing){
+    var fp=getFloor(mouse);
+    if(fp){
+      var snapRes=isWallItem(placing)?nearestWallSnap(snap(fp.x),snap(fp.z),placing):null;
+      var cp=snapRes||clamp(snap(fp.x),snap(fp.z),placing);
+      placeItem(placing,cp.x,cp.z,snapRes?snapRes.rot:0);
+    }
+    return;
+  }
   var hit=pickScene(mouse);
   if(hit){
     if(hit.type==='furn'){
+      closeWallPanel();
       if(sel!==hit.item)selectItem(hit.item);
       dragging=true;dragItem=hit.item;controls.enabled=false;
       var fp=getFloor(mouse);dragOX=fp?fp.x-hit.item.mesh.position.x:0;dragOZ=fp?fp.z-hit.item.mesh.position.z:0;
       renderer.domElement.style.cursor='grabbing';e.preventDefault();e.stopPropagation();
     } else if(hit.type==='wall'){
       selectedWall=hit.wall;
-      var wp=document.getElementById('wallpanel');wp.classList.add('show');
+      openWallPanel();
+      e.preventDefault();e.stopPropagation();
     }
   } else {
     clearSelect();
-    document.getElementById('wallpanel').classList.remove('show');
-    selectedWall=null;
+    closeWallPanel();
   }
 }
 function onMove(e){
   var mouse=setMouse(e);
-  if(placing){var fp=getFloor(mouse);if(fp){if(!ghostMesh){ghostMesh=makeMesh(placing,true);furnGrp.add(ghostMesh);}var cp=clamp(snap(fp.x),snap(fp.z),placing);ghostMesh.position.set(cp.x,0,cp.z);}return;}
-  if(dragging&&dragItem){var fp=getFloor(mouse);if(fp){dragItem.mesh.position.x=snap(fp.x-dragOX);dragItem.mesh.position.z=snap(fp.z-dragOZ);enforceBounds(dragItem);updateOutline();}e.preventDefault();}
+  if(placing){
+    var fp=getFloor(mouse);
+    if(fp){
+      if(!ghostMesh){ghostMesh=makeMesh(placing,true);furnGrp.add(ghostMesh);}
+      var snapRes=isWallItem(placing)?nearestWallSnap(snap(fp.x),snap(fp.z),placing):null;
+      var cp=snapRes||clamp(snap(fp.x),snap(fp.z),placing);
+      ghostMesh.position.set(cp.x,0,cp.z);ghostMesh.rotation.y=snapRes?snapRes.rot:0;
+    }
+    return;
+  }
+  if(dragging&&dragItem){
+    var fp=getFloor(mouse);
+    if(fp){
+      if(isWallItem(dragItem.def)){
+        var snapRes=nearestWallSnap(snap(fp.x-dragOX),snap(fp.z-dragOZ),dragItem.def);
+        if(snapRes){
+          dragItem.mesh.position.x=snapRes.x;dragItem.mesh.position.z=snapRes.z;
+          dragItem.rot=snapRes.rot;dragItem.mesh.rotation.y=snapRes.rot;
+        } else {
+          dragItem.mesh.position.x=snap(fp.x-dragOX);dragItem.mesh.position.z=snap(fp.z-dragOZ);
+        }
+      } else {
+        dragItem.mesh.position.x=snap(fp.x-dragOX);dragItem.mesh.position.z=snap(fp.z-dragOZ);
+      }
+      enforceBounds(dragItem);updateOutline();
+    }
+    e.preventDefault();
+  }
 }
 function onUp(){controls.enabled=true;if(dragging){dragging=false;dragItem=null;renderer.domElement.style.cursor='default';saveState();}}
 function onTDown(e){e.preventDefault();if(!dragging)controls.enabled=true;onDown(e);}
@@ -1164,7 +1234,13 @@ function buildItems(rt){
   Object.keys(CAT).forEach(function(k){h+='<option value="'+k+'"'+(k===rt?' selected':'')+'>'+( RLBL[k]||k)+'</option>';});
   h+='</select><div class="slbl">Tap item → tap room to place</div><div class="fgrid">';
   items.forEach(function(d){h+='<div class="fcard" id="fc_'+d.id+'" onclick="pickItem(\''+d.id+'\',this)"><span class="ico">'+d.e+'</span><span class="nm">'+d.n+'</span></div>';});
-  h+='</div><div style="font-size:9px;color:#1a1a30;text-align:center;margin-top:8px">R=rotate 90° · Del=delete · Arrow buttons=nudge</div>';
+  h+='</div>';
+  if(rt!=='structure'){
+    h+='<div class="slbl">Wall Fixtures</div><div class="fgrid">';
+    UNIVERSAL.forEach(function(d){h+='<div class="fcard" id="fc_wf_'+d.id+'" onclick="pickItem(\''+d.id+'\',this)"><span class="ico">'+d.e+'</span><span class="nm">'+d.n+'</span></div>';});
+    h+='</div>';
+  }
+  h+='<div style="font-size:9px;color:#1a1a30;text-align:center;margin-top:8px">R=rotate 90° · Del=delete · Arrow buttons=nudge</div>';
   document.getElementById('sbinner').innerHTML=h;
 }
 
@@ -1291,8 +1367,13 @@ function init3D(){
   canvas.addEventListener('touchmove',onTMove,{passive:false});
   canvas.addEventListener('touchend',onUp,{passive:true});
   window.addEventListener('resize',resizeRenderer);
+  // Click anywhere outside the wall editor popup (sidebar tabs, header buttons, etc.) closes it
+  document.addEventListener('mousedown',function(e){
+    var wp=document.getElementById('wallpanel');
+    if(wp.classList.contains('show')&&!wp.contains(e.target))closeWallPanel();
+  });
   document.addEventListener('keydown',function(e){
-    if(e.key==='Escape')cancelPlace();
+    if(e.key==='Escape'){cancelPlace();closeWallPanel();}
     if((e.key==='Delete'||e.key==='Backspace')&&sel&&!placing){e.preventDefault();delSel();}
     if((e.key==='r'||e.key==='R')&&sel&&!placing)rotSel(90);
     if(e.key==='ArrowLeft'&&sel){e.preventDefault();nudge('x',-.1);}

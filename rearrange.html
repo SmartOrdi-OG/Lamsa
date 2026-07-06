@@ -355,22 +355,13 @@
       'font-family:Tajawal,sans-serif;transition:all 0.2s;';
     saveBtn.textContent = '⬇ Save Image';
     saveBtn.onclick = function() {
-      fetch(url).then(function(r) { return r.blob(); }).then(function(blob) {
-        var file = new File([blob], filename, { type: 'image/jpeg' });
-        if (navigator.canShare && navigator.canShare({ files: [file] })) {
-          return navigator.share({ files: [file], title: 'Lamsa Rearranged Room' })
-            .catch(function(err) { if (!err || err.name !== 'AbortError') triggerDownload(blob); });
-        }
-        triggerDownload(blob);
-      }).catch(function() { window.open(url, '_blank'); });
-
-      function triggerDownload(blob) {
-        var blobUrl = URL.createObjectURL(blob);
-        var a = document.createElement('a');
-        a.href = blobUrl; a.download = filename;
-        document.body.appendChild(a); a.click(); document.body.removeChild(a);
-        URL.revokeObjectURL(blobUrl);
-      }
+      var link = document.createElement('a');
+      link.href = url; // the direct fal.ai image URL
+      link.download = filename;
+      link.target = '_blank';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
     };
 
     var shareBtn = document.createElement('button');
@@ -388,36 +379,92 @@
     return wrap;
   }
 
+  var POLL_INTERVAL_MS = 2500;
+  var MAX_POLL_ATTEMPTS = 60; // ~2.5 minutes
+
+  function renderGenerateResult(data) {
+    document.getElementById('loadingDots').classList.remove('show');
+    document.getElementById('generateBtn').disabled = false;
+
+    if (data.images && data.images.length > 0) {
+      document.getElementById('resultPlaceholder').style.display = 'none';
+      var imgWrap = document.getElementById('resultImg');
+      imgWrap.innerHTML = '';
+      var imgEl = document.createElement('img');
+      imgEl.src = data.images[0].url;
+      imgEl.style.cssText = 'width:100%;border-radius:10px;';
+      imgWrap.style.cssText = 'display:block;aspect-ratio:auto;';
+      imgWrap.appendChild(imgEl);
+      imgWrap.appendChild(createDownloadBtn(data.images[0].url, 'lamsa-rearranged.jpg'));
+    } else {
+      showError('Error generating image. Please try again.');
+    }
+  }
+
+  function pollForResult(requestId, attempt) {
+    if (attempt >= MAX_POLL_ATTEMPTS) {
+      showError('Generation is taking too long. Please try again.');
+      console.error('polling timed out for request_id:', requestId);
+      return;
+    }
+
+    fetch('/api/status?request_id=' + encodeURIComponent(requestId))
+      .then(function(res) { return res.json(); })
+      .then(function(statusData) {
+        console.log('[generate] status check #' + attempt + ':', statusData);
+
+        var status = statusData.status;
+        if (status === 'COMPLETED') {
+          fetch('/api/status?request_id=' + encodeURIComponent(requestId) + '&mode=result')
+            .then(function(res) { return res.json(); })
+            .then(function(resultData) {
+              console.log('[generate] result:', resultData);
+              renderGenerateResult(resultData);
+            })
+            .catch(function(err) {
+              showError('Connection error. Please try again.');
+              console.error('result fetch error:', err);
+            });
+        } else if (status === 'FAILED' || status === 'ERROR') {
+          showError('Error generating image. Please try again.');
+          console.error('generation failed:', statusData);
+        } else {
+          // IN_QUEUE or IN_PROGRESS — keep polling
+          setTimeout(function() { pollForResult(requestId, attempt + 1); }, POLL_INTERVAL_MS);
+        }
+      })
+      .catch(function(err) {
+        showError('Connection error. Please try again.');
+        console.error('status check error:', err);
+      });
+  }
+
   function callGenerate(imageUrl, prompt) {
+    var requestBody = {
+      prompt: prompt,
+      image_url: imageUrl,
+      num_images: 1,
+      guidance_scale: 3.5,
+      aspect_ratio: '16:9'
+    };
+    console.log('[generate] sending to /api/generate:', requestBody);
+
     fetch('/api/generate', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        prompt: prompt,
-        image_url: imageUrl,
-        num_images: 1,
-        guidance_scale: 3.5,
-        aspect_ratio: '16:9'
-      })
+      body: JSON.stringify(requestBody)
     })
     .then(function(res) { return res.json(); })
-    .then(function(data) {
-      document.getElementById('loadingDots').classList.remove('show');
-      document.getElementById('generateBtn').disabled = false;
+    .then(function(submitData) {
+      console.log('[generate] /api/generate response:', submitData);
 
-      if (data.images && data.images.length > 0) {
-        document.getElementById('resultPlaceholder').style.display = 'none';
-        var imgWrap = document.getElementById('resultImg');
-        imgWrap.innerHTML = '';
-        var imgEl = document.createElement('img');
-        imgEl.src = data.images[0].url;
-        imgEl.style.cssText = 'width:100%;border-radius:10px;';
-        imgWrap.style.cssText = 'display:block;aspect-ratio:auto;';
-        imgWrap.appendChild(imgEl);
-        imgWrap.appendChild(createDownloadBtn(data.images[0].url, 'lamsa-rearranged.jpg'));
-      } else {
+      if (!submitData || !submitData.request_id) {
         showError('Error generating image. Please try again.');
+        console.error('no request_id in response:', submitData);
+        return;
       }
+
+      pollForResult(submitData.request_id, 0);
     })
     .catch(function(err) {
       showError('Connection error. Please try again.');

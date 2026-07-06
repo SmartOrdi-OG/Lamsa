@@ -2031,6 +2031,7 @@
   let designMode = 'redesign'; // 'redesign' = full AI redesign, 'rearrange' = reposition existing furniture only
   var formPanelsSnapshot = null; // pristine panel markup, captured once on load — used by startNewDesign()
   var resultAreaSnapshot = null; // pristine result-area markup (doGenerate replaces its contents with the generated image)
+  var lastBeforeImageDataUrl = null; // "before" image shown in the before/after result view
 
   function goTo(n) {
     document.getElementById('panel-' + currentPanel).classList.remove('active');
@@ -2454,21 +2455,94 @@
     }
 
     function callGenerate(imageUrl) {
-      // Call fal.ai FLUX.1 Kontext Pro
+      var requestBody = {
+        prompt: prompt,
+        image_url: imageUrl || undefined,
+        num_images: designCount,
+        guidance_scale: 3.5,
+        aspect_ratio: '16:9',
+        safety_tolerance: '2'
+      };
+      console.log('[generate] sending to /api/generate:', requestBody);
+
+      // Call fal.ai FLUX.1 Kontext Pro (queue-based: submit, then poll for the result)
       fetch('/api/generate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          prompt: prompt,
-          image_url: imageUrl || undefined,
-          num_images: designCount,
-          guidance_scale: 3.5,
-          aspect_ratio: '16:9',
-          safety_tolerance: '2'
-        })
+        body: JSON.stringify(requestBody)
       })
       .then(function(res) { return res.json(); })
-      .then(function(data) {
+      .then(function(submitData) {
+        console.log('[generate] /api/generate response:', submitData);
+
+        if (!submitData || !submitData.request_id) {
+          document.getElementById('loadingDots').classList.remove('show');
+          document.getElementById('resultPlaceholder').style.display = 'block';
+          document.getElementById('resultPlaceholder').innerHTML = '<div class="rp-icon">❌</div><p>Error generating image. Please try again.</p>';
+          console.error('[generate] no request_id in response:', submitData);
+          return;
+        }
+
+        pollForResult(submitData.request_id, 0);
+      })
+      .catch(function(err) {
+        document.getElementById('loadingDots').classList.remove('show');
+        document.getElementById('resultPlaceholder').style.display = 'block';
+        document.getElementById('resultPlaceholder').innerHTML = '<div class="rp-icon">❌</div><p>Connection error. Please try again.</p>';
+        console.error('[generate] submit error:', err);
+      });
+    } // close callGenerate
+
+    var POLL_INTERVAL_MS = 2500;
+    var MAX_POLL_ATTEMPTS = 60; // ~2.5 minutes
+
+    function pollForResult(requestId, attempt) {
+      if (attempt >= MAX_POLL_ATTEMPTS) {
+        document.getElementById('loadingDots').classList.remove('show');
+        document.getElementById('resultPlaceholder').style.display = 'block';
+        document.getElementById('resultPlaceholder').innerHTML = '<div class="rp-icon">❌</div><p>Generation is taking too long. Please try again.</p>';
+        console.error('[generate] polling timed out for request_id:', requestId);
+        return;
+      }
+
+      fetch('/api/status?request_id=' + encodeURIComponent(requestId))
+        .then(function(res) { return res.json(); })
+        .then(function(statusData) {
+          console.log('[generate] status check #' + attempt + ':', statusData);
+
+          var status = statusData.status;
+          if (status === 'COMPLETED') {
+            fetch('/api/status?request_id=' + encodeURIComponent(requestId) + '&mode=result')
+              .then(function(res) { return res.json(); })
+              .then(function(resultData) {
+                console.log('[generate] result:', resultData);
+                renderResult(resultData);
+              })
+              .catch(function(err) {
+                document.getElementById('loadingDots').classList.remove('show');
+                document.getElementById('resultPlaceholder').style.display = 'block';
+                document.getElementById('resultPlaceholder').innerHTML = '<div class="rp-icon">❌</div><p>Connection error. Please try again.</p>';
+                console.error('[generate] result fetch error:', err);
+              });
+          } else if (status === 'FAILED' || status === 'ERROR') {
+            document.getElementById('loadingDots').classList.remove('show');
+            document.getElementById('resultPlaceholder').style.display = 'block';
+            document.getElementById('resultPlaceholder').innerHTML = '<div class="rp-icon">❌</div><p>Error generating image. Please try again.</p>';
+            console.error('[generate] generation failed:', statusData);
+          } else {
+            // IN_QUEUE or IN_PROGRESS — keep polling
+            setTimeout(function() { pollForResult(requestId, attempt + 1); }, POLL_INTERVAL_MS);
+          }
+        })
+        .catch(function(err) {
+          document.getElementById('loadingDots').classList.remove('show');
+          document.getElementById('resultPlaceholder').style.display = 'block';
+          document.getElementById('resultPlaceholder').innerHTML = '<div class="rp-icon">❌</div><p>Connection error. Please try again.</p>';
+          console.error('[generate] status check error:', err);
+        });
+    }
+
+    function renderResult(data) {
         document.getElementById('loadingDots').classList.remove('show');
         document.getElementById('resultPlaceholder').style.display = 'none';
 
@@ -2496,35 +2570,13 @@
               '⬇ Save Image';
             saveBtn.textContent = saveTxt;
             saveBtn.onclick = function() {
-              fetch(url)
-                .then(function(r) { return r.blob(); })
-                .then(function(blob) {
-                  var file = new File([blob], filename, { type: 'image/jpeg' });
-                  // iOS/Android: share sheet has "Save Image" → saves to gallery
-                  if (navigator.canShare && navigator.canShare({ files: [file] })) {
-                    return navigator.share({ files: [file], title: 'Lamsa Design' })
-                      .catch(function(err) {
-                        if (err && err.name === 'AbortError') return; // user cancelled
-                        triggerDownload(blob);
-                      });
-                  }
-                  // Desktop: normal download
-                  triggerDownload(blob);
-                })
-                .catch(function() {
-                  window.open(url, '_blank');
-                });
-
-              function triggerDownload(blob) {
-                var blobUrl = URL.createObjectURL(blob);
-                var a = document.createElement('a');
-                a.href = blobUrl;
-                a.download = filename;
-                document.body.appendChild(a);
-                a.click();
-                document.body.removeChild(a);
-                URL.revokeObjectURL(blobUrl);
-              }
+              var link = document.createElement('a');
+              link.href = url; // the direct fal.ai image URL
+              link.download = filename;
+              link.target = '_blank';
+              document.body.appendChild(link);
+              link.click();
+              document.body.removeChild(link);
             };
 
             // Share button
@@ -2553,7 +2605,7 @@
 
             var beforeDiv = document.createElement('div');
             beforeDiv.innerHTML = '<p style="color:var(--gray);font-size:12px;text-align:center;margin-bottom:6px;">Before</p>' +
-              '<img src="' + imageDataUrl + '" style="width:100%;border-radius:10px;object-fit:cover;">';
+              '<img src="' + lastBeforeImageDataUrl + '" style="width:100%;border-radius:10px;object-fit:cover;">';
 
             var afterDiv = document.createElement('div');
             afterDiv.innerHTML = '<p style="color:var(--gold);font-size:12px;text-align:center;margin-bottom:6px;">After ✦</p>' +
@@ -2577,17 +2629,11 @@
           document.getElementById('resultPlaceholder').style.display = 'block';
           document.getElementById('resultPlaceholder').innerHTML = '<div class="rp-icon">❌</div><p>Error generating image. Please try again.</p>';
         }
-      })
-      .catch(function(err) {
-        document.getElementById('loadingDots').classList.remove('show');
-        document.getElementById('resultPlaceholder').style.display = 'block';
-        document.getElementById('resultPlaceholder').innerHTML = '<div class="rp-icon">❌</div><p>Connection error. Please try again.</p>';
-        console.error('fal.ai error:', err);
-      });
-    } // close callGenerate
+    } // close renderResult
 
     if (uploadedFiles.length > 0) {
       compressImage(uploadedFiles[0], 1536, 0.9, function(imageDataUrl) {
+        lastBeforeImageDataUrl = imageDataUrl;
         // Upload image to fal storage first (base64 not accepted directly)
         fetch('/api/upload', {
           method: 'POST',

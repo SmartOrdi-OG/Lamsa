@@ -8,31 +8,41 @@ export default async function handler(req, res) {
 
   if (!prompt) return res.status(400).json({ error: 'prompt is required' });
 
+  // Submit to the fal.ai QUEUE instead of the synchronous endpoint. Flux Kontext Pro
+  // generations regularly take 15-30s+, which exceeds Vercel's serverless function
+  // timeout on the sync endpoint (the function gets killed mid-request and the
+  // frontend is left spinning forever). The queue endpoint returns a request_id
+  // immediately; the frontend polls /api/status for completion.
+  const body = {
+    prompt,
+    image_url: image_url || undefined,
+    num_images,
+    guidance_scale,
+    aspect_ratio,
+    output_format: 'jpeg',
+    safety_tolerance: '2'
+  };
+
+  console.log('Submitting to fal.ai queue:', JSON.stringify(body));
+
   try {
-    const falRes = await fetch('https://fal.run/fal-ai/flux-pro/kontext', {
+    const falRes = await fetch('https://queue.fal.run/fal-ai/flux-pro/kontext', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         'Authorization': `Key ${FAL_API_KEY}`
       },
-      body: JSON.stringify({
-        prompt,
-        image_url: image_url || undefined,
-        num_images,
-        guidance_scale,
-        aspect_ratio,
-        output_format: 'jpeg',
-        safety_tolerance: '2'
-      })
+      body: JSON.stringify(body)
     });
 
     if (!falRes.ok) {
       const err = await falRes.text();
-      console.error('fal.ai error:', falRes.status, err);
+      console.error('fal.ai queue submit error:', falRes.status, err);
       return res.status(falRes.status).json({ error: 'Generation failed', details: err });
     }
 
     const data = await falRes.json();
+    console.log('fal.ai queue submit response:', JSON.stringify(data));
     return res.status(200).json(data);
 
   } catch (err) {
