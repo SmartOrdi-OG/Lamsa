@@ -568,23 +568,38 @@
   var POLL_INTERVAL_MS = 3000; // poll every 3 seconds
   var POLL_TIMEOUT_MS = 2 * 60 * 1000; // 2 minutes
 
+  // fal.ai's queue result payload shape varies by endpoint/version — sometimes the
+  // images are top-level, sometimes nested under output/response/data. Check every
+  // known shape instead of assuming just `data.images`.
+  function extractResultImages(data) {
+    if (!data) return null;
+    if (Array.isArray(data.images) && data.images.length) return data.images;
+    if (data.image && data.image.url) return [data.image];
+    if (data.output && Array.isArray(data.output.images) && data.output.images.length) return data.output.images;
+    if (data.response && Array.isArray(data.response.images) && data.response.images.length) return data.response.images;
+    if (data.data && Array.isArray(data.data.images) && data.data.images.length) return data.data.images;
+    return null;
+  }
+
   function renderGenerateResult(data) {
     console.log('[generate] rendering result:', data);
     document.getElementById('loadingDots').classList.remove('show');
     document.getElementById('manualGenerateBtn').disabled = placedStickers.length === 0;
     document.getElementById('autoGenerateBtn').disabled = !modules.auto.uploadedFile;
 
-    if (data.images && data.images.length > 0) {
-      console.log('[generate] displaying image:', data.images[0].url);
+    var images = extractResultImages(data);
+
+    if (images && images.length > 0) {
+      console.log('[generate] displaying image:', images[0].url);
       document.getElementById('resultPlaceholder').style.display = 'none';
       var imgWrap = document.getElementById('resultImg');
       imgWrap.innerHTML = '';
       var imgEl = document.createElement('img');
-      imgEl.src = data.images[0].url;
+      imgEl.src = images[0].url;
       imgEl.style.cssText = 'width:100%;border-radius:10px;';
       imgWrap.style.cssText = 'display:block;aspect-ratio:auto;';
       imgWrap.appendChild(imgEl);
-      imgWrap.appendChild(createDownloadBtn(data.images[0].url, 'lamsa-rearranged.jpg'));
+      imgWrap.appendChild(createDownloadBtn(images[0].url, 'lamsa-rearranged.jpg'));
     } else {
       console.error('[generate] no images in result data:', data);
       showError('Error generating image. Please try again.');
@@ -619,7 +634,9 @@
           return;
         }
 
-        var status = result.data.status;
+        // fal.ai returns status in varying casing depending on the endpoint version,
+        // so normalize before comparing.
+        var status = (result.data.status || '').toString().toUpperCase();
 
         if (status === 'COMPLETED') {
           console.log('[generate] status COMPLETED — fetching final result for request_id:', requestId);

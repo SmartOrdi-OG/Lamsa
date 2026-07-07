@@ -2454,6 +2454,33 @@
       img.src = objUrl;
     }
 
+    // fal.ai's queue result payload shape varies by endpoint/version — sometimes the
+    // images are top-level, sometimes nested under output/response/data. Check every
+    // known shape instead of assuming just `data.images`.
+    function extractResultImages(data) {
+      if (!data) return null;
+      if (Array.isArray(data.images) && data.images.length) return data.images;
+      if (data.image && data.image.url) return [data.image];
+      if (data.output && Array.isArray(data.output.images) && data.output.images.length) return data.output.images;
+      if (data.response && Array.isArray(data.response.images) && data.response.images.length) return data.response.images;
+      if (data.data && Array.isArray(data.data.images) && data.data.images.length) return data.data.images;
+      return null;
+    }
+
+    function fetchJson(url, options) {
+      return fetch(url, options).then(function(res) {
+        return res.json().then(function(data) {
+          return { ok: res.ok, status: res.status, data: data };
+        });
+      });
+    }
+
+    function showGenerateError(message) {
+      document.getElementById('loadingDots').classList.remove('show');
+      document.getElementById('resultPlaceholder').style.display = 'block';
+      document.getElementById('resultPlaceholder').innerHTML = '<div class="rp-icon">❌</div><p>' + message + '</p>';
+    }
+
     function callGenerate(imageUrl) {
       var requestBody = {
         prompt: prompt,
@@ -2466,30 +2493,25 @@
       console.log('[generate] sending to /api/generate:', requestBody);
 
       // Call fal.ai FLUX.1 Kontext Pro (queue-based: submit, then poll for the result)
-      fetch('/api/generate', {
+      fetchJson('/api/generate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(requestBody)
       })
-      .then(function(res) { return res.json(); })
-      .then(function(submitData) {
-        console.log('[generate] /api/generate response:', submitData);
+      .then(function(result) {
+        console.log('[generate] /api/generate response (http ' + result.status + '):', result.data);
 
-        if (!submitData || !submitData.request_id) {
-          document.getElementById('loadingDots').classList.remove('show');
-          document.getElementById('resultPlaceholder').style.display = 'block';
-          document.getElementById('resultPlaceholder').innerHTML = '<div class="rp-icon">❌</div><p>Error generating image. Please try again.</p>';
-          console.error('[generate] no request_id in response:', submitData);
+        if (!result.ok || !result.data || !result.data.request_id) {
+          console.error('[generate] no request_id in response:', result.data);
+          showGenerateError('Error generating image. Please try again.');
           return;
         }
 
-        pollForResult(submitData.request_id, 0);
+        pollForResult(result.data.request_id, 0);
       })
       .catch(function(err) {
-        document.getElementById('loadingDots').classList.remove('show');
-        document.getElementById('resultPlaceholder').style.display = 'block';
-        document.getElementById('resultPlaceholder').innerHTML = '<div class="rp-icon">❌</div><p>Connection error. Please try again.</p>';
         console.error('[generate] submit error:', err);
+        showGenerateError('Connection error. Please try again.');
       });
     } // close callGenerate
 
@@ -2498,47 +2520,51 @@
 
     function pollForResult(requestId, attempt) {
       if (attempt >= MAX_POLL_ATTEMPTS) {
-        document.getElementById('loadingDots').classList.remove('show');
-        document.getElementById('resultPlaceholder').style.display = 'block';
-        document.getElementById('resultPlaceholder').innerHTML = '<div class="rp-icon">❌</div><p>Generation is taking too long. Please try again.</p>';
         console.error('[generate] polling timed out for request_id:', requestId);
+        showGenerateError('Generation is taking too long. Please try again.');
         return;
       }
 
-      fetch('/api/status?request_id=' + encodeURIComponent(requestId))
-        .then(function(res) { return res.json(); })
-        .then(function(statusData) {
-          console.log('[generate] status check #' + attempt + ':', statusData);
+      fetchJson('/api/status?request_id=' + encodeURIComponent(requestId))
+        .then(function(result) {
+          console.log('[generate] status check #' + attempt + ' (http ' + result.status + '):', result.data);
 
-          var status = statusData.status;
+          if (!result.ok) {
+            console.error('[generate] status check returned an error:', result.data);
+            showGenerateError('Error generating image. Please try again.');
+            return;
+          }
+
+          // fal.ai returns status in varying casing depending on the endpoint version,
+          // so normalize before comparing.
+          var status = (result.data.status || '').toString().toUpperCase();
+
           if (status === 'COMPLETED') {
-            fetch('/api/status?request_id=' + encodeURIComponent(requestId) + '&mode=result')
-              .then(function(res) { return res.json(); })
-              .then(function(resultData) {
-                console.log('[generate] result:', resultData);
-                renderResult(resultData);
+            fetchJson('/api/status?request_id=' + encodeURIComponent(requestId) + '&mode=result')
+              .then(function(resultResp) {
+                console.log('[generate] result (http ' + resultResp.status + '):', resultResp.data);
+                if (!resultResp.ok) {
+                  console.error('[generate] result fetch returned an error:', resultResp.data);
+                  showGenerateError('Error generating image. Please try again.');
+                  return;
+                }
+                renderResult(resultResp.data);
               })
               .catch(function(err) {
-                document.getElementById('loadingDots').classList.remove('show');
-                document.getElementById('resultPlaceholder').style.display = 'block';
-                document.getElementById('resultPlaceholder').innerHTML = '<div class="rp-icon">❌</div><p>Connection error. Please try again.</p>';
                 console.error('[generate] result fetch error:', err);
+                showGenerateError('Connection error. Please try again.');
               });
           } else if (status === 'FAILED' || status === 'ERROR') {
-            document.getElementById('loadingDots').classList.remove('show');
-            document.getElementById('resultPlaceholder').style.display = 'block';
-            document.getElementById('resultPlaceholder').innerHTML = '<div class="rp-icon">❌</div><p>Error generating image. Please try again.</p>';
-            console.error('[generate] generation failed:', statusData);
+            console.error('[generate] generation failed:', result.data);
+            showGenerateError('Error generating image. Please try again.');
           } else {
             // IN_QUEUE or IN_PROGRESS — keep polling
             setTimeout(function() { pollForResult(requestId, attempt + 1); }, POLL_INTERVAL_MS);
           }
         })
         .catch(function(err) {
-          document.getElementById('loadingDots').classList.remove('show');
-          document.getElementById('resultPlaceholder').style.display = 'block';
-          document.getElementById('resultPlaceholder').innerHTML = '<div class="rp-icon">❌</div><p>Connection error. Please try again.</p>';
           console.error('[generate] status check error:', err);
+          showGenerateError('Connection error. Please try again.');
         });
     }
 
@@ -2546,7 +2572,9 @@
         document.getElementById('loadingDots').classList.remove('show');
         document.getElementById('resultPlaceholder').style.display = 'none';
 
-        if (data.images && data.images.length > 0) {
+        var images = extractResultImages(data);
+
+        if (images && images.length > 0) {
           var imgWrap = document.getElementById('resultImg');
           imgWrap.innerHTML = '';
 
@@ -2609,15 +2637,15 @@
 
             var afterDiv = document.createElement('div');
             afterDiv.innerHTML = '<p style="color:var(--gold);font-size:12px;text-align:center;margin-bottom:6px;">After ✦</p>' +
-              '<img src="' + data.images[0].url + '" style="width:100%;border-radius:10px;object-fit:cover;">';
+              '<img src="' + images[0].url + '" style="width:100%;border-radius:10px;object-fit:cover;">';
 
             beforeAfterDiv.appendChild(beforeDiv);
             beforeAfterDiv.appendChild(afterDiv);
             imgWrap.appendChild(beforeAfterDiv);
-            imgWrap.appendChild(createDownloadBtn(data.images[0].url, 'lamsa-design.jpg'));
+            imgWrap.appendChild(createDownloadBtn(images[0].url, 'lamsa-design.jpg'));
 
           } else {
-            data.images.forEach(function(img, i) {
+            images.forEach(function(img, i) {
               var imgEl = document.createElement('img');
               imgEl.src = img.url;
               imgEl.style.cssText = 'width:100%;border-radius:10px;margin-bottom:10px;';
