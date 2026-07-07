@@ -1,8 +1,13 @@
 export default async function handler(req, res) {
+  console.log('[api/generate] handler invoked, method:', req.method);
+
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
 
   const FAL_API_KEY = (process.env.FAL_API_KEY || '').trim().replace(/\s+/g, '');
-  if (!FAL_API_KEY) return res.status(500).json({ error: 'FAL_API_KEY not configured' });
+  if (!FAL_API_KEY) {
+    console.error('[api/generate] FAL_API_KEY not configured');
+    return res.status(500).json({ error: 'FAL_API_KEY not configured' });
+  }
 
   const { prompt, image_url, num_images = 1, guidance_scale = 3.5, aspect_ratio = '16:9' } = req.body;
 
@@ -23,7 +28,7 @@ export default async function handler(req, res) {
     safety_tolerance: '2'
   };
 
-  console.log('Submitting to fal.ai queue:', JSON.stringify(body));
+  console.log('[api/generate] submitting to fal.ai queue:', JSON.stringify(body));
 
   try {
     const falRes = await fetch('https://queue.fal.run/fal-ai/flux-pro/kontext', {
@@ -35,18 +40,21 @@ export default async function handler(req, res) {
       body: JSON.stringify(body)
     });
 
+    console.log('[api/generate] fal.ai queue submit http status:', falRes.status);
+
     if (!falRes.ok) {
       const err = await falRes.text();
-      console.error('fal.ai queue submit error:', falRes.status, err);
+      console.error('[api/generate] fal.ai queue submit error:', falRes.status, err);
       return res.status(falRes.status).json({ error: 'Generation failed', details: err });
     }
 
     const data = await falRes.json();
-    console.log('fal.ai queue submit response:', JSON.stringify(data));
+    console.log('[api/generate] fal.ai queue submit response:', JSON.stringify(data));
+    console.log('[api/generate] request_id:', data.request_id);
     return res.status(200).json(data);
 
   } catch (err) {
-    console.error('Generate error:', err.message);
+    console.error('[api/generate] Generate error:', err.message);
     return res.status(500).json({ error: err.message });
   }
 }

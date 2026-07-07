@@ -62,44 +62,122 @@
   }
   .back-link:hover { color: var(--gold); }
 
-  .wrap { max-width: 560px; margin: 0 auto; padding: 100px 20px 60px; }
+  .wrap { max-width: 1040px; margin: 0 auto; padding: 100px 20px 60px; }
+  .hero { max-width: 560px; margin: 0 auto; }
   h1 { font-size: clamp(26px, 6vw, 36px); font-weight: 900; text-align: center; margin-bottom: 10px; }
   .sub { color: var(--gray); font-size: 14px; text-align: center; line-height: 1.6; margin-bottom: 36px; }
 
-  .mode-row {
-    display: flex; align-items: center; gap: 14px;
+  .modules-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+    align-items: start;
+  }
+  @media (max-width: 800px) {
+    .modules-grid { grid-template-columns: 1fr; }
+  }
+
+  .module-card {
     background: var(--dark);
-    border: 1px solid var(--border);
-    border-radius: 12px;
-    padding: 14px 16px;
-    margin-bottom: 20px;
+    border: 2px solid var(--border);
+    border-radius: 18px;
+    padding: 26px 20px;
+    transition: border-color 0.3s, box-shadow 0.3s;
   }
-  .mode-toggle-wrap {
-    width: 44px; height: 24px;
-    background: var(--border);
-    border-radius: 12px;
-    position: relative;
+  .module-card.selected {
+    border-color: var(--gold);
+    box-shadow: 0 20px 50px rgba(201,168,76,0.15);
+  }
+
+  .module-header { text-align: center; margin-bottom: 20px; }
+  .module-icon { font-size: 32px; margin-bottom: 8px; }
+  .module-title { font-size: 19px; font-weight: 900; margin-bottom: 8px; }
+  .module-desc { color: var(--gray); font-size: 12.5px; line-height: 1.5; }
+
+  .sub-toggle { display: flex; gap: 8px; margin-bottom: 18px; }
+  .sub-toggle-btn {
+    flex: 1;
+    background: var(--card);
+    border: 1.5px solid var(--border);
+    color: var(--gray);
+    padding: 10px 6px;
+    border-radius: 10px;
+    font-family: 'Tajawal', sans-serif;
+    font-size: 12px; font-weight: 900;
     cursor: pointer;
-    transition: background 0.3s;
-    flex-shrink: 0;
+    transition: all 0.2s;
   }
-  .mode-toggle-wrap.on { background: var(--gold); }
-  .mode-toggle-switch {
-    width: 18px; height: 18px;
-    background: white;
-    border-radius: 50%;
+  .sub-toggle-btn:hover { border-color: var(--gold); }
+  .sub-toggle-btn.active { border-color: var(--gold); background: var(--gold-dim); color: var(--white); }
+
+  .sticker-overlay { position: absolute; inset: 0; pointer-events: none; }
+  .placed-sticker {
     position: absolute;
-    top: 3px; left: 3px;
-    transition: transform 0.3s;
+    transform: translate(-50%, -50%);
+    width: 48px; height: 48px;
+    background: var(--dark);
+    border: 2px solid var(--gold);
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 22px;
+    cursor: grab;
+    pointer-events: auto;
+    touch-action: none;
+    box-shadow: 0 4px 14px rgba(0,0,0,0.5);
   }
-  .mode-toggle-wrap.on .mode-toggle-switch { transform: translateX(20px); }
-  .mode-label-main { font-size: 14px; font-weight: 900; color: var(--white); }
-  .mode-label-sub { font-size: 12px; color: var(--gray); margin-top: 2px; }
+  .placed-sticker.dragging { cursor: grabbing; box-shadow: 0 6px 20px rgba(201,168,76,0.5); }
+  .placed-sticker .ps-remove {
+    position: absolute; top: -8px; right: -8px;
+    width: 18px; height: 18px;
+    border-radius: 50%;
+    background: var(--black);
+    border: 1px solid var(--border);
+    color: var(--white);
+    font-size: 10px;
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer;
+    padding: 0;
+  }
+
+  .detect-btn {
+    width: 100%;
+    background: transparent;
+    color: var(--gold);
+    border: 1.5px solid var(--gold);
+    padding: 15px;
+    border-radius: 12px;
+    font-family: 'Tajawal', sans-serif;
+    font-size: 14px; font-weight: 900;
+    cursor: pointer;
+    transition: all 0.2s;
+    margin-top: 16px;
+  }
+  .detect-btn:hover:not(:disabled) { background: var(--gold-dim); }
+  .detect-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+  .sticker-tray {
+    display: flex; flex-wrap: wrap; gap: 8px;
+    margin-top: 16px;
+  }
+  .sticker-card {
+    background: var(--card);
+    border: 1.5px solid var(--gold);
+    border-radius: 12px;
+    padding: 10px 12px;
+    text-align: center;
+    cursor: pointer;
+    min-width: 68px;
+    transition: all 0.2s;
+  }
+  .sticker-card:hover { background: var(--gold-dim); transform: translateY(-2px); }
+  .sc-emoji { font-size: 24px; margin-bottom: 4px; }
+  .sc-name { font-size: 10.5px; color: var(--white); font-weight: 700; text-transform: capitalize; }
+  .manual-hint { color: var(--gray); font-size: 11.5px; text-align: center; margin-top: 12px; }
 
   .upload-zone {
     border: 2px dashed var(--border);
     border-radius: 14px;
-    padding: 50px 24px;
+    padding: 34px 16px;
     text-align: center;
     cursor: pointer;
     transition: all 0.3s;
@@ -108,12 +186,12 @@
   }
   .upload-zone:hover, .upload-zone.dragover { border-color: var(--gold); background: var(--gold-dim); }
   .upload-zone input { position: absolute; inset: 0; opacity: 0; cursor: pointer; }
-  .upload-icon { font-size: 40px; margin-bottom: 14px; }
-  .upload-title { font-size: 16px; font-weight: 700; margin-bottom: 6px; }
-  .upload-sub { font-size: 12px; color: var(--gray); }
+  .upload-icon { font-size: 34px; margin-bottom: 10px; }
+  .upload-title { font-size: 13.5px; font-weight: 700; margin-bottom: 6px; }
+  .upload-sub { font-size: 11px; color: var(--gray); }
 
   .upload-preview { display: none; position: relative; }
-  .upload-preview img { width: 100%; max-height: 320px; object-fit: cover; border-radius: 14px; display: block; }
+  .upload-preview img { width: 100%; max-height: 260px; object-fit: cover; border-radius: 14px; display: block; }
   .upload-preview .remove-btn {
     position: absolute; top: 10px; right: 10px;
     background: rgba(0,0,0,0.7);
@@ -129,20 +207,20 @@
     background-size: 200% 200%;
     color: var(--black);
     border: none;
-    padding: 20px;
+    padding: 18px;
     border-radius: 12px;
     font-family: 'Tajawal', sans-serif;
-    font-size: 18px; font-weight: 900;
+    font-size: 15px; font-weight: 900;
     cursor: pointer;
     transition: all 0.3s;
-    margin-top: 24px;
+    margin-top: 16px;
     animation: shimmer 3s infinite;
   }
   @keyframes shimmer { 0% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } 100% { background-position: 0% 50%; } }
   .generate-btn:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 16px 50px rgba(201,168,76,0.4); }
   .generate-btn:disabled { opacity: 0.4; cursor: not-allowed; animation: none; }
 
-  .result-area { display: none; margin-top: 32px; }
+  .result-area { display: none; max-width: 560px; margin: 32px auto 0; }
   .result-area.show { display: block; animation: fadeUp 0.5s ease both; }
   @keyframes fadeUp { from { opacity:0; transform:translateY(20px); } to { opacity:1; transform:translateY(0); } }
   .result-img-wrap {
@@ -177,35 +255,83 @@
 </nav>
 
 <div class="wrap">
-  <h1>✨ Rearrange My Room</h1>
-  <p class="sub">Upload a photo of your room. We'll keep every piece of furniture exactly as it is and just find a better layout for it.</p>
-
-  <div class="mode-row">
-    <div class="mode-toggle-wrap" id="modeToggleWrap" onclick="toggleMode()">
-      <div class="mode-toggle-switch"></div>
-    </div>
-    <div>
-      <div class="mode-label-main" id="modeLabelMain">Rearrange Only</div>
-      <div class="mode-label-sub" id="modeLabelSub">Keep the exact same furniture — just find a better layout</div>
-    </div>
+  <div class="hero">
+    <h1>✨ Rearrange My Room</h1>
+    <p class="sub">Upload a photo of your room and choose how you'd like it rearranged.</p>
   </div>
 
-  <div class="upload-zone" id="uploadZone">
-    <input type="file" accept="image/*" id="fileInput" onchange="handleUpload(this)">
-    <div id="uploadContent">
-      <div class="upload-icon">📷</div>
-      <div class="upload-title">Drag your room photo here or click to upload</div>
-      <div class="upload-sub">PNG, JPG, HEIC · Max 10MB</div>
-    </div>
-    <div class="upload-preview" id="uploadPreview">
-      <img id="previewImg" alt="Room photo">
-      <button class="remove-btn" onclick="removeImage(event)">✕ Remove</button>
-    </div>
-  </div>
+  <div class="modules-grid">
 
-  <button class="generate-btn" id="generateBtn" onclick="rearrangeRoom()" disabled>
-    ✨ Rearrange My Room
-  </button>
+    <!-- MODULE 1: Place It Yourself -->
+    <div class="module-card" id="moduleManual" onclick="selectModule('manual')">
+      <div class="module-header">
+        <div class="module-icon">🖐</div>
+        <div class="module-title">Place It Yourself</div>
+        <p class="module-desc">AI detects your furniture, you decide where each piece goes</p>
+      </div>
+
+      <div class="upload-zone" id="uploadZoneManual">
+        <input type="file" accept="image/*" id="fileInputManual" onchange="handleUpload(this, 'manual')">
+        <div id="uploadContentManual">
+          <div class="upload-icon">📷</div>
+          <div class="upload-title">Upload your room photo</div>
+          <div class="upload-sub">PNG, JPG, HEIC · Max 10MB</div>
+        </div>
+        <div class="upload-preview" id="uploadPreviewManual">
+          <img id="previewImgManual" alt="Room photo">
+          <div class="sticker-overlay" id="stickerOverlay"></div>
+          <button class="remove-btn" onclick="removeImage(event, 'manual')">✕ Remove</button>
+        </div>
+      </div>
+
+      <button class="detect-btn" id="detectBtn" onclick="detectFurniture()" disabled>
+        🔍 Detect Furniture
+      </button>
+      <div class="loading-dots" id="detectLoadingDots">
+        <div class="dot"></div>
+        <div class="dot"></div>
+        <div class="dot"></div>
+      </div>
+      <div class="sticker-tray" id="stickerTray"></div>
+      <p class="manual-hint" id="manualHint" style="display:none;">Tap a piece to add it to the photo, then drag it where you want it.</p>
+
+      <button class="generate-btn" id="manualGenerateBtn" onclick="generateWithLayout()" disabled>
+        ✨ Generate
+      </button>
+    </div>
+
+    <!-- MODULE 2: AI Decides -->
+    <div class="module-card" id="moduleAuto" onclick="selectModule('auto')">
+      <div class="module-header">
+        <div class="module-icon">🤖</div>
+        <div class="module-title">AI Decides</div>
+        <p class="module-desc">AI automatically finds the best layout for your room</p>
+      </div>
+
+      <div class="sub-toggle" id="subToggle">
+        <button class="sub-toggle-btn active" data-submode="rearrange" onclick="selectSubMode('rearrange')" type="button">Rearrange Only</button>
+        <button class="sub-toggle-btn" data-submode="redesign" onclick="selectSubMode('redesign')" type="button">Full Redesign</button>
+      </div>
+
+      <div class="upload-zone" id="uploadZoneAuto">
+        <input type="file" accept="image/*" id="fileInputAuto" onchange="handleUpload(this, 'auto')">
+        <div id="uploadContentAuto">
+          <div class="upload-icon">📷</div>
+          <div class="upload-title">Upload your room photo</div>
+          <div class="upload-sub">PNG, JPG, HEIC · Max 10MB</div>
+        </div>
+        <div class="upload-preview" id="uploadPreviewAuto">
+          <img id="previewImgAuto" alt="Room photo">
+          <button class="remove-btn" onclick="removeImage(event, 'auto')">✕ Remove</button>
+        </div>
+      </div>
+
+      <button class="generate-btn" id="autoGenerateBtn" onclick="generateAuto()" disabled>
+        ✨ Generate
+      </button>
+    </div>
+
+  </div>
 
   <div class="result-area" id="resultArea">
     <div class="result-img-wrap" id="resultImg">
@@ -262,42 +388,105 @@
     'DO NOT add, move, or remove architectural elements (windows, doors, walls, structural beams).\n\n' +
     'Output: photorealistic, professional interior design magazine quality result.';
 
-  var mode = 'rearrange'; // 'rearrange' = keep exact furniture, 'redesign' = AI can change furniture/style
+  // Each module keeps its own upload state so the two flows are fully independent.
+  var modules = {
+    manual: { uploadedFile: null, uploadedImageUrl: null },
+    auto: { uploadedFile: null, uploadedImageUrl: null, subMode: 'rearrange' }
+  };
 
-  var uploadedFile = null;
+  var selectedModule = null;
 
-  function handleUpload(input) {
+  var detectedFurniture = [];
+  var placedStickers = []; // { id, name, emoji, x, y } — x/y are % of photo dimensions
+  var stickerIdCounter = 0;
+
+  function selectModule(id) {
+    if (selectedModule === id) return;
+    selectedModule = id;
+    console.log('[module] selected:', id);
+    document.getElementById('moduleManual').classList.toggle('selected', id === 'manual');
+    document.getElementById('moduleAuto').classList.toggle('selected', id === 'auto');
+  }
+
+  function selectSubMode(subMode) {
+    modules.auto.subMode = subMode;
+    console.log('[auto] sub-mode switched to:', subMode);
+
+    var buttons = document.querySelectorAll('#subToggle .sub-toggle-btn');
+    for (var i = 0; i < buttons.length; i++) {
+      buttons[i].classList.toggle('active', buttons[i].getAttribute('data-submode') === subMode);
+    }
+  }
+
+  function handleUpload(input, moduleId) {
     var file = input.files[0];
     if (!file) return;
-    uploadedFile = file;
-    document.getElementById('previewImg').src = URL.createObjectURL(file);
-    document.getElementById('uploadContent').style.display = 'none';
-    document.getElementById('uploadPreview').style.display = 'block';
-    document.getElementById('generateBtn').disabled = false;
+    setUploadedFile(moduleId, file);
   }
 
-  function toggleMode() {
-    mode = (mode === 'rearrange') ? 'redesign' : 'rearrange';
-    document.getElementById('modeToggleWrap').classList.toggle('on', mode === 'redesign');
-    document.getElementById('modeLabelMain').textContent = mode === 'redesign' ? 'Full Redesign' : 'Rearrange Only';
-    document.getElementById('modeLabelSub').textContent = mode === 'redesign'
-      ? 'AI can suggest new furniture, colors, and style'
-      : 'Keep the exact same furniture — just find a better layout';
-    document.getElementById('generateBtn').textContent = mode === 'redesign' ? '✨ Redesign My Room' : '✨ Rearrange My Room';
+  function setUploadedFile(moduleId, file) {
+    selectModule(moduleId);
+    var state = modules[moduleId];
+    state.uploadedFile = file;
+    state.uploadedImageUrl = null;
+    console.log('[upload:' + moduleId + '] new photo selected:', file.name, file.size + ' bytes');
+
+    if (moduleId === 'manual') {
+      resetManualPlacement();
+      document.getElementById('previewImgManual').src = URL.createObjectURL(file);
+      document.getElementById('uploadContentManual').style.display = 'none';
+      document.getElementById('uploadPreviewManual').style.display = 'block';
+      document.getElementById('detectBtn').disabled = false;
+    } else {
+      document.getElementById('previewImgAuto').src = URL.createObjectURL(file);
+      document.getElementById('uploadContentAuto').style.display = 'none';
+      document.getElementById('uploadPreviewAuto').style.display = 'block';
+      document.getElementById('autoGenerateBtn').disabled = false;
+    }
   }
 
-  function removeImage(e) {
+  function removeImage(e, moduleId) {
     e.preventDefault();
     e.stopPropagation();
-    uploadedFile = null;
-    document.getElementById('fileInput').value = '';
-    document.getElementById('uploadContent').style.display = 'block';
-    document.getElementById('uploadPreview').style.display = 'none';
-    document.getElementById('generateBtn').disabled = true;
+    var state = modules[moduleId];
+    state.uploadedFile = null;
+    state.uploadedImageUrl = null;
+
+    if (moduleId === 'manual') {
+      resetManualPlacement();
+      document.getElementById('fileInputManual').value = '';
+      document.getElementById('uploadContentManual').style.display = 'block';
+      document.getElementById('uploadPreviewManual').style.display = 'none';
+      document.getElementById('detectBtn').disabled = true;
+    } else {
+      document.getElementById('fileInputAuto').value = '';
+      document.getElementById('uploadContentAuto').style.display = 'block';
+      document.getElementById('uploadPreviewAuto').style.display = 'none';
+      document.getElementById('autoGenerateBtn').disabled = true;
+    }
+  }
+
+  function resetManualPlacement() {
+    detectedFurniture = [];
+    placedStickers = [];
+    stickerIdCounter = 0;
+    var tray = document.getElementById('stickerTray');
+    if (tray) tray.innerHTML = '';
+    var overlay = document.getElementById('stickerOverlay');
+    if (overlay) overlay.innerHTML = '';
+    var hint = document.getElementById('manualHint');
+    if (hint) hint.style.display = 'none';
+    var manualBtn = document.getElementById('manualGenerateBtn');
+    if (manualBtn) manualBtn.disabled = true;
   }
 
   window.addEventListener('DOMContentLoaded', function() {
-    var zone = document.getElementById('uploadZone');
+    setupDropZone('uploadZoneManual', 'manual');
+    setupDropZone('uploadZoneAuto', 'auto');
+  });
+
+  function setupDropZone(zoneId, moduleId) {
+    var zone = document.getElementById(zoneId);
     zone.addEventListener('dragover', function(e) { e.preventDefault(); e.stopPropagation(); zone.classList.add('dragover'); });
     zone.addEventListener('dragleave', function(e) { e.preventDefault(); e.stopPropagation(); zone.classList.remove('dragover'); });
     zone.addEventListener('drop', function(e) {
@@ -305,13 +494,9 @@
       zone.classList.remove('dragover');
       var file = e.dataTransfer.files[0];
       if (!file || !file.type.startsWith('image/')) return;
-      uploadedFile = file;
-      document.getElementById('previewImg').src = URL.createObjectURL(file);
-      document.getElementById('uploadContent').style.display = 'none';
-      document.getElementById('uploadPreview').style.display = 'block';
-      document.getElementById('generateBtn').disabled = false;
+      setUploadedFile(moduleId, file);
     });
-  });
+  }
 
   function compressImage(file, maxSize, quality, callback) {
     var img = new Image();
@@ -342,7 +527,8 @@
     var ph = document.getElementById('resultPlaceholder');
     ph.style.display = 'block';
     ph.innerHTML = '<div class="rp-icon">❌</div><p>' + msg + '</p>';
-    document.getElementById('generateBtn').disabled = false;
+    document.getElementById('manualGenerateBtn').disabled = placedStickers.length === 0;
+    document.getElementById('autoGenerateBtn').disabled = !modules.auto.uploadedFile;
   }
 
   function createDownloadBtn(url, filename) {
@@ -379,14 +565,17 @@
     return wrap;
   }
 
-  var POLL_INTERVAL_MS = 2500;
-  var MAX_POLL_ATTEMPTS = 60; // ~2.5 minutes
+  var POLL_INTERVAL_MS = 3000; // poll every 3 seconds
+  var POLL_TIMEOUT_MS = 2 * 60 * 1000; // 2 minutes
 
   function renderGenerateResult(data) {
+    console.log('[generate] rendering result:', data);
     document.getElementById('loadingDots').classList.remove('show');
-    document.getElementById('generateBtn').disabled = false;
+    document.getElementById('manualGenerateBtn').disabled = placedStickers.length === 0;
+    document.getElementById('autoGenerateBtn').disabled = !modules.auto.uploadedFile;
 
     if (data.images && data.images.length > 0) {
+      console.log('[generate] displaying image:', data.images[0].url);
       document.getElementById('resultPlaceholder').style.display = 'none';
       var imgWrap = document.getElementById('resultImg');
       imgWrap.innerHTML = '';
@@ -397,45 +586,68 @@
       imgWrap.appendChild(imgEl);
       imgWrap.appendChild(createDownloadBtn(data.images[0].url, 'lamsa-rearranged.jpg'));
     } else {
+      console.error('[generate] no images in result data:', data);
       showError('Error generating image. Please try again.');
     }
   }
 
-  function pollForResult(requestId, attempt) {
-    if (attempt >= MAX_POLL_ATTEMPTS) {
-      showError('Generation is taking too long. Please try again.');
-      console.error('polling timed out for request_id:', requestId);
+  function fetchJson(url) {
+    return fetch(url).then(function(res) {
+      return res.json().then(function(data) {
+        return { ok: res.ok, status: res.status, data: data };
+      });
+    });
+  }
+
+  function pollForResult(requestId, startTime) {
+    var elapsed = Date.now() - startTime;
+    if (elapsed >= POLL_TIMEOUT_MS) {
+      console.error('[generate] polling timed out after ' + Math.round(elapsed / 1000) + 's for request_id:', requestId);
+      showError('Generation took too long. Please try again.');
       return;
     }
 
-    fetch('/api/status?request_id=' + encodeURIComponent(requestId))
-      .then(function(res) { return res.json(); })
-      .then(function(statusData) {
-        console.log('[generate] status check #' + attempt + ':', statusData);
+    console.log('[generate] polling status for request_id:', requestId, '(elapsed ' + Math.round(elapsed / 1000) + 's)');
 
-        var status = statusData.status;
+    fetchJson('/api/status?request_id=' + encodeURIComponent(requestId))
+      .then(function(result) {
+        console.log('[generate] status response (http ' + result.status + '):', result.data);
+
+        if (!result.ok) {
+          console.error('[generate] status check returned an error:', result.data);
+          showError('Error generating image. Please try again.');
+          return;
+        }
+
+        var status = result.data.status;
+
         if (status === 'COMPLETED') {
-          fetch('/api/status?request_id=' + encodeURIComponent(requestId) + '&mode=result')
-            .then(function(res) { return res.json(); })
-            .then(function(resultData) {
-              console.log('[generate] result:', resultData);
-              renderGenerateResult(resultData);
+          console.log('[generate] status COMPLETED — fetching final result for request_id:', requestId);
+          fetchJson('/api/status?request_id=' + encodeURIComponent(requestId) + '&mode=result')
+            .then(function(resultResp) {
+              console.log('[generate] result response (http ' + resultResp.status + '):', resultResp.data);
+              if (!resultResp.ok) {
+                console.error('[generate] result fetch returned an error:', resultResp.data);
+                showError('Error generating image. Please try again.');
+                return;
+              }
+              renderGenerateResult(resultResp.data);
             })
             .catch(function(err) {
+              console.error('[generate] result fetch threw:', err);
               showError('Connection error. Please try again.');
-              console.error('result fetch error:', err);
             });
         } else if (status === 'FAILED' || status === 'ERROR') {
+          console.error('[generate] generation failed:', result.data);
           showError('Error generating image. Please try again.');
-          console.error('generation failed:', statusData);
         } else {
-          // IN_QUEUE or IN_PROGRESS — keep polling
-          setTimeout(function() { pollForResult(requestId, attempt + 1); }, POLL_INTERVAL_MS);
+          console.log('[generate] status = ' + status + ' — polling again in ' + (POLL_INTERVAL_MS / 1000) + 's');
+          setTimeout(function() { pollForResult(requestId, startTime); }, POLL_INTERVAL_MS);
         }
       })
       .catch(function(err) {
+        console.error('[generate] status check threw:', err);
         showError('Connection error. Please try again.');
-        console.error('status check error:', err);
       });
   }
 
@@ -447,35 +659,73 @@
       guidance_scale: 3.5,
       aspect_ratio: '16:9'
     };
-    console.log('[generate] sending to /api/generate:', requestBody);
+    console.log('[generate] POST /api/generate:', requestBody);
 
     fetch('/api/generate', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(requestBody)
     })
-    .then(function(res) { return res.json(); })
-    .then(function(submitData) {
-      console.log('[generate] /api/generate response:', submitData);
+    .then(function(res) {
+      return res.json().then(function(data) { return { ok: res.ok, status: res.status, data: data }; });
+    })
+    .then(function(result) {
+      console.log('[generate] /api/generate response (http ' + result.status + '):', result.data);
 
-      if (!submitData || !submitData.request_id) {
+      if (!result.ok || !result.data || !result.data.request_id) {
+        console.error('[generate] no request_id in response:', result.data);
         showError('Error generating image. Please try again.');
-        console.error('no request_id in response:', submitData);
         return;
       }
 
-      pollForResult(submitData.request_id, 0);
+      console.log('[generate] request_id received:', result.data.request_id, '— starting poll loop');
+      pollForResult(result.data.request_id, Date.now());
     })
     .catch(function(err) {
+      console.error('[generate] /api/generate call threw:', err);
       showError('Connection error. Please try again.');
-      console.error('fal.ai error:', err);
     });
   }
 
-  function rearrangeRoom() {
-    if (!uploadedFile) return;
+  // Compresses + uploads a module's photo once, then caches and reuses the hosted
+  // URL for every subsequent action (detect furniture, generate) so we never
+  // re-upload the same photo twice.
+  function ensurePhotoUploaded(moduleId, callback) {
+    var state = modules[moduleId];
 
-    document.getElementById('generateBtn').disabled = true;
+    if (state.uploadedImageUrl) {
+      console.log('[upload:' + moduleId + '] reusing already-uploaded photo url:', state.uploadedImageUrl);
+      callback(state.uploadedImageUrl);
+      return;
+    }
+
+    console.log('[upload:' + moduleId + '] compressing image:', state.uploadedFile.name, state.uploadedFile.size + ' bytes');
+    compressImage(state.uploadedFile, 1536, 0.9, function(imageDataUrl) {
+      console.log('[upload:' + moduleId + '] image compressed, uploading to /api/upload');
+      fetch('/api/upload', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ image_data: imageDataUrl, mime_type: state.uploadedFile.type || 'image/jpeg' })
+      })
+      .then(function(res) {
+        return res.json().then(function(data) { return { ok: res.ok, status: res.status, data: data }; });
+      })
+      .then(function(result) {
+        console.log('[upload:' + moduleId + '] /api/upload response (http ' + result.status + '):', result.data);
+        if (!result.ok || !result.data || !result.data.url) {
+          console.error('[upload:' + moduleId + '] upload did not return a usable url, falling back to inline data url');
+        }
+        state.uploadedImageUrl = (result.ok && result.data && result.data.url) ? result.data.url : imageDataUrl;
+        callback(state.uploadedImageUrl);
+      })
+      .catch(function(err) {
+        console.error('[upload:' + moduleId + '] upload call threw:', err);
+        showError('Image upload failed. Please try again.');
+      });
+    });
+  }
+
+  function showResultLoading() {
     var resultArea = document.getElementById('resultArea');
     resultArea.classList.add('show');
     resultArea.scrollIntoView({ behavior: 'smooth', block: 'center' });
@@ -484,23 +734,225 @@
     ph.style.display = 'block';
     ph.innerHTML = '<div class="rp-icon">🎨</div><p>Generating your new layout...</p><small>Takes 15-30 seconds</small>';
     document.getElementById('loadingDots').classList.add('show');
+  }
 
-    var promptToUse = (mode === 'redesign') ? FULL_REDESIGN_PROMPT : REARRANGE_PROMPT;
+  // ---------- MODULE 2: AI Decides ----------
 
-    compressImage(uploadedFile, 1536, 0.9, function(imageDataUrl) {
-      fetch('/api/upload', {
+  function generateAuto() {
+    var state = modules.auto;
+    if (!state.uploadedFile) return;
+
+    selectModule('auto');
+    console.log('[auto] Generate clicked, sub-mode =', state.subMode);
+
+    document.getElementById('autoGenerateBtn').disabled = true;
+    showResultLoading();
+
+    var promptToUse = (state.subMode === 'redesign') ? FULL_REDESIGN_PROMPT : REARRANGE_PROMPT;
+
+    ensurePhotoUploaded('auto', function(url) {
+      callGenerate(url, promptToUse);
+    });
+  }
+
+  // ---------- MODULE 1: Place It Yourself ----------
+
+  function detectFurniture() {
+    var state = modules.manual;
+    if (!state.uploadedFile) return;
+
+    selectModule('manual');
+    console.log('[manual] Detect Furniture clicked');
+    document.getElementById('detectBtn').disabled = true;
+    document.getElementById('detectLoadingDots').classList.add('show');
+    document.getElementById('stickerTray').innerHTML = '';
+
+    ensurePhotoUploaded('manual', function(url) {
+      console.log('[manual] POST /api/detect-furniture with image_url:', url);
+      fetch('/api/detect-furniture', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ image_data: imageDataUrl, mime_type: uploadedFile.type || 'image/jpeg' })
+        body: JSON.stringify({ image_url: url })
       })
-      .then(function(r) { return r.json(); })
-      .then(function(uploadResult) {
-        callGenerate(uploadResult.url || imageDataUrl, promptToUse);
+      .then(function(res) {
+        return res.json().then(function(data) { return { ok: res.ok, status: res.status, data: data }; });
+      })
+      .then(function(result) {
+        console.log('[manual] /api/detect-furniture response (http ' + result.status + '):', result.data);
+        document.getElementById('detectLoadingDots').classList.remove('show');
+        document.getElementById('detectBtn').disabled = false;
+
+        if (!result.ok || !result.data || !result.data.furniture || !result.data.furniture.length) {
+          console.error('[manual] furniture detection failed or returned nothing:', result.data);
+          document.getElementById('stickerTray').innerHTML =
+            '<p style="color:var(--gray);font-size:13px;">Could not detect furniture. Please try again.</p>';
+          return;
+        }
+
+        detectedFurniture = result.data.furniture;
+        console.log('[manual] detected furniture:', detectedFurniture);
+        renderFurnitureTray(detectedFurniture);
       })
       .catch(function(err) {
-        showError('Image upload failed. Please try again.');
-        console.error('upload error:', err);
+        console.error('[manual] detect-furniture call threw:', err);
+        document.getElementById('detectLoadingDots').classList.remove('show');
+        document.getElementById('detectBtn').disabled = false;
+        document.getElementById('stickerTray').innerHTML =
+          '<p style="color:var(--gray);font-size:13px;">Connection error. Please try again.</p>';
       });
+    });
+  }
+
+  function renderFurnitureTray(furniture) {
+    var tray = document.getElementById('stickerTray');
+    tray.innerHTML = '';
+    furniture.forEach(function(item) {
+      var card = document.createElement('div');
+      card.className = 'sticker-card';
+      card.innerHTML = '<div class="sc-emoji">' + item.emoji + '</div><div class="sc-name">' + item.name + '</div>';
+      card.onclick = function() { placeSticker(item); };
+      tray.appendChild(card);
+    });
+    document.getElementById('manualHint').style.display = furniture.length ? 'block' : 'none';
+  }
+
+  function placeSticker(item) {
+    stickerIdCounter++;
+    var id = 'sticker-' + stickerIdCounter;
+
+    // Stagger the default drop position so multiple stickers don't land on top of each other.
+    var count = placedStickers.length;
+    var x = 30 + (count % 3) * 20;
+    var y = 30 + Math.floor(count / 3) * 20;
+
+    var stickerObj = { id: id, name: item.name, emoji: item.emoji, x: x, y: y };
+    placedStickers.push(stickerObj);
+    console.log('[manual] placed sticker on photo:', stickerObj);
+
+    renderPlacedSticker(stickerObj);
+    document.getElementById('manualGenerateBtn').disabled = false;
+  }
+
+  function renderPlacedSticker(stickerObj) {
+    var overlay = document.getElementById('stickerOverlay');
+    var el = document.createElement('div');
+    el.className = 'placed-sticker';
+    el.id = stickerObj.id;
+    el.style.left = stickerObj.x + '%';
+    el.style.top = stickerObj.y + '%';
+    el.innerHTML = '<span>' + stickerObj.emoji + '</span>' +
+      '<button class="ps-remove" title="Remove" type="button">✕</button>';
+    el.querySelector('.ps-remove').onclick = function(e) { removeSticker(stickerObj.id, e); };
+    overlay.appendChild(el);
+    makeDraggable(el, stickerObj);
+  }
+
+  function removeSticker(id, e) {
+    if (e) { e.preventDefault(); e.stopPropagation(); }
+    placedStickers = placedStickers.filter(function(s) { return s.id !== id; });
+    var el = document.getElementById(id);
+    if (el) el.remove();
+    console.log('[manual] removed sticker:', id, '— placements remaining:', placedStickers.length);
+    document.getElementById('manualGenerateBtn').disabled = placedStickers.length === 0;
+  }
+
+  // Drag support for placed stickers — mouse events for desktop, touch events for mobile.
+  // Position is tracked as a percentage of the photo's rendered dimensions so it stays
+  // correct across different screen sizes.
+  function makeDraggable(el, stickerObj) {
+    var dragRect = null;
+
+    function moveTo(clientX, clientY) {
+      var xPct = ((clientX - dragRect.left) / dragRect.width) * 100;
+      var yPct = ((clientY - dragRect.top) / dragRect.height) * 100;
+      xPct = Math.max(0, Math.min(100, xPct));
+      yPct = Math.max(0, Math.min(100, yPct));
+      stickerObj.x = xPct;
+      stickerObj.y = yPct;
+      el.style.left = xPct + '%';
+      el.style.top = yPct + '%';
+    }
+
+    el.addEventListener('mousedown', function(e) {
+      e.preventDefault();
+      e.stopPropagation();
+      dragRect = document.getElementById('stickerOverlay').getBoundingClientRect();
+      el.classList.add('dragging');
+
+      function onMouseMove(e2) { moveTo(e2.clientX, e2.clientY); }
+      function onMouseUp() {
+        el.classList.remove('dragging');
+        console.log('[manual] sticker moved:', stickerObj.name, '->', Math.round(stickerObj.x) + '%, ' + Math.round(stickerObj.y) + '%');
+        document.removeEventListener('mousemove', onMouseMove);
+        document.removeEventListener('mouseup', onMouseUp);
+      }
+      document.addEventListener('mousemove', onMouseMove);
+      document.addEventListener('mouseup', onMouseUp);
+    });
+
+    el.addEventListener('touchstart', function(e) {
+      e.preventDefault();
+      e.stopPropagation();
+      dragRect = document.getElementById('stickerOverlay').getBoundingClientRect();
+      el.classList.add('dragging');
+
+      function onTouchMove(e2) {
+        var t = e2.touches[0];
+        moveTo(t.clientX, t.clientY);
+      }
+      function onTouchEnd() {
+        el.classList.remove('dragging');
+        console.log('[manual] sticker moved:', stickerObj.name, '->', Math.round(stickerObj.x) + '%, ' + Math.round(stickerObj.y) + '%');
+        document.removeEventListener('touchmove', onTouchMove);
+        document.removeEventListener('touchend', onTouchEnd);
+      }
+      document.addEventListener('touchmove', onTouchMove, { passive: false });
+      document.addEventListener('touchend', onTouchEnd);
+    }, { passive: false });
+  }
+
+  function positionLabel(xPct, yPct) {
+    var horiz = xPct < 33 ? 'left side' : (xPct > 66 ? 'right side' : 'center');
+    var vert = yPct < 33 ? 'top' : (yPct > 66 ? 'bottom' : 'middle');
+    if (vert === 'middle' && horiz === 'center') return 'the center of the room';
+    if (vert === 'middle') return horiz;
+    if (horiz === 'center') return vert;
+    return vert + ' ' + horiz;
+  }
+
+  function buildManualPrompt() {
+    var placements = placedStickers.map(function(s) {
+      return s.name + ' at the ' + positionLabel(s.x, s.y);
+    });
+    var placementText = 'place ' + placements.join(', ');
+
+    return 'CRITICAL: Do NOT add any new furniture. Do NOT change any existing furniture.\n' +
+      'Use ONLY what is visible in the original photo — same sofa, same bed, same chairs, same items.\n\n' +
+      'You are an expert interior designer. Rearrange this room exactly as instructed:\n' +
+      placementText + '.\n\n' +
+      'DESIGN PRINCIPLES to apply:\n' +
+      '- Create 60-90cm clear walkways\n' +
+      '- No furniture blocking doors or windows\n' +
+      '- Follow the requested layout as closely as possible\n\n' +
+      'Furniture appearance stays 100% identical - same color, material, size.\n' +
+      'Output: photorealistic, professional interior design result.';
+  }
+
+  function generateWithLayout() {
+    var state = modules.manual;
+    if (!state.uploadedFile || placedStickers.length === 0) return;
+
+    selectModule('manual');
+    console.log('[manual] Generate clicked, placements:', placedStickers);
+
+    document.getElementById('manualGenerateBtn').disabled = true;
+    showResultLoading();
+
+    var promptToUse = buildManualPrompt();
+    console.log('[manual] built prompt from layout:', promptToUse);
+
+    ensurePhotoUploaded('manual', function(url) {
+      callGenerate(url, promptToUse);
     });
   }
 </script>
