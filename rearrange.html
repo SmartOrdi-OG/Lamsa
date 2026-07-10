@@ -461,6 +461,8 @@
           countryCode: NearbyStores.countryFromLocale(),
           lang: 'en'
         });
+      } else {
+        console.error('[nearby-stores] window.NearbyStores is undefined — js/nearby-stores.js failed to load');
       }
     } else {
       console.error('[generate] no images in result data:', data);
