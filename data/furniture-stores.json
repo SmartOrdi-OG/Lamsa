@@ -1,0 +1,14 @@
+{
+  "AE": { "name": "United Arab Emirates", "nameAr": "الإمارات", "stores": ["IKEA", "Home Centre", "Pan Emirates", "Homebox", "ACE Hardware", "Danube Home", "2XL Furniture"] },
+  "SA": { "name": "Saudi Arabia", "nameAr": "السعودية", "stores": ["IKEA", "Home Centre", "Pan Emirates", "Homebox", "SACO", "ACE Hardware", "Danube Home"] },
+  "KW": { "name": "Kuwait", "nameAr": "الكويت", "stores": ["IKEA", "Home Centre", "Pan Emirates", "Homebox", "ACE Hardware"] },
+  "QA": { "name": "Qatar", "nameAr": "قطر", "stores": ["IKEA", "Home Centre", "Pan Emirates", "Homebox", "ACE Hardware", "Danube Home"] },
+  "OM": { "name": "Oman", "nameAr": "عُمان", "stores": ["IKEA", "Home Centre", "Pan Emirates", "Homebox", "ACE Hardware"] },
+  "BH": { "name": "Bahrain", "nameAr": "البحرين", "stores": ["IKEA", "Home Centre", "Pan Emirates", "Homebox", "ACE Hardware", "Danube Home"] },
+  "GB": { "name": "United Kingdom", "nameAr": "المملكة المتحدة", "stores": ["IKEA", "DFS", "Dunelm", "Made.com", "Homebase"] },
+  "DE": { "name": "Germany", "nameAr": "ألمانيا", "stores": ["IKEA", "XXXLutz", "Poco", "Roller", "Mömax"] },
+  "FR": { "name": "France", "nameAr": "فرنسا", "stores": ["IKEA", "Conforama", "BUT", "Maisons du Monde"] },
+  "ES": { "name": "Spain", "nameAr": "إسبانيا", "stores": ["IKEA", "Kave Home", "Conforama"] },
+  "IT": { "name": "Italy", "nameAr": "إيطاليا", "stores": ["IKEA", "Mondo Convenienza", "Maisons du Monde"] },
+  "EU": { "name": "Europe", "nameAr": "أوروبا", "stores": ["IKEA", "Maisons du Monde", "Made.com"] }
+}

@@ -164,6 +164,26 @@
   .dot:nth-child(1) { animation-delay: -0.32s; }
   .dot:nth-child(2) { animation-delay: -0.16s; }
   @keyframes bounce { 0%, 80%, 100% { transform: scale(0); opacity: 0.3; } 40% { transform: scale(1); opacity: 1; } }
+
+  /* NEARBY STORES */
+  .nearby-stores { margin-top: 24px; padding-top: 20px; border-top: 1px solid var(--border); }
+  .nearby-stores-title { font-size: 15px; font-weight: 900; margin-bottom: 4px; }
+  .nearby-stores-sub { font-size: 12px; color: var(--gray); margin-bottom: 14px; }
+  .nearby-stores-list { display: flex; flex-direction: column; gap: 10px; }
+  .nearby-store-item {
+    display: flex; align-items: center; justify-content: space-between; gap: 10px;
+    background: var(--card); border: 1px solid var(--border); border-radius: 12px;
+    padding: 12px 14px;
+  }
+  .nearby-store-name { font-size: 13.5px; font-weight: 700; }
+  .nearby-store-btn {
+    flex-shrink: 0;
+    background: transparent; border: 1.5px solid var(--gold); color: var(--gold);
+    font-family: 'Tajawal', sans-serif; font-size: 11.5px; font-weight: 700;
+    padding: 7px 12px; border-radius: 20px; text-decoration: none;
+    white-space: nowrap; transition: all 0.2s;
+  }
+  .nearby-store-btn:hover { background: var(--gold-dim); }
 </style>
 </head>
 <body>
@@ -225,9 +245,11 @@
       <div class="dot"></div>
       <div class="dot"></div>
     </div>
+    <div id="nearbyStoresContainer"></div>
   </div>
 </div>
 
+<script src="js/nearby-stores.js"></script>
 <script>
   var REARRANGE_PROMPT =
     'CRITICAL: Do NOT add any new furniture. Do NOT change any existing furniture.\n' +
@@ -433,6 +455,13 @@
       imgWrap.style.cssText = 'display:block;aspect-ratio:auto;';
       imgWrap.appendChild(imgEl);
       imgWrap.appendChild(createDownloadBtn(images[0].url, 'lamsa-rearranged.jpg'));
+
+      if (window.NearbyStores) {
+        NearbyStores.render('nearbyStoresContainer', {
+          countryCode: NearbyStores.countryFromLocale(),
+          lang: 'en'
+        });
+      }
     } else {
       console.error('[generate] no images in result data:', data);
       showError('Error generating image. Please try again.');
@@ -572,10 +601,25 @@
     });
   }
 
+  // A prior successful renderGenerateResult() replaces #resultImg's contents
+  // with the result image, which removes #resultPlaceholder from the DOM.
+  // Recreate it before every run so a second/third generate doesn't crash.
+  function ensureResultPlaceholder() {
+    if (document.getElementById('resultPlaceholder')) return;
+    document.getElementById('resultImg').innerHTML =
+      '<div class="result-placeholder" id="resultPlaceholder">' +
+        '<div class="rp-icon">🎨</div>' +
+        '<p>Generating your new layout...</p>' +
+        '<small>Takes 15-30 seconds</small>' +
+      '</div>';
+  }
+
   function showResultLoading() {
     var resultArea = document.getElementById('resultArea');
     resultArea.classList.add('show');
     resultArea.scrollIntoView({ behavior: 'smooth', block: 'center' });
+
+    ensureResultPlaceholder();
 
     var ph = document.getElementById('resultPlaceholder');
     ph.style.display = 'block';

@@ -831,6 +831,27 @@
   }
   .dot:nth-child(1) { animation-delay: -0.32s; }
   .dot:nth-child(2) { animation-delay: -0.16s; }
+
+  /* NEARBY STORES */
+  .nearby-stores { margin-top: 24px; padding-top: 20px; border-top: 1px solid var(--border); }
+  .nearby-stores-title { font-size: 15px; font-weight: 900; margin-bottom: 4px; }
+  .nearby-stores-sub { font-size: 12px; color: var(--gray); margin-bottom: 14px; }
+  .nearby-stores-list { display: flex; flex-direction: column; gap: 10px; }
+  .nearby-store-item {
+    display: flex; align-items: center; justify-content: space-between; gap: 10px;
+    background: var(--card); border: 1px solid var(--border); border-radius: 12px;
+    padding: 12px 14px;
+  }
+  .nearby-store-name { font-size: 13.5px; font-weight: 700; }
+  .nearby-store-btn {
+    flex-shrink: 0;
+    background: transparent; border: 1.5px solid var(--gold); color: var(--gold);
+    font-family: 'Tajawal', sans-serif; font-size: 11.5px; font-weight: 700;
+    padding: 7px 12px; border-radius: 20px; text-decoration: none;
+    white-space: nowrap; transition: all 0.2s;
+  }
+  .nearby-store-btn:hover { background: var(--gold-dim); }
+
   @keyframes bounce {
     0%, 80%, 100% { transform: scale(0); opacity: 0.3; }
     40% { transform: scale(1); opacity: 1; }
@@ -1431,6 +1452,7 @@
         <div class="dot"></div>
         <div class="dot"></div>
       </div>
+      <div id="nearbyStoresContainer"></div>
     </div>
   </div>
 </section>
@@ -1498,6 +1520,7 @@
   </div>
 </div>
 
+<script src="js/nearby-stores.js"></script>
 <script>
   // ===== LANG CONFIG =====
   const langs = {
@@ -2728,6 +2751,13 @@
               imgEl.style.cssText = 'width:100%;border-radius:10px;margin-bottom:10px;';
               imgWrap.appendChild(imgEl);
               imgWrap.appendChild(createDownloadBtn(img.url, 'lamsa-design-' + (i+1) + '.jpg'));
+            });
+          }
+
+          if (window.NearbyStores) {
+            NearbyStores.render('nearbyStoresContainer', {
+              countryCode: NearbyStores.countryFromCurrency(currency, currentLang),
+              lang: currentLang
             });
           }
         } else {
