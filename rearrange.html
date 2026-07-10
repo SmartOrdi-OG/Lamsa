@@ -641,7 +641,7 @@
     // (strength) — fal.ai defaults strength to 0.1 when omitted, which is
     // far too conservative for a full redesign.
     var guidanceScale = isRedesign ? 7.5 : 3.5;
-    var strength = isRedesign ? 0.9 : 0.6;
+    var strength = isRedesign ? 1 : 0.6;
 
     ensurePhotoUploaded(function(url) {
       callGenerate(url, promptToUse, guidanceScale, strength);

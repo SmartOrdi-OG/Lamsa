@@ -2579,13 +2579,12 @@
       };
       // fal.ai's `strength` (0-1) caps how much the output may differ from
       // the source photo, separately from guidance_scale (prompt weight).
-      // It defaults to 0.1 when omitted — meant for light touch-ups — which
-      // is why raising guidance_scale alone never fully removed stray
-      // elements from the original photo (like a built-in shower): the
-      // model was never allowed to deviate from those pixels in the first
-      // place. This flow fully strips and rebuilds the room, so it needs a
-      // high strength.
-      if (imageUrl) requestBody.strength = 0.9;
+      // It defaults to 0.1 when omitted — meant for light touch-ups. 0.9
+      // still wasn't enough to fully clear a very prominent structural
+      // fixture (a floor-to-ceiling shower frame) from one real test photo,
+      // so this flow — which always fully strips and rebuilds the room's
+      // furniture — uses the maximum.
+      if (imageUrl) requestBody.strength = 1;
       console.log('[generate] sending to /api/generate:', requestBody);
 
       // Call fal.ai FLUX.1 Kontext Pro (queue-based: submit, then poll for the result)
