@@ -789,6 +789,19 @@
     border-radius: 20px;
     font-size: 11px; font-weight: 700;
   }
+  .result-clear-btn {
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--gray);
+    font-family: 'Tajawal', sans-serif;
+    font-size: 11px; font-weight: 700;
+    padding: 4px 10px;
+    border-radius: 20px;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: all 0.2s;
+  }
+  .result-clear-btn:hover { border-color: var(--gold); color: var(--gold); }
   .result-img-wrap {
     background: var(--black);
     border: 1px solid var(--border);
@@ -1403,7 +1416,7 @@
         <div class="result-title" data-ar="✦ تصميمك الجديد" data-en="✦ Your New Design">✦ Your New Design</div>
         <div style="display:flex;align-items:center;gap:10px;">
           <div class="result-badge">AI Generated</div>
-          <button type="button" class="planner-clear-btn" onclick="startNewDesign()" data-en="↺ Start New Design" data-ar="↺ تصميم جديد">↺ Start New Design</button>
+          <button type="button" class="result-clear-btn" onclick="startNewDesign()" data-en="↺ Start New Design" data-ar="↺ تصميم جديد">↺ Start New Design</button>
         </div>
       </div>
       <div class="result-img-wrap" id="resultImg">
@@ -2301,11 +2314,29 @@
     doGenerate();
   }
 
+  // Re-generating overwrites #resultImg's contents with the previous result
+  // (image + download buttons), which permanently removes #resultPlaceholder
+  // from the DOM. Recreate it before every generate so a second/third run
+  // doesn't crash on a null getElementById('resultPlaceholder').
+  function ensureResultPlaceholder() {
+    if (document.getElementById('resultPlaceholder')) return;
+    var genText = currentLang === 'ar' ? 'جاري توليد تصميمك...' : 'Generating your design...';
+    var genSub  = currentLang === 'ar' ? 'يستغرق 15-30 ثانية' : 'Takes 15-30 seconds';
+    document.getElementById('resultImg').innerHTML =
+      '<div class="result-placeholder" id="resultPlaceholder">' +
+        '<div class="rp-icon">🎨</div>' +
+        '<p>' + genText + '</p>' +
+        '<small>' + genSub + '</small>' +
+      '</div>';
+  }
+
   function doGenerate() {
 
     var resultArea = document.getElementById('resultArea');
     resultArea.classList.add('show');
     resultArea.scrollIntoView({ behavior: 'smooth', block: 'center' });
+
+    ensureResultPlaceholder();
 
     // Show loading
     document.getElementById('loadingDots').classList.add('show');
