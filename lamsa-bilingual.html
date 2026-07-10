@@ -2756,6 +2756,8 @@
               countryCode: NearbyStores.countryFromCurrency(currency, currentLang),
               lang: currentLang
             });
+          } else {
+            console.error('[nearby-stores] window.NearbyStores is undefined — js/nearby-stores.js failed to load');
           }
         } else {
           document.getElementById('resultPlaceholder').style.display = 'block';
