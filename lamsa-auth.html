@@ -503,10 +503,10 @@
       <!-- LOGIN FORM -->
       <div id="loginForm">
         <div class="form-group">
-          <label class="form-label">اسم المستخدم أو الإيميل</label>
+          <label class="form-label">البريد الإلكتروني</label>
           <div class="input-wrap">
-            <span class="input-icon">👤</span>
-            <input type="text" class="form-input" id="loginUser" placeholder="اسم المستخدم أو الإيميل">
+            <span class="input-icon">✉️</span>
+            <input type="email" class="form-input" id="loginUser" placeholder="example@email.com" dir="ltr">
           </div>
         </div>
         <div class="form-group">
@@ -678,40 +678,53 @@
   }
 
   // SOCIAL LOGIN
+  // Real OAuth isn't wired up to any backend yet — say so honestly instead
+  // of faking a logged-in state that would immediately break (every
+  // protected API call requires a real server session).
   function socialLogin(provider) {
+    alert('Sign in with ' + (provider === 'google' ? 'Google' : 'Apple') + ' is coming soon — please use email & password for now.');
+  }
+
+  function cacheLoggedInUser(user) {
     try {
-      localStorage.setItem('lamsa_user', JSON.stringify({
-        username: provider === 'google' ? 'Google User' : 'Apple User',
-        loggedIn: true
-      }));
-    } catch(e){}
-    showSuccess();
+      localStorage.setItem('lamsa_user', JSON.stringify({ username: user.username, email: user.email, loggedIn: true }));
+    } catch (e) {}
   }
 
   // LOGIN
   function handleLogin() {
-    var username = document.getElementById('loginUser').value.trim();
+    var email = document.getElementById('loginUser').value.trim();
     var password = document.getElementById('loginPass').value;
 
-    if (!username || !password) {
-      alert('Please enter username and password');
+    if (!email || !password) {
+      alert('Please enter your email and password');
       return;
     }
 
-    // The login field accepts either a username or an email — if it looks
-    // like an email, keep it as the account's email too (needed for
-    // credit balance / Stripe checkout, which are looked up by email).
-    var isEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(username);
+    var btn = document.querySelector('#loginForm .submit-btn');
+    if (btn) btn.disabled = true;
 
-    try {
-      localStorage.setItem('lamsa_user', JSON.stringify({
-        username: username,
-        email: isEmail ? username : '',
-        loggedIn: true
-      }));
-    } catch(e){}
-
-    showSuccess();
+    fetch('/api/auth-login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+      body: JSON.stringify({ email: email, password: password })
+    })
+    .then(function(r) { return r.json().then(function(data) { return { ok: r.ok, data: data }; }); })
+    .then(function(result) {
+      if (btn) btn.disabled = false;
+      if (!result.ok) {
+        alert(result.data.error || 'Login failed');
+        return;
+      }
+      cacheLoggedInUser(result.data);
+      showSuccess(result.data.username);
+    })
+    .catch(function(err) {
+      if (btn) btn.disabled = false;
+      console.error('[login] request failed:', err);
+      alert('Connection error, please try again');
+    });
   }
 
   // REGISTER
@@ -724,8 +737,8 @@
       alert('Please fill all fields');
       return;
     }
-    if (password.length < 6) {
-      alert('Password too short');
+    if (password.length < 8) {
+      alert('Password must be at least 8 characters');
       return;
     }
     if (!selectedCountry) {
@@ -733,22 +746,44 @@
       return;
     }
 
-    try {
-      localStorage.setItem('lamsa_user', JSON.stringify({ username: username, email: email, loggedIn: true }));
-    } catch(e){}
+    var btn = document.querySelector('#registerForm .submit-btn');
+    if (btn) btn.disabled = true;
 
-    showSuccess();
+    fetch('/api/auth-register', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+      body: JSON.stringify({ username: username, email: email, password: password, country: selectedCountry.code })
+    })
+    .then(function(r) { return r.json().then(function(data) { return { ok: r.ok, data: data }; }); })
+    .then(function(result) {
+      if (btn) btn.disabled = false;
+      if (!result.ok) {
+        alert(result.data.error || 'Registration failed');
+        return;
+      }
+      cacheLoggedInUser(result.data);
+      showSuccess(result.data.username);
+    })
+    .catch(function(err) {
+      if (btn) btn.disabled = false;
+      console.error('[register] request failed:', err);
+      alert('Connection error, please try again');
+    });
   }
 
-  function showSuccess() {
-    // Get username from inputs
-    var username = '';
-    try {
-      var regUser = document.getElementById('regUsername');
-      var loginUser = document.getElementById('loginUser');
-      if(regUser && regUser.value.trim()) username = regUser.value.trim();
-      else if(loginUser && loginUser.value.trim()) username = loginUser.value.trim().split('@')[0];
-    } catch(e){}
+  function showSuccess(knownUsername) {
+    // Prefer the real username the server returned; fall back to guessing
+    // from the form inputs only if it wasn't passed in.
+    var username = knownUsername || '';
+    if (!username) {
+      try {
+        var regUser = document.getElementById('regUsername');
+        var loginUser = document.getElementById('loginUser');
+        if(regUser && regUser.value.trim()) username = regUser.value.trim();
+        else if(loginUser && loginUser.value.trim()) username = loginUser.value.trim().split('@')[0];
+      } catch(e){}
+    }
 
     document.getElementById('formContent').style.display = 'none';
     document.getElementById('successBox').classList.add('show');

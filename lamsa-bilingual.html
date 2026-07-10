@@ -4,7 +4,10 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <script>
-  // Auth guard: bounce to login if no logged-in session is found
+  // Fast, optimistic auth check to avoid a flash of the app before redirecting
+  // — this only looks at a local cache and can't be trusted for anything
+  // security-relevant. The real check is checkAuth() (calls /api/me against
+  // the actual server session) run on DOMContentLoaded further down.
   (function() {
     try {
       var user = JSON.parse(localStorage.getItem('lamsa_user') || 'null');
@@ -99,6 +102,20 @@
     transition: all 0.2s;
   }
   .nav-rearrange:hover { border-color: var(--gold); color: var(--gold); }
+
+  .nav-logout {
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--light);
+    padding: 6px 10px;
+    border-radius: 6px;
+    font-size: 12px; font-weight: 700;
+    font-family: 'Tajawal', sans-serif;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: all 0.2s;
+  }
+  .nav-logout:hover { border-color: var(--gold); color: var(--gold); }
 
   .lang-dropdown { position: relative; }
   .lang-selected {
@@ -969,6 +986,7 @@
       </div>
     </div>
     <button class="nav-cta" onclick="scrollToForm()" data-ar="ابدأ مجاناً" data-en="Start Free" data-de="Kostenlos starten" data-es="Empezar gratis">Start Free</button>
+    <button type="button" class="nav-logout" onclick="logout()" data-en="Log Out" data-ar="تسجيل الخروج">Log Out</button>
   </div>
 </nav>
 
@@ -2275,41 +2293,53 @@
     document.getElementById('beforeAfterLabel').textContent = beforeAfterOn ? 'On — Before & After' : 'Off — New design only';
   }
 
-  // ===== CREDITS / PAYMENTS (Stripe, one-time credit purchases) =====
+  // ===== AUTH (real server session) + CREDITS / PAYMENTS =====
   var CREDIT_PACKAGES = [
     { id: 'x1',  credits: 1,  price: '€1', label: '1 Design' },
     { id: 'x5',  credits: 5,  price: '€4', label: '5 Designs' },
     { id: 'x10', credits: 10, price: '€7', label: '10 Designs' }
   ];
 
-  function getUserEmail() {
-    try {
-      var user = JSON.parse(localStorage.getItem('lamsa_user') || 'null');
-      return (user && user.email) ? user.email.trim() : '';
-    } catch (e) { return ''; }
+  var currentUser = null; // { username, email } — populated by checkAuth(), source of truth is the server session, not localStorage
+
+  // The server session cookie is the only thing that actually gates
+  // generate()/credits/checkout — this call is what enforces that, redirecting
+  // to login if the session is missing or expired. The localStorage flag some
+  // older code paths still read is just a display cache, not a security check.
+  function checkAuth() {
+    return fetch('/api/me', { credentials: 'include' })
+      .then(function(r) { return r.json().then(function(data) { return { ok: r.ok, data: data }; }); })
+      .then(function(result) {
+        if (!result.ok) {
+          window.location.replace('lamsa-auth.html');
+          return null;
+        }
+        currentUser = result.data;
+        try { localStorage.setItem('lamsa_user', JSON.stringify({ username: currentUser.username, email: currentUser.email, loggedIn: true })); } catch (e) {}
+        return currentUser;
+      })
+      .catch(function(err) {
+        console.error('[auth] session check failed:', err);
+        window.location.replace('lamsa-auth.html');
+        return null;
+      });
   }
 
-  function setUserEmail(email) {
-    try {
-      var user = JSON.parse(localStorage.getItem('lamsa_user') || '{}') || {};
-      user.email = email;
-      localStorage.setItem('lamsa_user', JSON.stringify(user));
-    } catch (e) {}
+  function logout() {
+    fetch('/api/auth-logout', { method: 'POST', credentials: 'include' })
+      .catch(function(err) { console.error('[auth] logout request failed:', err); })
+      .then(function() {
+        try { localStorage.removeItem('lamsa_user'); } catch (e) {}
+        window.location.replace('lamsa-auth.html');
+      });
   }
 
   function refreshCreditBalance() {
     var badge = document.getElementById('freeTrialBadge');
     if (!badge) return;
-    var email = getUserEmail();
     var isAr = currentLang === 'ar';
 
-    if (!email) {
-      badge.innerHTML = '<a href="javascript:void(0)" onclick="showCreditsModal()" style="color:var(--gold);text-decoration:underline;">' +
-        (isAr ? '✦ 1 تصميم مجاني — اضغطي للبدء' : '✦ 1 free design included — click to start') + '</a>';
-      return;
-    }
-
-    fetch('/api/credits?email=' + encodeURIComponent(email))
+    fetch('/api/credits', { credentials: 'include' })
       .then(function(r) { return r.json(); })
       .then(function(data) {
         if (typeof data.credits !== 'number') return;
@@ -2335,9 +2365,7 @@
 
     var title = isAr ? '🎨 اشتري تصاميم' : '🎨 Buy Designs';
     var sub = message || (isAr ? 'كل تصميم يخصم كريدت واحد من رصيدك' : 'Each design uses 1 credit from your balance');
-    var emailLabel = isAr ? 'بريدك الإلكتروني' : 'Your email';
     var closeLabel = isAr ? 'إغلاق' : 'Close';
-    var savedEmail = (getUserEmail() || '').replace(/"/g, '&quot;');
 
     var packagesHtml = CREDIT_PACKAGES.map(function(pkg) {
       var creditsLabel = isAr ? (pkg.credits + (pkg.credits === 1 ? ' تصميم' : ' تصاميم')) : pkg.label;
@@ -2352,8 +2380,6 @@
       '<div style="font-size:42px;margin-bottom:16px;">✦</div>' +
       '<div style="font-size:22px;font-weight:900;color:#c9a84c;margin-bottom:8px;">' + title + '</div>' +
       '<div style="font-size:13px;color:#888;margin-bottom:20px;line-height:1.6;">' + sub + '</div>' +
-      '<input type="email" id="creditsEmailInput" placeholder="' + emailLabel + '" value="' + savedEmail + '" dir="ltr" ' +
-      'style="width:100%;background:#111;border:1px solid #2a2a2a;border-radius:10px;padding:12px 14px;color:white;font-size:14px;margin-bottom:16px;font-family:Tajawal,sans-serif;box-sizing:border-box;">' +
       '<div id="creditsPkgList">' + packagesHtml + '</div>' +
       '<div id="creditsModalError" style="color:#e06060;font-size:12px;margin-top:6px;min-height:16px;"></div>' +
       '<button type="button" onclick="document.getElementById(\'creditsModalOverlay\').remove()" ' +
@@ -2369,17 +2395,7 @@
 
   function startCheckout(packageId) {
     var isAr = currentLang === 'ar';
-    var emailInput = document.getElementById('creditsEmailInput');
     var errorEl = document.getElementById('creditsModalError');
-    var email = emailInput ? emailInput.value.trim() : '';
-
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-      if (errorEl) errorEl.textContent = isAr ? 'الرجاء إدخال بريد إلكتروني صحيح' : 'Please enter a valid email';
-      return;
-    }
-
-    setUserEmail(email);
-    if (errorEl) errorEl.textContent = '';
 
     var buttons = document.querySelectorAll('.credits-pkg-btn');
     Array.prototype.forEach.call(buttons, function(b) { b.disabled = true; b.style.opacity = '0.5'; });
@@ -2387,10 +2403,12 @@
     fetch('/api/create-checkout-session', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email: email, package: packageId, return_page: 'lamsa-bilingual.html' })
+      credentials: 'include',
+      body: JSON.stringify({ package: packageId, return_page: 'lamsa-bilingual.html' })
     })
-    .then(function(r) { return r.json().then(function(data) { return { ok: r.ok, data: data }; }); })
+    .then(function(r) { return r.json().then(function(data) { return { ok: r.ok, status: r.status, data: data }; }); })
     .then(function(result) {
+      if (result.status === 401) { window.location.replace('lamsa-auth.html'); return; }
       if (!result.ok || !result.data || !result.data.url) {
         if (errorEl) errorEl.textContent = (result.data && result.data.error) || (isAr ? 'حدث خطأ، حاولي مرة أخرى' : 'Something went wrong, please try again');
         Array.prototype.forEach.call(buttons, function(b) { b.disabled = false; b.style.opacity = '1'; });
@@ -2411,11 +2429,10 @@
       return;
     }
 
-    if (!getUserEmail()) {
-      showCreditsModal(currentLang === 'ar' ? 'أدخلي بريدك الإلكتروني لاستخدام تصميمك المجاني' : 'Enter your email to use your free design');
-      return;
-    }
-
+    // No email/login check here — the page-load auth guard (checkAuth())
+    // already redirects to lamsa-auth.html if there's no valid session, and
+    // callGenerate() below handles a 401 defensively in case the session
+    // expired mid-visit.
     doGenerate();
   }
 
@@ -2671,8 +2688,7 @@
         num_images: designCount,
         guidance_scale: 7.5,
         aspect_ratio: '16:9',
-        safety_tolerance: '2',
-        email: getUserEmail()
+        safety_tolerance: '2'
       };
       // fal.ai's `strength` (0-1) caps how much the output may differ from
       // the source photo, separately from guidance_scale (prompt weight).
@@ -2692,6 +2708,12 @@
       })
       .then(function(result) {
         console.log('[generate] /api/generate response (http ' + result.status + '):', result.data);
+
+        if (result.status === 401) {
+          console.log('[generate] session expired, redirecting to login');
+          window.location.replace('lamsa-auth.html');
+          return;
+        }
 
         if (result.status === 402) {
           console.log('[generate] blocked - no credits remaining');
@@ -2930,8 +2952,11 @@
     initFloorPlan();
     formPanelsSnapshot = document.querySelector('.form-panels').innerHTML;
     resultAreaSnapshot = document.getElementById('resultArea').innerHTML;
-    refreshCreditBalance();
-    handleCheckoutRedirect();
+    checkAuth().then(function(user) {
+      if (!user) return; // checkAuth() already redirected to login
+      refreshCreditBalance();
+      handleCheckoutRedirect();
+    });
   });
 
   // After a Stripe Checkout redirect back to this page, show a short status
