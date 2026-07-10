@@ -14,6 +14,7 @@
 - [x] Fix `vercel.json` not serving static files outside `/api/*` and `*.html` (no `"handle": "filesystem"` phase), which silently broke the Nearby Stores panel in production — `js/nearby-stores.js` likely 404'd, so `window.NearbyStores` stayed undefined and nothing rendered, with no visible error. Added the filesystem phase plus a `console.error` for next time.
 - [x] Simplify the nav/brand logo to a single "LAMSA" wordmark (removed the Arabic "لمستي" line) on all three pages, and bumped its size up slightly.
 - [x] Fix misleading "WHY LAMSA" landing page copy — two feature cards promised "Furniture List with Prices" (real IKEA/Jysk pricing) and "Direct Purchase Links" (one-click buying), neither of which was ever implemented. Reworded both to accurately describe what Nearby Stores actually does: a general store list + Google Maps search links.
+- [x] Fix bathroom fixtures (shower, bathtub, sink, toilet) surviving into non-bathroom redesigns — user generated a Kids Room and got a shower stall in the result. The prompt told the model to "REMOVE all existing furniture" and separately to "STRICTLY PRESERVE... architectural elements", with nothing covering fixed plumbing fixtures in between — a shower bolted to a wall plausibly reads as "architectural" rather than "furniture" to the model. Added an explicit instruction to remove any bathroom/plumbing fixtures for every non-bathroom room type.
 
 ## 💡 Suggestions
 _(لسا ما في شي)_

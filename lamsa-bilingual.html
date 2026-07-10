@@ -2454,6 +2454,7 @@
           '\n• ' + furnitureText.split(', ').join('\n• ') +
           '\nAll fixtures must use water-resistant materials. Tile grout lines must look realistic and precise.'
         : '\nREMOVE all existing furniture and loose objects from the photo.' +
+          '\nThis is NOT a bathroom: if a shower, bathtub, sink, toilet, or any other plumbing/bathroom fixture is visible anywhere in the original photo, REMOVE it completely — these are NOT architectural elements to preserve, they do not belong in a ' + roomTypeLabel + ' and must not appear in the output.' +
           '\nPlace ALL of the following items inside the room, correctly proportioned to the room size:' +
           (isBedRoom ? '\n• ' + (bedCount === 2 ? 'TWO separate single beds (not a bunk bed, two individual beds)' : 'Standard bed with headboard') : '') +
           '\n• ' + furnitureText.split(', ').join('\n• ')
