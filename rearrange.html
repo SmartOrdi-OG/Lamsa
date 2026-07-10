@@ -222,6 +222,7 @@
     <button class="generate-btn" id="generateBtn" onclick="generate()" disabled>
       ✨ Generate
     </button>
+    <div id="creditsBadge" style="text-align:center;margin-top:10px;font-size:12px;color:var(--gold);"></div>
   </div>
 
   <div class="result-area" id="resultArea">
@@ -456,6 +457,7 @@
       } else {
         console.error('[nearby-stores] window.NearbyStores is undefined — js/nearby-stores.js failed to load');
       }
+      refreshCreditBalance(); // a credit was just spent — reflect the new balance
     } else {
       console.error('[generate] no images in result data:', data);
       showError('Error generating image. Please try again.');
@@ -530,7 +532,8 @@
       image_url: imageUrl,
       num_images: 1,
       guidance_scale: guidanceScale || 3.5,
-      aspect_ratio: '16:9'
+      aspect_ratio: '16:9',
+      email: getUserEmail()
     };
     // fal.ai's `strength` (0-1) caps how much the output may differ from the
     // source photo — separate from guidance_scale (prompt weight) — and
@@ -548,6 +551,15 @@
     })
     .then(function(result) {
       console.log('[generate] /api/generate response (http ' + result.status + '):', result.data);
+
+      if (result.status === 402) {
+        console.log('[generate] blocked - no credits remaining');
+        document.getElementById('loadingDots').classList.remove('show');
+        document.getElementById('resultArea').classList.remove('show');
+        showCreditsModal("You're out of credits — buy more to continue");
+        refreshCreditBalance();
+        return;
+      }
 
       if (!result.ok || !result.data || !result.data.request_id) {
         console.error('[generate] no request_id in response:', result.data);
@@ -625,8 +637,155 @@
     document.getElementById('loadingDots').classList.add('show');
   }
 
+  // ===== CREDITS / PAYMENTS (Stripe, one-time credit purchases) =====
+  // Shares the lamsa_user localStorage key with lamsa-bilingual.html so a
+  // balance bought on either page is available on both.
+  var CREDIT_PACKAGES = [
+    { id: 'x1',  credits: 1,  price: '€1', label: '1 Design' },
+    { id: 'x5',  credits: 5,  price: '€4', label: '5 Designs' },
+    { id: 'x10', credits: 10, price: '€7', label: '10 Designs' }
+  ];
+
+  function getUserEmail() {
+    try {
+      var user = JSON.parse(localStorage.getItem('lamsa_user') || 'null');
+      return (user && user.email) ? user.email.trim() : '';
+    } catch (e) { return ''; }
+  }
+
+  function setUserEmail(email) {
+    try {
+      var user = JSON.parse(localStorage.getItem('lamsa_user') || '{}') || {};
+      user.email = email;
+      localStorage.setItem('lamsa_user', JSON.stringify(user));
+    } catch (e) {}
+  }
+
+  function refreshCreditBalance() {
+    var badge = document.getElementById('creditsBadge');
+    if (!badge) return;
+    var email = getUserEmail();
+
+    if (!email) {
+      badge.innerHTML = '<a href="javascript:void(0)" onclick="showCreditsModal()" style="color:var(--gold);text-decoration:underline;">✦ 1 free design included — click to start</a>';
+      return;
+    }
+
+    fetch('/api/credits?email=' + encodeURIComponent(email))
+      .then(function(r) { return r.json(); })
+      .then(function(data) {
+        if (typeof data.credits !== 'number') return;
+        badge.innerHTML = 'Your balance: <b>' + data.credits + '</b> credit' + (data.credits === 1 ? '' : 's') +
+          ' &middot; <a href="javascript:void(0)" onclick="showCreditsModal()" style="color:var(--gold);text-decoration:underline;">Buy more</a>';
+      })
+      .catch(function(err) { console.error('[credits] failed to load balance:', err); });
+  }
+
+  function showCreditsModal(message) {
+    var existing = document.getElementById('creditsModalOverlay');
+    if (existing) existing.remove();
+
+    var overlay = document.createElement('div');
+    overlay.id = 'creditsModalOverlay';
+    overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.9);z-index:9999;display:flex;align-items:center;justify-content:center;padding:20px;overflow-y:auto;';
+
+    var box = document.createElement('div');
+    box.style.cssText = 'background:var(--dark);border:1px solid var(--gold);border-radius:20px;padding:32px 24px;max-width:420px;width:100%;text-align:center;';
+
+    var sub = message || 'Each design uses 1 credit from your balance';
+    var savedEmail = (getUserEmail() || '').replace(/"/g, '&quot;');
+
+    var packagesHtml = CREDIT_PACKAGES.map(function(pkg) {
+      return '<button type="button" class="credits-pkg-btn" data-pkg="' + pkg.id + '" ' +
+        'style="width:100%;display:flex;justify-content:space-between;align-items:center;background:var(--black);border:1px solid var(--border);border-radius:12px;padding:14px 16px;margin-bottom:10px;cursor:pointer;color:var(--white);font-family:Tajawal,sans-serif;font-size:14px;">' +
+        '<span style="font-weight:700;">' + pkg.label + '</span>' +
+        '<span style="color:var(--gold);font-weight:900;">' + pkg.price + '</span>' +
+        '</button>';
+    }).join('');
+
+    box.innerHTML =
+      '<div style="font-size:42px;margin-bottom:16px;">✦</div>' +
+      '<div style="font-size:22px;font-weight:900;color:var(--gold);margin-bottom:8px;">🎨 Buy Designs</div>' +
+      '<div style="font-size:13px;color:var(--gray);margin-bottom:20px;line-height:1.6;">' + sub + '</div>' +
+      '<input type="email" id="creditsEmailInput" placeholder="Your email" value="' + savedEmail + '" dir="ltr" ' +
+      'style="width:100%;background:var(--black);border:1px solid var(--border);border-radius:10px;padding:12px 14px;color:var(--white);font-size:14px;margin-bottom:16px;font-family:Tajawal,sans-serif;box-sizing:border-box;">' +
+      '<div id="creditsPkgList">' + packagesHtml + '</div>' +
+      '<div id="creditsModalError" style="color:#e06060;font-size:12px;margin-top:6px;min-height:16px;"></div>' +
+      '<button type="button" onclick="document.getElementById(\'creditsModalOverlay\').remove()" ' +
+      'style="width:100%;background:transparent;border:1px solid var(--border);color:var(--gray);padding:10px;border-radius:10px;font-size:13px;cursor:pointer;margin-top:8px;font-family:Tajawal,sans-serif;">Close</button>';
+
+    overlay.appendChild(box);
+    document.body.appendChild(overlay);
+
+    Array.prototype.forEach.call(box.querySelectorAll('.credits-pkg-btn'), function(btn) {
+      btn.onclick = function() { startCheckout(btn.getAttribute('data-pkg')); };
+    });
+  }
+
+  function startCheckout(packageId) {
+    var emailInput = document.getElementById('creditsEmailInput');
+    var errorEl = document.getElementById('creditsModalError');
+    var email = emailInput ? emailInput.value.trim() : '';
+
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      if (errorEl) errorEl.textContent = 'Please enter a valid email';
+      return;
+    }
+
+    setUserEmail(email);
+    if (errorEl) errorEl.textContent = '';
+
+    var buttons = document.querySelectorAll('.credits-pkg-btn');
+    Array.prototype.forEach.call(buttons, function(b) { b.disabled = true; b.style.opacity = '0.5'; });
+
+    fetch('/api/create-checkout-session', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email: email, package: packageId, return_page: 'rearrange.html' })
+    })
+    .then(function(r) { return r.json().then(function(data) { return { ok: r.ok, data: data }; }); })
+    .then(function(result) {
+      if (!result.ok || !result.data || !result.data.url) {
+        if (errorEl) errorEl.textContent = (result.data && result.data.error) || 'Something went wrong, please try again';
+        Array.prototype.forEach.call(buttons, function(b) { b.disabled = false; b.style.opacity = '1'; });
+        return;
+      }
+      window.location.href = result.data.url;
+    })
+    .catch(function(err) {
+      console.error('[checkout] failed:', err);
+      if (errorEl) errorEl.textContent = 'Connection error';
+      Array.prototype.forEach.call(buttons, function(b) { b.disabled = false; b.style.opacity = '1'; });
+    });
+  }
+
+  function handleCheckoutRedirect() {
+    var params = new URLSearchParams(window.location.search);
+    var checkout = params.get('checkout');
+    if (!checkout) return;
+
+    if (checkout === 'success') {
+      alert('✦ Payment successful! Your balance will update in a few seconds.');
+      [500, 2000, 4000].forEach(function(delay) { setTimeout(refreshCreditBalance, delay); });
+    }
+
+    params.delete('checkout');
+    var newUrl = window.location.pathname + (params.toString() ? '?' + params.toString() : '');
+    window.history.replaceState({}, '', newUrl);
+  }
+
+  window.addEventListener('DOMContentLoaded', function() {
+    refreshCreditBalance();
+    handleCheckoutRedirect();
+  });
+
   function generate() {
     if (!state.uploadedFile) return;
+
+    if (!getUserEmail()) {
+      showCreditsModal('Enter your email to use your free design');
+      return;
+    }
 
     console.log('[auto] Generate clicked, sub-mode =', state.subMode);
 

@@ -1,0 +1,11 @@
+{
+  "name": "lamsa",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Lamsa — AI interior design web app (static pages + Vercel serverless functions).",
+  "dependencies": {
+    "@upstash/redis": "^1.34.3",
+    "stripe": "^17.4.0"
+  }
+}

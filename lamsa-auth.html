@@ -698,8 +698,17 @@
       return;
     }
 
+    // The login field accepts either a username or an email — if it looks
+    // like an email, keep it as the account's email too (needed for
+    // credit balance / Stripe checkout, which are looked up by email).
+    var isEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(username);
+
     try {
-      localStorage.setItem('lamsa_user', JSON.stringify({ username: username, loggedIn: true }));
+      localStorage.setItem('lamsa_user', JSON.stringify({
+        username: username,
+        email: isEmail ? username : '',
+        loggedIn: true
+      }));
     } catch(e){}
 
     showSuccess();
@@ -725,7 +734,7 @@
     }
 
     try {
-      localStorage.setItem('lamsa_user', JSON.stringify({ username: username, loggedIn: true }));
+      localStorage.setItem('lamsa_user', JSON.stringify({ username: username, email: email, loggedIn: true }));
     } catch(e){}
 
     showSuccess();
