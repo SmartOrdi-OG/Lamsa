@@ -5,6 +5,9 @@
 - [x] Remove the 3D room planner (`planner.html`, `test3d.html`, `js/three.min.js`, `js/OrbitControls.js`) and all related UI/JS in `lamsa-bilingual.html`.
 - [x] Add a 2D floor plan editor in its place — draws the room from the Length/Width inputs and lets the user tap a wall to place/remove door and window markers, feeding a description into the AI prompt.
 - [x] Remove the "Detect Furniture" / "Place It Yourself" module from `rearrange.html` and its `api/detect-furniture.js` endpoint, keeping only the "AI Decides" (Rearrange Only / Full Redesign) flow.
+- [x] Fix regeneration crash: generating a second design in the same session silently threw on a null `#resultPlaceholder` (removed from the DOM by the first result render) and left the UI stuck on the loading spinner forever. `doGenerate()` now recreates the placeholder before each run.
+- [x] Restore the "Start New Design" button's CSS, accidentally dropped when `.planner-clear-btn` was removed with the 3D planner.
+- [x] Fix "Full Redesign" in Quick Rearrange producing near-identical output to the source photo — rewrote `FULL_REDESIGN_PROMPT` with mandatory, itemized change instructions (mirroring the working Rearrange Only prompt) and raised `guidance_scale` to 7.5 for that mode.
 
 ## 💡 Suggestions
 - [ ] Add links/names of real furniture stores (Gulf countries + Europe) so users can shop the pieces suggested in their generated design — e.g. show a curated list of retailers per region/country near the results, possibly matched to the selected style and currency.
