@@ -13,6 +13,7 @@
 - [x] Fix the 2D floor plan showing stale door/window markers from a previous, unrelated visit — it was persisting `fpItems` to `localStorage` indefinitely while every other room-info field (type, area, dimensions, style, notes...) resets on a fresh page load. It's now in-memory only for the current page load, consistent with the rest of the form.
 - [x] Fix `vercel.json` not serving static files outside `/api/*` and `*.html` (no `"handle": "filesystem"` phase), which silently broke the Nearby Stores panel in production — `js/nearby-stores.js` likely 404'd, so `window.NearbyStores` stayed undefined and nothing rendered, with no visible error. Added the filesystem phase plus a `console.error` for next time.
 - [x] Simplify the nav/brand logo to a single "LAMSA" wordmark (removed the Arabic "لمستي" line) on all three pages, and bumped its size up slightly.
+- [x] Fix misleading "WHY LAMSA" landing page copy — two feature cards promised "Furniture List with Prices" (real IKEA/Jysk pricing) and "Direct Purchase Links" (one-click buying), neither of which was ever implemented. Reworded both to accurately describe what Nearby Stores actually does: a general store list + Google Maps search links.
 
 ## 💡 Suggestions
 _(لسا ما في شي)_
@@ -37,6 +38,7 @@ _(لسا ما في شي)_
 - [ ] Consolidate the growing pile of inline "BUG N fix" comments in `lamsa-bilingual.html` (scroll-lock, panel reset) into named, testable functions instead of ad-hoc patches.
 - [ ] `lamsa-bilingual.html` is ~160KB of inline HTML/CSS/JS — consider splitting into separate JS/CSS files for maintainability.
 - [ ] Add the 2D floor plan's door/window strings to the non-English/Arabic translation dictionaries in `lamsa-bilingual.html` (they currently fall back to English).
+- [ ] Remove the now-orphaned `'Furniture List with Prices'` / `'Direct Purchase Links'` entries left behind in the 7 non-English/Arabic translation dictionaries after the WHY LAMSA copy fix — dead code, harmless but unused. Also retranslate the two reworded cards into those languages (currently fall back to English).
 
 ## Product
 - [ ] Decide on and implement password reset flow (`forgotPass` string exists in translations but has no handler).
