@@ -13,8 +13,8 @@ balances).
 
 ## Live flow
 
-1. **`lamsa-auth.html`** — login / registration screen. Note: authentication is
-   currently client-side only (see [Known limitations](#known-limitations)).
+1. **`lamsa-auth.html`** — login / registration screen, backed by real
+   server-side accounts and sessions (see [Authentication](#authentication)).
 2. **`lamsa-bilingual.html`** — the main designer. A 5-step form:
    - Upload up to 5 room photos
    - Room info: type, area, length/width, and a 2D floor plan editor where you tap
@@ -44,12 +44,41 @@ handler(req, res)`).
 
 | Endpoint | Method | Purpose |
 |---|---|---|
+| `POST /api/auth-register` | POST | Creates an account (`{ username, email, password, country }`), hashes the password (scrypt), starts a session, sets the `lamsa_session` cookie, grants the 1 free welcome credit. `409` if the email is already registered. |
+| `POST /api/auth-login` | POST | Verifies `{ email, password }` against the stored hash, starts a session, sets the `lamsa_session` cookie. Returns a generic `401` for both "no such account" and "wrong password" (no user enumeration). |
+| `POST /api/auth-logout` | POST | Destroys the current session and clears the cookie. |
+| `GET /api/me` | GET | Returns `{ username, email }` for the current session, or `401` if not logged in. Used by every protected page's auth guard. |
 | `POST /api/upload` | POST | Uploads a base64 image to fal.ai's CDN storage, returns a public `url`. |
-| `POST /api/generate` | POST | Deducts 1 credit for `email`, then submits a `{ prompt, image_url, strength }` job to fal.ai's `flux-pro/kontext` queue, returns a `request_id`. Refunds the credit if the fal.ai submission itself fails. Returns `402` if the user has no credits left. |
+| `POST /api/generate` | POST | Requires a valid session. Deducts 1 credit from the logged-in user, then submits a `{ prompt, image_url, strength }` job to fal.ai's `flux-pro/kontext` queue, returns a `request_id`. Refunds the credit if the fal.ai submission itself fails. Returns `401` if not logged in, `402` if the user has no credits left. |
 | `GET /api/status` | GET | Polls fal.ai's queue for a `request_id` (`?mode=result` fetches the final image once status is `COMPLETED`). |
-| `GET /api/credits` | GET | Returns `{ email, credits }` for `?email=`. First lookup for a new email grants 1 free credit. |
-| `POST /api/create-checkout-session` | POST | Creates a Stripe Checkout Session (one-time payment) for `{ email, package, return_page }`, returns `{ url }` to redirect the browser to. |
+| `GET /api/credits` | GET | Returns `{ email, credits }` for the current session. `401` if not logged in. |
+| `POST /api/create-checkout-session` | POST | Requires a valid session. Creates a Stripe Checkout Session (one-time payment) for `{ package, return_page }`, returns `{ url }` to redirect the browser to. `401` if not logged in. |
 | `POST /api/stripe-webhook` | POST | Verifies the Stripe signature and, on `checkout.session.completed`, credits the paying email's balance. Idempotent against duplicate webhook deliveries. |
+
+## Authentication
+
+Accounts are real and server-verified — not a localStorage fake.
+
+- **Passwords**: hashed with Node's built-in `crypto.scrypt` (random per-user
+  salt, `crypto.timingSafeEqual` for comparison). Never stored in plaintext,
+  never sent back to the client.
+- **Sessions**: an opaque random token (`crypto.randomBytes(32)`) is stored in
+  Upstash Redis as `lamsa:session:<token> → email` with a 30-day TTL, and
+  delivered to the browser as an `httpOnly; SameSite=Lax` cookie (`Secure` too,
+  outside of `localhost`). JavaScript on the page can never read the token.
+- **Identity source of truth**: every protected endpoint (`/api/generate`,
+  `/api/credits`, `/api/create-checkout-session`) reads the user's identity
+  *only* from that session cookie via `requireSessionEmail()` in `api/_auth.js`
+  — never from an `email` field in the request body or query string. This is
+  what actually stops one person from spending or charging another person's
+  credits by guessing/typing their email.
+- **Page guards**: `lamsa-bilingual.html` and `rearrange.html` call `GET
+  /api/me` on load and redirect to `lamsa-auth.html` if it 401s. A cached
+  `{username, email}` in `localStorage` is used only to avoid a login-screen
+  flash before that check resolves — it has no authority on its own.
+- **Google / Apple sign-in** buttons are present in the UI but not wired to a
+  real OAuth backend yet; they show an honest "coming soon" message instead of
+  faking a logged-in state.
 
 ## Credits & payments
 
@@ -58,8 +87,9 @@ subscriptions. New emails get 1 free credit; each `/api/generate` call spends 1.
 
 - **Pricing** (`api/_stripe.js` → `CREDIT_PACKAGES`): 1 credit / €1, 5 credits / €4,
   10 credits / €7.
-- **Identity**: credits are keyed by email, not a real authenticated account —
-  see [Known limitations](#known-limitations).
+- **Identity**: credits are keyed by the email on the user's verified server
+  session (see [Authentication](#authentication)) — not a client-supplied
+  field, so they can't be spent or purchased on someone else's behalf.
 - **Storage**: balances live in Upstash Redis (`api/_db.js`), not localStorage,
   so they can't be reset by clearing browser storage.
 - **Payment methods**: Stripe Checkout with `payment_method_types` left
@@ -134,12 +164,17 @@ serverless functions, serves any `*.html` path directly, and redirects `/` to
 ├── js/
 │   └── nearby-stores.js  # shared "shop similar pieces" render logic
 ├── api/
+│   ├── auth-register.js   # create account, hash password, start session
+│   ├── auth-login.js      # verify password, start session
+│   ├── auth-logout.js     # destroy session
+│   ├── me.js               # who's logged in, from the session cookie
 │   ├── upload.js          # image upload → fal.ai storage
 │   ├── generate.js        # deduct a credit, submit a generation job to fal.ai
 │   ├── status.js          # poll job status / fetch result
-│   ├── credits.js         # get a user's credit balance (grants 1 free on first lookup)
+│   ├── credits.js         # get the logged-in user's credit balance
 │   ├── create-checkout-session.js  # start a Stripe Checkout session
 │   ├── stripe-webhook.js  # grant credits once Stripe confirms payment
+│   ├── _auth.js           # password hashing + session helpers (not a route)
 │   ├── _db.js             # Upstash Redis client + credit helpers (not a route)
 │   └── _stripe.js         # Stripe client + credit package pricing (not a route)
 ├── package.json
@@ -148,15 +183,10 @@ serverless functions, serves any `*.html` path directly, and redirects `/` to
 
 ## Known limitations
 
-- **Auth is client-side only.** `lamsa-auth.html` writes `{ username, email,
-  loggedIn }` to `localStorage` on login/register — there's no server-side
-  account, password hashing, or session validation. Don't rely on it to gate
-  access to anything sensitive.
-- **Credits are keyed by email with no verification.** Anyone can type any
-  email into the credits modal and see/spend that email's balance — there's no
-  proof the visitor actually owns it. This is deliberately the same trade-off as
-  the auth system above; fixing one properly means fixing both together (real
-  accounts + server-verified sessions), tracked in `TODO.md`.
+- **No password reset flow yet.** A user who forgets their password has no
+  self-service way to recover the account.
+- **Google / Apple sign-in aren't wired up.** The buttons exist but only show
+  a "coming soon" message — see [Authentication](#authentication).
 - No automated tests.
 
 See `TODO.md` for the fuller list of planned hardening work.

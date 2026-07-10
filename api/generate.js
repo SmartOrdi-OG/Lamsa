@@ -1,4 +1,5 @@
-import { redis, deductCredit, addCredits } from './_db.js';
+import { redis, deductCredit, addCredits, ensureWelcomeCredit } from './_db.js';
+import { requireSessionEmail } from './_auth.js';
 
 export default async function handler(req, res) {
   console.log('[api/generate] handler invoked, method:', req.method);
@@ -11,18 +12,27 @@ export default async function handler(req, res) {
     return res.status(500).json({ error: 'FAL_API_KEY not configured' });
   }
 
-  const { prompt, image_url, num_images = 1, guidance_scale = 3.5, aspect_ratio = '16:9', strength, email } = req.body;
+  const { prompt, image_url, num_images = 1, guidance_scale = 3.5, aspect_ratio = '16:9', strength } = req.body;
 
   if (!prompt) return res.status(400).json({ error: 'prompt is required' });
 
-  const normalizedEmail = (email || '').trim().toLowerCase();
-  if (!normalizedEmail || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(normalizedEmail)) {
-    return res.status(400).json({ error: 'A valid email is required' });
-  }
   if (!redis) {
     console.error('[api/generate] Upstash Redis not configured');
     return res.status(500).json({ error: 'Database not configured' });
   }
+
+  // The email that gets billed/credited comes only from the verified
+  // session cookie, never from the request body — a client-supplied email
+  // can't be trusted to spend or refund someone else's credits.
+  const normalizedEmail = await requireSessionEmail(req);
+  if (!normalizedEmail) {
+    return res.status(401).json({ error: 'Please log in', code: 'not_logged_in' });
+  }
+
+  // Defensive fallback — the welcome credit is normally granted right at
+  // registration, but this covers any account that predates that or was
+  // created some other way. A no-op if the balance already exists.
+  await ensureWelcomeCredit(normalizedEmail);
 
   const newBalance = await deductCredit(normalizedEmail);
   if (newBalance === null) {
@@ -57,6 +67,17 @@ export default async function handler(req, res) {
 
   console.log('[api/generate] submitting to fal.ai queue:', JSON.stringify(body));
 
+  // Wrapped separately from the main try/catch below so a failure in the
+  // refund call itself can't fall into that catch block and trigger a
+  // second refund attempt for the same failed request.
+  async function refundCredit() {
+    try {
+      await addCredits(normalizedEmail, 1);
+    } catch (refundErr) {
+      console.error('[api/generate] refund failed for', normalizedEmail, '-', refundErr.message);
+    }
+  }
+
   try {
     const falRes = await fetch('https://queue.fal.run/fal-ai/flux-pro/kontext', {
       method: 'POST',
@@ -72,7 +93,7 @@ export default async function handler(req, res) {
     if (!falRes.ok) {
       const err = await falRes.text();
       console.error('[api/generate] fal.ai queue submit error:', falRes.status, err);
-      await addCredits(normalizedEmail, 1); // refund - the job was never actually queued
+      await refundCredit(); // the job was never actually queued
       return res.status(falRes.status).json({ error: 'Generation failed', details: err });
     }
 
@@ -83,7 +104,7 @@ export default async function handler(req, res) {
 
   } catch (err) {
     console.error('[api/generate] Generate error:', err.message);
-    await addCredits(normalizedEmail, 1); // refund - the job was never actually queued
+    await refundCredit(); // the job was never actually queued
     return res.status(500).json({ error: err.message });
   }
 }
