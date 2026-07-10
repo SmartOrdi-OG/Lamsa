@@ -205,53 +205,34 @@
   }
 
 
-  /* ===== 3D PLANNER ===== */
-  .planner-btn-wrap { margin-top: 14px; }
-  .planner-open-btn {
-    display: flex; align-items: center; justify-content: center; gap: 10px;
-    width: 100%; padding: 18px; border-radius: 14px;
-    background: linear-gradient(135deg, #1a1200 0%, #2a1e00 100%);
-    border: 2px solid var(--gold); color: var(--gold);
-    font-size: 15px; font-weight: 700; cursor: pointer;
-    transition: all 0.2s; letter-spacing: 0.5px;
-  }
-  .planner-open-btn:hover { background: linear-gradient(135deg, #2a1e00, #3a2a00); box-shadow: 0 0 20px rgba(201,168,76,0.25); }
-  .planner-preview { font-size: 11px; color: var(--sub); text-align: center; flex: 1; }
-  .planner-preview-row {
-    margin-top: 10px;
-    display: none;
-    align-items: center; justify-content: center; gap: 10px;
-  }
-  .planner-preview-row.show { display: flex; }
-  .planner-clear-btn {
-    background: transparent;
+  /* ===== 2D FLOOR PLAN ===== */
+  .floorplan-wrap { margin-top: 18px; }
+  .floorplan-title { font-size: 14px; font-weight: 700; margin-bottom: 4px; }
+  .floorplan-sub { font-size: 12px; color: var(--gray); margin-bottom: 12px; line-height: 1.5; }
+  #floorplanCanvas {
+    display: block; width: 100%; height: auto; aspect-ratio: 3/2;
+    background: var(--black);
     border: 1px solid var(--border);
+    border-radius: 14px;
+    cursor: crosshair;
+    touch-action: none;
+  }
+  .floorplan-tools { display: flex; gap: 8px; margin-top: 12px; flex-wrap: wrap; }
+  .fp-tool-btn {
+    flex: 1; min-width: 100px;
+    background: var(--card);
+    border: 1.5px solid var(--border);
     color: var(--gray);
     font-family: 'Tajawal', sans-serif;
-    font-size: 11px; font-weight: 700;
-    padding: 4px 10px;
-    border-radius: 20px;
+    font-size: 12px; font-weight: 700;
+    padding: 10px 8px;
+    border-radius: 10px;
     cursor: pointer;
-    white-space: nowrap;
     transition: all 0.2s;
-    flex-shrink: 0;
   }
-  .planner-clear-btn:hover { border-color: var(--gold); color: var(--gold); }
-  /* Fullscreen modal */
-  #planner-modal {
-    display: none; position: fixed; inset: 0; z-index: 9999;
-    background: #000; flex-direction: column;
-  }
-  #planner-modal.open { display: flex; }
-  #planner-modal iframe { flex: 1; border: none; width: 100%; height: 100%; }
-  #plannerCloseBtn {
-    position: absolute; top: 14px; right: 14px; z-index: 10000;
-    width: 36px; height: 36px; border-radius: 50%;
-    background: rgba(0,0,0,0.7); border: 1px solid rgba(255,255,255,0.25);
-    color: #fff; font-size: 16px; cursor: pointer;
-    display: flex; align-items: center; justify-content: center;
-  }
-  #plannerCloseBtn:hover { background: rgba(0,0,0,0.9); border-color: var(--gold); color: var(--gold); }
+  .fp-tool-btn:hover { border-color: var(--gold); }
+  .fp-tool-btn.active { border-color: var(--gold); background: var(--gold-dim); color: var(--white); }
+  .floorplan-hint { font-size: 11px; color: var(--gray); text-align: center; margin-top: 10px; }
 
   /* ADVANCED BOX */
   .advanced-box {
@@ -1075,7 +1056,7 @@
         <div class="form-grid">
           <div class="form-group">
             <label data-en="Room Type" data-ar="نوع الغرفة">Room Type</label>
-            <select id="roomTypeSelect" onchange="onRoomTypeChange()">
+            <select id="roomTypeSelect">
               <option value="bedroom" data-en="Bedroom" data-ar="غرفة نوم">Bedroom</option>
               <option value="living" data-en="Living Room" data-ar="صالة جلوس">Living Room</option>
               <option value="kitchen" data-en="Kitchen" data-ar="مطبخ">Kitchen</option>
@@ -1091,27 +1072,25 @@
           </div>
           <div class="form-group">
             <label data-en="Length (m)" data-ar="الطول (م)">Length (m)</label>
-            <input type="number" placeholder="e.g. 5" step="0.5">
+            <input type="number" id="roomLengthInput" placeholder="e.g. 5" step="0.5" min="1" oninput="drawFloorPlan()">
           </div>
           <div class="form-group">
             <label data-en="Width (m)" data-ar="العرض (م)">Width (m)</label>
-            <input type="number" placeholder="e.g. 4" step="0.5">
+            <input type="number" id="roomWidthInput" placeholder="e.g. 4" step="0.5" min="1" oninput="drawFloorPlan()">
           </div>
         </div>
 
-        <!-- 3D PLANNER BUTTON -->
-        <div class="planner-btn-wrap">
-          <button class="planner-open-btn" onclick="openPlanner()" data-en="🧊 Open 3D Room Planner" data-ar="🧊 فتح المخطط ثلاثي الأبعاد">🧊 Open 3D Room Planner</button>
-          <div class="planner-preview-row" id="plannerPreviewRow">
-            <div class="planner-preview" id="plannerPreview"></div>
-            <button type="button" class="planner-clear-btn" onclick="clearFp()" data-en="✕ Clear" data-ar="✕ مسح">✕ Clear</button>
+        <!-- 2D FLOOR PLAN -->
+        <div class="floorplan-wrap">
+          <div class="floorplan-title" data-en="Room Floor Plan" data-ar="مخطط الغرفة">Room Floor Plan</div>
+          <div class="floorplan-sub" data-en="Tap a wall below to mark where a window or door is" data-ar="اضغط على أحد الجدران بالأسفل لتحديد مكان النافذة أو الباب">Tap a wall below to mark where a window or door is</div>
+          <canvas id="floorplanCanvas" width="600" height="400" onclick="floorplanClick(event)"></canvas>
+          <div class="floorplan-tools">
+            <button type="button" class="fp-tool-btn active" id="fpToolWindow" onclick="setFpTool('window')" data-en="🪟 Window" data-ar="🪟 نافذة">🪟 Window</button>
+            <button type="button" class="fp-tool-btn" id="fpToolDoor" onclick="setFpTool('door')" data-en="🚪 Door" data-ar="🚪 باب">🚪 Door</button>
+            <button type="button" class="fp-tool-btn" id="fpToolErase" onclick="setFpTool('erase')" data-en="🗑️ Remove" data-ar="🗑️ حذف">🗑️ Remove</button>
           </div>
-        </div>
-
-        <!-- FULLSCREEN 3D MODAL -->
-        <div id="planner-modal">
-          <button id="plannerCloseBtn" onclick="closePlanner()" aria-label="Close" title="Close">✕</button>
-          <iframe id="plannerFrame" title="3D Room Planner" allow="accelerometer; autoplay"></iframe>
+          <div class="floorplan-hint" data-en="Click a wall edge to place, or switch to Remove and click a marker" data-ar="اضغط على حافة الجدار للإضافة، أو اختر «حذف» ثم اضغط على العلامة">Click a wall edge to place, or switch to Remove and click a marker</div>
         </div>
         </div>
 
@@ -2063,46 +2042,125 @@
     document.documentElement.style.overflow = '';
   }
 
-  // ── 3D Planner fullscreen modal ──
-  function openPlanner() {
-    var roomSel = document.getElementById('roomTypeSelect');
-    var roomType = roomSel ? roomSel.value : 'bedroom';
-    var frame = document.getElementById('plannerFrame');
-    frame.src = 'planner.html?room=' + roomType;
-    document.getElementById('planner-modal').classList.add('open');
-    document.body.style.overflow = 'hidden';
-  }
-  function closePlanner() {
-    document.getElementById('planner-modal').classList.remove('open');
-    resetBodyScrollLock();
-  }
-
   // BUG 1 fix: bfcache restores (back/forward) can resurrect a stale scroll-locked body
   window.addEventListener('pageshow', function(e) {
     if (e.persisted) resetBodyScrollLock();
   });
 
-  var plannerResult = null; // stores last planner data from postMessage
+  // ── 2D Floor Plan (room shape + door/window placement) ──
+  var fpItems = []; // { wall: 'N'|'S'|'E'|'W', t: 0..1, type: 'door'|'window' }
+  var fpTool = 'window';
+  var fpRect = null; // last drawn room rect in canvas pixels, set by drawFloorPlan()
+  var FP_MAX_ITEMS = 8;
+  var FP_SNAP_PX = 26;
+  var FP_ERASE_PX = 20;
 
-  window.addEventListener('message', function(e) {
-    if (!e.data) return;
-    if (e.data.type === 'lamsa_planner_done') {
-      closePlanner();
-      plannerResult = e.data; // save for use in generate()
-      // Sync the room type dropdown to match what was planned
-      if (e.data.roomType) {
-        var roomSel = document.querySelector('#panel-2 select');
-        if (roomSel && e.data.roomType !== roomSel.value) {
-          roomSel.value = e.data.roomType;
-        }
-      }
-      if (e.data.description) {
-        var prev = document.getElementById('plannerPreview');
-        prev.textContent = '✓ 3D Layout saved: ' + e.data.description.substring(0,80) + (e.data.description.length>80?'…':'');
-        document.getElementById('plannerPreviewRow').classList.add('show');
-      }
+  function setFpTool(tool) {
+    fpTool = tool;
+    document.getElementById('fpToolWindow').classList.toggle('active', tool === 'window');
+    document.getElementById('fpToolDoor').classList.toggle('active', tool === 'door');
+    document.getElementById('fpToolErase').classList.toggle('active', tool === 'erase');
+  }
+
+  function fpWallPoint(rect, wall, t) {
+    switch (wall) {
+      case 'N': return { x: rect.x + rect.w * t, y: rect.y };
+      case 'S': return { x: rect.x + rect.w * t, y: rect.y + rect.h };
+      case 'W': return { x: rect.x, y: rect.y + rect.h * t };
+      case 'E': return { x: rect.x + rect.w, y: rect.y + rect.h * t };
     }
-  });
+  }
+
+  function drawFloorPlan() {
+    var canvas = document.getElementById('floorplanCanvas');
+    if (!canvas) return;
+    var ctx = canvas.getContext('2d');
+    var W = canvas.width, H = canvas.height, pad = 50;
+
+    var lenInput = document.getElementById('roomLengthInput');
+    var widInput = document.getElementById('roomWidthInput');
+    var roomLen = parseFloat(lenInput && lenInput.value) || 5;
+    var roomWid = parseFloat(widInput && widInput.value) || 4;
+
+    var scale = Math.min((W - 2 * pad) / roomLen, (H - 2 * pad) / roomWid);
+    var w = roomLen * scale, h = roomWid * scale;
+    var rect = { x: (W - w) / 2, y: (H - h) / 2, w: w, h: h };
+    fpRect = rect;
+
+    ctx.clearRect(0, 0, W, H);
+    ctx.strokeStyle = '#c9a84c';
+    ctx.lineWidth = 4;
+    ctx.strokeRect(rect.x, rect.y, rect.w, rect.h);
+
+    fpItems.forEach(function(item) {
+      var p = fpWallPoint(rect, item.wall, item.t);
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, 12, 0, Math.PI * 2);
+      ctx.fillStyle = '#111111';
+      ctx.fill();
+      ctx.lineWidth = 2;
+      ctx.strokeStyle = '#c9a84c';
+      ctx.stroke();
+      ctx.font = '14px sans-serif';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(item.type === 'door' ? '🚪' : '🪟', p.x, p.y);
+    });
+  }
+
+  // Finds the nearest wall + position fraction to a click, snapping only within FP_SNAP_PX.
+  function fpNearestWall(rect, x, y) {
+    var candidates = [
+      { wall: 'N', d: Math.abs(y - rect.y), t: (x - rect.x) / rect.w, inRange: x >= rect.x && x <= rect.x + rect.w },
+      { wall: 'S', d: Math.abs(y - (rect.y + rect.h)), t: (x - rect.x) / rect.w, inRange: x >= rect.x && x <= rect.x + rect.w },
+      { wall: 'W', d: Math.abs(x - rect.x), t: (y - rect.y) / rect.h, inRange: y >= rect.y && y <= rect.y + rect.h },
+      { wall: 'E', d: Math.abs(x - (rect.x + rect.w)), t: (y - rect.y) / rect.h, inRange: y >= rect.y && y <= rect.y + rect.h }
+    ].filter(function(c) { return c.inRange; });
+
+    var best = null;
+    candidates.forEach(function(c) {
+      if (c.d <= FP_SNAP_PX && (!best || c.d < best.d)) best = c;
+    });
+    if (!best) return null;
+    return { wall: best.wall, t: Math.max(0, Math.min(1, best.t)) };
+  }
+
+  function floorplanClick(e) {
+    if (!fpRect) return;
+    var canvas = document.getElementById('floorplanCanvas');
+    var r = canvas.getBoundingClientRect();
+    var x = (e.clientX - r.left) * (canvas.width / r.width);
+    var y = (e.clientY - r.top) * (canvas.height / r.height);
+
+    if (fpTool === 'erase') {
+      var closest = null, closestDist = FP_ERASE_PX;
+      fpItems.forEach(function(item, i) {
+        var p = fpWallPoint(fpRect, item.wall, item.t);
+        var dist = Math.hypot(p.x - x, p.y - y);
+        if (dist <= closestDist) { closestDist = dist; closest = i; }
+      });
+      if (closest !== null) fpItems.splice(closest, 1);
+    } else {
+      if (fpItems.length >= FP_MAX_ITEMS) return;
+      var hit = fpNearestWall(fpRect, x, y);
+      if (hit) fpItems.push({ wall: hit.wall, t: hit.t, type: fpTool });
+    }
+
+    saveFloorPlan();
+    drawFloorPlan();
+  }
+
+  function saveFloorPlan() {
+    try { localStorage.setItem('lamsa_floorplan', JSON.stringify(fpItems)); } catch(e) {}
+  }
+
+  function initFloorPlan() {
+    try {
+      var saved = JSON.parse(localStorage.getItem('lamsa_floorplan') || '[]');
+      if (Array.isArray(saved)) fpItems = saved;
+    } catch(e) { fpItems = []; }
+    drawFloorPlan();
+  }
 
   // Single-select for color chips in panel 5
   function selectColor(el) {
@@ -2234,20 +2292,8 @@
   }
 
   function generate() {
-    // Check planner data
-    var hasPlannerData = false;
-    try {
-      // Check both 3D planner (new) and legacy key
-      if (plannerResult && plannerResult.description) {
-        hasPlannerData = true;
-      } else {
-        var pd3d = JSON.parse(localStorage.getItem('lamsa_planner3d') || '{}');
-        hasPlannerData = pd3d.items && pd3d.items.length > 0;
-      }
-    } catch(e){}
-
-    if (uploadedFiles.length === 0 && !hasPlannerData) {
-      alert(currentLang === 'ar' ? 'الرجاء رفع صورة أو استخدام الـ 3D Planner!' : 'Please upload a photo or use the 3D Planner!');
+    if (uploadedFiles.length === 0 && fpItems.length === 0) {
+      alert(currentLang === 'ar' ? 'الرجاء رفع صورة أو تحديد النافذة/الباب في مخطط الغرفة!' : 'Please upload a photo or mark a window/door on the floor plan!');
       return;
     }
 
@@ -2373,8 +2419,8 @@
           '\n• ' + furnitureText.split(', ').join('\n• ')
       ) +
 
-      // ── FURNITURE PLACEMENT ──
-      (fpInfo ? '\n\n=== FURNITURE PLACEMENT ===\n3D Planner layout: ' + fpInfo : '') +
+      // ── DOORS & WINDOWS ──
+      (fpInfo ? '\n\n=== DOORS & WINDOWS ===\n' + fpInfo : '') +
 
       // ── COLOR & ATMOSPHERE ──
       '\n\n=== COLOR PALETTE & ATMOSPHERE ===' +
@@ -2710,14 +2756,13 @@
 
   document.addEventListener('keydown', function(e) {
     if (e.key !== 'Escape') return;
-    if (document.getElementById('planner-modal').classList.contains('open')) closePlanner();
-    else closeModal();
+    closeModal();
   });
 
   // Apply English on page load
   window.addEventListener('DOMContentLoaded', function() {
     setLang('en');
-    refreshPlannerPreviewFromStorage();
+    initFloorPlan();
     formPanelsSnapshot = document.querySelector('.form-panels').innerHTML;
     resultAreaSnapshot = document.getElementById('resultArea').innerHTML;
   });
@@ -2735,7 +2780,6 @@
     designCount = 1;
     beforeAfterOn = false;
     designMode = 'redesign';
-    plannerResult = null;
     clearFp();
 
     document.getElementById('fileInput').value = '';
@@ -2753,57 +2797,29 @@
     document.getElementById('form-section').scrollIntoView({ behavior: 'smooth' });
   }
 
-
+  // Builds the doors/windows text fed into the AI prompt from the 2D floor plan.
   function getFpDescription() {
-    try {
-      // Use live postMessage result if available (most accurate — includes room type + furniture names)
-      if (plannerResult && plannerResult.description) {
-        var rt = plannerResult.roomType || 'room';
-        var rw = plannerResult.roomW ? plannerResult.roomW.toFixed(1) + 'm' : '';
-        var rd = plannerResult.roomD ? plannerResult.roomD.toFixed(1) + 'm' : '';
-        var dims = (rw && rd) ? ' (' + rw + ' x ' + rd + ')' : '';
-        return '3D room layout' + dims + ' [' + rt + ']: ' + plannerResult.description;
-      }
-      // Fallback: read from 3D planner localStorage
-      var pd = JSON.parse(localStorage.getItem('lamsa_planner3d') || '{}');
-      if (!pd.items || pd.items.length === 0) return '';
-      var rt2 = pd.rt || 'room';
-      return '3D room layout ' + (pd.RW||5).toFixed(1) + 'm x ' + (pd.RD||4).toFixed(1) + 'm [' + rt2 + ']: ' + pd.items.length + ' furniture items placed.';
-    } catch(e) { return ''; }
+    if (fpItems.length === 0) return '';
+    var wallNames = { N: 'north wall', S: 'south wall', E: 'east wall', W: 'west wall' };
+    var lenInput = document.getElementById('roomLengthInput');
+    var widInput = document.getElementById('roomWidthInput');
+    var roomLen = parseFloat(lenInput && lenInput.value) || 5;
+    var roomWid = parseFloat(widInput && widInput.value) || 4;
+
+    var lines = fpItems.map(function(item) {
+      var pct = Math.round(item.t * 100);
+      var pos = pct < 40 ? 'near one end' : (pct > 60 ? 'near the other end' : 'centered');
+      return (item.type === 'door' ? 'Door' : 'Window') + ' on the ' + wallNames[item.wall] + ' (' + pos + ', ' + pct + '% along the wall)';
+    });
+
+    return 'Floor plan: room ' + roomLen.toFixed(1) + 'm x ' + roomWid.toFixed(1) + 'm.\n' + lines.join('\n');
   }
 
-  // BUG 2 fix: fully clear a stale/previous 3D planner session
+  // BUG 2 fix: fully clear a stale/previous floor plan session
   function clearFp() {
-    try { localStorage.removeItem('lamsa_planner3d'); } catch(e) {}
-    plannerResult = null;
-    var row = document.getElementById('plannerPreviewRow');
-    var prev = document.getElementById('plannerPreview');
-    if (row) row.classList.remove('show');
-    if (prev) prev.textContent = '';
-  }
-
-  // BUG 2 fix: switching room type invalidates any previously placed 3D furniture
-  function onRoomTypeChange() {
-    clearFp();
-  }
-
-  // BUG 2 fix: only resurrect the planner summary if it still matches the selected room
-  function refreshPlannerPreviewFromStorage() {
-    try {
-      var pd = JSON.parse(localStorage.getItem('lamsa_planner3d') || 'null');
-      var roomSel = document.getElementById('roomTypeSelect');
-      var roomType = roomSel ? roomSel.value : 'bedroom';
-      var row = document.getElementById('plannerPreviewRow');
-      var prev = document.getElementById('plannerPreview');
-      if (!row || !prev) return;
-      if (pd && pd.items && pd.items.length > 0 && pd.rt === roomType) {
-        prev.textContent = '✓ 3D Layout saved: ' + pd.items.length + ' furniture items placed.';
-        row.classList.add('show');
-      } else {
-        row.classList.remove('show');
-        prev.textContent = '';
-      }
-    } catch(e) {}
+    fpItems = [];
+    try { localStorage.removeItem('lamsa_floorplan'); } catch(e) {}
+    drawFloorPlan();
   }
 
 
