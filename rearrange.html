@@ -253,9 +253,16 @@
     'Output: photorealistic, professional interior design result.';
 
   var FULL_REDESIGN_PROMPT =
-    'You are a professional interior designer creating a complete redesign of this room.\n\n' +
-    'You may add, remove, or replace furniture and decor as needed to achieve a stunning, professional result.\n' +
-    'Feel free to suggest a new color palette, new furniture pieces, new lighting, and new decorative accents.\n\n' +
+    'CRITICAL: This must be a DRAMATIC, COMPLETE visual transformation of the room — not a minor touch-up. ' +
+    'If someone compares the before and after side by side, almost nothing about the decor should look the same.\n\n' +
+    'You are an expert interior designer tasked with a full redesign of this room.\n\n' +
+    'MANDATORY CHANGES - every one of these must be clearly, visibly different from the original photo:\n' +
+    '- Wall color/finish: change to a new palette, different from the original\n' +
+    '- Flooring: change the material, color, or finish\n' +
+    '- Every furniture piece (sofas, chairs, tables, storage, bed): REPLACE with different pieces — different shape, material, and color than what is in the photo\n' +
+    '- Lighting fixtures: replace with new fixtures\n' +
+    '- Decor and accessories (art, rugs, plants, curtains, cushions): replace entirely with new items\n' +
+    '- Furniture layout: rearrange into a new configuration, not the same positions as the original\n\n' +
     'DESIGN PRINCIPLES to apply:\n' +
     '- Identify the room focal point (TV, window, fireplace) and design around it\n' +
     '- All seating must face the focal point\n' +
@@ -263,8 +270,9 @@
     '- No furniture blocking doors or windows\n' +
     '- Balance visual weight left and right\n' +
     '- Create intimate conversation groupings\n\n' +
-    'STRICTLY PRESERVE: room shape, wall count, ceiling height, number of windows, number of doors, room proportions, and camera angle.\n' +
+    'STRICTLY PRESERVE ONLY: room shape, wall count, ceiling height, number and position of windows and doors, room proportions, and camera angle — everything else (colors, materials, furniture, decor, lighting) must change.\n' +
     'DO NOT add, move, or remove architectural elements (windows, doors, walls, structural beams).\n\n' +
+    'The before and after must look like a completely different room in style, color, and furniture — only the architecture stays recognizable.\n' +
     'Output: photorealistic, professional interior design magazine quality result.';
 
   var state = { uploadedFile: null, uploadedImageUrl: null, subMode: 'rearrange' };
@@ -493,12 +501,12 @@
       });
   }
 
-  function callGenerate(imageUrl, prompt) {
+  function callGenerate(imageUrl, prompt, guidanceScale) {
     var requestBody = {
       prompt: prompt,
       image_url: imageUrl,
       num_images: 1,
-      guidance_scale: 3.5,
+      guidance_scale: guidanceScale || 3.5,
       aspect_ratio: '16:9'
     };
     console.log('[generate] POST /api/generate:', requestBody);
@@ -583,10 +591,14 @@
     document.getElementById('generateBtn').disabled = true;
     showResultLoading();
 
-    var promptToUse = (state.subMode === 'redesign') ? FULL_REDESIGN_PROMPT : REARRANGE_PROMPT;
+    var isRedesign = state.subMode === 'redesign';
+    var promptToUse = isRedesign ? FULL_REDESIGN_PROMPT : REARRANGE_PROMPT;
+    // Full Redesign needs the model to diverge much more from the source photo
+    // than a plain rearrange, so give the prompt more weight.
+    var guidanceScale = isRedesign ? 7.5 : 3.5;
 
     ensurePhotoUploaded(function(url) {
-      callGenerate(url, promptToUse);
+      callGenerate(url, promptToUse, guidanceScale);
     });
   }
 </script>
