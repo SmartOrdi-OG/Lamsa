@@ -2275,42 +2275,134 @@
     document.getElementById('beforeAfterLabel').textContent = beforeAfterOn ? 'On — Before & After' : 'Off — New design only';
   }
 
-  // ===== FREE TRIAL SYSTEM =====
-  var FREE_LIMIT = 1;
+  // ===== CREDITS / PAYMENTS (Stripe, one-time credit purchases) =====
+  var CREDIT_PACKAGES = [
+    { id: 'x1',  credits: 1,  price: '€1', label: '1 Design' },
+    { id: 'x5',  credits: 5,  price: '€4', label: '5 Designs' },
+    { id: 'x10', credits: 10, price: '€7', label: '10 Designs' }
+  ];
 
-  function showUpgradeModal() {
+  function getUserEmail() {
+    try {
+      var user = JSON.parse(localStorage.getItem('lamsa_user') || 'null');
+      return (user && user.email) ? user.email.trim() : '';
+    } catch (e) { return ''; }
+  }
+
+  function setUserEmail(email) {
+    try {
+      var user = JSON.parse(localStorage.getItem('lamsa_user') || '{}') || {};
+      user.email = email;
+      localStorage.setItem('lamsa_user', JSON.stringify(user));
+    } catch (e) {}
+  }
+
+  function refreshCreditBalance() {
+    var badge = document.getElementById('freeTrialBadge');
+    if (!badge) return;
+    var email = getUserEmail();
+    var isAr = currentLang === 'ar';
+
+    if (!email) {
+      badge.innerHTML = '<a href="javascript:void(0)" onclick="showCreditsModal()" style="color:var(--gold);text-decoration:underline;">' +
+        (isAr ? '✦ 1 تصميم مجاني — اضغطي للبدء' : '✦ 1 free design included — click to start') + '</a>';
+      return;
+    }
+
+    fetch('/api/credits?email=' + encodeURIComponent(email))
+      .then(function(r) { return r.json(); })
+      .then(function(data) {
+        if (typeof data.credits !== 'number') return;
+        badge.innerHTML = (isAr ? 'رصيدك: ' : 'Your balance: ') + '<b>' + data.credits + '</b> ' +
+          (isAr ? (data.credits === 1 ? 'تصميم' : 'تصاميم') : ('credit' + (data.credits === 1 ? '' : 's'))) +
+          ' &middot; <a href="javascript:void(0)" onclick="showCreditsModal()" style="color:var(--gold);text-decoration:underline;">' +
+          (isAr ? 'شراء المزيد' : 'Buy more') + '</a>';
+      })
+      .catch(function(err) { console.error('[credits] failed to load balance:', err); });
+  }
+
+  function showCreditsModal(message) {
+    var existing = document.getElementById('creditsModalOverlay');
+    if (existing) existing.remove();
+
+    var isAr = currentLang === 'ar';
     var overlay = document.createElement('div');
-    overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.9);z-index:9999;display:flex;align-items:center;justify-content:center;padding:20px;';
+    overlay.id = 'creditsModalOverlay';
+    overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.9);z-index:9999;display:flex;align-items:center;justify-content:center;padding:20px;overflow-y:auto;';
 
     var box = document.createElement('div');
-    box.style.cssText = 'background:#161616;border:1px solid #c9a84c;border-radius:20px;padding:32px 24px;max-width:400px;width:100%;text-align:center;';
+    box.style.cssText = 'background:#161616;border:1px solid #c9a84c;border-radius:20px;padding:32px 24px;max-width:420px;width:100%;text-align:center;';
 
-    var msgs = {
-      ar: { title: '🎨 استنفدت تصميمك المجاني!', sub: 'اشترك الآن للحصول على تصاميم غير محدودة', btn: 'اشترك الآن — €9/شهر', skip: 'لاحقاً' },
-      en: { title: '🎨 Free Design Used!', sub: 'Subscribe now for unlimited designs', btn: 'Subscribe Now — €9/mo', skip: 'Maybe Later' },
-      de: { title: '🎨 Kostenloses Design verwendet!', sub: 'Jetzt abonnieren für unbegrenzte Designs', btn: 'Jetzt abonnieren — €9/Monat', skip: 'Später' },
-      es: { title: '🎨 Diseño gratuito usado!', sub: 'Suscríbete para diseños ilimitados', btn: 'Suscribirse — €9/mes', skip: 'Más tarde' },
-      tr: { title: '🎨 Ucretsiz tasarim kullanildi!', sub: 'Sinırsız tasarim icin abone ol', btn: 'Abone Ol — €9/ay', skip: 'Sonra' },
-      fr: { title: '🎨 Design gratuit utilisé!', sub: 'Abonnez-vous pour des designs illimités', btn: "S'abonner — €9/mois", skip: 'Plus tard' },
-      it: { title: '🎨 Design gratuito usato!', sub: 'Abbonati per design illimitati', btn: 'Abbonati — €9/mese', skip: 'Dopo' },
-      ru: { title: '🎨 Besplatnyy dizayn ispolzovan!', sub: 'Podpishites dlya neogranichennykh dizaynov', btn: 'Podpisatsya — €9/mes', skip: 'Pozzhe' },
-    };
-    var m = msgs[currentLang] || msgs['en'];
+    var title = isAr ? '🎨 اشتري تصاميم' : '🎨 Buy Designs';
+    var sub = message || (isAr ? 'كل تصميم يخصم كريدت واحد من رصيدك' : 'Each design uses 1 credit from your balance');
+    var emailLabel = isAr ? 'بريدك الإلكتروني' : 'Your email';
+    var closeLabel = isAr ? 'إغلاق' : 'Close';
+    var savedEmail = (getUserEmail() || '').replace(/"/g, '&quot;');
+
+    var packagesHtml = CREDIT_PACKAGES.map(function(pkg) {
+      var creditsLabel = isAr ? (pkg.credits + (pkg.credits === 1 ? ' تصميم' : ' تصاميم')) : pkg.label;
+      return '<button type="button" class="credits-pkg-btn" data-pkg="' + pkg.id + '" ' +
+        'style="width:100%;display:flex;justify-content:space-between;align-items:center;background:#111;border:1px solid #2a2a2a;border-radius:12px;padding:14px 16px;margin-bottom:10px;cursor:pointer;color:white;font-family:Tajawal,sans-serif;font-size:14px;">' +
+        '<span style="font-weight:700;">' + creditsLabel + '</span>' +
+        '<span style="color:#c9a84c;font-weight:900;">' + pkg.price + '</span>' +
+        '</button>';
+    }).join('');
 
     box.innerHTML =
       '<div style="font-size:42px;margin-bottom:16px;">✦</div>' +
-      '<div style="font-size:22px;font-weight:900;color:#c9a84c;margin-bottom:10px;">' + m.title + '</div>' +
-      '<div style="font-size:14px;color:#888;margin-bottom:24px;line-height:1.6;">' + m.sub + '</div>' +
-      '<div style="background:#111;border:1px solid #2a2a2a;border-radius:12px;padding:16px;margin-bottom:20px;">' +
-        '<div style="font-size:12px;color:#888;margin-bottom:8px;">Pro Plan</div>' +
-        '<div style="font-size:32px;font-weight:900;color:white;">€9<span style="font-size:14px;color:#888;">/mo</span></div>' +
-        '<div style="font-size:12px;color:#c9a84c;margin-top:6px;">✓ Unlimited designs · ✓ HD quality · ✓ Save & download</div>' +
-      '</div>' +
-      '<button onclick="window.location.href=\'#subscribe\'" style="width:100%;background:#c9a84c;color:#000;border:none;padding:14px;border-radius:10px;font-size:16px;font-weight:900;cursor:pointer;margin-bottom:10px;">' + m.btn + '</button>' +
-      '<button onclick="this.closest(\'div\').parentElement.remove()" style="width:100%;background:transparent;border:1px solid #2a2a2a;color:#888;padding:10px;border-radius:10px;font-size:13px;cursor:pointer;">' + m.skip + '</button>';
+      '<div style="font-size:22px;font-weight:900;color:#c9a84c;margin-bottom:8px;">' + title + '</div>' +
+      '<div style="font-size:13px;color:#888;margin-bottom:20px;line-height:1.6;">' + sub + '</div>' +
+      '<input type="email" id="creditsEmailInput" placeholder="' + emailLabel + '" value="' + savedEmail + '" dir="ltr" ' +
+      'style="width:100%;background:#111;border:1px solid #2a2a2a;border-radius:10px;padding:12px 14px;color:white;font-size:14px;margin-bottom:16px;font-family:Tajawal,sans-serif;box-sizing:border-box;">' +
+      '<div id="creditsPkgList">' + packagesHtml + '</div>' +
+      '<div id="creditsModalError" style="color:#e06060;font-size:12px;margin-top:6px;min-height:16px;"></div>' +
+      '<button type="button" onclick="document.getElementById(\'creditsModalOverlay\').remove()" ' +
+      'style="width:100%;background:transparent;border:1px solid #2a2a2a;color:#888;padding:10px;border-radius:10px;font-size:13px;cursor:pointer;margin-top:8px;font-family:Tajawal,sans-serif;">' + closeLabel + '</button>';
 
     overlay.appendChild(box);
     document.body.appendChild(overlay);
+
+    Array.prototype.forEach.call(box.querySelectorAll('.credits-pkg-btn'), function(btn) {
+      btn.onclick = function() { startCheckout(btn.getAttribute('data-pkg')); };
+    });
+  }
+
+  function startCheckout(packageId) {
+    var isAr = currentLang === 'ar';
+    var emailInput = document.getElementById('creditsEmailInput');
+    var errorEl = document.getElementById('creditsModalError');
+    var email = emailInput ? emailInput.value.trim() : '';
+
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      if (errorEl) errorEl.textContent = isAr ? 'الرجاء إدخال بريد إلكتروني صحيح' : 'Please enter a valid email';
+      return;
+    }
+
+    setUserEmail(email);
+    if (errorEl) errorEl.textContent = '';
+
+    var buttons = document.querySelectorAll('.credits-pkg-btn');
+    Array.prototype.forEach.call(buttons, function(b) { b.disabled = true; b.style.opacity = '0.5'; });
+
+    fetch('/api/create-checkout-session', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email: email, package: packageId, return_page: 'lamsa-bilingual.html' })
+    })
+    .then(function(r) { return r.json().then(function(data) { return { ok: r.ok, data: data }; }); })
+    .then(function(result) {
+      if (!result.ok || !result.data || !result.data.url) {
+        if (errorEl) errorEl.textContent = (result.data && result.data.error) || (isAr ? 'حدث خطأ، حاولي مرة أخرى' : 'Something went wrong, please try again');
+        Array.prototype.forEach.call(buttons, function(b) { b.disabled = false; b.style.opacity = '1'; });
+        return;
+      }
+      window.location.href = result.data.url;
+    })
+    .catch(function(err) {
+      console.error('[checkout] failed:', err);
+      if (errorEl) errorEl.textContent = isAr ? 'خطأ بالاتصال' : 'Connection error';
+      Array.prototype.forEach.call(buttons, function(b) { b.disabled = false; b.style.opacity = '1'; });
+    });
   }
 
   function generate() {
@@ -2319,7 +2411,11 @@
       return;
     }
 
-    // Skip trial check - go directly
+    if (!getUserEmail()) {
+      showCreditsModal(currentLang === 'ar' ? 'أدخلي بريدك الإلكتروني لاستخدام تصميمك المجاني' : 'Enter your email to use your free design');
+      return;
+    }
+
     doGenerate();
   }
 
@@ -2575,7 +2671,8 @@
         num_images: designCount,
         guidance_scale: 7.5,
         aspect_ratio: '16:9',
-        safety_tolerance: '2'
+        safety_tolerance: '2',
+        email: getUserEmail()
       };
       // fal.ai's `strength` (0-1) caps how much the output may differ from
       // the source photo, separately from guidance_scale (prompt weight).
@@ -2595,6 +2692,15 @@
       })
       .then(function(result) {
         console.log('[generate] /api/generate response (http ' + result.status + '):', result.data);
+
+        if (result.status === 402) {
+          console.log('[generate] blocked - no credits remaining');
+          document.getElementById('loadingDots').classList.remove('show');
+          document.getElementById('resultArea').classList.remove('show');
+          showCreditsModal(currentLang === 'ar' ? 'خلص رصيدك من التصاميم — اشتري المزيد للمتابعة' : "You're out of credits — buy more to continue");
+          refreshCreditBalance();
+          return;
+        }
 
         if (!result.ok || !result.data || !result.data.request_id) {
           console.error('[generate] no request_id in response:', result.data);
@@ -2757,6 +2863,7 @@
           } else {
             console.error('[nearby-stores] window.NearbyStores is undefined — js/nearby-stores.js failed to load');
           }
+          refreshCreditBalance(); // a credit was just spent — reflect the new balance
         } else {
           document.getElementById('resultPlaceholder').style.display = 'block';
           document.getElementById('resultPlaceholder').innerHTML = '<div class="rp-icon">❌</div><p>Error generating image. Please try again.</p>';
@@ -2823,7 +2930,31 @@
     initFloorPlan();
     formPanelsSnapshot = document.querySelector('.form-panels').innerHTML;
     resultAreaSnapshot = document.getElementById('resultArea').innerHTML;
+    refreshCreditBalance();
+    handleCheckoutRedirect();
   });
+
+  // After a Stripe Checkout redirect back to this page, show a short status
+  // message and strip the query param so a refresh doesn't repeat it.
+  function handleCheckoutRedirect() {
+    var params = new URLSearchParams(window.location.search);
+    var checkout = params.get('checkout');
+    if (!checkout) return;
+
+    if (checkout === 'success') {
+      alert(currentLang === 'ar' ? '✦ تم الدفع بنجاح! رح يتحدّث رصيدك خلال ثوانٍ.' : '✦ Payment successful! Your balance will update in a few seconds.');
+      // The Stripe webhook that actually grants the credits can land a beat
+      // after this redirect happens, so poll the balance a few times rather
+      // than trusting a single check right away.
+      [500, 2000, 4000].forEach(function(delay) {
+        setTimeout(refreshCreditBalance, delay);
+      });
+    }
+
+    params.delete('checkout');
+    var newUrl = window.location.pathname + (params.toString() ? '?' + params.toString() : '');
+    window.history.replaceState({}, '', newUrl);
+  }
 
   // BUG 3 fix: wipe every panel selection and go back to a clean panel 1
   function startNewDesign() {
@@ -2852,6 +2983,7 @@
 
     resetBodyScrollLock();
     setLang(currentLang);
+    refreshCreditBalance(); // formPanelsSnapshot reset #freeTrialBadge back to its static placeholder text
     document.getElementById('form-section').scrollIntoView({ behavior: 'smooth' });
   }
 
