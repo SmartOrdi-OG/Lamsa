@@ -8,9 +8,11 @@
 - [x] Fix regeneration crash: generating a second design in the same session silently threw on a null `#resultPlaceholder` (removed from the DOM by the first result render) and left the UI stuck on the loading spinner forever. `doGenerate()` now recreates the placeholder before each run.
 - [x] Restore the "Start New Design" button's CSS, accidentally dropped when `.planner-clear-btn` was removed with the 3D planner.
 - [x] Fix "Full Redesign" in Quick Rearrange producing near-identical output to the source photo — rewrote `FULL_REDESIGN_PROMPT` with mandatory, itemized change instructions (mirroring the working Rearrange Only prompt) and raised `guidance_scale` to 7.5 for that mode.
+- [x] Fix the same regeneration-crash bug in `rearrange.html` (same `#resultPlaceholder` removal issue as `lamsa-bilingual.html`, found while working on the item below).
+- [x] Add "Nearby Stores" — `data/furniture-stores.json` (furniture retailers by Gulf + Europe country) and `js/nearby-stores.js` (a vanilla-JS render function, since the app isn't Next.js/React) render a "Shop similar pieces" list under the generated result in both `lamsa-bilingual.html` and `rearrange.html`. Each entry is plain text (no logos) with a "View on map" link to a Google Maps search (`target="_blank" rel="noopener noreferrer"`, no paid API). Country is inferred from the currency already selected in the designer (or browser locale on `rearrange.html`, which has no currency selector). Furniture-type-based matching is stubbed for later, once Claude Vision furniture detection exists again — today it always shows the general per-country list.
 
 ## 💡 Suggestions
-- [ ] Add links/names of real furniture stores (Gulf countries + Europe) so users can shop the pieces suggested in their generated design — e.g. show a curated list of retailers per region/country near the results, possibly matched to the selected style and currency.
+_(لسا ما في شي)_
 
 ## Auth & security
 - [ ] Replace fake client-side auth in `lamsa-auth.html` (login/register just write `localStorage.lamsa_user`, no server call) with a real backend: password hashing, session tokens, and server-side validation.
