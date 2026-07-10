@@ -159,6 +159,10 @@ serverless functions, serves any `*.html` path directly, and redirects `/` to
 ├── lamsa-auth.html        # login / register
 ├── lamsa-bilingual.html   # main designer (upload, floor plan, style, generate)
 ├── rearrange.html         # quick rearrange / full redesign from one photo
+├── assets/
+│   ├── favicon.svg        # app icon (favicon / home-screen icon), self-contained
+│   ├── favicon-32.png / favicon-16.png / apple-touch-icon.png  # raster fallbacks
+│   └── logo-mark.svg      # icon-only mark (no background), used in the nav logo
 ├── data/
 │   └── furniture-stores.json  # store names by country (Gulf + Europe)
 ├── js/
