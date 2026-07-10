@@ -1,5 +1,14 @@
 # Lamsa — TODO
 
+## ✅ Done
+- [x] Add a `README.md` explaining the app, local dev setup, and required env vars.
+- [x] Remove the 3D room planner (`planner.html`, `test3d.html`, `js/three.min.js`, `js/OrbitControls.js`) and all related UI/JS in `lamsa-bilingual.html`.
+- [x] Add a 2D floor plan editor in its place — draws the room from the Length/Width inputs and lets the user tap a wall to place/remove door and window markers, feeding a description into the AI prompt.
+- [x] Remove the "Detect Furniture" / "Place It Yourself" module from `rearrange.html` and its `api/detect-furniture.js` endpoint, keeping only the "AI Decides" (Rearrange Only / Full Redesign) flow.
+
+## 💡 Suggestions
+_(اقتراحات نضيفها هون أول ما تنذكر — لسا ما في شي)_
+
 ## Auth & security
 - [ ] Replace fake client-side auth in `lamsa-auth.html` (login/register just write `localStorage.lamsa_user`, no server call) with a real backend: password hashing, session tokens, and server-side validation.
 - [ ] Add an auth guard check on `rearrange.html`, not just the main app — right now anyone can open it directly without logging in.
@@ -12,7 +21,6 @@
 - [ ] Delete the stray duplicate `upload.js` at the repo root — it's an unused copy of `api/upload.js` (only `api/` is routed per `vercel.json`).
 
 ## Project hygiene
-- [x] Add a `README.md` explaining the app, local dev setup, and required env vars.
 - [ ] Add a `package.json` (or document Vercel's default Node runtime) so dependencies/scripts aren't implicit.
 - [ ] Add a `.gitignore` (env files, `node_modules`, editor artifacts).
 - [ ] Add basic tests for the `api/*.js` handlers (mock fal.ai responses, verify status codes and error paths).
