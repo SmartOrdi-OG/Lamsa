@@ -397,11 +397,11 @@
 
   /* RESPONSIVE */
   @media (max-width: 700px) {
-    body { flex-direction: column; overflow: auto; }
+    body { height: auto; min-height: 100vh; flex-direction: column; overflow: visible; }
     .left-panel { width: 100%; padding: 28px 20px; min-height: auto; }
     .left-content { margin-top: 24px; }
     .feature-list { display: none; }
-    .right-panel { padding: 24px 16px; }
+    .right-panel { flex: none; min-height: auto; overflow-y: visible; padding: 24px 16px; }
     .country-grid { grid-template-columns: repeat(3, 1fr); }
   }
 </style>
