@@ -7,7 +7,7 @@
 - [x] Remove the "Detect Furniture" / "Place It Yourself" module from `rearrange.html` and its `api/detect-furniture.js` endpoint, keeping only the "AI Decides" (Rearrange Only / Full Redesign) flow.
 
 ## 💡 Suggestions
-_(اقتراحات نضيفها هون أول ما تنذكر — لسا ما في شي)_
+- [ ] Add links/names of real furniture stores (Gulf countries + Europe) so users can shop the pieces suggested in their generated design — e.g. show a curated list of retailers per region/country near the results, possibly matched to the selected style and currency.
 
 ## Auth & security
 - [ ] Replace fake client-side auth in `lamsa-auth.html` (login/register just write `localStorage.lamsa_user`, no server call) with a real backend: password hashing, session tokens, and server-side validation.
