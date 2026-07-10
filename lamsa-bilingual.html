@@ -2182,19 +2182,16 @@
       if (hit) fpItems.push({ wall: hit.wall, t: hit.t, type: fpTool });
     }
 
-    saveFloorPlan();
     drawFloorPlan();
   }
 
-  function saveFloorPlan() {
-    try { localStorage.setItem('lamsa_floorplan', JSON.stringify(fpItems)); } catch(e) {}
-  }
-
+  // fpItems is intentionally in-memory only for the current page load — none
+  // of the other room-info fields (type, area, length/width, style, notes...)
+  // survive a refresh either, so persisting just the floor plan to
+  // localStorage meant it kept showing door/window markers from a previous,
+  // unrelated design session/room.
   function initFloorPlan() {
-    try {
-      var saved = JSON.parse(localStorage.getItem('lamsa_floorplan') || '[]');
-      if (Array.isArray(saved)) fpItems = saved;
-    } catch(e) { fpItems = []; }
+    fpItems = [];
     drawFloorPlan();
   }
 
@@ -2879,7 +2876,6 @@
   // BUG 2 fix: fully clear a stale/previous floor plan session
   function clearFp() {
     fpItems = [];
-    try { localStorage.removeItem('lamsa_floorplan'); } catch(e) {}
     drawFloorPlan();
   }
 
