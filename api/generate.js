@@ -9,7 +9,7 @@ export default async function handler(req, res) {
     return res.status(500).json({ error: 'FAL_API_KEY not configured' });
   }
 
-  const { prompt, image_url, num_images = 1, guidance_scale = 3.5, aspect_ratio = '16:9' } = req.body;
+  const { prompt, image_url, num_images = 1, guidance_scale = 3.5, aspect_ratio = '16:9', strength } = req.body;
 
   if (!prompt) return res.status(400).json({ error: 'prompt is required' });
 
@@ -27,6 +27,15 @@ export default async function handler(req, res) {
     output_format: 'jpeg',
     safety_tolerance: '2'
   };
+  // strength (0-1) caps how much the output is allowed to differ from
+  // image_url, independent of guidance_scale (which only controls how
+  // closely the model follows the prompt). fal.ai defaults this to 0.1 when
+  // omitted — far too conservative for a full room redesign — so only the
+  // caller's explicit choice is forwarded, and only when there's a source
+  // image to edit.
+  if (image_url && typeof strength === 'number') {
+    body.strength = strength;
+  }
 
   console.log('[api/generate] submitting to fal.ai queue:', JSON.stringify(body));
 

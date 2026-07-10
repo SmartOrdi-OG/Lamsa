@@ -524,7 +524,7 @@
       });
   }
 
-  function callGenerate(imageUrl, prompt, guidanceScale) {
+  function callGenerate(imageUrl, prompt, guidanceScale, strength) {
     var requestBody = {
       prompt: prompt,
       image_url: imageUrl,
@@ -532,6 +532,10 @@
       guidance_scale: guidanceScale || 3.5,
       aspect_ratio: '16:9'
     };
+    // fal.ai's `strength` (0-1) caps how much the output may differ from the
+    // source photo — separate from guidance_scale (prompt weight) — and
+    // defaults to 0.1 (a light touch-up) when omitted.
+    if (imageUrl && typeof strength === 'number') requestBody.strength = strength;
     console.log('[generate] POST /api/generate:', requestBody);
 
     fetch('/api/generate', {
@@ -632,11 +636,15 @@
     var isRedesign = state.subMode === 'redesign';
     var promptToUse = isRedesign ? FULL_REDESIGN_PROMPT : REARRANGE_PROMPT;
     // Full Redesign needs the model to diverge much more from the source photo
-    // than a plain rearrange, so give the prompt more weight.
+    // than a plain rearrange, so give the prompt more weight (guidance_scale)
+    // and allow it to actually move further from the source pixels
+    // (strength) — fal.ai defaults strength to 0.1 when omitted, which is
+    // far too conservative for a full redesign.
     var guidanceScale = isRedesign ? 7.5 : 3.5;
+    var strength = isRedesign ? 0.9 : 0.6;
 
     ensurePhotoUploaded(function(url) {
-      callGenerate(url, promptToUse, guidanceScale);
+      callGenerate(url, promptToUse, guidanceScale, strength);
     });
   }
 </script>
