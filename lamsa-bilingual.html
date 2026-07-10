@@ -2573,7 +2573,12 @@
         prompt: prompt,
         image_url: imageUrl || undefined,
         num_images: designCount,
-        guidance_scale: 3.5,
+        // This flow fully strips and rebuilds the room's furniture (not a
+        // light touch-up), so it needs the prompt to carry more weight over
+        // the source pixels than a low guidance_scale allows — 3.5 was too
+        // low and let stray elements from the original photo (like a
+        // built-in shower) blend into the result instead of being replaced.
+        guidance_scale: 7.5,
         aspect_ratio: '16:9',
         safety_tolerance: '2'
       };
