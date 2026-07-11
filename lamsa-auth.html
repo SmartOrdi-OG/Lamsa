@@ -607,32 +607,34 @@
 </div>
 
 <script>
+  let currentLang = 'en';
+
   // COUNTRIES DATA
   const countries = [
-    { flag: '🇸🇦', name: 'السعودية', code: 'SA', currency: 'ر.س', lang: 'ar' },
-    { flag: '🇦🇪', name: 'الإمارات', code: 'AE', currency: 'د.إ', lang: 'ar' },
-    { flag: '🇰🇼', name: 'الكويت', code: 'KW', currency: 'د.ك', lang: 'ar' },
-    { flag: '🇶🇦', name: 'قطر', code: 'QA', currency: 'ر.ق', lang: 'ar' },
-    { flag: '🇴🇲', name: 'عُمان', code: 'OM', currency: 'ر.ع', lang: 'ar' },
-    { flag: '🇧🇭', name: 'البحرين', code: 'BH', currency: 'د.ب', lang: 'ar' },
-    { flag: '🇸🇾', name: 'سوريا', code: 'SY', currency: 'ل.س', lang: 'ar' },
-    { flag: '🇱🇧', name: 'لبنان', code: 'LB', currency: 'ل.ل', lang: 'ar' },
-    { flag: '🇪🇬', name: 'مصر', code: 'EG', currency: 'ج.م', lang: 'ar' },
-    { flag: '🇯🇴', name: 'الأردن', code: 'JO', currency: 'د.أ', lang: 'ar' },
-    { flag: '🇮🇶', name: 'العراق', code: 'IQ', currency: 'د.ع', lang: 'ar' },
-    { flag: '🇲🇦', name: 'المغرب', code: 'MA', currency: 'د.م', lang: 'ar' },
-    { flag: '🇩🇪', name: 'ألمانيا', code: 'DE', currency: '€', lang: 'de' },
-    { flag: '🇦🇹', name: 'النمسا', code: 'AT', currency: '€', lang: 'de' },
-    { flag: '🇨🇭', name: 'سويسرا', code: 'CH', currency: 'CHF', lang: 'de' },
-    { flag: '🇬🇧', name: 'بريطانيا', code: 'GB', currency: '£', lang: 'en' },
-    { flag: '🇺🇸', name: 'أمريكا', code: 'US', currency: '$', lang: 'en' },
-    { flag: '🇫🇷', name: 'فرنسا', code: 'FR', currency: '€', lang: 'fr' },
-    { flag: '🇪🇸', name: 'إسبانيا', code: 'ES', currency: '€', lang: 'es' },
-    { flag: '🇮🇹', name: 'إيطاليا', code: 'IT', currency: '€', lang: 'it' },
-    { flag: '🇹🇷', name: 'تركيا', code: 'TR', currency: '₺', lang: 'tr' },
-    { flag: '🇨🇦', name: 'كندا', code: 'CA', currency: 'C$', lang: 'en' },
-    { flag: '🇦🇺', name: 'أستراليا', code: 'AU', currency: 'A$', lang: 'en' },
-    { flag: '🌍', name: 'أخرى', code: 'OTHER', currency: '$', lang: 'en' },
+    { flag: '🇸🇦', name: 'السعودية', nameEn: 'Saudi Arabia', code: 'SA', currency: 'ر.س', lang: 'ar' },
+    { flag: '🇦🇪', name: 'الإمارات', nameEn: 'United Arab Emirates', alias: 'UAE', code: 'AE', currency: 'د.إ', lang: 'ar' },
+    { flag: '🇰🇼', name: 'الكويت', nameEn: 'Kuwait', code: 'KW', currency: 'د.ك', lang: 'ar' },
+    { flag: '🇶🇦', name: 'قطر', nameEn: 'Qatar', code: 'QA', currency: 'ر.ق', lang: 'ar' },
+    { flag: '🇴🇲', name: 'عُمان', nameEn: 'Oman', code: 'OM', currency: 'ر.ع', lang: 'ar' },
+    { flag: '🇧🇭', name: 'البحرين', nameEn: 'Bahrain', code: 'BH', currency: 'د.ب', lang: 'ar' },
+    { flag: '🇸🇾', name: 'سوريا', nameEn: 'Syria', code: 'SY', currency: 'ل.س', lang: 'ar' },
+    { flag: '🇱🇧', name: 'لبنان', nameEn: 'Lebanon', code: 'LB', currency: 'ل.ل', lang: 'ar' },
+    { flag: '🇪🇬', name: 'مصر', nameEn: 'Egypt', code: 'EG', currency: 'ج.م', lang: 'ar' },
+    { flag: '🇯🇴', name: 'الأردن', nameEn: 'Jordan', code: 'JO', currency: 'د.أ', lang: 'ar' },
+    { flag: '🇮🇶', name: 'العراق', nameEn: 'Iraq', code: 'IQ', currency: 'د.ع', lang: 'ar' },
+    { flag: '🇲🇦', name: 'المغرب', nameEn: 'Morocco', code: 'MA', currency: 'د.م', lang: 'ar' },
+    { flag: '🇩🇪', name: 'ألمانيا', nameEn: 'Germany', code: 'DE', currency: '€', lang: 'de' },
+    { flag: '🇦🇹', name: 'النمسا', nameEn: 'Austria', code: 'AT', currency: '€', lang: 'de' },
+    { flag: '🇨🇭', name: 'سويسرا', nameEn: 'Switzerland', code: 'CH', currency: 'CHF', lang: 'de' },
+    { flag: '🇬🇧', name: 'بريطانيا', nameEn: 'United Kingdom', alias: 'Britain UK', code: 'GB', currency: '£', lang: 'en' },
+    { flag: '🇺🇸', name: 'أمريكا', nameEn: 'United States', alias: 'USA America', code: 'US', currency: '$', lang: 'en' },
+    { flag: '🇫🇷', name: 'فرنسا', nameEn: 'France', code: 'FR', currency: '€', lang: 'fr' },
+    { flag: '🇪🇸', name: 'إسبانيا', nameEn: 'Spain', code: 'ES', currency: '€', lang: 'es' },
+    { flag: '🇮🇹', name: 'إيطاليا', nameEn: 'Italy', code: 'IT', currency: '€', lang: 'it' },
+    { flag: '🇹🇷', name: 'تركيا', nameEn: 'Turkey', code: 'TR', currency: '₺', lang: 'tr' },
+    { flag: '🇨🇦', name: 'كندا', nameEn: 'Canada', code: 'CA', currency: 'C$', lang: 'en' },
+    { flag: '🇦🇺', name: 'أستراليا', nameEn: 'Australia', code: 'AU', currency: 'A$', lang: 'en' },
+    { flag: '🌍', name: 'أخرى', nameEn: 'Other', code: 'OTHER', currency: '$', lang: 'en' },
   ];
 
   let selectedCountry = null;
@@ -644,7 +646,7 @@
       <div class="country-chip ${selectedCountry?.code === c.code ? 'selected' : ''}"
            onclick="selectCountry('${c.code}')">
         <span class="country-flag">${c.flag}</span>
-        <span class="country-name">${c.name}</span>
+        <span class="country-name">${currentLang === 'ar' ? c.name : c.nameEn}</span>
       </div>
     `).join('');
   }
@@ -655,8 +657,13 @@
   }
 
   function filterCountries(q) {
-    filteredCountries = q
-      ? countries.filter(c => c.name.includes(q) || c.code.toLowerCase().includes(q.toLowerCase()))
+    const needle = q.trim().toLowerCase();
+    filteredCountries = needle
+      ? countries.filter(c =>
+          c.name.includes(q.trim()) ||
+          c.nameEn.toLowerCase().includes(needle) ||
+          (c.alias && c.alias.toLowerCase().includes(needle)) ||
+          c.code.toLowerCase() === needle)
       : [...countries];
     renderCountries(filteredCountries);
   }
@@ -999,7 +1006,6 @@
   };
 
   let langMenuOpen = false;
-  let currentLang = 'en';
 
   function toggleLangMenu() {
     langMenuOpen = !langMenuOpen;
@@ -1077,6 +1083,9 @@
       const regBtn = regForm.querySelector('.submit-btn');
       if (regBtn) regBtn.textContent = t.registerBtn;
     }
+
+    // Update country grid (names shown in the new language)
+    renderCountries(filteredCountries);
 
     // Update terms text
     const termsTextEl = document.getElementById('termsText');
