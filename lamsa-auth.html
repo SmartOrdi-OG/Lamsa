@@ -568,9 +568,10 @@
         <button class="submit-btn" onclick="handleRegister()">إنشاء الحساب ✦</button>
 
         <p class="terms-text">
-          بالتسجيل، أنت توافق على
-          <a href="#">شروط الاستخدام</a> و
-          <a href="#">سياسة الخصوصية</a>
+          <span id="termsText">بالتسجيل، أنت توافق على</span>
+          <a href="#" id="termsLink">شروط الاستخدام</a>
+          <span id="andText">و</span>
+          <a href="#" id="privacyLink">سياسة الخصوصية</a>
         </p>
       </div>
 
@@ -1053,6 +1054,16 @@
       const regBtn = regForm.querySelector('.submit-btn');
       if (regBtn) regBtn.textContent = t.registerBtn;
     }
+
+    // Update terms text
+    const termsTextEl = document.getElementById('termsText');
+    if (termsTextEl) termsTextEl.textContent = t.terms;
+    const termsLinkEl = document.getElementById('termsLink');
+    if (termsLinkEl) termsLinkEl.textContent = t.termsLink;
+    const andTextEl = document.getElementById('andText');
+    if (andTextEl) andTextEl.textContent = t.andText;
+    const privacyLinkEl = document.getElementById('privacyLink');
+    if (privacyLinkEl) privacyLinkEl.textContent = t.privacyLink;
 
     // Update Google/Apple buttons
     const googleBtn = document.querySelector('.google-btn');
