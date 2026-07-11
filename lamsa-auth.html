@@ -228,17 +228,18 @@
   .input-icon {
     position: absolute;
     top: 50%; transform: translateY(-50%);
-    right: 14px;
+    inset-inline-end: 14px;
     color: var(--gray);
     font-size: 16px;
     pointer-events: none;
   }
-  .input-wrap .form-input { padding-right: 42px; }
+  .input-wrap .form-input { padding-inline-end: 42px; }
+  .input-wrap:has(.toggle-pass) .form-input { padding-inline-start: 40px; }
 
   .toggle-pass {
     position: absolute;
     top: 50%; transform: translateY(-50%);
-    left: 14px;
+    inset-inline-start: 14px;
     background: none; border: none;
     color: var(--gray); cursor: pointer;
     font-size: 14px; padding: 4px;
