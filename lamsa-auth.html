@@ -664,12 +664,13 @@
     .left-panel { width: 100%; padding: 28px 20px; min-height: 480px; }
     .left-content { margin-top: 24px; }
     .feature-list { display: none; }
-    .right-panel { flex: none; min-height: auto; overflow-y: visible; padding: 24px 16px; }
+    .right-panel { flex: none; min-height: auto; overflow-y: visible; padding: 0; background: var(--card); }
     .country-grid { grid-template-columns: repeat(3, 1fr); }
 
     /* Compact the form itself (not the photo) so the whole card fits
        without scrolling on short mobile screens. */
-    .auth-box { padding: 22px 20px 18px; }
+    .auth-box { padding: 22px 20px 18px; max-width: 100%; border-radius: 0; box-shadow: none; }
+    .auth-box::before { display: none; }
     .auth-tabs { margin-bottom: 18px; }
     .google-btn, .apple-btn { padding: 11px 20px; margin-bottom: 6px; }
     .apple-btn { margin-bottom: 14px; }
