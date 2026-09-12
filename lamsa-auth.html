@@ -617,10 +617,26 @@
   /* RESPONSIVE */
   @media (max-width: 700px) {
     body { height: auto; min-height: 100vh; flex-direction: column; overflow: visible; }
-    /* min-height (not just padding) so the photo gets real room to show —
-       .brand/.left-content's auto margins then push apart to fill it. */
-    .left-panel { width: 100%; padding: 28px 20px; min-height: 480px; }
-    .left-content { margin-top: 24px; }
+    /* On mobile the photo is no longer a full-bleed background with text
+       floated on top of it (that forced a tall box and cropped most of the
+       photo to fill it) — it's a framed card sized to the photo's own
+       ~1.85:1 aspect ratio, with the brand row above it and the headline
+       text below it in normal, dark-on-light text. */
+    .left-panel { width: 100%; padding: 16px 16px 28px; min-height: 0; background: var(--card); border-right: none; }
+    .brand { position: static; z-index: auto; margin-bottom: 16px; }
+    .brand-name { color: var(--gold-deep); text-shadow: none; }
+    .brand-icon { border-color: var(--gold); background: var(--gold-dim); box-shadow: none; }
+    .hero-bg-stack {
+      position: relative; inset: auto; width: 100%; aspect-ratio: 1.85;
+      border-radius: 16px; overflow: hidden; border: 1px solid var(--border); margin-bottom: 20px;
+    }
+    .hero-layer { background-size: contain; background-color: #2a2e33; }
+    .hero-scrim { display: none; } /* no text over the photo anymore, so no scrim needed */
+    .left-content { position: static; margin-top: 0; padding-bottom: 0; }
+    .eyebrow { color: var(--gold-deep); background: var(--gold-dim); border-color: var(--border); }
+    .left-title { color: var(--white); text-shadow: none; }
+    .left-title .gold { color: var(--gold-deep); }
+    .left-sub { color: var(--gray); text-shadow: none; }
     .feature-list { display: none; }
     /* The success/welcome screen carries its own full hero photo (see
        .success-box's own .hero-bg-stack) — without this, it stacked below
