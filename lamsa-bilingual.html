@@ -2580,7 +2580,7 @@
         badge.innerHTML = (isAr ? 'رصيدك: ' : 'Your balance: ') + '<b>' + data.credits + '</b> ' +
           (isAr ? (data.credits === 1 ? 'تصميم' : 'تصاميم') : ('credit' + (data.credits === 1 ? '' : 's'))) +
           (isAndroidTWA ? '' :
-            ' &middot; <a href="javascript:void(0)" onclick="showCreditsModal()" style="color:var(--gold);text-decoration:underline;">' +
+            ' &middot; <a href="javascript:void(0)" onclick="showSubscriptionModal()" style="color:var(--gold);text-decoration:underline;">' +
             (isAr ? 'شراء المزيد' : 'Buy more') + '</a>');
       })
       .catch(function(err) { console.error('[credits] failed to load balance:', err); });
@@ -2672,6 +2672,103 @@
       if (errorEl) errorEl.textContent = isAr ? 'خطأ بالاتصال' : 'Connection error';
       Array.prototype.forEach.call(buttons, function(b) { b.disabled = false; b.style.opacity = '1'; });
     });
+  }
+
+  // ===== SUBSCRIPTION PAYWALL (design draft — not wired to real billing yet) =====
+  // Full-screen paywall modeled on a competitor's subscription screen, adapted
+  // to Lamsa's own visual language. Tier prices below are placeholders for the
+  // team to finalize; the "Continue" button intentionally does NOT charge
+  // anything yet — it's here for visual/UX review before any Stripe work.
+  var SUBSCRIPTION_TIERS = [
+    { id: 'lifetime', badge: null, period: { ar: 'مدى الحياة', en: 'Lifetime' }, sub: { ar: 'دفعة واحدة', en: '1 purchase' }, price: '€29.99', tag: { ar: 'أفضل قيمة', en: 'BEST VALUE' } },
+    { id: 'yearly', badge: { ar: 'وفر 83%', en: 'SAVE 83%' }, period: { ar: 'سنة', en: '1 Year' }, sub: { ar: '(€0.29/أسبوع)', en: '(€0.29/week)' }, price: '€14.99', tag: null, highlighted: true },
+    { id: 'weekly', badge: null, period: { ar: 'أسبوع', en: '1 Week' }, sub: { ar: '', en: '' }, price: '€2.99', tag: { ar: 'الأكثر شيوعاً', en: 'MOST POPULAR' } }
+  ];
+
+  function showSubscriptionModal() {
+    var existing = document.getElementById('subModalOverlay');
+    if (existing) existing.remove();
+
+    var isAr = currentLang === 'ar';
+    var overlay = document.createElement('div');
+    overlay.id = 'subModalOverlay';
+    overlay.style.cssText = 'position:fixed;inset:0;background:#fff;z-index:9999;display:flex;flex-direction:column;overflow-y:auto;font-family:Tajawal,sans-serif;';
+
+    var features = [
+      { icon: 'sparkles', ar: 'الوصول لكل الميزات', en: 'Access to all features' },
+      { icon: 'refresh', ar: 'تصاميم غير محدودة للغرفة', en: 'Unlimited room redesigns' },
+      { icon: 'swatch', ar: 'فتح جميع الستايلات', en: 'All styles unlocked' },
+      { icon: 'bulb', ar: 'أولوية الوصول للميزات الجديدة', en: 'Priority access to new features' }
+    ];
+    var featuresHtml = features.map(function(f) {
+      return '<div style="display:flex;align-items:center;gap:14px;margin-bottom:18px;">' +
+        '<div style="width:36px;height:36px;border-radius:50%;background:#1b1e22;color:var(--gold);display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;">' + (window.icon ? window.icon(f.icon) : '') + '</div>' +
+        '<div style="font-size:15px;font-weight:700;color:#1b1e22;">' + (isAr ? f.ar : f.en) + '</div>' +
+        '</div>';
+    }).join('');
+
+    var tiersHtml = SUBSCRIPTION_TIERS.map(function(t) {
+      var tagHtml = t.tag ? '<div style="font-size:10px;font-weight:900;color:#767d86;text-align:center;margin-bottom:6px;white-space:nowrap;">' + (isAr ? t.tag.ar : t.tag.en) + '</div>' : '<div style="height:16px;margin-bottom:6px;"></div>';
+      var badgeHtml = t.badge ? '<div style="background:var(--gold);color:#1b1e22;font-size:10px;font-weight:900;text-align:center;padding:4px 0;border-radius:8px 8px 0 0;margin:0 -1px;">' + (isAr ? t.badge.ar : t.badge.en) + '</div>' : '';
+      var border = t.highlighted ? '2px solid var(--gold)' : '1px solid #dfe2e6';
+      return '<div class="sub-tier-card" data-tier="' + t.id + '" style="flex:1;cursor:pointer;border:' + border + ';border-radius:14px;overflow:hidden;text-align:center;background:#fff;">' +
+        tagHtml +
+        badgeHtml +
+        '<div style="padding:14px 8px;">' +
+          '<div style="font-size:16px;font-weight:900;color:#1b1e22;">' + (isAr ? t.period.ar : t.period.en) + '</div>' +
+          '<div style="font-size:10px;color:#767d86;min-height:14px;margin-bottom:8px;">' + (isAr ? t.sub.ar : t.sub.en) + '</div>' +
+          '<div style="border-top:1px solid #eef0f2;padding-top:8px;font-size:15px;font-weight:900;color:#1b1e22;">' + t.price + '</div>' +
+        '</div>' +
+      '</div>';
+    }).join('<div style="width:8px;"></div>');
+
+    overlay.innerHTML =
+      '<div style="position:relative;">' +
+        '<img src="assets/hero-bg/pair1-after.jpg" style="width:100%;height:38vh;min-height:220px;object-fit:cover;display:block;">' +
+        '<div style="position:absolute;inset:0;background:linear-gradient(180deg, rgba(0,0,0,0.15) 0%, rgba(0,0,0,0) 30%, rgba(0,0,0,0.55) 100%);"></div>' +
+        '<button type="button" onclick="document.getElementById(\'subModalOverlay\').remove()" style="position:absolute;top:16px;' + (isAr ? 'right' : 'left') + ':16px;width:34px;height:34px;border-radius:50%;background:rgba(0,0,0,0.35);color:#fff;border:none;font-size:16px;cursor:pointer;">' + (window.icon ? window.icon('close') : '×') + '</button>' +
+        '<div style="position:absolute;top:20px;' + (isAr ? 'left' : 'right') + ':16px;color:#fff;font-size:13px;font-weight:700;text-decoration:underline;cursor:pointer;">' + (isAr ? 'استعادة' : 'Restore') + '</div>' +
+        '<div style="position:absolute;bottom:16px;left:20px;right:20px;color:#fff;">' +
+          '<div style="display:flex;gap:5px;margin-bottom:10px;">' +
+            '<span style="width:16px;height:4px;border-radius:2px;background:#fff;"></span>' +
+            '<span style="width:16px;height:4px;border-radius:2px;background:rgba(255,255,255,0.4);"></span>' +
+            '<span style="width:16px;height:4px;border-radius:2px;background:rgba(255,255,255,0.4);"></span>' +
+          '</div>' +
+          '<div style="font-size:26px;font-weight:900;">' + (isAr ? 'تصميم داخلي بالذكاء الاصطناعي' : 'AI Interior Design') + '</div>' +
+        '</div>' +
+      '</div>' +
+      '<div style="flex:1;background:#fff;border-radius:24px 24px 0 0;margin-top:-20px;position:relative;padding:26px 20px 20px;">' +
+        '<div style="margin-bottom:22px;">' + featuresHtml + '</div>' +
+        '<div id="subTierList" style="display:flex;margin-bottom:18px;">' + tiersHtml + '</div>' +
+        '<button type="button" id="subContinueBtn" style="width:100%;background:var(--gold);color:#1b1e22;border:none;padding:16px;border-radius:14px;font-size:17px;font-weight:900;cursor:pointer;font-family:Tajawal,sans-serif;">' + (isAr ? 'متابعة' : 'Continue') + '</button>' +
+        '<div style="text-align:center;font-size:11px;color:#98a0a8;margin-top:14px;">' + (isAr ? 'تجديد تلقائي. يمكن الإلغاء بأي وقت.' : 'Auto-renewable. Cancel anytime.') + '</div>' +
+        '<div style="text-align:center;font-size:11px;margin-top:6px;">' +
+          '<a href="#" style="color:#767d86;text-decoration:underline;margin-inline-end:16px;">' + (isAr ? 'شروط الاستخدام' : 'Terms of Use') + '</a>' +
+          '<a href="#" style="color:#767d86;text-decoration:underline;">' + (isAr ? 'سياسة الخصوصية' : 'Privacy Policy') + '</a>' +
+        '</div>' +
+      '</div>';
+
+    document.body.appendChild(overlay);
+
+    var selectedTier = 'yearly';
+    function paintSelection() {
+      Array.prototype.forEach.call(overlay.querySelectorAll('.sub-tier-card'), function(card) {
+        var isSel = card.getAttribute('data-tier') === selectedTier;
+        card.style.border = isSel ? '2px solid var(--gold)' : '1px solid #dfe2e6';
+        card.style.boxShadow = isSel ? '0 8px 20px -8px rgba(201,169,110,0.5)' : 'none';
+      });
+    }
+    paintSelection();
+    Array.prototype.forEach.call(overlay.querySelectorAll('.sub-tier-card'), function(card) {
+      card.onclick = function() { selectedTier = card.getAttribute('data-tier'); paintSelection(); };
+    });
+
+    document.getElementById('subContinueBtn').onclick = function() {
+      // Design-review stage only — no real charge yet. Swap this for a real
+      // checkout call (mirroring startCheckout) once pricing is finalized
+      // and the backend supports recurring subscriptions.
+      alert(isAr ? 'هاي معاينة تصميم بس — الدفع الفعلي لسا مو مفعّل.' : 'This is a design preview only — real payment isn\'t wired up yet.');
+    };
   }
 
   function generate() {
