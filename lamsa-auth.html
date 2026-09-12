@@ -660,7 +660,12 @@
     body:has(.auth-box.success-mode) .left-panel { display: none; }
     body:has(.auth-box.success-mode) .right-panel { min-height: 100vh; display: flex; align-items: center; }
     .auth-box.success-mode .success-box { height: 100vh; border-radius: 0; }
-    .right-panel { flex: none; min-height: auto; overflow-y: visible; padding: 0; background: var(--card); }
+    /* flex:1 (not flex:none/auto-height) so it fills whatever height is
+       left after the photo — on a taller phone that leftover space is
+       centered around the form (via the base rule's align-items/
+       justify-content:center) instead of sitting as dead white space
+       below the Sign In button. */
+    .right-panel { flex: 1; min-height: 0; overflow-y: auto; padding: 0; background: var(--card); }
     .country-grid { grid-template-columns: repeat(3, 1fr); }
 
     /* Compact the form itself (not the photo) so the whole card fits
