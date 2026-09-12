@@ -664,6 +664,15 @@
     .left-panel { width: 100%; padding: 28px 20px; min-height: 480px; }
     .left-content { margin-top: 24px; }
     .feature-list { display: none; }
+    /* The success/welcome screen carries its own full hero photo (see
+       .success-box's own .hero-bg-stack) — without this, it stacked below
+       the login page's hero panel on mobile, doubling the photo and making
+       the whole screen far too tall. Stretch it to fill the viewport
+       instead of the desktop card's capped 80vh, so there's no leftover
+       empty space below it either. */
+    body:has(.auth-box.success-mode) .left-panel { display: none; }
+    body:has(.auth-box.success-mode) .right-panel { min-height: 100vh; display: flex; align-items: center; }
+    .auth-box.success-mode .success-box { height: 100vh; border-radius: 0; }
     .right-panel { flex: none; min-height: auto; overflow-y: visible; padding: 0; background: var(--card); }
     .country-grid { grid-template-columns: repeat(3, 1fr); }
 
