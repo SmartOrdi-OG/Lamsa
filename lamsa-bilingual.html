@@ -3427,11 +3427,11 @@
 
             var beforeDiv = document.createElement('div');
             beforeDiv.innerHTML = '<p style="color:var(--gray);font-size:12px;text-align:center;margin-bottom:6px;">Before</p>' +
-              '<img src="' + lastBeforeImageDataUrl + '" style="width:100%;border-radius:10px;object-fit:cover;">';
+              '<img src="' + lastBeforeImageDataUrl + '" style="width:100%;border-radius:10px;border:1px solid #dfe2e6;object-fit:contain;">';
 
             var afterDiv = document.createElement('div');
             afterDiv.innerHTML = '<p style="color:var(--gold);font-size:12px;text-align:center;margin-bottom:6px;">After</p>' +
-              '<img src="' + images[0].url + '" style="width:100%;border-radius:10px;object-fit:cover;">';
+              '<img src="' + images[0].url + '" style="width:100%;border-radius:10px;border:1px solid #dfe2e6;object-fit:contain;">';
 
             beforeAfterDiv.appendChild(beforeDiv);
             beforeAfterDiv.appendChild(afterDiv);
