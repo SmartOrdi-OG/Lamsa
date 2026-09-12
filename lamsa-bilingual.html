@@ -1088,28 +1088,31 @@
     footer { display: none; }
     /* nav is position:fixed and wraps to 2 rows on mobile (~137px tall) —
        this padding-top needs to clear that, with room left over for the
-       ambient photo band below. */
-    #form-section { padding-top: 509px; position: relative; overflow: hidden; }
+       framed ambient photo band below (sized to the photos' own ~1.85:1
+       aspect ratio, so its height tracks the viewport width). */
+    #form-section { padding-top: calc(153px + (100vw - 32px) / 1.85); position: relative; overflow: hidden; }
     /* Before/After result: side-by-side halves each image on a phone —
        stack them full-width instead so the result is actually visible. */
     .before-after-grid { grid-template-columns: 1fr !important; }
 
-    /* Ambient before/after background behind the wizard — constrained to
-       just the top padding band above the card (NOT inset:0, which would
-       also bleed down the card's left/right side margins as thin vertical
-       strips running the full page height — reads as a rendering glitch,
-       not ambience). Its fixed height means it never reaches the form
-       content below, so removing the card's own background (above) never
-       exposes the photo behind any text or fields.
-       top:137px (not 0) starts it right where the fixed nav ends — at
-       top:0 the nav's translucent/blurred background sat directly over
-       the band's top ~137px, hiding that much of the photo behind it. */
-    .form-bg-stack, .form-bg-scrim { display: block; position: absolute; top: 137px; left: 0; right: 0; height: 420px; z-index: 0; }
+    /* Ambient before/after band behind the wizard — a framed card (not a
+       full-bleed background) sized to the photos' real aspect ratio so the
+       whole photo shows instead of being cropped to fill an unrelated box.
+       top:153px starts it just below the fixed nav (~137px) plus a 16px
+       gap; the card below already has its own 48px margin-top, which is
+       enough separation on its own. */
+    .form-bg-stack, .form-bg-scrim {
+      display: block; position: absolute; top: 153px; left: 16px; right: 16px;
+      aspect-ratio: 1.85; border-radius: 16px; overflow: hidden; z-index: 0;
+    }
+    .form-bg-stack { border: 1px solid rgba(255,255,255,0.35); }
+    /* Fit (not fill) each photo so none of it is ever cropped to fit the
+       frame, even for a pair whose aspect ratio doesn't match exactly. */
+    .form-bg-stack .hero-layer { background-size: contain; background-color: #2a2e33; }
     /* No text sits on this band on mobile (the badge/title/sub stay hidden
        here), so there's no legibility reason to blur or darken the photo —
-       show it clearly, only darkening right at the bottom edge so it blends
-       into the card instead of cutting off hard. */
-    .form-bg-scrim { background: linear-gradient(180deg, rgba(20,22,26,0.02) 0%, rgba(20,22,26,0.05) 70%, rgba(20,22,26,0.4) 100%); }
+       show it clearly, only darkening slightly at the very bottom. */
+    .form-bg-scrim { background: linear-gradient(180deg, rgba(20,22,26,0) 0%, rgba(20,22,26,0) 80%, rgba(20,22,26,0.25) 100%); }
   }
 </style>
 </head>
