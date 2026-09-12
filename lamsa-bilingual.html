@@ -702,7 +702,7 @@
   }
   .upload-preview img {
     width: 100%; max-height: 280px;
-    object-fit: cover; border-radius: 10px;
+    object-fit: contain; border-radius: 10px; border: 1px solid var(--border); background: #f3f4f5;
   }
   .upload-preview .remove-btn {
     position: absolute; top: 10px; left: 10px;
@@ -3442,7 +3442,7 @@
             images.forEach(function(img, i) {
               var imgEl = document.createElement('img');
               imgEl.src = img.url;
-              imgEl.style.cssText = 'width:100%;border-radius:10px;margin-bottom:10px;';
+              imgEl.style.cssText = 'width:100%;border-radius:10px;border:1px solid #dfe2e6;margin-bottom:10px;';
               imgWrap.appendChild(imgEl);
               imgWrap.appendChild(createDownloadBtn(img.url, 'lamsa-design-' + (i+1) + '.jpg'));
             });
