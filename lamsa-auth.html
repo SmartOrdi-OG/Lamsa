@@ -292,48 +292,6 @@
     pointer-events: none;
   }
 
-  /* GOOGLE BTN */
-  .google-btn {
-    width: 100%;
-    background: var(--dark);
-    border: 1px solid var(--border);
-    color: var(--white);
-    padding: 14px 20px;
-    border-radius: 10px;
-    font-family: 'Tajawal', sans-serif;
-    font-size: 14px; font-weight: 700;
-    cursor: pointer;
-    display: flex; align-items: center; justify-content: center; gap: 10px;
-    transition: all 0.2s;
-    margin-bottom: 8px;
-  }
-  .google-btn:hover { border-color: var(--gold); background: var(--gold-dim); }
-  .google-btn svg { width: 18px; height: 18px; flex-shrink: 0; }
-
-  .apple-btn {
-    width: 100%;
-    background: var(--dark);
-    border: 1px solid var(--border);
-    color: var(--white);
-    padding: 14px 20px;
-    border-radius: 10px;
-    font-family: 'Tajawal', sans-serif;
-    font-size: 14px; font-weight: 700;
-    cursor: pointer;
-    display: flex; align-items: center; justify-content: center; gap: 10px;
-    transition: all 0.2s;
-    margin-bottom: 20px;
-  }
-  .apple-btn:hover { border-color: var(--gold); background: var(--gold-dim); }
-
-  /* DIVIDER */
-  .divider {
-    display: flex; align-items: center; gap: 12px;
-    margin-bottom: 20px;
-  }
-  .divider-line { flex: 1; height: 1px; background: var(--border); }
-  .divider-text { font-size: 11px; color: var(--gray); white-space: nowrap; }
-
   /* FORM */
   .form-group {
     margin-bottom: 16px;
@@ -681,9 +639,6 @@
     .auth-box { padding: 22px 20px 18px; max-width: 100%; border-radius: 0; box-shadow: none; }
     .auth-box::before { display: none; }
     .auth-tabs { margin-bottom: 18px; }
-    .google-btn, .apple-btn { padding: 11px 20px; margin-bottom: 6px; }
-    .apple-btn { margin-bottom: 14px; }
-    .divider { margin-bottom: 14px; }
     .form-group { margin-bottom: 11px; }
     .form-input { padding: 10px 14px; }
     .submit-btn { padding: 12px; margin-top: 4px; }
@@ -761,30 +716,6 @@
 
     <!-- FORM CONTENT -->
     <div id="formContent">
-
-      <!-- SOCIAL LOGIN -->
-      <button class="google-btn" onclick="socialLogin('google')">
-        <svg viewBox="0 0 24 24" fill="none">
-          <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
-          <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
-          <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z" fill="#FBBC05"/>
-          <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
-        </svg>
-        متابعة مع Google
-      </button>
-
-      <button class="apple-btn" onclick="socialLogin('apple')">
-        <svg viewBox="0 0 24 24" fill="currentColor" width="18" height="18">
-          <path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.8-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z"/>
-        </svg>
-        متابعة مع Apple
-      </button>
-
-      <div class="divider">
-        <div class="divider-line"></div>
-        <div class="divider-text">أو</div>
-        <div class="divider-line"></div>
-      </div>
 
       <!-- LOGIN FORM -->
       <div id="loginForm">
@@ -1004,14 +935,6 @@
     clearTimeout(toastTimer);
   }
 
-  // SOCIAL LOGIN
-  // Real OAuth isn't wired up to any backend yet — say so honestly instead
-  // of faking a logged-in state that would immediately break (every
-  // protected API call requires a real server session).
-  function socialLogin(provider) {
-    showToast('Sign in with ' + (provider === 'google' ? 'Google' : 'Apple') + ' is coming soon — please use email & password for now.', 'info');
-  }
-
   function cacheLoggedInUser(user) {
     try {
       localStorage.setItem('lamsa_user', JSON.stringify({ username: user.username, email: user.email, loggedIn: true }));
@@ -1142,8 +1065,6 @@
       leftTitle: 'صمّم بيتك<br><span class="gold">بلمستك</span> الخاصة',
       leftSub: 'أول منصة تصميم داخلي بالذكاء الاصطناعي — بثماني لغات، لكل بيت، في كل مكان.',
       tabLogin: 'تسجيل الدخول', tabRegister: 'حساب جديد',
-      googleBtn: 'متابعة مع Google', appleBtn: 'متابعة مع Apple',
-      orText: 'أو',
       userLabel: 'اسم المستخدم أو الإيميل', userPlaceholder: 'اسم المستخدم أو الإيميل',
       passLabel: 'كلمة المرور', passPlaceholder: 'كلمة المرور',
       forgotPass: 'نسيت كلمة المرور؟',
@@ -1163,8 +1084,6 @@
       leftTitle: 'Design Your Home<br>With Your <span class="gold">Touch</span>',
       leftSub: 'First AI interior design platform — in 8 languages, for every home, everywhere.',
       tabLogin: 'Sign In', tabRegister: 'New Account',
-      googleBtn: 'Continue with Google', appleBtn: 'Continue with Apple',
-      orText: 'or',
       userLabel: 'Username or Email', userPlaceholder: 'Username or Email',
       passLabel: 'Password', passPlaceholder: 'Password',
       forgotPass: 'Forgot password?',
@@ -1184,8 +1103,6 @@
       leftTitle: 'Gestalte dein Zuhause<br>Mit deiner <span class="gold">Note</span>',
       leftSub: 'Erste KI-Innendesignplattform — in 8 Sprachen, für jedes Zuhause, überall.',
       tabLogin: 'Anmelden', tabRegister: 'Neues Konto',
-      googleBtn: 'Mit Google fortfahren', appleBtn: 'Mit Apple fortfahren',
-      orText: 'oder',
       userLabel: 'Benutzername oder E-Mail', userPlaceholder: 'Benutzername oder E-Mail',
       passLabel: 'Passwort', passPlaceholder: 'Passwort',
       forgotPass: 'Passwort vergessen?',
@@ -1205,8 +1122,6 @@
       leftTitle: 'Diseña tu hogar<br>Con tu <span class="gold">toque</span>',
       leftSub: 'Primera plataforma de diseño interior con IA — en 8 idiomas, para cada hogar, en todas partes.',
       tabLogin: 'Iniciar sesión', tabRegister: 'Nueva cuenta',
-      googleBtn: 'Continuar con Google', appleBtn: 'Continuar con Apple',
-      orText: 'o',
       userLabel: 'Usuario o correo', userPlaceholder: 'Usuario o correo electrónico',
       passLabel: 'Contraseña', passPlaceholder: 'Contraseña',
       forgotPass: '¿Olvidaste tu contraseña?',
@@ -1226,8 +1141,6 @@
       leftTitle: 'Evinizi Tasarlayin<br><span class="gold">Kendi</span> Dokunusunuzla',
       leftSub: 'Ilk yapay zeka ic tasarim platformu — 8 dilde, her ev icin, her yerde.',
       tabLogin: 'Giris Yap', tabRegister: 'Yeni Hesap',
-      googleBtn: 'Google ile devam et', appleBtn: 'Apple ile devam et',
-      orText: 'veya',
       userLabel: 'Kullanici adi veya E-posta', userPlaceholder: 'Kullanici adi veya E-posta',
       passLabel: 'Sifre', passPlaceholder: 'Sifre',
       forgotPass: 'Sifreni mi unuttun?',
@@ -1247,8 +1160,6 @@
       leftTitle: 'Concevez votre maison<br>Avec votre <span class="gold">touche</span>',
       leftSub: 'Premiere plateforme de design interieur IA — en 8 langues, pour chaque maison, partout.',
       tabLogin: 'Connexion', tabRegister: 'Nouveau compte',
-      googleBtn: 'Continuer avec Google', appleBtn: 'Continuer avec Apple',
-      orText: 'ou',
       userLabel: 'Nom utilisateur ou email', userPlaceholder: 'Nom utilisateur ou email',
       passLabel: 'Mot de passe', passPlaceholder: 'Mot de passe',
       forgotPass: 'Mot de passe oublie?',
@@ -1268,8 +1179,6 @@
       leftTitle: 'Progetta la tua casa<br>Con il tuo <span class="gold">tocco</span>',
       leftSub: 'Prima piattaforma di interior design IA — in 8 lingue, per ogni casa, ovunque.',
       tabLogin: 'Accedi', tabRegister: 'Nuovo account',
-      googleBtn: 'Continua con Google', appleBtn: 'Continua con Apple',
-      orText: 'o',
       userLabel: 'Nome utente o email', userPlaceholder: 'Nome utente o email',
       passLabel: 'Password', passPlaceholder: 'Password',
       forgotPass: 'Password dimenticata?',
@@ -1289,8 +1198,6 @@
       leftTitle: 'Oformite svoy dom<br>So svoim <span class="gold">stilem</span>',
       leftSub: 'Pervaya platforma dizayna na II — na 8 yazykakh, dlya kazhdogo doma, vezde.',
       tabLogin: 'Vkhod', tabRegister: 'Novyy akkaunt',
-      googleBtn: 'Prodolzhit s Google', appleBtn: 'Prodolzhit s Apple',
-      orText: 'ili',
       userLabel: 'Imya polzovatelya ili email', userPlaceholder: 'Imya polzovatelya ili email',
       passLabel: 'Parol', passPlaceholder: 'Parol',
       forgotPass: 'Zabyli parol?',
@@ -1343,7 +1250,6 @@
     document.querySelector('.left-sub').textContent = t.leftSub;
     document.getElementById('tab-login').textContent = t.tabLogin;
     document.getElementById('tab-register').textContent = t.tabRegister;
-    document.querySelector('.divider-text').textContent = t.orText;
 
     // Update feature list
     document.querySelectorAll('.feature-item span[data-en], .eyebrow span[data-en]').forEach(function(el) {
@@ -1398,12 +1304,6 @@
     if (andTextEl) andTextEl.textContent = t.andText;
     const privacyLinkEl = document.getElementById('privacyLink');
     if (privacyLinkEl) privacyLinkEl.textContent = t.privacyLink;
-
-    // Update Google/Apple buttons
-    const googleBtn = document.querySelector('.google-btn');
-    if (googleBtn) googleBtn.lastChild.textContent = ' ' + t.googleBtn;
-    const appleBtn = document.querySelector('.apple-btn');
-    if (appleBtn) appleBtn.lastChild.textContent = ' ' + t.appleBtn;
 
     // Update success box
     const successTitle = document.querySelector('.success-title');
