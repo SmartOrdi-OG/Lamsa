@@ -616,27 +616,35 @@
 
   /* RESPONSIVE */
   @media (max-width: 700px) {
-    body { height: auto; min-height: 100vh; flex-direction: column; overflow: visible; }
+    /* Fixed, single "screen" on mobile (no page-level scroll) now that the
+       compacted layout actually fits real device heights (verified down to
+       iPhone SE's 667px, across languages) — overflow-y stays auto as a
+       safety net for any edge case that doesn't. */
+    body { height: 100dvh; flex-direction: column; overflow-y: auto; overflow-x: hidden; }
     /* On mobile the photo is no longer a full-bleed background with text
        floated on top of it (that forced a tall box and cropped most of the
        photo to fill it) — it's a framed card sized to the photo's own
        ~1.85:1 aspect ratio, with the brand row above it and the headline
        text below it in normal, dark-on-light text. */
-    .left-panel { width: 100%; padding: 16px 16px 28px; min-height: 0; background: var(--card); border-right: none; }
-    .brand { position: static; z-index: auto; margin-bottom: 16px; }
+    .left-panel { width: 100%; padding: 8px 8px 8px; min-height: 0; background: var(--card); border-right: none; }
+    .brand { position: static; z-index: auto; margin-bottom: 6px; }
     .brand-name { color: var(--gold-deep); text-shadow: none; }
     .brand-icon { border-color: var(--gold); background: var(--gold-dim); box-shadow: none; }
     .hero-bg-stack {
       position: relative; inset: auto; width: 100%; aspect-ratio: 1.85;
-      border-radius: 16px; overflow: hidden; border: 1px solid var(--border); margin-bottom: 20px;
+      border-radius: 16px; overflow: hidden; border: 1px solid var(--border); margin-bottom: 8px;
     }
     .hero-layer { background-size: contain; background-color: #2a2e33; }
     .hero-scrim { display: none; } /* no text over the photo anymore, so no scrim needed */
     .left-content { position: static; margin-top: 0; padding-bottom: 0; }
-    .eyebrow { color: var(--gold-deep); background: var(--gold-dim); border-color: var(--border); }
-    .left-title { color: var(--white); text-shadow: none; }
+    /* Compact this text block (label, headline, subtitle) — it used to be
+       free (overlaid straight onto the photo, at any size); now that it's
+       real page content below the photo, its size directly competes with
+       the form below for the same short mobile viewport. */
+    .eyebrow { color: var(--gold-deep); background: var(--gold-dim); border-color: var(--border); font-size: 10px; padding: 4px 12px 4px 8px; margin-bottom: 6px; }
+    .left-title { color: var(--white); text-shadow: none; font-size: 20px; line-height: 1.2; margin-bottom: 4px; }
     .left-title .gold { color: var(--gold-deep); }
-    .left-sub { color: var(--gray); text-shadow: none; }
+    .left-sub { color: var(--gray); text-shadow: none; font-size: 12.5px; line-height: 1.5; margin-bottom: 0; }
     .feature-list { display: none; }
     /* The success/welcome screen carries its own full hero photo (see
        .success-box's own .hero-bg-stack) — without this, it stacked below
@@ -652,12 +660,13 @@
 
     /* Compact the form itself (not the photo) so the whole card fits
        without scrolling on short mobile screens. */
-    .auth-box { padding: 22px 20px 18px; max-width: 100%; border-radius: 0; box-shadow: none; }
+    .auth-box { padding: 10px 20px 10px; max-width: 100%; border-radius: 0; box-shadow: none; }
     .auth-box::before { display: none; }
-    .auth-tabs { margin-bottom: 18px; }
-    .form-group { margin-bottom: 11px; }
-    .form-input { padding: 10px 14px; }
-    .submit-btn { padding: 12px; margin-top: 4px; }
+    .auth-tabs { margin-bottom: 8px; }
+    .form-group { margin-bottom: 8px; }
+    .form-label { margin-bottom: 4px; }
+    .form-input { padding: 8px 14px; }
+    .submit-btn { padding: 10px; margin-top: 2px; }
   }
 </style>
 </head>
@@ -750,7 +759,7 @@
             <button class="toggle-pass" onclick="togglePass('loginPass')"><svg class="icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M2.5 12S6 5.5 12 5.5 21.5 12 21.5 12 18 18.5 12 18.5 2.5 12 2.5 12z"/><circle cx="12" cy="12" r="2.7"/></svg></button>
           </div>
         </div>
-        <div style="text-align:left; margin-bottom:16px;">
+        <div style="text-align:left; margin-bottom:10px;">
           <a href="#" style="font-size:12px; color:var(--gold); text-decoration:none;">نسيت كلمة المرور؟</a>
         </div>
         <button class="submit-btn" onclick="handleLogin()">تسجيل الدخول <svg class="icon-svg" viewBox="0 0 24 24"><path d="M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8L12 3z" fill="currentColor" stroke="none"/></svg></button>
