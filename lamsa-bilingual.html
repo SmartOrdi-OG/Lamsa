@@ -2685,6 +2685,62 @@
     { id: 'x10', badge: null, period: { ar: '10 تصاميم', en: '10 Designs' }, sub: { ar: '(€0.70/تصميم)', en: '(€0.70/design)' }, price: '€7', tag: { ar: 'أفضل قيمة', en: 'BEST VALUE' } }
   ];
 
+  // Quick before/after demo shown right before the first-run paywall, using
+  // the same real result photos as the hero background (BG_CYCLE_PAIRS).
+  // Lets a brand-new user see what the tool actually does before they're
+  // asked to pick a credit package.
+  function showDemoGallery() {
+    var existing = document.getElementById('demoGalleryOverlay');
+    if (existing) existing.remove();
+
+    var isAr = currentLang === 'ar';
+    var overlay = document.createElement('div');
+    overlay.id = 'demoGalleryOverlay';
+    overlay.style.cssText = 'position:fixed;inset:0;background:#fff;z-index:9999;display:flex;flex-direction:column;font-family:Tajawal,sans-serif;';
+
+    var idx = 0;
+    var total = BG_CYCLE_PAIRS.length;
+
+    function render() {
+      var pair = BG_CYCLE_PAIRS[idx];
+      var dotsHtml = BG_CYCLE_PAIRS.map(function(_, i) {
+        return '<span style="display:inline-block;width:' + (i === idx ? '16px' : '6px') + ';height:6px;border-radius:3px;background:' + (i === idx ? 'var(--gold)' : '#dfe2e6') + ';margin:0 2px;"></span>';
+      }).join('');
+
+      overlay.innerHTML =
+        '<div style="display:flex;align-items:center;justify-content:space-between;padding:16px;">' +
+          '<button type="button" id="demoCloseBtn" style="width:34px;height:34px;border-radius:50%;background:#edeff1;border:none;font-size:16px;cursor:pointer;color:#3d434b;">' + (window.icon ? window.icon('close') : '×') + '</button>' +
+          '<div style="font-size:15px;font-weight:900;color:#1b1e22;">' + (isAr ? 'شوف الفرق' : 'See the difference') + '</div>' +
+          '<div style="width:34px;"></div>' +
+        '</div>' +
+        '<div style="flex:1;display:flex;flex-direction:column;padding:0 16px;gap:10px;min-height:0;">' +
+          '<div style="position:relative;flex:1;border-radius:16px;overflow:hidden;min-height:0;">' +
+            '<img src="' + pair.before + '" style="width:100%;height:100%;object-fit:cover;display:block;">' +
+            '<div style="position:absolute;top:10px;' + (isAr ? 'right' : 'left') + ':10px;background:rgba(0,0,0,0.55);color:#fff;font-size:11px;font-weight:900;padding:4px 10px;border-radius:20px;">' + (isAr ? 'قبل' : 'BEFORE') + '</div>' +
+          '</div>' +
+          '<div style="position:relative;flex:1;border-radius:16px;overflow:hidden;min-height:0;">' +
+            '<img src="' + pair.after + '" style="width:100%;height:100%;object-fit:cover;display:block;">' +
+            '<div style="position:absolute;top:10px;' + (isAr ? 'right' : 'left') + ':10px;background:var(--gold);color:#1b1e22;font-size:11px;font-weight:900;padding:4px 10px;border-radius:20px;">' + (isAr ? 'بعد' : 'AFTER') + '</div>' +
+          '</div>' +
+        '</div>' +
+        '<div style="text-align:center;padding:14px 0;">' + dotsHtml + '</div>' +
+        '<div style="padding:0 20px 20px;">' +
+          '<button type="button" id="demoNextBtn" style="width:100%;background:var(--gold);color:#1b1e22;border:none;padding:16px;border-radius:14px;font-size:17px;font-weight:900;cursor:pointer;font-family:Tajawal,sans-serif;">' +
+            (idx === total - 1 ? (isAr ? 'شوف الباقات' : 'See packages') : (isAr ? 'التالي' : 'Next')) +
+          '</button>' +
+        '</div>';
+
+      document.getElementById('demoCloseBtn').onclick = function() { overlay.remove(); };
+      document.getElementById('demoNextBtn').onclick = function() {
+        if (idx === total - 1) { overlay.remove(); showWelcomePaywall(); }
+        else { idx++; render(); }
+      };
+    }
+
+    document.body.appendChild(overlay);
+    render();
+  }
+
   function showWelcomePaywall() {
     var existing = document.getElementById('welcomePaywallOverlay');
     if (existing) existing.remove();
@@ -3509,15 +3565,15 @@
       refreshCreditBalance();
       handleCheckoutRedirect();
 
-      // First-run credits paywall — shown once per browser, right after the
-      // very first login. Skipped inside the Android TWA: purchases there
-      // must stay on the website per Google Play Billing policy (see
-      // isAndroidTWA usage elsewhere in this file).
+      // First-run demo + credits paywall — shown once per browser, right
+      // after the very first login. Skipped inside the Android TWA:
+      // purchases there must stay on the website per Google Play Billing
+      // policy (see isAndroidTWA usage elsewhere in this file).
       if (!isAndroidTWA) {
         try {
           if (!localStorage.getItem('lamsa_welcome_paywall_shown')) {
             localStorage.setItem('lamsa_welcome_paywall_shown', '1');
-            showWelcomePaywall();
+            showDemoGallery();
           }
         } catch (e) {}
       }
