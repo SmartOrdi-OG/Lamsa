@@ -628,25 +628,28 @@
        photo to fill it) — it's a framed card sized to the photo's own
        ~1.85:1 aspect ratio, with the brand row above it and the headline
        text below it in normal, dark-on-light text. */
-    .left-panel { width: 100%; padding: 8px 8px 8px; min-height: 0; background: var(--card); border-right: none; }
-    .brand { position: static; z-index: auto; margin-bottom: 6px; }
+    .left-panel { width: 100%; padding: 8px 0 8px; min-height: 0; background: var(--card); border-right: none; }
+    .brand { position: static; z-index: auto; margin: 0 12px 6px; }
     .brand-name { color: var(--gold-deep); text-shadow: none; }
     .brand-icon { border-color: var(--gold); background: var(--gold-dim); box-shadow: none; }
+    /* Full device width (no side inset) so the photo is as large as it can
+       be — it's the frame's own border/rounded corners doing the framing
+       now, not surrounding whitespace. */
     .hero-bg-stack {
       position: relative; inset: auto; width: 100%; aspect-ratio: 1.85;
       border-radius: 16px; overflow: hidden; border: 1px solid var(--border); margin-bottom: 8px;
     }
     .hero-layer { background-size: contain; background-color: #2a2e33; }
     .hero-scrim { display: none; } /* no text over the photo anymore, so no scrim needed */
-    .left-content { position: static; margin-top: 0; padding-bottom: 0; }
-    /* Compact this text block (label, headline, subtitle) — it used to be
-       free (overlaid straight onto the photo, at any size); now that it's
-       real page content below the photo, its size directly competes with
-       the form below for the same short mobile viewport. */
-    .eyebrow { color: var(--gold-deep); background: var(--gold-dim); border-color: var(--border); font-size: 10px; padding: 4px 12px 4px 8px; margin-bottom: 6px; }
-    .left-title { color: var(--white); text-shadow: none; font-size: 20px; line-height: 1.2; margin-bottom: 4px; }
+    .left-content { position: static; margin: 0 12px; padding-bottom: 0; }
+    /* Compact this text block (label, headline, subtitle) further — it
+       used to be free (overlaid straight onto the photo, at any size);
+       now it's real page content competing with the form for the same
+       short mobile viewport, and the photo above for visual weight. */
+    .eyebrow { color: var(--gold-deep); background: var(--gold-dim); border-color: var(--border); font-size: 9.5px; padding: 3px 10px 3px 7px; margin-bottom: 5px; }
+    .left-title { color: var(--white); text-shadow: none; font-size: 16px; line-height: 1.15; margin-bottom: 3px; }
     .left-title .gold { color: var(--gold-deep); }
-    .left-sub { color: var(--gray); text-shadow: none; font-size: 12.5px; line-height: 1.5; margin-bottom: 0; }
+    .left-sub { color: var(--gray); text-shadow: none; font-size: 11px; line-height: 1.4; margin-bottom: 0; }
     .feature-list { display: none; }
     /* The success/welcome screen carries its own full hero photo (see
        .success-box's own .hero-bg-stack) — without this, it stacked below
