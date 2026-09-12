@@ -169,7 +169,7 @@
   .upload-sub { font-size: 11px; color: var(--gray); }
 
   .upload-preview { display: none; position: relative; }
-  .upload-preview img { width: 100%; max-height: 260px; object-fit: cover; border-radius: 14px; display: block; }
+  .upload-preview img { width: 100%; max-height: 260px; object-fit: contain; border-radius: 14px; border: 1px solid var(--border); background: #f3f4f5; display: block; }
   .upload-preview .remove-btn {
     position: absolute; top: 10px; right: 10px;
     background: rgba(0,0,0,0.7);
@@ -563,7 +563,7 @@
       imgWrap.innerHTML = '';
       var imgEl = document.createElement('img');
       imgEl.src = images[0].url;
-      imgEl.style.cssText = 'width:100%;border-radius:10px;';
+      imgEl.style.cssText = 'width:100%;border-radius:10px;border:1px solid var(--border);';
       imgWrap.style.cssText = 'display:block;aspect-ratio:auto;';
       imgWrap.appendChild(imgEl);
       imgWrap.appendChild(createDownloadBtn(images[0].url, 'lamsa-rearranged.jpg'));
