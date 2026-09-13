@@ -672,15 +672,24 @@
     .left-title .gold { color: var(--gold-deep); }
     .left-sub { color: var(--gray); text-shadow: none; font-size: 11px; line-height: 1.4; margin-bottom: 0; }
     .feature-list { display: none; }
-    /* The success/welcome screen carries its own full hero photo (see
-       .success-box's own .hero-bg-stack) — without this, it stacked below
-       the login page's hero panel on mobile, doubling the photo and making
-       the whole screen far too tall. Stretch it to fill the viewport
-       instead of the desktop card's capped 80vh, so there's no leftover
-       empty space below it either. */
+    /* Welcome/success screen: the same "framed, uncropped photo with the
+       text below it" treatment as the login page's own hero — the old
+       full-bleed cover background lost more than half the photo's width
+       cramming it into a tall, narrow phone screen. Still need to hide the
+       login page's own hero panel, or it'd stack above this one. */
     body:has(.auth-box.success-mode) .left-panel { display: none; }
-    body:has(.auth-box.success-mode) .right-panel { min-height: 100vh; display: flex; align-items: center; }
-    .auth-box.success-mode .success-box { height: 100vh; border-radius: 0; }
+    .auth-box.success-mode { max-width: 100%; box-shadow: none; }
+    .auth-box.success-mode .success-box { height: auto; border-radius: 0; background: none; }
+    .success-box .hero-bg-stack {
+      position: relative; inset: auto; width: 100%; aspect-ratio: 1.85;
+      border-radius: 16px; overflow: hidden; border: 1px solid var(--border); margin-bottom: 14px;
+    }
+    .success-box .hero-layer { background-size: contain; background-color: #2a2e33; }
+    .success-box .hero-scrim { display: none; } /* no text over the photo anymore, so no scrim needed */
+    .success-content { position: static; height: auto; padding: 0 16px 20px; justify-content: flex-start; }
+    .success-icon { color: var(--gold-deep); background: var(--gold-dim); border-color: var(--border); }
+    .success-title { color: var(--white); text-shadow: none; }
+    .success-sub { color: var(--gray); text-shadow: none; }
     /* flex:1 (not flex:none/auto-height) so it fills whatever height is
        left after the photo — on a taller phone that leftover space is
        centered around the form (via the base rule's align-items/
