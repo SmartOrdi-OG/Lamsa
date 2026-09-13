@@ -2717,7 +2717,7 @@
     var buttons = buttonEl ? [buttonEl] : document.querySelectorAll('.credits-pkg-btn');
     Array.prototype.forEach.call(buttons, function(b) { b.disabled = true; b.style.opacity = '0.5'; });
 
-    fetch('/api/telegram-create-invoice', {
+    fetch('/api/telegram?action=invoice', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       credentials: 'include',
