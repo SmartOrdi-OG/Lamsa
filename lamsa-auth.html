@@ -1134,7 +1134,7 @@
     document.getElementById('formContent').style.display = 'none';
     document.getElementById('tgLoginLoading').style.display = '';
 
-    fetch('/api/telegram?action=login', {
+    fetch('/api/telegram', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       credentials: 'include',

@@ -1,50 +1,8 @@
 import crypto from 'crypto';
 
 const TELEGRAM_BOT_TOKEN = (process.env.TELEGRAM_BOT_TOKEN || '').trim();
-export const TELEGRAM_WEBHOOK_SECRET = (process.env.TELEGRAM_WEBHOOK_SECRET || '').trim();
 
 export const telegramConfigured = !!TELEGRAM_BOT_TOKEN;
-
-// Credits -> Telegram Stars price. Stars are Telegram's own in-app currency
-// (users buy them from Telegram with real money at Telegram's rate), so
-// these are just catalog prices, roughly matching the existing EUR packages
-// in _stripe.js at ~50 Stars per euro — adjust freely, there's no external
-// payment provider to keep in sync with.
-export const STARS_PACKAGES = {
-  x1:  { credits: 1,  stars: 50,  label: '1 Design' },
-  x5:  { credits: 5,  stars: 200, label: '5 Designs' },
-  x10: { credits: 10, stars: 350, label: '10 Designs' }
-};
-
-const API_BASE = 'https://api.telegram.org/bot' + TELEGRAM_BOT_TOKEN;
-
-async function callTelegramApi(method, payload) {
-  const res = await fetch(API_BASE + '/' + method, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(payload)
-  });
-  const data = await res.json();
-  if (!data.ok) throw new Error('Telegram API ' + method + ' failed: ' + (data.description || res.status));
-  return data.result;
-}
-
-export function createInvoiceLink({ title, description, payload, stars }) {
-  return callTelegramApi('createInvoiceLink', {
-    title,
-    description,
-    payload,
-    provider_token: '', // empty for Telegram Stars (XTR) — there's no external provider
-    currency: 'XTR',
-    prices: [{ label: title, amount: stars }]
-  });
-}
-
-export function answerPreCheckoutQuery(preCheckoutQueryId, ok, errorMessage) {
-  const body = { pre_checkout_query_id: preCheckoutQueryId, ok };
-  if (!ok && errorMessage) body.error_message = errorMessage;
-  return callTelegramApi('answerPreCheckoutQuery', body);
-}
 
 // Verifies the initData string Telegram.WebApp.initData hands the frontend,
 // per Telegram's documented check: https://core.telegram.org/bots/webapps#validating-data-received-via-the-mini-app
