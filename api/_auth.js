@@ -68,6 +68,28 @@ export async function createUser({ username, email, password, country }) {
   return { user };
 }
 
+// Telegram Mini App users have no email/password — they're identified by
+// their Telegram user id instead, under a synthetic "email" key ('tg:<id>')
+// that every other function here (sessions, credits, etc.) can key on
+// exactly like a real email without knowing the difference. No entry in the
+// username index: Telegram users always log back in via initData, never a
+// username/password form.
+export async function getOrCreateTelegramUser(tgUser) {
+  const email = 'tg:' + tgUser.id;
+  const key = userKey(email);
+  const existing = await redis.get(key);
+  if (existing) return existing;
+
+  const user = {
+    username: tgUser.username || tgUser.first_name || ('tg_' + tgUser.id),
+    email,
+    telegramId: tgUser.id,
+    createdAt: new Date().toISOString()
+  };
+  await redis.set(key, user);
+  return user;
+}
+
 // Login accepts either an email or a username. Resolves either to the email
 // that actually keys the user record — a plain string match on EMAIL_RE
 // decides which one was given, since usernames never contain '@'.

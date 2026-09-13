@@ -856,6 +856,11 @@
 
     </div>
 
+    <!-- TELEGRAM AUTO-LOGIN LOADING (shown briefly while verifying Telegram.WebApp.initData with the server; hidden again if it fails, falling back to the normal form above) -->
+    <div id="tgLoginLoading" style="display:none; text-align:center; padding:40px 20px; color:var(--gray); font-size:14px;">
+      <span data-en="Signing in with Telegram…" data-ar="جاري تسجيل الدخول عبر تيلغرام…">جاري تسجيل الدخول عبر تيلغرام…</span>
+    </div>
+
     <!-- SUCCESS STATE -->
     <div class="success-box" id="successBox">
       <div class="hero-bg-stack" id="successBgStack"></div>
@@ -1114,6 +1119,46 @@
 
   function goToApp() {
     window.location.href = 'lamsa-bilingual.html';
+  }
+
+  // TELEGRAM AUTO-LOGIN — when this page is opened inside Telegram's Mini
+  // App WebView (isTelegramMiniApp, set earlier from the Telegram SDK
+  // script), skip the login/register form entirely: Telegram already
+  // vouches for who the user is via the signed initData string, so log
+  // them in (creating the account on first visit) automatically.
+  function telegramAutoLogin() {
+    var tg = window.Telegram && window.Telegram.WebApp;
+    if (!isTelegramMiniApp || !tg || !tg.initData) return;
+
+    document.getElementById('authTabs').style.display = 'none';
+    document.getElementById('formContent').style.display = 'none';
+    document.getElementById('tgLoginLoading').style.display = '';
+
+    fetch('/api/auth-telegram', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+      body: JSON.stringify({ initData: tg.initData })
+    })
+    .then(function(r) { return r.json().then(function(data) { return { ok: r.ok, data: data }; }); })
+    .then(function(result) {
+      document.getElementById('tgLoginLoading').style.display = 'none';
+      if (!result.ok) {
+        console.error('[telegramAutoLogin] failed:', result.data.error);
+        // Fall back to the normal form rather than stranding the user.
+        document.getElementById('authTabs').style.display = '';
+        document.getElementById('formContent').style.display = '';
+        return;
+      }
+      cacheLoggedInUser(result.data);
+      showSuccess(result.data.username);
+    })
+    .catch(function(err) {
+      console.error('[telegramAutoLogin] request failed:', err);
+      document.getElementById('tgLoginLoading').style.display = 'none';
+      document.getElementById('authTabs').style.display = '';
+      document.getElementById('formContent').style.display = '';
+    });
   }
 
   function closeSuccess() {
@@ -1383,6 +1428,7 @@
   window.addEventListener('DOMContentLoaded', function() {
     setLang('en');
     initAuthBackground();
+    telegramAutoLogin();
   });
 
   var BG_CYCLE_PAIRS = [
