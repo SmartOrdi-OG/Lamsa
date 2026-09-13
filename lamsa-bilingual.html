@@ -2555,15 +2555,6 @@
     { id: 'x10', credits: 10, price: '€7', label: '10 Designs' }
   ];
 
-  // Same packages, priced in Telegram Stars (must match STARS_PACKAGES in
-  // api/_telegram.js) — shown instead of the € price whenever the app is
-  // running as a Telegram Mini App, where purchases go through Stars
-  // instead of Stripe.
-  var STARS_BY_PACKAGE = { x1: 50, x5: 200, x10: 350 };
-  function packagePriceLabel(packageId, eurPrice) {
-    return isTelegramMiniApp ? ('⭐ ' + STARS_BY_PACKAGE[packageId]) : eurPrice;
-  }
-
   var currentUser = null; // { username, email } — populated by checkAuth(), source of truth is the server session, not localStorage
 
   // The server session cookie is the only thing that actually gates
@@ -2653,7 +2644,7 @@
       return '<button type="button" class="credits-pkg-btn" data-pkg="' + pkg.id + '" ' +
         'style="width:100%;display:flex;justify-content:space-between;align-items:center;background:#edeff1;border:1px solid #dfe2e6;border-radius:12px;padding:14px 16px;margin-bottom:10px;cursor:pointer;color:#1b1e22;font-family:Tajawal,sans-serif;font-size:14px;">' +
         '<span style="font-weight:700;">' + creditsLabel + '</span>' +
-        '<span style="color:#3d434b;font-weight:900;">' + packagePriceLabel(pkg.id, pkg.price) + '</span>' +
+        '<span style="color:#3d434b;font-weight:900;">' + pkg.price + '</span>' +
         '</button>';
     }).join('');
 
@@ -2675,8 +2666,6 @@
   }
 
   function startCheckout(packageId, buttonEl, errorElId) {
-    if (isTelegramMiniApp) return startTelegramCheckout(packageId, buttonEl, errorElId);
-
     var isAr = currentLang === 'ar';
     var errorEl = document.getElementById(errorElId || 'creditsModalError');
 
@@ -2697,56 +2686,19 @@
         Array.prototype.forEach.call(buttons, function(b) { b.disabled = false; b.style.opacity = '1'; });
         return;
       }
-      window.location.href = result.data.url;
+      // Telegram's Mini App WebView doesn't reliably support top-level
+      // navigation to an external domain (Stripe's checkout page) — openLink
+      // hands it to the device's browser instead. The Stripe webhook grants
+      // credits independently of this redirect, so the balance is correct
+      // whenever the user comes back, regardless of how they got there.
+      if (isTelegramMiniApp && window.Telegram && window.Telegram.WebApp.openLink) {
+        window.Telegram.WebApp.openLink(result.data.url);
+      } else {
+        window.location.href = result.data.url;
+      }
     })
     .catch(function(err) {
       console.error('[checkout] failed:', err);
-      if (errorEl) errorEl.textContent = isAr ? 'خطأ بالاتصال' : 'Connection error';
-      Array.prototype.forEach.call(buttons, function(b) { b.disabled = false; b.style.opacity = '1'; });
-    });
-  }
-
-  // Telegram Mini App variant of startCheckout(): buys Stars instead of
-  // going through Stripe, using Telegram.WebApp.openInvoice() (an in-app
-  // sheet) instead of a redirect — there's no return page to come back to,
-  // so success/failure is handled entirely by the callback here.
-  function startTelegramCheckout(packageId, buttonEl, errorElId) {
-    var isAr = currentLang === 'ar';
-    var errorEl = document.getElementById(errorElId || 'creditsModalError');
-
-    var buttons = buttonEl ? [buttonEl] : document.querySelectorAll('.credits-pkg-btn');
-    Array.prototype.forEach.call(buttons, function(b) { b.disabled = true; b.style.opacity = '0.5'; });
-
-    fetch('/api/telegram?action=invoice', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      credentials: 'include',
-      body: JSON.stringify({ package: packageId })
-    })
-    .then(function(r) { return r.json().then(function(data) { return { ok: r.ok, status: r.status, data: data }; }); })
-    .then(function(result) {
-      if (result.status === 401) { window.location.replace('lamsa-auth.html'); return; }
-      if (!result.ok || !result.data || !result.data.url) {
-        if (errorEl) errorEl.textContent = (result.data && result.data.error) || (isAr ? 'حدث خطأ، حاولي مرة أخرى' : 'Something went wrong, please try again');
-        Array.prototype.forEach.call(buttons, function(b) { b.disabled = false; b.style.opacity = '1'; });
-        return;
-      }
-      window.Telegram.WebApp.openInvoice(result.data.url, function(status) {
-        Array.prototype.forEach.call(buttons, function(b) { b.disabled = false; b.style.opacity = '1'; });
-        if (status === 'paid') {
-          var creditsOverlay = document.getElementById('creditsModalOverlay');
-          if (creditsOverlay) creditsOverlay.remove();
-          var paywallOverlay = document.getElementById('welcomePaywallOverlay');
-          if (paywallOverlay) paywallOverlay.remove();
-          refreshCreditBalance();
-        } else if (status === 'failed' && errorEl) {
-          errorEl.textContent = isAr ? 'فشلت عملية الدفع' : 'Payment failed';
-        }
-        // 'cancelled'/'pending': no message needed, the user just backed out.
-      });
-    })
-    .catch(function(err) {
-      console.error('[telegram checkout] failed:', err);
       if (errorEl) errorEl.textContent = isAr ? 'خطأ بالاتصال' : 'Connection error';
       Array.prototype.forEach.call(buttons, function(b) { b.disabled = false; b.style.opacity = '1'; });
     });
@@ -2841,14 +2793,6 @@
         '</div>';
     }).join('');
 
-    var CREDITS_BY_PACKAGE = { x1: 1, x5: 5, x10: 10 };
-    function packageSubLabel(t) {
-      if (!isTelegramMiniApp) return isAr ? t.sub.ar : t.sub.en;
-      var perUnit = Math.round(STARS_BY_PACKAGE[t.id] / CREDITS_BY_PACKAGE[t.id]);
-      if (CREDITS_BY_PACKAGE[t.id] <= 1) return '';
-      return '(⭐' + perUnit + '/' + (isAr ? 'تصميم' : 'design') + ')';
-    }
-
     var tiersHtml = CREDIT_PAYWALL_TIERS.map(function(t) {
       var tagHtml = t.tag ? '<div style="font-size:10px;font-weight:900;color:#767d86;text-align:center;margin-bottom:6px;white-space:nowrap;">' + (isAr ? t.tag.ar : t.tag.en) + '</div>' : '<div style="height:16px;margin-bottom:6px;"></div>';
       var badgeHtml = t.badge ? '<div style="background:var(--gold);color:#1b1e22;font-size:10px;font-weight:900;text-align:center;padding:4px 0;border-radius:8px 8px 0 0;margin:0 -1px;">' + (isAr ? t.badge.ar : t.badge.en) + '</div>' : '';
@@ -2858,8 +2802,8 @@
         badgeHtml +
         '<div style="padding:14px 8px;">' +
           '<div style="font-size:16px;font-weight:900;color:#1b1e22;">' + (isAr ? t.period.ar : t.period.en) + '</div>' +
-          '<div style="font-size:10px;color:#767d86;min-height:14px;margin-bottom:8px;">' + packageSubLabel(t) + '</div>' +
-          '<div style="border-top:1px solid #eef0f2;padding-top:8px;font-size:15px;font-weight:900;color:#1b1e22;">' + packagePriceLabel(t.id, t.price) + '</div>' +
+          '<div style="font-size:10px;color:#767d86;min-height:14px;margin-bottom:8px;">' + (isAr ? t.sub.ar : t.sub.en) + '</div>' +
+          '<div style="border-top:1px solid #eef0f2;padding-top:8px;font-size:15px;font-weight:900;color:#1b1e22;">' + t.price + '</div>' +
         '</div>' +
       '</div>';
     }).join('<div style="width:8px;"></div>');
