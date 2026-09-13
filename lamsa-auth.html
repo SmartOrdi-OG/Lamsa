@@ -651,13 +651,17 @@
     .brand-icon { border-color: var(--gold); background: var(--gold-dim); box-shadow: none; }
     /* Full device width (no side inset) so the photo is as large as it can
        be — it's the frame's own border/rounded corners doing the framing
-       now, not surrounding whitespace. */
-    .hero-bg-stack {
+       now, not surrounding whitespace. Scoped to .left-panel: the success
+       screen's own .hero-bg-stack (#successBgStack) reuses the same class
+       but must stay full-bleed absolute — this rule used to be unscoped and
+       shrank that hero to a small top card, pushing .success-content below
+       the box's fixed height where overflow:hidden clipped it entirely. */
+    .left-panel .hero-bg-stack {
       position: relative; inset: auto; width: 100%; aspect-ratio: 1.85;
       border-radius: 16px; overflow: hidden; border: 1px solid var(--border); margin-bottom: 8px;
     }
-    .hero-layer { background-size: contain; background-color: #2a2e33; }
-    .hero-scrim { display: none; } /* no text over the photo anymore, so no scrim needed */
+    .left-panel .hero-layer { background-size: contain; background-color: #2a2e33; }
+    .left-panel .hero-scrim { display: none; } /* no text over the photo anymore, so no scrim needed */
     .left-content { position: static; margin: 0 12px; padding-bottom: 0; }
     /* Compact this text block (label, headline, subtitle) further — it
        used to be free (overlaid straight onto the photo, at any size);
