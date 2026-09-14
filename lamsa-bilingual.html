@@ -1011,7 +1011,10 @@
   /* MODAL */
   .modal-overlay {
     display: none;
-    position: fixed; inset: 0; z-index: 999;
+    /* Above the full-screen overlays (demo gallery, welcome paywall,
+       credits modal all sit at z-index:9999) so opening Terms/Privacy from
+       inside one of them isn't rendered underneath it. */
+    position: fixed; inset: 0; z-index: 10000;
     background: rgba(0,0,0,0.85);
     backdrop-filter: blur(6px);
     align-items: center; justify-content: center;
@@ -2828,8 +2831,8 @@
         '<button type="button" id="welcomePaywallContinueBtn" style="width:100%;background:var(--gold);color:#1b1e22;border:none;padding:16px;border-radius:14px;font-size:17px;font-weight:900;cursor:pointer;font-family:Tajawal,sans-serif;">' + (isAr ? 'متابعة' : 'Continue') + '</button>' +
         '<div id="welcomePaywallError" style="color:#e05555;font-size:12px;text-align:center;margin-top:10px;min-height:16px;"></div>' +
         '<div style="text-align:center;font-size:11px;margin-top:6px;">' +
-          '<a href="#" style="color:#767d86;text-decoration:underline;margin-inline-end:16px;">' + (isAr ? 'شروط الاستخدام' : 'Terms of Use') + '</a>' +
-          '<a href="#" style="color:#767d86;text-decoration:underline;">' + (isAr ? 'سياسة الخصوصية' : 'Privacy Policy') + '</a>' +
+          '<a href="#" onclick="openModal(\'terms\')" style="color:#767d86;text-decoration:underline;margin-inline-end:16px;">' + (isAr ? 'شروط الاستخدام' : 'Terms of Use') + '</a>' +
+          '<a href="#" onclick="openModal(\'privacy\')" style="color:#767d86;text-decoration:underline;">' + (isAr ? 'سياسة الخصوصية' : 'Privacy Policy') + '</a>' +
         '</div>' +
       '</div>';
 
