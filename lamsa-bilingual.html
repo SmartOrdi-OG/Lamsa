@@ -3705,6 +3705,34 @@
     buildBgCycle('formBgStack', false);
   }
 
+  // Small dismissible banner for the checkout-success message below —
+  // replaces a plain alert() with something that matches the app's own
+  // look instead of a native browser dialog.
+  function showStatusBanner(message) {
+    var existing = document.getElementById('statusBanner');
+    if (existing) existing.remove();
+
+    var el = document.createElement('div');
+    el.id = 'statusBanner';
+    el.style.cssText = 'position:fixed;top:20px;left:50%;transform:translateX(-50%) translateY(-16px);z-index:10001;'
+      + 'background:var(--card);border:1px solid var(--border);border-left:4px solid var(--gold);border-radius:12px;'
+      + 'padding:14px 18px;box-shadow:0 24px 60px -20px rgba(20,20,20,0.35);display:flex;align-items:center;gap:10px;'
+      + 'font-family:Tajawal,sans-serif;font-size:14px;color:var(--white);max-width:calc(100vw - 32px);'
+      + 'opacity:0;transition:opacity 0.25s ease, transform 0.25s ease;';
+    el.innerHTML = '<span style="font-size:18px;line-height:1;">' + (window.icon ? window.icon('check') : '✓') + '</span><span>' + message + '</span>';
+    document.body.appendChild(el);
+
+    requestAnimationFrame(function() {
+      el.style.opacity = '1';
+      el.style.transform = 'translateX(-50%) translateY(0)';
+    });
+    setTimeout(function() {
+      el.style.opacity = '0';
+      el.style.transform = 'translateX(-50%) translateY(-16px)';
+      setTimeout(function() { el.remove(); }, 300);
+    }, 4500);
+  }
+
   // After a Stripe Checkout redirect back to this page, show a short status
   // message and strip the query param so a refresh doesn't repeat it.
   function handleCheckoutRedirect() {
@@ -3713,7 +3741,7 @@
     if (!checkout) return;
 
     if (checkout === 'success') {
-      alert(currentLang === 'ar' ? 'تم الدفع بنجاح! رح يتحدّث رصيدك خلال ثوانٍ.' : 'Payment successful! Your balance will update in a few seconds.');
+      showStatusBanner(currentLang === 'ar' ? 'تم الدفع بنجاح! رح يتحدّث رصيدك خلال ثوانٍ.' : 'Payment successful! Your balance will update in a few seconds.');
       // The Stripe webhook that actually grants the credits can land a beat
       // after this redirect happens, so poll the balance a few times rather
       // than trusting a single check right away.
