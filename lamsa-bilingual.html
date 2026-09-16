@@ -1614,15 +1614,22 @@
           <span data-icon="sparkle" data-ar="أنشئ تصميمي الآن" data-en="Generate My Design Now">Generate My Design Now</span>
           <span class="gen-sub" id="genSubText" data-ar="الذكاء الاصطناعي سيولد صورة واقعية لغرفتك" data-en="AI will generate a realistic image of your room">AI will generate a realistic image of your room</span>
         </button>
-        <div id="freeTrialBadge" style="text-align:center;margin-top:10px;font-size:12px;color:var(--gold);">
-          <svg class="icon-svg" viewBox="0 0 24 24"><path d="M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8L12 3z" fill="currentColor" stroke="none"/></svg> 1 free design included — no credit card needed
-        </div>
-        <!-- Clarifies why the balance shown above can be higher than what
-             was actually purchased — every account gets 1 free design on
-             top of it, which was confusing a user who bought exactly 1
-             credit and still had 2 to use. -->
-        <div id="freeCreditNote" style="text-align:center;margin-top:4px;font-size:10.5px;color:var(--gray);">
-          <span data-ar="ملاحظة: كل حساب جديد يحصل على تصميم واحد مجاني عند أول تسجيل، بالإضافة لأي باقة تشتريها." data-en="Note: every new account gets 1 free design on sign-up, on top of any package you purchase.">Note: every new account gets 1 free design on sign-up, on top of any package you purchase.</span>
+        <!-- Credit status card — replaces the old plain text line. The
+             balance itself (#freeTrialBadge) and the "Buy more" pill are
+             filled in by refreshCreditBalance() once the real balance
+             loads; this markup is just the placeholder shown until then. -->
+        <div id="creditStatusCard" style="margin-top:14px;background:var(--gold-dim);border:1px solid var(--border);border-radius:14px;padding:14px 16px;text-align:center;">
+          <div id="freeTrialBadge" style="font-size:13px;color:var(--white);font-weight:700;display:flex;align-items:center;justify-content:center;gap:6px;">
+            <svg class="icon-svg" viewBox="0 0 24 24"><path d="M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8L12 3z" fill="currentColor" stroke="none"/></svg> 1 free design included — no credit card needed
+          </div>
+          <a href="javascript:void(0)" id="buyMoreBtn" onclick="showCreditsModal()" style="display:none;margin-top:8px;background:var(--gold-deep);color:#fff;font-size:11px;font-weight:800;padding:6px 16px;border-radius:20px;text-decoration:none;cursor:pointer;">Buy more</a>
+          <!-- Clarifies why the balance above can be higher than what was
+               actually purchased — every account gets 1 free design on top
+               of it, which was confusing a user who bought exactly 1
+               credit and still had 2 to use. -->
+          <div id="freeCreditNote" style="margin-top:6px;font-size:10.5px;color:var(--gray);">
+            <span data-ar="ملاحظة: كل حساب جديد يحصل على تصميم واحد مجاني عند أول تسجيل، بالإضافة لأي باقة تشتريها." data-en="Note: every new account gets 1 free design on sign-up, on top of any package you purchase.">Note: every new account gets 1 free design on sign-up, on top of any package you purchase.</span>
+          </div>
         </div>
       </div>
 
@@ -2265,6 +2272,8 @@
       var ph = extraPlaceholders[id];
       el.placeholder = ph[lang] || ph['en'];
     });
+
+    renderCreditBalance();
   }
 
   let currentPanel = 1;
@@ -2599,20 +2608,37 @@
       });
   }
 
+  // Cached so setLang() can re-render this in the newly-selected language
+  // without a redundant re-fetch — the badge/button text is built in JS,
+  // not from static data-en/data-ar attributes, so it isn't covered by
+  // setLang()'s generic translation pass.
+  var lastCreditBalance = null;
+
+  function renderCreditBalance() {
+    var badge = document.getElementById('freeTrialBadge');
+    var buyBtn = document.getElementById('buyMoreBtn');
+    if (!badge || lastCreditBalance === null) return;
+    var isAr = currentLang === 'ar';
+
+    badge.innerHTML = (window.icon ? window.icon('sparkle') : '') + ' ' +
+      (isAr ? 'رصيدك: ' : 'Your balance: ') + '<b>' + lastCreditBalance + '</b> ' +
+      (isAr ? (lastCreditBalance === 1 ? 'تصميم' : 'تصاميم') : ('credit' + (lastCreditBalance === 1 ? '' : 's')));
+    if (buyBtn) {
+      buyBtn.textContent = isAr ? 'شراء المزيد' : 'Buy more';
+      buyBtn.style.display = isAndroidTWA ? 'none' : 'inline-block';
+    }
+  }
+
   function refreshCreditBalance() {
     var badge = document.getElementById('freeTrialBadge');
     if (!badge) return;
-    var isAr = currentLang === 'ar';
 
     fetch('/api/credits', { credentials: 'include' })
       .then(function(r) { return r.json(); })
       .then(function(data) {
         if (typeof data.credits !== 'number') return;
-        badge.innerHTML = (isAr ? 'رصيدك: ' : 'Your balance: ') + '<b>' + data.credits + '</b> ' +
-          (isAr ? (data.credits === 1 ? 'تصميم' : 'تصاميم') : ('credit' + (data.credits === 1 ? '' : 's'))) +
-          (isAndroidTWA ? '' :
-            ' &middot; <a href="javascript:void(0)" onclick="showCreditsModal()" style="color:var(--gold);text-decoration:underline;">' +
-            (isAr ? 'شراء المزيد' : 'Buy more') + '</a>');
+        lastCreditBalance = data.credits;
+        renderCreditBalance();
       })
       .catch(function(err) { console.error('[credits] failed to load balance:', err); });
   }
