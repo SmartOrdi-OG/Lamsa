@@ -491,6 +491,13 @@
     background: linear-gradient(180deg, rgba(10,11,13,0.62) 0%, rgba(10,11,13,0.30) 40%, rgba(10,11,13,0.38) 68%, rgba(10,11,13,0.66) 100%);
   }
 
+  /* Demo gallery's card fills its flex:1 container instead of being sized
+     to the photos' own ~1.85:1 ratio, so fit (not fill) each photo within
+     it — same "never crop" rule as everywhere else, just letterboxed
+     inside this bordered frame instead of leaving blank page background
+     around a smaller floating card. */
+  #demoBgStack .hero-layer { background-size: contain; background-repeat: no-repeat; background-color: #f3f4f5; }
+
   @media (prefers-reduced-motion: reduce) {
     .hero-pair.active .hero-pair-zoom, .hero-pair.active .hero-layer-after, .hero-pair.active .hero-edge,
     .hero-pair.active .hero-tag-before, .hero-pair.active .hero-tag-after { animation: none; }
@@ -2767,27 +2774,30 @@
     var isAr = currentLang === 'ar';
     var overlay = document.createElement('div');
     overlay.id = 'demoGalleryOverlay';
-    overlay.style.cssText = 'position:fixed;inset:0;background:#fff;z-index:9999;display:flex;flex-direction:column;font-family:Tajawal,sans-serif;';
+    // A compact card centered on a dimmed backdrop (same pattern as
+    // showCreditsModal() below) instead of a stark white full-screen
+    // page — a landscape (1.85:1) photo shown uncropped only needs a
+    // modest height, and forcing a full-screen page to that height (or
+    // stretching the photo's own container to fill it) both left a big
+    // empty/letterboxed gap. Sizing the card to its own content and
+    // centering it removes the gap instead of relocating it.
+    overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.9);z-index:9999;display:flex;align-items:center;justify-content:center;padding:20px;font-family:Tajawal,sans-serif;';
 
     overlay.innerHTML =
-      '<div style="display:flex;align-items:center;justify-content:space-between;padding:16px;">' +
-        '<button type="button" id="demoCloseBtn" style="width:34px;height:34px;border-radius:50%;background:#edeff1;border:none;font-size:16px;cursor:pointer;color:#3d434b;">' + (window.icon ? window.icon('close') : '×') + '</button>' +
-        '<div style="font-size:15px;font-weight:900;color:#1b1e22;">' + (isAr ? 'شوف الفرق' : 'See the difference') + '</div>' +
-        '<div style="width:34px;"></div>' +
-      '</div>' +
-      // Not vertically centered in a flex:1 area — a landscape (1.85:1)
-      // photo shown uncropped on a tall narrow screen only needs a modest
-      // height, and centering it stretches that into a big empty gap
-      // above AND below. Anchoring it right under the header and letting
-      // the leftover room fall below the button instead reads as normal
-      // spacing rather than a broken layout.
-      '<div style="padding:28px 16px 0;">' +
-        '<div class="hero-bg-stack" id="demoBgStack" style="position:relative;width:100%;aspect-ratio:1.85;border-radius:16px;overflow:hidden;border:1px solid #dfe2e6;"></div>' +
-      '</div>' +
-      '<div style="padding:28px 20px 20px;">' +
-        '<button type="button" id="demoContinueBtn" style="width:100%;background:var(--gold);color:#1b1e22;border:none;padding:16px;border-radius:14px;font-size:17px;font-weight:900;cursor:pointer;font-family:Tajawal,sans-serif;">' +
-          (isAr ? 'شوف الباقات' : 'See packages') +
-        '</button>' +
+      '<div style="position:relative;background:#fff;border-radius:20px;overflow:hidden;max-width:420px;width:100%;">' +
+        '<div style="display:flex;align-items:center;justify-content:space-between;padding:16px;">' +
+          '<button type="button" id="demoCloseBtn" style="width:34px;height:34px;border-radius:50%;background:#edeff1;border:none;font-size:16px;cursor:pointer;color:#3d434b;">' + (window.icon ? window.icon('close') : '×') + '</button>' +
+          '<div style="font-size:15px;font-weight:900;color:#1b1e22;">' + (isAr ? 'شوف الفرق' : 'See the difference') + '</div>' +
+          '<div style="width:34px;"></div>' +
+        '</div>' +
+        '<div style="padding:0 16px;">' +
+          '<div class="hero-bg-stack" id="demoBgStack" style="position:relative;width:100%;aspect-ratio:1.85;border-radius:14px;overflow:hidden;border:1px solid #dfe2e6;"></div>' +
+        '</div>' +
+        '<div style="padding:20px 20px 20px;">' +
+          '<button type="button" id="demoContinueBtn" style="width:100%;background:var(--gold);color:#1b1e22;border:none;padding:16px;border-radius:14px;font-size:17px;font-weight:900;cursor:pointer;font-family:Tajawal,sans-serif;">' +
+            (isAr ? 'شوف الباقات' : 'See packages') +
+          '</button>' +
+        '</div>' +
       '</div>';
 
     document.body.appendChild(overlay);
