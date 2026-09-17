@@ -1,6 +1,6 @@
 import { redis } from './_db.js';
 import { stripe, CREDIT_PACKAGES } from './_stripe.js';
-import { requireSessionEmail } from './_auth.js';
+import { requireSessionEmail, EMAIL_RE } from './_auth.js';
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
@@ -36,9 +36,14 @@ export default async function handler(req, res) {
   const origin = req.headers.origin || ('https://' + req.headers.host);
 
   try {
-    const session = await stripe.checkout.sessions.create({
+    // Telegram-logged-in users are identified internally by a synthetic
+    // 'tg:<id>' key, not a real address — Stripe's customer_email is
+    // validated as an actual email format and rejects that outright.
+    // Omitting it just means Stripe Checkout asks the buyer for an email
+    // itself (for the receipt); crediting the right account never depends
+    // on it — see metadata.email below, which the webhook reads first.
+    const stripeParams = {
       mode: 'payment',
-      customer_email: email,
       line_items: [{
         price_data: {
           currency: 'eur',
@@ -56,7 +61,10 @@ export default async function handler(req, res) {
       },
       success_url: origin + '/' + returnPage + '?checkout=success',
       cancel_url: origin + '/' + returnPage + '?checkout=cancel'
-    });
+    };
+    if (EMAIL_RE.test(email)) stripeParams.customer_email = email;
+
+    const session = await stripe.checkout.sessions.create(stripeParams);
 
     console.log('[create-checkout-session] created session', session.id, 'for', email, packageId);
     return res.status(200).json({ url: session.url });

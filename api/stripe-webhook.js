@@ -43,7 +43,14 @@ export default async function handler(req, res) {
   try {
     if (event.type === 'checkout.session.completed') {
       const session = event.data.object;
-      const email = (session.customer_email || (session.metadata && session.metadata.email) || '').trim().toLowerCase();
+      // metadata.email is the identity create-checkout-session.js set
+      // server-side (the actual session's own email/tg: key) — always
+      // prefer it over customer_email, which is either the same value or,
+      // for a Telegram login, whatever unrelated address the buyer typed
+      // into Stripe's own checkout form (customer_email isn't set for
+      // those sessions at all, precisely so it can't be mistaken for the
+      // identity to credit).
+      const email = ((session.metadata && session.metadata.email) || session.customer_email || '').trim().toLowerCase();
       const credits = parseInt((session.metadata && session.metadata.credits) || '0', 10);
 
       if (!email || !credits) {
