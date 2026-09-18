@@ -1,3 +1,4 @@
+import crypto from 'crypto';
 import { Redis } from '@upstash/redis';
 
 // Vercel's own KV product was sunset in favor of the Marketplace Upstash
@@ -53,4 +54,59 @@ export async function deductCredit(email) {
 export async function markEventProcessed(eventId) {
   const ok = await redis.set('lamsa:stripe_event:' + eventId, '1', { nx: true, ex: 60 * 60 * 24 * 30 });
   return ok === 'OK' || ok === true;
+}
+
+function referralCodeKey(code) {
+  return 'lamsa:refcode:' + code;
+}
+
+function referralOwnerKey(email) {
+  return 'lamsa:refcode_owner:' + email.trim().toLowerCase();
+}
+
+function referralCountKey(email) {
+  return 'lamsa:referrals:' + email.trim().toLowerCase();
+}
+
+// Every user gets one stable short code the first time it's asked for
+// (shown on their own invite link), generated lazily rather than at
+// account creation so it also backfills accounts created before this
+// existed. NX on the code->owner mapping guards the astronomically
+// unlikely random collision by just retrying with a fresh code.
+export async function getOrCreateReferralCode(email) {
+  const ownerKey = referralOwnerKey(email);
+  const existing = await redis.get(ownerKey);
+  if (existing) return existing;
+
+  const code = crypto.randomBytes(4).toString('hex');
+  const stored = await redis.set(referralCodeKey(code), email.trim().toLowerCase(), { nx: true });
+  if (stored !== 'OK' && stored !== true) return getOrCreateReferralCode(email);
+
+  await redis.set(ownerKey, code);
+  return code;
+}
+
+export async function resolveReferralCode(code) {
+  if (!code || typeof code !== 'string') return null;
+  return redis.get(referralCodeKey(code.trim()));
+}
+
+export async function getReferralCount(email) {
+  const val = await redis.get(referralCountKey(email));
+  return typeof val === 'number' ? val : parseInt(val, 10) || 0;
+}
+
+// Grants the invite bonus (1 credit to each side) the first time a given
+// new-user email is recorded as referred — the NX guard makes this safe to
+// call from a retried request (Telegram login re-runs on every open) without
+// paying out more than once for the same signup.
+export async function recordReferral(referrerEmail, newUserEmail) {
+  const guardKey = 'lamsa:referred_recorded:' + newUserEmail.trim().toLowerCase();
+  const first = await redis.set(guardKey, referrerEmail.trim().toLowerCase(), { nx: true });
+  if (first !== 'OK' && first !== true) return false;
+
+  await redis.incr(referralCountKey(referrerEmail));
+  await addCredits(referrerEmail, 1);
+  await addCredits(newUserEmail, 1);
+  return true;
 }
