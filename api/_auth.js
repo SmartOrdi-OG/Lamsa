@@ -78,7 +78,7 @@ export async function getOrCreateTelegramUser(tgUser) {
   const email = 'tg:' + tgUser.id;
   const key = userKey(email);
   const existing = await redis.get(key);
-  if (existing) return existing;
+  if (existing) return { user: existing, isNew: false };
 
   const user = {
     username: tgUser.username || tgUser.first_name || ('tg_' + tgUser.id),
@@ -87,7 +87,7 @@ export async function getOrCreateTelegramUser(tgUser) {
     createdAt: new Date().toISOString()
   };
   await redis.set(key, user);
-  return user;
+  return { user, isNew: true };
 }
 
 // Login accepts either an email or a username. Resolves either to the email

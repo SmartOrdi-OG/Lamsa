@@ -1639,7 +1639,12 @@
           <div id="freeTrialBadge" style="font-size:13px;color:#fff;font-weight:800;text-shadow:0 1px 3px rgba(0,0,0,0.3);display:flex;align-items:center;justify-content:center;gap:6px;">
             <svg class="icon-svg" viewBox="0 0 24 24"><path d="M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8L12 3z" fill="currentColor" stroke="none"/></svg> 1 free design included — no credit card needed
           </div>
-          <a href="javascript:void(0)" id="buyMoreBtn" onclick="showCreditsModal()" style="display:none;margin-top:8px;background:#fff;color:var(--gold-deep);font-size:11px;font-weight:800;padding:6px 16px;border-radius:20px;text-decoration:none;cursor:pointer;box-shadow:0 4px 10px rgba(0,0,0,0.15);">Buy more</a>
+          <div style="margin-top:8px;display:flex;gap:8px;justify-content:center;flex-wrap:wrap;">
+            <a href="javascript:void(0)" id="buyMoreBtn" onclick="showCreditsModal()" style="display:none;background:#fff;color:var(--gold-deep);font-size:11px;font-weight:800;padding:6px 16px;border-radius:20px;text-decoration:none;cursor:pointer;box-shadow:0 4px 10px rgba(0,0,0,0.15);">Buy more</a>
+            <a href="javascript:void(0)" id="inviteFriendBtn" onclick="showInviteModal()" style="background:rgba(255,255,255,0.18);color:#fff;font-size:11px;font-weight:800;padding:6px 16px;border-radius:20px;text-decoration:none;cursor:pointer;border:1px solid rgba(255,255,255,0.5);">
+              <span data-ar="🎁 دعوة صديق" data-en="🎁 Invite a friend">🎁 Invite a friend</span>
+            </a>
+          </div>
           <!-- Clarifies why the balance above can be higher than what was
                actually purchased — every account gets 1 free design on top
                of it, which was confusing a user who bought exactly 1
@@ -2630,6 +2635,8 @@
   // not from static data-en/data-ar attributes, so it isn't covered by
   // setLang()'s generic translation pass.
   var lastCreditBalance = null;
+  var lastReferralCode = null;
+  var lastReferralCount = 0;
 
   function renderCreditBalance() {
     var badge = document.getElementById('freeTrialBadge');
@@ -2655,6 +2662,8 @@
       .then(function(data) {
         if (typeof data.credits !== 'number') return;
         lastCreditBalance = data.credits;
+        if (data.referralCode) lastReferralCode = data.referralCode;
+        if (typeof data.referralCount === 'number') lastReferralCount = data.referralCount;
         renderCreditBalance();
       })
       .catch(function(err) { console.error('[credits] failed to load balance:', err); });
@@ -2795,6 +2804,101 @@
     Array.prototype.forEach.call(box.querySelectorAll('.credits-pkg-btn'), function(btn) {
       btn.onclick = function() { startCheckout(btn.getAttribute('data-pkg')); };
     });
+  }
+
+  // Invite link: inside Telegram, a t.me deep link with a startapp param
+  // Telegram hands back to the Mini App as initDataUnsafe.start_param (see
+  // telegramAutoLogin() in lamsa-auth.html); on the plain website, a normal
+  // ?ref= query param on the login page instead.
+  function showInviteModal() {
+    // The very first click can race refreshCreditBalance()'s initial fetch
+    // (which is what actually populates lastReferralCode) — fetch it
+    // directly rather than open the modal with an empty code in the link.
+    if (!lastReferralCode) {
+      fetch('/api/credits', { credentials: 'include' })
+        .then(function(r) { return r.json(); })
+        .then(function(data) {
+          if (data.referralCode) lastReferralCode = data.referralCode;
+          if (typeof data.referralCount === 'number') lastReferralCount = data.referralCount;
+          showInviteModal();
+        })
+        .catch(function(err) { console.error('[invite] failed to load referral code:', err); });
+      return;
+    }
+
+    var existing = document.getElementById('inviteModalOverlay');
+    if (existing) existing.remove();
+
+    var isAr = currentLang === 'ar';
+    var overlay = document.createElement('div');
+    overlay.id = 'inviteModalOverlay';
+    overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.9);z-index:9999;display:flex;align-items:center;justify-content:center;padding:20px;overflow-y:auto;';
+
+    var box = document.createElement('div');
+    box.style.cssText = 'position:relative;overflow:hidden;background:#ffffff;border:1px solid #dfe2e6;border-radius:20px;padding:32px 24px;max-width:420px;width:100%;text-align:center;box-shadow:0 30px 70px -25px rgba(90,98,116,0.35);';
+
+    var code = lastReferralCode || '';
+    var link = isTelegramMiniApp
+      ? 'https://t.me/LamsaDesignBot?startapp=' + code
+      : (window.location.origin + '/lamsa-auth.html?ref=' + code);
+
+    var title = isAr ? '🎁 دعوة صديق' : '🎁 Invite a friend';
+    var sub = isAr
+      ? 'شارك رابطك، وكل صديق ينضم عن طريقك بيحصل الاتنين على تصميم مجاني إضافي.'
+      : 'Share your link — every friend who joins through it gets you both an extra free design.';
+    var countLine = lastReferralCount > 0
+      ? (isAr ? ('دعيتي ' + lastReferralCount + (lastReferralCount === 1 ? ' صديق لحد الآن' : ' أصدقاء لحد الآن')) : ('You\'ve invited ' + lastReferralCount + ' friend' + (lastReferralCount === 1 ? '' : 's') + ' so far'))
+      : '';
+    var closeLabel = isAr ? 'إغلاق' : 'Close';
+    var copyLabel = isAr ? 'نسخ الرابط' : 'Copy link';
+    var shareLabel = isAr ? 'مشاركة على تيلغرام' : 'Share on Telegram';
+
+    box.innerHTML =
+      '<div style="font-size:42px;margin-bottom:16px;">🎁</div>' +
+      '<div style="font-size:22px;font-weight:900;color:#3d434b;margin-bottom:8px;">' + title + '</div>' +
+      '<div style="font-size:13px;color:#767d86;margin-bottom:16px;line-height:1.6;">' + sub + '</div>' +
+      '<div style="display:flex;background:#edeff1;border:1px solid #dfe2e6;border-radius:10px;padding:10px 12px;margin-bottom:8px;">' +
+        '<input type="text" id="inviteLinkInput" readonly value="' + link + '" style="flex:1;border:none;background:transparent;font-size:12px;color:#1b1e22;font-family:monospace;min-width:0;">' +
+      '</div>' +
+      (countLine ? '<div style="font-size:11.5px;color:#a3abb5;margin-bottom:16px;">' + countLine + '</div>' : '<div style="margin-bottom:16px;"></div>') +
+      '<button type="button" id="inviteCopyBtn" style="width:100%;background:var(--gold);color:#fff;border:none;padding:12px;border-radius:10px;font-size:14px;font-weight:800;cursor:pointer;font-family:Tajawal,sans-serif;margin-bottom:8px;">' + copyLabel + '</button>' +
+      (isTelegramMiniApp ? '<button type="button" id="inviteShareBtn" style="width:100%;background:#edeff1;color:#3d434b;border:none;padding:12px;border-radius:10px;font-size:14px;font-weight:800;cursor:pointer;font-family:Tajawal,sans-serif;margin-bottom:8px;">' + shareLabel + '</button>' : '') +
+      '<button type="button" onclick="document.getElementById(\'inviteModalOverlay\').remove()" ' +
+      'style="width:100%;background:transparent;border:1px solid #dfe2e6;color:#767d86;padding:10px;border-radius:10px;font-size:13px;cursor:pointer;font-family:Tajawal,sans-serif;">' + closeLabel + '</button>';
+
+    overlay.appendChild(box);
+    document.body.appendChild(overlay);
+
+    var copyBtn = document.getElementById('inviteCopyBtn');
+    copyBtn.onclick = function() {
+      var input = document.getElementById('inviteLinkInput');
+      var done = function() {
+        copyBtn.textContent = isAr ? 'تم النسخ ✓' : 'Copied ✓';
+        setTimeout(function() { copyBtn.textContent = copyLabel; }, 2000);
+      };
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(link).then(done).catch(function() {
+          input.select();
+          try { document.execCommand('copy'); done(); } catch (e) {}
+        });
+      } else {
+        input.select();
+        try { document.execCommand('copy'); done(); } catch (e) {}
+      }
+    };
+
+    var shareBtn = document.getElementById('inviteShareBtn');
+    if (shareBtn) {
+      shareBtn.onclick = function() {
+        var shareText = isAr ? 'جرب تصميم غرفتك بالذكاء الاصطناعي مع لمسة!' : 'Try redesigning your room with AI on Lamsa!';
+        var shareUrl = 'https://t.me/share/url?url=' + encodeURIComponent(link) + '&text=' + encodeURIComponent(shareText);
+        if (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.openTelegramLink) {
+          window.Telegram.WebApp.openTelegramLink(shareUrl);
+        } else {
+          window.open(shareUrl, '_blank');
+        }
+      };
+    }
   }
 
   function startCheckout(packageId, buttonEl, errorElId) {

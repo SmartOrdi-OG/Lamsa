@@ -901,6 +901,14 @@
 <script>
   let currentLang = 'en';
 
+  // Referral code from an invite link (?ref=... in a normal browser tab,
+  // or Telegram's own start_param when opened via a bot deep link) — read
+  // once at load and sent along with whichever signup path actually runs.
+  var pendingRefCode = null;
+  try {
+    pendingRefCode = new URLSearchParams(window.location.search).get('ref') || null;
+  } catch (e) {}
+
   // COUNTRIES DATA
   const countries = [
     { flag: '🇸🇦', name: 'السعودية', nameEn: 'Saudi Arabia', code: 'SA', currency: 'ر.س', lang: 'ar' },
@@ -1094,7 +1102,7 @@
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       credentials: 'include',
-      body: JSON.stringify({ username: username, email: email, password: password, country: selectedCountry.code })
+      body: JSON.stringify({ username: username, email: email, password: password, country: selectedCountry.code, ref: pendingRefCode })
     })
     .then(function(r) { return r.json().then(function(data) { return { ok: r.ok, data: data }; }); })
     .then(function(result) {
@@ -1155,11 +1163,16 @@
     document.getElementById('formContent').style.display = 'none';
     document.getElementById('tgLoginLoading').style.display = '';
 
+    // The start_param Telegram attaches when the bot is opened via a
+    // t.me/<bot>?startapp=<code> invite link — falls back to a plain ?ref=
+    // query param on the off chance this WebView exposes one instead.
+    var tgRef = (tg.initDataUnsafe && tg.initDataUnsafe.start_param) || pendingRefCode;
+
     fetch('/api/telegram', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       credentials: 'include',
-      body: JSON.stringify({ initData: tg.initData })
+      body: JSON.stringify({ initData: tg.initData, ref: tgRef })
     })
     .then(function(r) { return r.json().then(function(data) { return { ok: r.ok, data: data }; }); })
     .then(function(result) {
