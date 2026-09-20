@@ -33,6 +33,21 @@ export async function addCredits(email, amount) {
   return redis.incrby(creditsKey(email), amount);
 }
 
+// In-app rating (1-5 stars, shown once per device after a successful
+// generation). Appended to a single list rather than keyed per-user —
+// there's no need to look one up by email, only to read them all back for
+// review, and a user re-rating (a fresh device/browser) just adds another
+// entry rather than needing an upsert.
+export async function addRating(email, rating, comment) {
+  const entry = JSON.stringify({
+    email,
+    rating,
+    comment: (comment || '').slice(0, 500),
+    at: new Date().toISOString()
+  });
+  await redis.rpush('lamsa:ratings', entry);
+}
+
 // Atomically decrements by 1 only if the balance is > 0. Returns the new
 // balance, or null if there were no credits to spend.
 const DEDUCT_SCRIPT = `

@@ -32,10 +32,25 @@
       isTelegramMiniApp = true;
       tg.ready();
       tg.expand();
+      // Otherwise Telegram treats a vertical swipe anywhere on the page as
+      // its own gesture to minimize/close the Mini App, which is exactly
+      // the "screen moves when I swipe up or down" behavior being fixed.
+      if (tg.disableVerticalSwipes) tg.disableVerticalSwipes();
       if (tg.setHeaderColor) tg.setHeaderColor('#f6f7f8');
       if (tg.setBackgroundColor) tg.setBackgroundColor('#f6f7f8');
     }
   } catch (e) {}
+
+  // This page is a fixed single "screen" — only .right-panel (the form)
+  // and .country-grid actually scroll. Without this, dragging a finger
+  // anywhere else (the hero photo, brand row, language toggle) still
+  // triggers the WebView's own native rubber-band bounce — very visible
+  // inside Telegram's iOS client — which slides the whole screen down and
+  // exposes blank space above it. overscroll-behavior in CSS alone
+  // doesn't stop that native bounce here, so it's blocked directly.
+  document.addEventListener('touchmove', function (e) {
+    if (!e.target.closest('.right-panel, .country-grid')) e.preventDefault();
+  }, { passive: false });
 </script>
 <style>
   .icon-svg { width: 1.15em; height: 1.15em; vertical-align: -0.18em; display: inline-block; flex-shrink: 0; }
@@ -61,6 +76,10 @@
   * { margin: 0; padding: 0; box-sizing: border-box; }
 
   html { scroll-behavior: smooth; }
+
+  /* Stops the page from bouncing/sliding when a swipe drags past the top
+     or bottom of the scrollable area. */
+  html, body { overscroll-behavior: none; }
 
   body {
     font-family: 'Tajawal', sans-serif;
@@ -253,6 +272,7 @@
     padding: 32px 24px;
     position: relative;
     overflow-y: auto;
+    overscroll-behavior: contain;
   }
 
   .auth-box {
@@ -405,6 +425,7 @@
     gap: 6px;
     max-height: 160px;
     overflow-y: auto;
+    overscroll-behavior: contain;
     padding: 2px;
   }
   .country-grid::-webkit-scrollbar { width: 3px; }

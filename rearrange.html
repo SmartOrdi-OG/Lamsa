@@ -47,6 +47,10 @@
       isTelegramMiniApp = true;
       tg.ready();
       tg.expand();
+      // Otherwise Telegram treats a vertical swipe anywhere on the page as
+      // its own gesture to minimize/close the Mini App, which is exactly
+      // the "screen moves when I swipe up or down" behavior being fixed.
+      if (tg.disableVerticalSwipes) tg.disableVerticalSwipes();
       if (tg.setHeaderColor) tg.setHeaderColor('#f6f7f8');
       if (tg.setBackgroundColor) tg.setBackgroundColor('#f6f7f8');
     }
@@ -70,6 +74,9 @@
     --gray: #767d86;
   }
   * { margin: 0; padding: 0; box-sizing: border-box; }
+  /* Stops the page from bouncing/sliding when a swipe drags past the top
+     or bottom of the scrollable area. */
+  html, body { overscroll-behavior: none; }
   body {
     font-family: 'Tajawal', sans-serif;
     background: var(--black);
