@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>محاكاة - معرض الإلهام</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;900&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --gold: #6b7480;
+    --gold-light: #a3abb5;
+    --gold-deep: #3d434b;
+    --gold-dim: rgba(107,116,128,0.10);
+    --white: #1b1e22;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: 'Tajawal', sans-serif;
+    background: #f7f7f8;
+    color: var(--white);
+  }
+  .banner {
+    background: #fff3cd;
+    color: #6b5900;
+    font-size: 12px;
+    text-align: center;
+    padding: 8px 12px;
+    font-weight: 700;
+    border-bottom: 1px solid #f0e0a0;
+  }
+  header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 16px;
+    background: #fff;
+    border-bottom: 1px solid #eceef0;
+    position: sticky;
+    top: 0;
+    z-index: 5;
+  }
+  header h1 { font-size: 18px; margin: 0; font-weight: 900; }
+  .section { padding: 18px 16px 4px; }
+  .section-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    margin-bottom: 10px;
+  }
+  .section-head h2 { font-size: 16px; margin: 0; font-weight: 900; }
+  .see-all {
+    font-size: 13px;
+    color: var(--gold);
+    font-weight: 700;
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 0;
+  }
+  .row {
+    display: flex;
+    gap: 10px;
+    overflow-x: auto;
+    padding-bottom: 10px;
+    scroll-snap-type: x proximity;
+    -webkit-overflow-scrolling: touch;
+  }
+  .row::-webkit-scrollbar { display: none; }
+  .card {
+    position: relative;
+    flex: 0 0 150px;
+    height: 190px;
+    border-radius: 14px;
+    overflow: hidden;
+    scroll-snap-align: start;
+    cursor: pointer;
+    border: 1px solid #eceef0;
+  }
+  .card img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .card .label {
+    position: absolute;
+    bottom: 0; right: 0; left: 0;
+    background: linear-gradient(to top, rgba(0,0,0,0.65), transparent);
+    color: #fff;
+    font-size: 12px;
+    font-weight: 700;
+    padding: 20px 8px 8px;
+  }
+  .grid {
+    display: none;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+    padding: 4px 0 10px;
+  }
+  .grid.open { display: grid; }
+  .grid .card { flex: unset; width: 100%; height: 160px; }
+  .row.hidden { display: none; }
+  .placeholder-note {
+    font-size: 11px;
+    color: #9aa0a8;
+    padding: 0 4px 4px;
+  }
+  /* lightbox */
+  .lightbox {
+    position: fixed; inset: 0; background: rgba(0,0,0,0.85);
+    display: none; align-items: center; justify-content: center;
+    z-index: 50; padding: 20px;
+  }
+  .lightbox.open { display: flex; }
+  .lightbox-inner {
+    background: #fff; border-radius: 16px; overflow: hidden;
+    max-width: 380px; width: 100%;
+  }
+  .lightbox-inner img { width: 100%; height: 260px; object-fit: cover; display: block; }
+  .lightbox-body { padding: 16px; }
+  .lightbox-body h3 { margin: 0 0 4px; font-size: 16px; font-weight: 900; }
+  .lightbox-body p { margin: 0 0 14px; font-size: 12.5px; color: #6b7480; }
+  .use-style-btn {
+    width: 100%; background: var(--gold); color: #fff; border: none;
+    padding: 13px; border-radius: 10px; font-size: 14px; font-weight: 800;
+    cursor: pointer; font-family: 'Tajawal', sans-serif;
+  }
+  .close-lightbox {
+    width: 100%; background: transparent; border: 1px solid #dfe2e6; color: #767d86;
+    padding: 10px; border-radius: 10px; font-size: 13px; cursor: pointer;
+    margin-top: 8px; font-family: 'Tajawal', sans-serif;
+  }
+  .toast {
+    position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%);
+    background: var(--white); color: #fff; padding: 10px 18px; border-radius: 10px;
+    font-size: 13px; z-index: 60; opacity: 0; transition: opacity 0.25s;
+    max-width: calc(100vw - 32px); text-align: center;
+  }
+  .toast.show { opacity: 1; }
+</style>
+</head>
+<body>
+
+  <div class="banner">صفحة محاكاة داخلية فقط — الصور مأخوذة مؤقتًا من صور التطبيق الحالية لتجربة فكرة العرض، وليست المحتوى النهائي</div>
+
+  <header>
+    <span style="font-size:20px;">‹</span>
+    <h1>إلهام التصميم</h1>
+  </header>
+
+  <div class="section" data-cat="living">
+    <div class="section-head">
+      <h2>غرفة الجلوس</h2>
+      <button class="see-all" data-target="living">عرض الكل »</button>
+    </div>
+    <div class="row" id="row-living">
+      <div class="card" data-img="assets/hero-bg/pair7-after.jpg" data-name="حديث ودافئ">
+        <img src="assets/hero-bg/pair7-after.jpg" alt="">
+        <div class="label">حديث ودافئ</div>
+      </div>
+      <div class="card" data-img="assets/hero-bg/pair2-after.jpg" data-name="فخم وغامق">
+        <img src="assets/hero-bg/pair2-after.jpg" alt="">
+        <div class="label">فخم وغامق</div>
+      </div>
+      <div class="card" data-img="assets/hero-bg/pair7-after.jpg" data-name="مريح وعائلي">
+        <img src="assets/hero-bg/pair7-after.jpg" alt="">
+        <div class="label">مريح وعائلي</div>
+      </div>
+      <div class="card" data-img="assets/hero-bg/pair2-after.jpg" data-name="مكتبي هادئ">
+        <img src="assets/hero-bg/pair2-after.jpg" alt="">
+        <div class="label">مكتبي هادئ</div>
+      </div>
+    </div>
+    <div class="grid" id="grid-living"></div>
+    <div class="placeholder-note">* بعض الصور مكررة مؤقتًا لتجربة شكل الصف والشبكة فقط</div>
+  </div>
+
+  <div class="section" data-cat="bedroom">
+    <div class="section-head">
+      <h2>غرفة النوم</h2>
+      <button class="see-all" data-target="bedroom">عرض الكل »</button>
+    </div>
+    <div class="row" id="row-bedroom">
+      <div class="card" data-img="assets/hero-bg/pair1-after.jpg" data-name="وردي ريفي">
+        <img src="assets/hero-bg/pair1-after.jpg" alt="">
+        <div class="label">وردي ريفي</div>
+      </div>
+      <div class="card" data-img="assets/hero-bg/pair1-after.jpg" data-name="ستايل كلاسيك">
+        <img src="assets/hero-bg/pair1-after.jpg" alt="">
+        <div class="label">ستايل كلاسيك</div>
+      </div>
+      <div class="card" data-img="assets/hero-bg/pair1-after.jpg" data-name="إضاءة هادئة">
+        <img src="assets/hero-bg/pair1-after.jpg" alt="">
+        <div class="label">إضاءة هادئة</div>
+      </div>
+    </div>
+    <div class="grid" id="grid-bedroom"></div>
+    <div class="placeholder-note">* صورة واحدة فقط متوفرة حاليًا بالمحاكاة — تكررت لتجربة الشكل فقط</div>
+  </div>
+
+  <div style="height:30px;"></div>
+
+  <div class="lightbox" id="lightbox">
+    <div class="lightbox-inner">
+      <img id="lightboxImg" src="" alt="">
+      <div class="lightbox-body">
+        <h3 id="lightboxName"></h3>
+        <p>محاكاة فقط — الزر أدناه لا يستدعي التوليد الفعلي بعد</p>
+        <button class="use-style-btn" id="useStyleBtn">استخدام هذا الستايل</button>
+        <button class="close-lightbox" id="closeLightboxBtn">إغلاق</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+<script>
+  function buildGrid(cat) {
+    var row = document.getElementById('row-' + cat);
+    var grid = document.getElementById('grid-' + cat);
+    if (grid.dataset.built) return;
+    var cards = row.querySelectorAll('.card');
+    // Simulate a fuller grid by repeating the row's cards a couple of times.
+    var html = '';
+    for (var rep = 0; rep < 3; rep++) {
+      cards.forEach(function (c) {
+        html += c.outerHTML;
+      });
+    }
+    grid.innerHTML = html;
+    grid.dataset.built = '1';
+  }
+
+  document.querySelectorAll('.see-all').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      var cat = btn.dataset.target;
+      var row = document.getElementById('row-' + cat);
+      var grid = document.getElementById('grid-' + cat);
+      var opening = !grid.classList.contains('open');
+      if (opening) {
+        buildGrid(cat);
+        grid.classList.add('open');
+        row.classList.add('hidden');
+        btn.textContent = 'إخفاء «';
+      } else {
+        grid.classList.remove('open');
+        row.classList.remove('hidden');
+        btn.textContent = 'عرض الكل »';
+      }
+    });
+  });
+
+  var lightbox = document.getElementById('lightbox');
+  var lightboxImg = document.getElementById('lightboxImg');
+  var lightboxName = document.getElementById('lightboxName');
+
+  document.body.addEventListener('click', function (e) {
+    var card = e.target.closest('.card');
+    if (!card) return;
+    lightboxImg.src = card.dataset.img;
+    lightboxName.textContent = card.dataset.name;
+    lightbox.classList.add('open');
+  });
+
+  document.getElementById('closeLightboxBtn').addEventListener('click', function () {
+    lightbox.classList.remove('open');
+  });
+
+  document.getElementById('useStyleBtn').addEventListener('click', function () {
+    showToast('محاكاة: هنا رح نودّي المستخدم لمعالج التصميم مع هذا الستايل محددًا مسبقًا');
+  });
+
+  function showToast(msg) {
+    var t = document.getElementById('toast');
+    t.textContent = msg;
+    t.classList.add('show');
+    setTimeout(function () { t.classList.remove('show'); }, 2600);
+  }
+</script>
+</body>
+</html>
