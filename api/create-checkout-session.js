@@ -28,7 +28,7 @@ export default async function handler(req, res) {
   // Send the user back to whichever page they started the purchase from.
   // Validated against an allowlist rather than trusting an arbitrary
   // client-supplied path, since this becomes a redirect target.
-  const ALLOWED_RETURN_PAGES = ['lamsa-bilingual.html', 'rearrange.html'];
+  const ALLOWED_RETURN_PAGES = ['lamsa-bilingual.html', 'rearrange.html', 'inspirations.html'];
   const returnPage = ALLOWED_RETURN_PAGES.includes(return_page) ? return_page : 'lamsa-bilingual.html';
 
   // Prefer the request's own origin so this works the same in preview
