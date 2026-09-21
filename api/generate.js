@@ -1,4 +1,4 @@
-import { redis, deductCredit, addCredits, ensureWelcomeCredit } from './_db.js';
+import { redis, deductCredit, addCredits, ensureWelcomeCredit, incrementGenerationCount } from './_db.js';
 import { requireSessionEmail } from './_auth.js';
 import { randomUUID } from 'crypto';
 
@@ -136,6 +136,7 @@ export default async function handler(req, res) {
 
     try {
       const request_id = await submitToFal(FAL_API_KEY, NANO_SUBMIT_URL, nanoBody);
+      await incrementGenerationCount();
       return res.status(200).json({ requests: [{ model: 'nano', request_id }] });
     } catch (err) {
       console.error('[api/generate] style-reference submit failed:', err.message);
@@ -178,6 +179,7 @@ export default async function handler(req, res) {
 
     try {
       const request_id = await submitToFal(FAL_API_KEY, NANO_SUBMIT_URL, nanoBody);
+      await incrementGenerationCount();
       return res.status(200).json({ requests: [{ model: 'nano', request_id }] });
     } catch (err) {
       console.error('[api/generate] refine submit failed:', err.message);
@@ -218,6 +220,7 @@ export default async function handler(req, res) {
   let request_id;
   try {
     request_id = await submitToFal(FAL_API_KEY, FLUX_SUBMIT_URL, fluxBody);
+    await incrementGenerationCount(count);
   } catch (err) {
     console.error('[api/generate] flux submit failed:', err.message);
     try {

@@ -2648,6 +2648,13 @@
     badge.innerHTML = (window.icon ? window.icon('sparkle') : '') + ' ' +
       (isAr ? 'رصيدك: ' : 'Your balance: ') + '<b>' + lastCreditBalance + '</b> ' +
       (isAr ? (lastCreditBalance === 1 ? 'تصميم' : 'تصاميم') : ('credit' + (lastCreditBalance === 1 ? '' : 's')));
+
+    // Site-wide total, only ever present in /api/me's response for the
+    // team account (see api/me.js) — everyone else's currentUser simply
+    // won't have this field.
+    if (currentUser && typeof currentUser.totalGenerations === 'number') {
+      badge.innerHTML += ' &middot; ' + (isAr ? 'إجمالي التوليدات: ' : 'Total generated: ') + '<b>' + currentUser.totalGenerations + '</b>';
+    }
     if (buyBtn) {
       buyBtn.textContent = isAr ? 'شراء المزيد' : 'Buy more';
       buyBtn.style.display = isAndroidTWA ? 'none' : 'inline-block';

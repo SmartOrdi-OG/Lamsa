@@ -64,6 +64,23 @@ export async function deductCredit(email) {
   return result === -1 ? null : result;
 }
 
+// Site-wide running total of AI generations actually submitted to fal.ai
+// (Flux + Nano, across the main designer, refine stage, and the
+// Inspirations Gallery style-reference stage) — incremented once per
+// successful submission, right alongside the credit deduction it belongs
+// to. Started fresh from whenever this was added, so it doesn't cover
+// generations made before.
+const GENERATIONS_TOTAL_KEY = 'lamsa:stats:generations_total';
+
+export async function incrementGenerationCount(by = 1) {
+  await redis.incrby(GENERATIONS_TOTAL_KEY, by);
+}
+
+export async function getGenerationCount() {
+  const val = await redis.get(GENERATIONS_TOTAL_KEY);
+  return typeof val === 'number' ? val : parseInt(val, 10) || 0;
+}
+
 // Idempotency guard for Stripe webhook retries — the first call for a given
 // event id succeeds (returns true), duplicate deliveries return false.
 export async function markEventProcessed(eventId) {
