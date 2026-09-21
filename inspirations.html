@@ -631,6 +631,11 @@
         if (typeof data.credits !== 'number') return;
         badge.innerHTML = 'Your balance: <b>' + data.credits + '</b> credit' + (data.credits === 1 ? '' : 's') +
           (isAndroidTWA ? '' : ' &middot; <a href="javascript:void(0)" onclick="showCreditsModal()" style="color:var(--gold);text-decoration:underline;">Buy more</a>');
+        // Only ever present for the team account (see api/me.js) — a
+        // site-wide count, not per-user.
+        if (currentUser && typeof currentUser.totalGenerations === 'number') {
+          badge.innerHTML += ' &middot; Total generated: <b>' + currentUser.totalGenerations + '</b>';
+        }
       })
       .catch(function () {});
   }

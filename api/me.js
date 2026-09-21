@@ -1,5 +1,9 @@
-import { redis, addRating } from './_db.js';
+import { redis, addRating, getGenerationCount } from './_db.js';
 import { requireSessionEmail, getUser } from './_auth.js';
+
+// Shown only to the team account — this is a site-wide number, not
+// something any other logged-in user should see on their own /api/me call.
+const STATS_VISIBLE_EMAILS = new Set(['team@smartordi.eu']);
 
 // POST here (action: 'rate') is the in-app star-rating widget's submit —
 // piggybacked on this endpoint rather than a new API file, since Vercel's
@@ -33,7 +37,11 @@ export default async function handler(req, res) {
     const user = await getUser(email);
     if (!user) return res.status(401).json({ error: 'Not logged in' });
 
-    return res.status(200).json({ username: user.username, email: user.email });
+    const response = { username: user.username, email: user.email };
+    if (STATS_VISIBLE_EMAILS.has(email)) {
+      response.totalGenerations = await getGenerationCount();
+    }
+    return res.status(200).json(response);
   } catch (err) {
     console.error('[me] error:', err.message);
     return res.status(500).json({ error: err.message });
