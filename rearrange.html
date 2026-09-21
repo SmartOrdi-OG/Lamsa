@@ -912,7 +912,7 @@
     overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.9);z-index:9999;display:flex;align-items:center;justify-content:center;padding:20px;overflow-y:auto;';
 
     var box = document.createElement('div');
-    box.style.cssText = 'background:var(--dark);border:1px solid var(--gold);border-radius:20px;padding:32px 24px;max-width:420px;width:100%;text-align:center;';
+    box.style.cssText = 'position:relative;overflow:hidden;background:var(--card);border:1px solid var(--border);border-radius:20px;padding:32px 24px;max-width:420px;width:100%;text-align:center;box-shadow:0 30px 70px -25px rgba(20,20,20,0.35);';
 
     if (isAndroidTWA) {
       box.innerHTML =
@@ -928,16 +928,30 @@
 
     var sub = message || 'Each design uses 1 credit from your balance';
 
+    var PKG_META = {
+      x1:  { color: '#5b7fdb', tag: '' },
+      x5:  { color: '#9b5bdb', tag: 'Popular' },
+      x10: { color: '#e0a52e', tag: 'Best Value' }
+    };
+
     var packagesHtml = CREDIT_PACKAGES.map(function(pkg) {
+      var meta = PKG_META[pkg.id] || { color: '#6b7480', tag: '' };
+      var badge = meta.tag
+        ? '<span style="position:absolute;top:-9px;right:14px;background:' + meta.color + ';color:#fff;font-size:10px;font-weight:900;padding:3px 10px;border-radius:20px;letter-spacing:0.2px;">' + meta.tag + '</span>'
+        : '';
       return '<button type="button" class="credits-pkg-btn" data-pkg="' + pkg.id + '" ' +
-        'style="width:100%;display:flex;justify-content:space-between;align-items:center;background:var(--black);border:1px solid var(--border);border-radius:12px;padding:14px 16px;margin-bottom:10px;cursor:pointer;color:var(--white);font-family:Tajawal,sans-serif;font-size:14px;">' +
+        'style="position:relative;width:100%;display:flex;justify-content:space-between;align-items:center;' +
+        'background:' + meta.color + '0d;border:1.5px solid ' + meta.color + '40;border-left:5px solid ' + meta.color + ';' +
+        'border-radius:12px;padding:14px 16px;margin-bottom:14px;cursor:pointer;color:var(--white);font-family:Tajawal,sans-serif;font-size:14px;">' +
+        badge +
         '<span style="font-weight:700;">' + pkg.label + '</span>' +
-        '<span style="color:var(--gold);font-weight:900;">' + pkg.price + '</span>' +
+        '<span style="color:' + meta.color + ';font-weight:900;font-size:16px;">' + pkg.price + '</span>' +
         '</button>';
     }).join('');
 
     box.innerHTML =
-      '<div style="font-size:42px;margin-bottom:16px;">' + (window.icon ? window.icon('palette') : '') + '</div>' +
+      '<div style="position:absolute;top:0;left:0;right:0;height:6px;background:linear-gradient(90deg,#5b7fdb,#9b5bdb,#e0a52e);"></div>' +
+      '<div style="width:64px;height:64px;margin:0 auto 16px;border-radius:50%;background:linear-gradient(135deg,#5b7fdb,#9b5bdb 55%,#e0a52e);display:flex;align-items:center;justify-content:center;font-size:26px;color:#fff;box-shadow:0 10px 24px -8px rgba(155,91,219,0.45);">' + (window.icon ? window.icon('palette') : '') + '</div>' +
       '<div style="font-size:22px;font-weight:900;color:var(--gold);margin-bottom:8px;">Buy Designs</div>' +
       '<div style="font-size:13px;color:var(--gray);margin-bottom:20px;line-height:1.6;">' + sub + '</div>' +
       '<div id="creditsPkgList">' + packagesHtml + '</div>' +
