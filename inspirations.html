@@ -528,7 +528,9 @@
         body: JSON.stringify({ image_data: dataUrl, mime_type: mimeType })
       });
       if (!uploadRes.ok || !uploadRes.data.url) {
-        throw new Error(uploadRes.data.error || 'Image upload failed');
+        var uploadErrMsg = uploadRes.data.error || 'Image upload failed';
+        if (uploadRes.data.details) uploadErrMsg += ' — ' + JSON.stringify(uploadRes.data.details).slice(0, 200);
+        throw new Error(uploadErrMsg);
       }
       var roomImageUrl = uploadRes.data.url;
 
