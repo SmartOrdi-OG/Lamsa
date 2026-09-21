@@ -25,6 +25,11 @@
   .drop input { position: absolute; inset: 0; opacity: 0; cursor: pointer; }
   .drop img { max-width: 100%; max-height: 160px; border-radius: 8px; display: block; margin: 0 auto; }
   .drop .placeholder { color: #a3abb5; font-size: 13px; }
+  .preset-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+  .preset-item { border: 2px solid transparent; border-radius: 10px; overflow: hidden; cursor: pointer; background: #fff; }
+  .preset-item img { width: 100%; height: 80px; object-fit: cover; display: block; }
+  .preset-item.selected { border-color: #3d434b; }
+  .preset-item .preset-label { font-size: 10px; text-align: center; padding: 3px 2px; color: #767d86; }
   textarea { width: 100%; border: 1px solid #dfe2e6; border-radius: 10px; padding: 10px; font-size: 13px; font-family: inherit; resize: vertical; }
   button#genBtn { width: 100%; background: #3d434b; color: #fff; border: none; padding: 14px; border-radius: 10px; font-size: 15px; font-weight: 800; cursor: pointer; }
   button#genBtn:disabled { opacity: 0.5; cursor: default; }
@@ -45,10 +50,28 @@
   </div>
 
   <div class="field">
-    <label>Reference photo (the exact object to add, e.g. a lighting fixture)</label>
-    <div class="drop" id="refDrop">
-      <input type="file" id="refInput" accept="image/*">
-      <div class="placeholder" id="refPlaceholder">Click to upload the reference photo</div>
+    <label>Pick the exact fixture shape to apply</label>
+    <div class="preset-grid" id="presetGrid">
+      <div class="preset-item" data-file="light-ref-tracklight.jpg">
+        <img src="assets/light-ref-tracklight.jpg">
+        <div class="preset-label">Track light</div>
+      </div>
+      <div class="preset-item" data-file="light-ref-flushmount.jpg">
+        <img src="assets/light-ref-flushmount.jpg">
+        <div class="preset-label">Flush mount</div>
+      </div>
+      <div class="preset-item" data-file="light-ref-globependant.jpg">
+        <img src="assets/light-ref-globependant.jpg">
+        <div class="preset-label">Glass globe</div>
+      </div>
+      <div class="preset-item" data-file="light-ref-fabricpendant.jpg">
+        <img src="assets/light-ref-fabricpendant.jpg">
+        <div class="preset-label">Fabric pendant</div>
+      </div>
+      <div class="preset-item" data-file="light-ref-recessedspot.jpg">
+        <img src="assets/light-ref-recessedspot.jpg">
+        <div class="preset-label">Recessed spot</div>
+      </div>
     </div>
   </div>
 
@@ -62,8 +85,18 @@
   <div id="resultBox"></div>
 
   <script>
-    var roomDataUrl = null, refDataUrl = null;
-    var roomUrl = null, refUrl = null;
+    var roomDataUrl = null;
+    var roomUrl = null;
+    var refUrl = null; // absolute URL to a preset asset — no /api/upload needed, it's already public
+
+    Array.prototype.forEach.call(document.querySelectorAll('.preset-item'), function(item) {
+      item.onclick = function() {
+        Array.prototype.forEach.call(document.querySelectorAll('.preset-item'), function(el) { el.classList.remove('selected'); });
+        item.classList.add('selected');
+        refUrl = window.location.origin + '/assets/' + item.getAttribute('data-file');
+        checkReady();
+      };
+    });
 
     function compressImage(file, maxSize, quality, callback) {
       var img = new Image();
@@ -98,11 +131,10 @@
     }
 
     function checkReady() {
-      document.getElementById('genBtn').disabled = !(roomDataUrl && refDataUrl);
+      document.getElementById('genBtn').disabled = !(roomDataUrl && refUrl);
     }
 
     wireDrop('roomInput', 'roomDrop', 'roomPlaceholder', function(dataUrl) { roomDataUrl = dataUrl; checkReady(); });
-    wireDrop('refInput', 'refDrop', 'refPlaceholder', function(dataUrl) { refDataUrl = dataUrl; checkReady(); });
 
     function uploadImage(dataUrl) {
       return fetch('/api/upload', {
@@ -163,12 +195,11 @@
       var btn = this;
       btn.disabled = true;
       var resultBox = document.getElementById('resultBox');
-      resultBox.textContent = 'Uploading images...';
+      resultBox.textContent = 'Uploading room photo...';
 
-      Promise.all([uploadImage(roomDataUrl), uploadImage(refDataUrl)])
-        .then(function(urls) {
-          roomUrl = urls[0];
-          refUrl = urls[1];
+      uploadImage(roomDataUrl)
+        .then(function(url) {
+          roomUrl = url;
           resultBox.textContent = 'Generating (this can take 15-30s)...';
           return fetch('/api/generate', {
             method: 'POST',
