@@ -3406,7 +3406,17 @@
         prompt: prompt,
         image_url: imageUrl || undefined,
         num_images: designCount,
-        guidance_scale: 7.5,
+        // Raised from 7.5 — the wizard's own selections (mood, furniture
+        // color, extra pieces, flooring) were landing in the prompt
+        // correctly but not always showing up in the result. guidance_scale
+        // controls how closely the model follows the TEXT prompt, which is
+        // exactly where those selections live — unlike `strength` below,
+        // it doesn't touch how much the image is allowed to deviate from
+        // the source, so it can't be what lets walls/windows/doors drift
+        // (that's what the STRUCTURAL LOCK text in the prompt itself is
+        // for, and a higher guidance_scale should make the model follow
+        // that instruction more closely too, not less).
+        guidance_scale: 12,
         aspect_ratio: '16:9',
         safety_tolerance: '2'
       };
