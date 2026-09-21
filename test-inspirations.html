@@ -1,0 +1,496 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>محاكاة - معرض الإلهام</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;900&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --gold: #6b7480;
+    --gold-light: #a3abb5;
+    --gold-deep: #3d434b;
+    --gold-dim: rgba(107,116,128,0.10);
+    --white: #1b1e22;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: 'Tajawal', sans-serif;
+    background: #f7f7f8;
+    color: var(--white);
+  }
+  .banner {
+    background: #fff3cd;
+    color: #6b5900;
+    font-size: 12px;
+    text-align: center;
+    padding: 8px 12px;
+    font-weight: 700;
+    border-bottom: 1px solid #f0e0a0;
+  }
+  header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 16px;
+    background: #fff;
+    border-bottom: 1px solid #eceef0;
+    position: sticky;
+    top: 0;
+    z-index: 5;
+  }
+  header h1 { font-size: 18px; margin: 0; font-weight: 900; }
+  .section { padding: 18px 16px 4px; }
+  .section-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    margin-bottom: 10px;
+  }
+  .section-head h2 { font-size: 16px; margin: 0; font-weight: 900; }
+  .see-all {
+    font-size: 13px;
+    color: var(--gold);
+    font-weight: 700;
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 0;
+  }
+  .row {
+    display: flex;
+    gap: 10px;
+    overflow-x: auto;
+    padding-bottom: 10px;
+    scroll-snap-type: x proximity;
+    -webkit-overflow-scrolling: touch;
+  }
+  .row::-webkit-scrollbar { display: none; }
+  .card {
+    position: relative;
+    flex: 0 0 150px;
+    height: 190px;
+    border-radius: 14px;
+    overflow: hidden;
+    scroll-snap-align: start;
+    cursor: pointer;
+    border: 1px solid #eceef0;
+  }
+  .card img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .card .label {
+    position: absolute;
+    bottom: 0; right: 0; left: 0;
+    background: linear-gradient(to top, rgba(0,0,0,0.65), transparent);
+    color: #fff;
+    font-size: 12px;
+    font-weight: 700;
+    padding: 20px 8px 8px;
+  }
+  .grid {
+    display: none;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+    padding: 4px 0 10px;
+  }
+  .grid.open { display: grid; }
+  .grid .card { flex: unset; width: 100%; height: 160px; }
+  .row.hidden { display: none; }
+  .placeholder-note {
+    font-size: 11px;
+    color: #9aa0a8;
+    padding: 0 4px 4px;
+  }
+  /* lightbox */
+  .lightbox {
+    position: fixed; inset: 0; background: rgba(0,0,0,0.85);
+    display: none; align-items: center; justify-content: center;
+    z-index: 50; padding: 20px;
+  }
+  .lightbox.open { display: flex; }
+  .lightbox-inner {
+    background: #fff; border-radius: 16px; overflow: hidden;
+    max-width: 380px; width: 100%;
+  }
+  .lightbox-inner img { width: 100%; height: 260px; object-fit: cover; display: block; }
+  .lightbox-body { padding: 16px; }
+  .lightbox-body h3 { margin: 0 0 4px; font-size: 16px; font-weight: 900; }
+  .lightbox-body p { margin: 0 0 14px; font-size: 12.5px; color: #6b7480; }
+  .use-style-btn {
+    width: 100%; background: var(--gold); color: #fff; border: none;
+    padding: 13px; border-radius: 10px; font-size: 14px; font-weight: 800;
+    cursor: pointer; font-family: 'Tajawal', sans-serif;
+  }
+  .close-lightbox {
+    width: 100%; background: transparent; border: 1px solid #dfe2e6; color: #767d86;
+    padding: 10px; border-radius: 10px; font-size: 13px; cursor: pointer;
+    margin-top: 8px; font-family: 'Tajawal', sans-serif;
+  }
+  .toast {
+    position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%);
+    background: var(--white); color: #fff; padding: 10px 18px; border-radius: 10px;
+    font-size: 13px; z-index: 60; opacity: 0; transition: opacity 0.25s;
+    max-width: calc(100vw - 32px); text-align: center;
+  }
+  .toast.show { opacity: 1; }
+  .gen-status {
+    font-size: 12.5px;
+    color: #6b7480;
+    margin-bottom: 10px;
+    min-height: 16px;
+  }
+  .gen-status.error { color: #b3261e; }
+  .gen-result-wrap { margin-bottom: 10px; }
+  .gen-result-wrap img {
+    width: 100%; border-radius: 10px; display: block; margin-bottom: 4px;
+  }
+  .gen-result-label {
+    font-size: 11px; color: #9aa0a8; margin-bottom: 8px;
+  }
+  .reset-btn {
+    width: 100%; background: transparent; border: 1px solid var(--gold); color: var(--gold);
+    padding: 10px; border-radius: 10px; font-size: 13px; cursor: pointer;
+    margin-top: 8px; font-family: 'Tajawal', sans-serif; font-weight: 700;
+  }
+</style>
+</head>
+<body>
+
+  <div class="banner">صفحة تجربة داخلية — المعرض والتصنيفات للتجربة فقط، بس زر "استخدام هذا الستايل" بيستدعي التوليد الفعلي بالـAI على صورة غرفتك (لازم تكوني مسجلة دخول بهذا المتصفح). بدون خصم رصيد.</div>
+
+  <header>
+    <span style="font-size:20px;">‹</span>
+    <h1>إلهام التصميم</h1>
+  </header>
+
+  <div class="section" data-cat="living">
+    <div class="section-head">
+      <h2>غرفة الجلوس</h2>
+      <button class="see-all" data-target="living">عرض الكل »</button>
+    </div>
+    <div class="row" id="row-living">
+      <div class="card" data-img="assets/hero-bg/pair7-after.jpg" data-name="حديث ودافئ">
+        <img src="assets/hero-bg/pair7-after.jpg" alt="">
+        <div class="label">حديث ودافئ</div>
+      </div>
+      <div class="card" data-img="assets/hero-bg/pair2-after.jpg" data-name="فخم وغامق">
+        <img src="assets/hero-bg/pair2-after.jpg" alt="">
+        <div class="label">فخم وغامق</div>
+      </div>
+      <div class="card" data-img="assets/hero-bg/pair7-after.jpg" data-name="مريح وعائلي">
+        <img src="assets/hero-bg/pair7-after.jpg" alt="">
+        <div class="label">مريح وعائلي</div>
+      </div>
+      <div class="card" data-img="assets/hero-bg/pair2-after.jpg" data-name="مكتبي هادئ">
+        <img src="assets/hero-bg/pair2-after.jpg" alt="">
+        <div class="label">مكتبي هادئ</div>
+      </div>
+      <div class="card" data-img="assets/inspiration/living-dark-lounge.jpg" data-name="غامق ومريح">
+        <img src="assets/inspiration/living-dark-lounge.jpg" alt="">
+        <div class="label">غامق ومريح</div>
+      </div>
+      <div class="card" data-img="assets/inspiration/living-blue-eclectic.jpg" data-name="أزرق منفتح">
+        <img src="assets/inspiration/living-blue-eclectic.jpg" alt="">
+        <div class="label">أزرق منفتح</div>
+      </div>
+      <div class="card" data-img="assets/inspiration/living-gold-classic.jpg" data-name="فاخر كلاسيك">
+        <img src="assets/inspiration/living-gold-classic.jpg" alt="">
+        <div class="label">فاخر كلاسيك</div>
+      </div>
+      <div class="card" data-img="assets/inspiration/living-teal-glam.jpg" data-name="أخضر غامق فاخر">
+        <img src="assets/inspiration/living-teal-glam.jpg" alt="">
+        <div class="label">أخضر غامق فاخر</div>
+      </div>
+    </div>
+    <div class="grid" id="grid-living"></div>
+    <div class="placeholder-note">* 6 أنماط حقيقية مختلفة الآن، بدون تكرار</div>
+  </div>
+
+  <div class="section" data-cat="bedroom">
+    <div class="section-head">
+      <h2>غرفة النوم</h2>
+      <button class="see-all" data-target="bedroom">عرض الكل »</button>
+    </div>
+    <div class="row" id="row-bedroom">
+      <div class="card" data-img="assets/hero-bg/pair1-after.jpg" data-name="وردي ريفي">
+        <img src="assets/hero-bg/pair1-after.jpg" alt="">
+        <div class="label">وردي ريفي</div>
+      </div>
+      <div class="card" data-img="assets/inspiration/bedroom-warm-luxury.jpg" data-name="فاخر دافئ">
+        <img src="assets/inspiration/bedroom-warm-luxury.jpg" alt="">
+        <div class="label">فاخر دافئ</div>
+      </div>
+      <div class="card" data-img="assets/inspiration/bedroom-modern-luxury.jpg" data-name="فاخر مودرن">
+        <img src="assets/inspiration/bedroom-modern-luxury.jpg" alt="">
+        <div class="label">فاخر مودرن</div>
+      </div>
+      <div class="card" data-img="assets/inspiration/bedroom-industrial-warm.jpg" data-name="صناعي دافئ">
+        <img src="assets/inspiration/bedroom-industrial-warm.jpg" alt="">
+        <div class="label">صناعي دافئ</div>
+      </div>
+    </div>
+    <div class="grid" id="grid-bedroom"></div>
+    <div class="placeholder-note">* 4 أنماط حقيقية مختلفة الآن، بدون تكرار</div>
+  </div>
+
+  <div class="section" data-cat="kitchen">
+    <div class="section-head">
+      <h2>المطبخ</h2>
+      <button class="see-all" data-target="kitchen">عرض الكل »</button>
+    </div>
+    <div class="row" id="row-kitchen">
+      <div class="card" data-img="assets/inspiration/kitchen-modern-dark.jpg" data-name="غامق وموزاييك">
+        <img src="assets/inspiration/kitchen-modern-dark.jpg" alt="">
+        <div class="label">غامق وموزاييك</div>
+      </div>
+      <div class="card" data-img="assets/inspiration/kitchen-black-gold.jpg" data-name="أسود وذهبي">
+        <img src="assets/inspiration/kitchen-black-gold.jpg" alt="">
+        <div class="label">أسود وذهبي</div>
+      </div>
+      <div class="card" data-img="assets/inspiration/kitchen-wood-classic.jpg" data-name="خشبي كلاسيك">
+        <img src="assets/inspiration/kitchen-wood-classic.jpg" alt="">
+        <div class="label">خشبي كلاسيك</div>
+      </div>
+      <div class="card" data-img="assets/inspiration/kitchen-navy-modern.jpg" data-name="كحلي مودرن">
+        <img src="assets/inspiration/kitchen-navy-modern.jpg" alt="">
+        <div class="label">كحلي مودرن</div>
+      </div>
+      <div class="card" data-img="assets/inspiration/kitchen-navy-classic.jpg" data-name="كحلي كلاسيك">
+        <img src="assets/inspiration/kitchen-navy-classic.jpg" alt="">
+        <div class="label">كحلي كلاسيك</div>
+      </div>
+    </div>
+    <div class="grid" id="grid-kitchen"></div>
+    <div class="placeholder-note">* 5 أنماط حقيقية مختلفة، بدون تكرار</div>
+  </div>
+
+  <div style="height:30px;"></div>
+
+  <div class="lightbox" id="lightbox">
+    <div class="lightbox-inner">
+      <img id="lightboxImg" src="" alt="">
+      <div class="lightbox-body">
+        <h3 id="lightboxName"></h3>
+        <p id="lightboxHint">اختاري صورة غرفتك الحقيقية ليتم تطبيق هذا النمط عليها فعليًا بالـAI — تجربة حقيقية وليست محاكاة بصرية فقط</p>
+        <input type="file" id="roomFileInput" accept="image/*" style="display:none;">
+        <div class="gen-result-wrap" id="genResultWrap" style="display:none;">
+          <img id="genResultImg" src="" alt="">
+          <div class="gen-result-label">النتيجة (فوق) — صورة غرفتك الأصلية (تحت)</div>
+          <img id="genOriginalImg" src="" alt="">
+        </div>
+        <div class="gen-status" id="genStatus"></div>
+        <button class="use-style-btn" id="useStyleBtn">استخدام هذا الستايل</button>
+        <button class="reset-btn" id="resetBtn" style="display:none;">جرّب صورة تانية</button>
+        <button class="close-lightbox" id="closeLightboxBtn">إغلاق</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+<script>
+  function buildGrid(cat) {
+    var row = document.getElementById('row-' + cat);
+    var grid = document.getElementById('grid-' + cat);
+    if (grid.dataset.built) return;
+    var cards = row.querySelectorAll('.card');
+    // Simulate a fuller grid by repeating the row's cards a couple of times.
+    var html = '';
+    for (var rep = 0; rep < 3; rep++) {
+      cards.forEach(function (c) {
+        html += c.outerHTML;
+      });
+    }
+    grid.innerHTML = html;
+    grid.dataset.built = '1';
+  }
+
+  document.querySelectorAll('.see-all').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      var cat = btn.dataset.target;
+      var row = document.getElementById('row-' + cat);
+      var grid = document.getElementById('grid-' + cat);
+      var opening = !grid.classList.contains('open');
+      if (opening) {
+        buildGrid(cat);
+        grid.classList.add('open');
+        row.classList.add('hidden');
+        btn.textContent = 'إخفاء «';
+      } else {
+        grid.classList.remove('open');
+        row.classList.remove('hidden');
+        btn.textContent = 'عرض الكل »';
+      }
+    });
+  });
+
+  var lightbox = document.getElementById('lightbox');
+  var lightboxImg = document.getElementById('lightboxImg');
+  var lightboxName = document.getElementById('lightboxName');
+  var useStyleBtn = document.getElementById('useStyleBtn');
+  var resetBtn = document.getElementById('resetBtn');
+  var roomFileInput = document.getElementById('roomFileInput');
+  var genStatus = document.getElementById('genStatus');
+  var genResultWrap = document.getElementById('genResultWrap');
+  var genResultImg = document.getElementById('genResultImg');
+  var genOriginalImg = document.getElementById('genOriginalImg');
+
+  var currentStyleUrl = '';
+  var busy = false;
+
+  function resetLightboxState() {
+    genResultWrap.style.display = 'none';
+    genStatus.textContent = '';
+    genStatus.classList.remove('error');
+    useStyleBtn.style.display = 'block';
+    useStyleBtn.disabled = false;
+    useStyleBtn.textContent = 'استخدام هذا الستايل';
+    resetBtn.style.display = 'none';
+    busy = false;
+  }
+
+  document.body.addEventListener('click', function (e) {
+    var card = e.target.closest('.card');
+    if (!card) return;
+    lightboxImg.src = card.dataset.img;
+    lightboxName.textContent = card.dataset.name;
+    currentStyleUrl = new URL(card.dataset.img, window.location.origin).href;
+    resetLightboxState();
+    lightbox.classList.add('open');
+  });
+
+  document.getElementById('closeLightboxBtn').addEventListener('click', function () {
+    lightbox.classList.remove('open');
+  });
+
+  useStyleBtn.addEventListener('click', function () {
+    if (busy) return;
+    roomFileInput.value = '';
+    roomFileInput.click();
+  });
+
+  resetBtn.addEventListener('click', function () {
+    resetLightboxState();
+  });
+
+  roomFileInput.addEventListener('change', function () {
+    var file = roomFileInput.files && roomFileInput.files[0];
+    if (!file) return;
+    var reader = new FileReader();
+    reader.onload = function () {
+      runRealGeneration(reader.result, file.type || 'image/jpeg');
+    };
+    reader.onerror = function () {
+      setStatus('تعذّرت قراءة الصورة، جربي صورة تانية', true);
+    };
+    reader.readAsDataURL(file);
+  });
+
+  function setStatus(msg, isError) {
+    genStatus.textContent = msg;
+    genStatus.classList.toggle('error', !!isError);
+  }
+
+  function setBusy(isBusy, btnLabel) {
+    busy = isBusy;
+    useStyleBtn.disabled = isBusy;
+    if (btnLabel) useStyleBtn.textContent = btnLabel;
+  }
+
+  async function runRealGeneration(dataUrl, mimeType) {
+    setBusy(true, 'جاري المعالجة...');
+    genResultWrap.style.display = 'none';
+    resetBtn.style.display = 'none';
+    try {
+      setStatus('جاري رفع صورة غرفتك...');
+      var uploadRes = await fetch('/api/upload', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ image_data: dataUrl, mime_type: mimeType })
+      });
+      var uploadData = await uploadRes.json();
+      if (!uploadRes.ok || !uploadData.url) {
+        throw new Error(uploadData.error || 'فشل رفع الصورة');
+      }
+      var roomImageUrl = uploadData.url;
+
+      setStatus('جاري تطبيق النمط بالـAI... قد يستغرق حتى 30 ثانية');
+      var prompt = 'Redesign the interior of the room in the first image so its overall style, ' +
+        'color palette, materials, furniture, and decor look match the second reference image as ' +
+        'closely as possible. Keep the room structure exactly identical: same walls, same doors, ' +
+        'same windows, same positions and sizes. Do not add, remove, move, or resize any wall, ' +
+        'door, or window. Only change decor, furniture, wall colors, flooring, and lighting to match ' +
+        'the reference style.';
+
+      var genRes = await fetch('/api/generate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          prompt: prompt,
+          image_url: roomImageUrl,
+          reference_image_url: currentStyleUrl
+        })
+      });
+      var genData = await genRes.json();
+      if (genRes.status === 401) {
+        throw new Error('يلزم تسجيل الدخول بهذا المتصفح أولاً، ثم إعادة المحاولة');
+      }
+      if (!genRes.ok || !genData.requests || !genData.requests[0]) {
+        throw new Error(genData.error || 'فشل بدء التوليد');
+      }
+      var requestId = genData.requests[0].request_id;
+      var model = genData.requests[0].model || 'nano';
+
+      var resultUrl = await pollForResult(requestId, model);
+      genOriginalImg.src = roomImageUrl;
+      genResultImg.src = resultUrl;
+      genResultWrap.style.display = 'block';
+      setStatus('جاهز — قارني النتيجة مع صورتك الأصلية');
+      useStyleBtn.style.display = 'none';
+      resetBtn.style.display = 'block';
+      busy = false;
+    } catch (err) {
+      setStatus('خطأ: ' + err.message, true);
+      setBusy(false, 'أعد المحاولة');
+    }
+  }
+
+  async function pollForResult(requestId, model) {
+    var maxAttempts = 20;
+    for (var i = 0; i < maxAttempts; i++) {
+      await new Promise(function (r) { setTimeout(r, 3000); });
+      var statusRes = await fetch('/api/status?request_id=' + encodeURIComponent(requestId) + '&model=' + model);
+      var statusData = await statusRes.json();
+      if (statusData.status === 'COMPLETED') {
+        var resultRes = await fetch('/api/status?request_id=' + encodeURIComponent(requestId) + '&model=' + model + '&mode=result');
+        var resultData = await resultRes.json();
+        var url = extractResultImage(resultData);
+        if (!url) throw new Error('لم يتم إيجاد صورة بالنتيجة');
+        return url;
+      }
+      if (statusData.status === 'FAILED' || statusData.status === 'ERROR') {
+        throw new Error('فشل التوليد من طرف fal.ai');
+      }
+    }
+    throw new Error('استغرق التوليد وقتًا أطول من المتوقع، جربي مرة تانية');
+  }
+
+  function extractResultImage(data) {
+    if (data.images && data.images[0] && data.images[0].url) return data.images[0].url;
+    if (data.image && data.image.url) return data.image.url;
+    if (data.output && data.output.images && data.output.images[0]) return data.output.images[0].url || data.output.images[0];
+    if (data.response && data.response.images && data.response.images[0]) return data.response.images[0].url || data.response.images[0];
+    if (data.data && data.data.images && data.data.images[0]) return data.data.images[0].url || data.data.images[0];
+    return null;
+  }
+
+  function showToast(msg) {
+    var t = document.getElementById('toast');
+    t.textContent = msg;
+    t.classList.add('show');
+    setTimeout(function () { t.classList.remove('show'); }, 2600);
+  }
+</script>
+</body>
+</html>

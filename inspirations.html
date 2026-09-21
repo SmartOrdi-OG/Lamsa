@@ -1,0 +1,761 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="color-scheme" content="light">
+<script>
+  // Fast, optimistic auth check to avoid a flash of the app before
+  // redirecting — mirrors rearrange.html. Not security-relevant on its
+  // own; the real check is checkAuth() (calls /api/me) below.
+  (function() {
+    try {
+      var user = JSON.parse(localStorage.getItem('lamsa_user') || 'null');
+      if (!user || !user.loggedIn) window.location.replace('lamsa-auth.html');
+    } catch (e) {
+      window.location.replace('lamsa-auth.html');
+    }
+  })();
+</script>
+<title>Inspirations Gallery | Lamsa</title>
+<link rel="icon" type="image/png" sizes="32x32" href="assets/favicon-32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="assets/favicon-16.png">
+<link rel="apple-touch-icon" sizes="180x180" href="assets/apple-touch-icon.png">
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#f6f7f8">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Lamsa">
+<link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;700;900&family=Playfair+Display:wght@400;700&display=swap" rel="stylesheet">
+<script src="js/icons.js"></script>
+<script>
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', function () { navigator.serviceWorker.register('sw.js').catch(function () {}); });
+  }
+</script>
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<script>
+  var isTelegramMiniApp = false;
+  try {
+    var tg = window.Telegram && window.Telegram.WebApp;
+    if (tg) {
+      isTelegramMiniApp = true;
+      tg.ready();
+      tg.expand();
+      if (tg.disableVerticalSwipes) tg.disableVerticalSwipes();
+      if (tg.setHeaderColor) tg.setHeaderColor('#f6f7f8');
+      if (tg.setBackgroundColor) tg.setBackgroundColor('#f6f7f8');
+    }
+  } catch (e) {}
+</script>
+<style>
+  .icon-svg { width: 1.15em; height: 1.15em; vertical-align: -0.18em; display: inline-block; flex-shrink: 0; }
+  :root {
+    color-scheme: light;
+    --black: #f6f7f8;
+    --dark: #edeff1;
+    --card: #ffffff;
+    --card-2: #fbfbfc;
+    --border: #dfe2e6;
+    --border-soft: rgba(107,116,128,0.24);
+    --gold: #6b7480;
+    --gold-light: #a3abb5;
+    --gold-deep: #3d434b;
+    --gold-dim: rgba(107,116,128,0.10);
+    --white: #1b1e22;
+    --gray: #767d86;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body { overscroll-behavior: none; }
+  body { font-family: 'Tajawal', sans-serif; background: var(--black); color: var(--white); min-height: 100vh; }
+  ::-webkit-scrollbar { width: 4px; }
+  ::-webkit-scrollbar-track { background: var(--dark); }
+  ::-webkit-scrollbar-thumb { background: var(--gold); border-radius: 2px; }
+
+  @keyframes shine-sweep { 0%, 25% { left: -40%; } 70%, 100% { left: 130%; } }
+
+  nav {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+    padding: 12px 16px;
+    display: flex; justify-content: space-between; align-items: center;
+    background: rgba(255,255,255,0.85);
+    backdrop-filter: blur(20px);
+    border-bottom: 1px solid var(--border);
+  }
+  .logo { display: flex; align-items: center; gap: 10px; text-decoration: none; color: var(--white); }
+  .logo-icon { width: 36px; height: 36px; border: 1.5px solid var(--gold); border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 16px; }
+  .logo-text { font-size: 19px; font-weight: 900; letter-spacing: 1px; }
+  .back-link { color: var(--gray); text-decoration: none; font-size: 13px; font-weight: 700; transition: color 0.2s; display: flex; align-items: center; gap: 4px; }
+  .back-link:hover { color: var(--gold); }
+  .nav-right { display: flex; align-items: center; gap: 10px; }
+  .nav-logout {
+    background: transparent; border: 1px solid var(--border); color: var(--gray);
+    padding: 6px 10px; border-radius: 6px; font-size: 12px; font-weight: 700;
+    font-family: 'Tajawal', sans-serif; cursor: pointer; white-space: nowrap; transition: all 0.2s;
+  }
+  .nav-logout:hover { border-color: var(--gold); color: var(--gold); }
+
+  .wrap { max-width: 640px; margin: 0 auto; padding: 96px 16px 60px; }
+  .hero { text-align: center; margin-bottom: 8px; }
+  h1 { font-size: clamp(24px, 6vw, 32px); font-weight: 900; margin-bottom: 8px; }
+  .sub { color: var(--gray); font-size: 13.5px; text-align: center; line-height: 1.6; margin-bottom: 6px; }
+  #creditsBadge { text-align: center; margin: 4px 0 22px; font-size: 12px; color: var(--gold); }
+
+  .cat-section { margin-bottom: 28px; }
+  .cat-head { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 10px; }
+  .cat-head h2 { font-size: 16px; font-weight: 900; margin: 0; }
+  .see-all { font-size: 12.5px; color: var(--gold); font-weight: 700; background: none; border: none; cursor: pointer; padding: 0; font-family: 'Tajawal', sans-serif; }
+
+  .cat-row { display: flex; gap: 10px; overflow-x: auto; padding-bottom: 8px; scroll-snap-type: x proximity; -webkit-overflow-scrolling: touch; }
+  .cat-row::-webkit-scrollbar { display: none; }
+  .style-card {
+    position: relative; flex: 0 0 150px; height: 190px; border-radius: 14px;
+    overflow: hidden; scroll-snap-align: start; cursor: pointer; border: 1px solid var(--border);
+  }
+  .cat-grid.open ~ .cat-row, .cat-row.hidden { display: none; }
+  .cat-grid { display: none; grid-template-columns: repeat(2, 1fr); gap: 10px; }
+  .cat-grid.open { display: grid; }
+  .cat-grid .style-card { flex: unset; width: 100%; height: 160px; }
+  .style-card img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .style-card .label {
+    position: absolute; bottom: 0; right: 0; left: 0;
+    background: linear-gradient(to top, rgba(0,0,0,0.65), transparent);
+    color: #fff; font-size: 12px; font-weight: 700; padding: 20px 8px 8px;
+  }
+
+  .lightbox { position: fixed; inset: 0; background: rgba(0,0,0,0.85); display: none; align-items: center; justify-content: center; z-index: 9998; padding: 20px; }
+  .lightbox.open { display: flex; }
+  .lightbox-inner { background: var(--card); border-radius: 18px; overflow: hidden; max-width: 420px; width: 100%; max-height: 92vh; overflow-y: auto; }
+  .lightbox-inner img.style-photo { width: 100%; height: 240px; object-fit: cover; display: block; }
+  .lightbox-body { padding: 20px; }
+  .lightbox-body h3 { margin: 0 0 4px; font-size: 17px; font-weight: 900; }
+  .lightbox-body p { margin: 0 0 16px; font-size: 12.5px; color: var(--gray); line-height: 1.5; }
+
+  .use-style-btn {
+    width: 100%; position: relative; overflow: hidden;
+    background: linear-gradient(135deg, #eef0f2 0%, var(--gold-light) 16%, var(--gold) 42%, var(--gold-deep) 65%, var(--gold) 84%, #eef0f2 100%);
+    color: var(--card); text-shadow: 0 1px 2px rgba(0,0,0,0.25);
+    border: none; padding: 15px; border-radius: 12px; font-family: 'Tajawal', sans-serif;
+    font-size: 14.5px; font-weight: 900; cursor: pointer; transition: all 0.3s;
+    box-shadow: 0 16px 34px -8px rgba(61,67,75,0.5), inset 0 1px 0 rgba(255,255,255,0.55);
+  }
+  .use-style-btn::after {
+    content: ''; position: absolute; top: -80%; left: -40%; width: 20%; height: 260%;
+    background: linear-gradient(120deg, transparent, rgba(255,255,255,0.95), transparent);
+    transform: rotate(22deg); animation: shine-sweep 2.6s ease-in-out infinite; animation-delay: 0.6s; pointer-events: none;
+  }
+  .use-style-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+  .use-style-btn:disabled::after { display: none; }
+  .close-lightbox, .reset-btn {
+    width: 100%; background: transparent; border: 1px solid var(--border); color: var(--gray);
+    padding: 11px; border-radius: 10px; font-size: 13px; cursor: pointer; margin-top: 8px; font-family: 'Tajawal', sans-serif;
+  }
+  .reset-btn { border-color: var(--gold); color: var(--gold); font-weight: 700; }
+
+  .gen-status { font-size: 12.5px; color: var(--gray); margin-bottom: 10px; min-height: 16px; line-height: 1.5; }
+  .gen-status.error { color: #b3261e; }
+  .loading-dots { display: none; justify-content: center; gap: 8px; margin: 6px 0 10px; }
+  .loading-dots.show { display: flex; }
+  .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--gold); animation: bounce 1.4s infinite ease-in-out both; }
+  .dot:nth-child(1) { animation-delay: -0.32s; }
+  .dot:nth-child(2) { animation-delay: -0.16s; }
+  @keyframes bounce { 0%, 80%, 100% { transform: scale(0); opacity: 0.3; } 40% { transform: scale(1); opacity: 1; } }
+
+  .gen-result-wrap { margin-bottom: 10px; }
+  .gen-result-wrap img { width: 100%; border-radius: 10px; border: 1px solid var(--border); display: block; margin-bottom: 4px; }
+  .gen-result-label { font-size: 11px; color: var(--gray); margin: 0 0 8px; }
+</style>
+</head>
+<body>
+
+<nav>
+  <a class="logo" href="lamsa-bilingual.html">
+    <div class="logo-icon"><img src="assets/logo-mark.png" alt="" style="max-width:75%;max-height:75%;object-fit:contain;"></div>
+    <div class="logo-text">LAMSA</div>
+  </a>
+  <div class="nav-right">
+    <a class="back-link" href="lamsa-bilingual.html"><svg class="icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M11 6l-6 6 6 6"/></svg> Full Designer</a>
+    <button type="button" class="nav-logout" onclick="logout()">Log Out</button>
+  </div>
+</nav>
+
+<div class="wrap">
+  <div class="hero">
+    <h1><svg class="icon-svg" viewBox="0 0 24 24"><path d="M12 3l1.4 4 4 1.4-4 1.4L12 14l-1.4-4.2-4-1.4 4-1.4L12 3z" fill="currentColor" stroke="none"/><path d="M19 15l.8 2.2L22 18l-2.2.8L19 21l-.8-2.2L16 18l2.2-.8L19 15z" fill="currentColor" stroke="none"/></svg> Inspirations Gallery</h1>
+    <p class="sub">Browse real interior styles, then apply one directly to a photo of your own room.</p>
+  </div>
+  <div id="creditsBadge"></div>
+
+  <div class="cat-section" data-cat="living">
+    <div class="cat-head">
+      <h2>Living Room</h2>
+      <button class="see-all" data-target="living">See all »</button>
+    </div>
+    <div class="cat-row" id="row-living">
+      <div class="style-card" data-img="assets/hero-bg/pair7-after.jpg" data-name="Modern &amp; Warm">
+        <img src="assets/hero-bg/pair7-after.jpg" alt="Modern and warm living room">
+        <div class="label">Modern &amp; Warm</div>
+      </div>
+      <div class="style-card" data-img="assets/hero-bg/pair2-after.jpg" data-name="Dark &amp; Moody">
+        <img src="assets/hero-bg/pair2-after.jpg" alt="Dark and moody living room">
+        <div class="label">Dark &amp; Moody</div>
+      </div>
+      <div class="style-card" data-img="assets/inspiration/living-dark-lounge.jpg" data-name="Cozy Lounge">
+        <img src="assets/inspiration/living-dark-lounge.jpg" alt="Cozy dark lounge living room">
+        <div class="label">Cozy Lounge</div>
+      </div>
+      <div class="style-card" data-img="assets/inspiration/living-blue-eclectic.jpg" data-name="Open &amp; Bright">
+        <img src="assets/inspiration/living-blue-eclectic.jpg" alt="Bright blue eclectic living room">
+        <div class="label">Open &amp; Bright</div>
+      </div>
+      <div class="style-card" data-img="assets/inspiration/living-gold-classic.jpg" data-name="Classic Luxury">
+        <img src="assets/inspiration/living-gold-classic.jpg" alt="Gold classic luxury living room">
+        <div class="label">Classic Luxury</div>
+      </div>
+      <div class="style-card" data-img="assets/inspiration/living-teal-glam.jpg" data-name="Deep Green Glam">
+        <img src="assets/inspiration/living-teal-glam.jpg" alt="Deep green glam living room">
+        <div class="label">Deep Green Glam</div>
+      </div>
+    </div>
+    <div class="cat-grid" id="grid-living"></div>
+  </div>
+
+  <div class="cat-section" data-cat="bedroom">
+    <div class="cat-head">
+      <h2>Bedroom</h2>
+      <button class="see-all" data-target="bedroom">See all »</button>
+    </div>
+    <div class="cat-row" id="row-bedroom">
+      <div class="style-card" data-img="assets/hero-bg/pair1-after.jpg" data-name="Rustic Pink">
+        <img src="assets/hero-bg/pair1-after.jpg" alt="Rustic pink bedroom">
+        <div class="label">Rustic Pink</div>
+      </div>
+      <div class="style-card" data-img="assets/inspiration/bedroom-warm-luxury.jpg" data-name="Warm Luxury">
+        <img src="assets/inspiration/bedroom-warm-luxury.jpg" alt="Warm luxury bedroom">
+        <div class="label">Warm Luxury</div>
+      </div>
+      <div class="style-card" data-img="assets/inspiration/bedroom-modern-luxury.jpg" data-name="Modern Luxury">
+        <img src="assets/inspiration/bedroom-modern-luxury.jpg" alt="Modern luxury bedroom">
+        <div class="label">Modern Luxury</div>
+      </div>
+      <div class="style-card" data-img="assets/inspiration/bedroom-industrial-warm.jpg" data-name="Warm Industrial">
+        <img src="assets/inspiration/bedroom-industrial-warm.jpg" alt="Warm industrial bedroom">
+        <div class="label">Warm Industrial</div>
+      </div>
+    </div>
+    <div class="cat-grid" id="grid-bedroom"></div>
+  </div>
+
+  <div class="cat-section" data-cat="kitchen">
+    <div class="cat-head">
+      <h2>Kitchen</h2>
+      <button class="see-all" data-target="kitchen">See all »</button>
+    </div>
+    <div class="cat-row" id="row-kitchen">
+      <div class="style-card" data-img="assets/inspiration/kitchen-modern-dark.jpg" data-name="Dark &amp; Patterned">
+        <img src="assets/inspiration/kitchen-modern-dark.jpg" alt="Dark patterned kitchen">
+        <div class="label">Dark &amp; Patterned</div>
+      </div>
+      <div class="style-card" data-img="assets/inspiration/kitchen-black-gold.jpg" data-name="Black &amp; Gold">
+        <img src="assets/inspiration/kitchen-black-gold.jpg" alt="Black and gold kitchen">
+        <div class="label">Black &amp; Gold</div>
+      </div>
+      <div class="style-card" data-img="assets/inspiration/kitchen-wood-classic.jpg" data-name="Classic Wood">
+        <img src="assets/inspiration/kitchen-wood-classic.jpg" alt="Classic wood kitchen">
+        <div class="label">Classic Wood</div>
+      </div>
+      <div class="style-card" data-img="assets/inspiration/kitchen-navy-modern.jpg" data-name="Modern Navy">
+        <img src="assets/inspiration/kitchen-navy-modern.jpg" alt="Modern navy kitchen">
+        <div class="label">Modern Navy</div>
+      </div>
+      <div class="style-card" data-img="assets/inspiration/kitchen-navy-classic.jpg" data-name="Classic Navy">
+        <img src="assets/inspiration/kitchen-navy-classic.jpg" alt="Classic navy kitchen">
+        <div class="label">Classic Navy</div>
+      </div>
+    </div>
+    <div class="cat-grid" id="grid-kitchen"></div>
+  </div>
+</div>
+
+<div class="lightbox" id="lightbox">
+  <div class="lightbox-inner">
+    <img class="style-photo" id="lightboxImg" src="" alt="">
+    <div class="lightbox-body">
+      <h3 id="lightboxName"></h3>
+      <p>Pick a photo of your own room and Lamsa's AI will apply this style to it — same walls, doors and windows, new look. Uses 1 credit.</p>
+      <input type="file" id="roomFileInput" accept="image/*" style="display:none;">
+      <div class="gen-result-wrap" id="genResultWrap" style="display:none;">
+        <img id="genResultImg" src="" alt="Result">
+        <div class="gen-result-label">Result (top) vs. your original room photo (below)</div>
+        <img id="genOriginalImg" src="" alt="Original room">
+      </div>
+      <div class="loading-dots" id="loadingDots"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div>
+      <div class="gen-status" id="genStatus"></div>
+      <div id="downloadBtnWrap"></div>
+      <button class="use-style-btn" id="useStyleBtn">Use This Style</button>
+      <button class="reset-btn" id="resetBtn" style="display:none;">Try Another Photo</button>
+      <button class="close-lightbox" id="closeLightboxBtn">Close</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  // ===== category rows / grid / lightbox =====
+  function buildGrid(cat) {
+    var row = document.getElementById('row-' + cat);
+    var grid = document.getElementById('grid-' + cat);
+    if (grid.dataset.built) return;
+    grid.innerHTML = row.innerHTML;
+    grid.dataset.built = '1';
+  }
+
+  document.querySelectorAll('.see-all').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      var cat = btn.dataset.target;
+      var row = document.getElementById('row-' + cat);
+      var grid = document.getElementById('grid-' + cat);
+      var opening = !grid.classList.contains('open');
+      if (opening) {
+        buildGrid(cat);
+        grid.classList.add('open');
+        row.classList.add('hidden');
+        btn.textContent = 'Hide «';
+      } else {
+        grid.classList.remove('open');
+        row.classList.remove('hidden');
+        btn.textContent = 'See all »';
+      }
+    });
+  });
+
+  var lightbox = document.getElementById('lightbox');
+  var lightboxImg = document.getElementById('lightboxImg');
+  var lightboxName = document.getElementById('lightboxName');
+  var useStyleBtn = document.getElementById('useStyleBtn');
+  var resetBtn = document.getElementById('resetBtn');
+  var roomFileInput = document.getElementById('roomFileInput');
+  var genStatus = document.getElementById('genStatus');
+  var genResultWrap = document.getElementById('genResultWrap');
+  var genResultImg = document.getElementById('genResultImg');
+  var genOriginalImg = document.getElementById('genOriginalImg');
+  var loadingDots = document.getElementById('loadingDots');
+  var downloadBtnWrap = document.getElementById('downloadBtnWrap');
+
+  var currentStyleUrl = '';
+  var busy = false;
+
+  function resetLightboxState() {
+    genResultWrap.style.display = 'none';
+    downloadBtnWrap.innerHTML = '';
+    loadingDots.classList.remove('show');
+    genStatus.textContent = '';
+    genStatus.classList.remove('error');
+    useStyleBtn.style.display = 'block';
+    useStyleBtn.disabled = false;
+    useStyleBtn.textContent = 'Use This Style';
+    resetBtn.style.display = 'none';
+    busy = false;
+  }
+
+  document.body.addEventListener('click', function (e) {
+    var card = e.target.closest('.style-card');
+    if (!card) return;
+    lightboxImg.src = card.dataset.img;
+    lightboxName.textContent = card.dataset.name;
+    currentStyleUrl = new URL(card.dataset.img, window.location.origin).href;
+    resetLightboxState();
+    lightbox.classList.add('open');
+  });
+
+  document.getElementById('closeLightboxBtn').addEventListener('click', function () {
+    lightbox.classList.remove('open');
+  });
+
+  useStyleBtn.addEventListener('click', function () {
+    if (busy) return;
+    roomFileInput.value = '';
+    roomFileInput.click();
+  });
+
+  resetBtn.addEventListener('click', function () {
+    resetLightboxState();
+  });
+
+  roomFileInput.addEventListener('change', function () {
+    var file = roomFileInput.files && roomFileInput.files[0];
+    if (!file) return;
+    compressImage(file, 1536, 0.9, function (dataUrl) {
+      runStyleGeneration(dataUrl, 'image/jpeg');
+    });
+  });
+
+  function setStatus(msg, isError) {
+    genStatus.textContent = msg;
+    genStatus.classList.toggle('error', !!isError);
+  }
+
+  function setBusy(isBusy, btnLabel) {
+    busy = isBusy;
+    useStyleBtn.disabled = isBusy;
+    if (btnLabel) useStyleBtn.textContent = btnLabel;
+  }
+
+  function compressImage(file, maxSize, quality, callback) {
+    var img = new Image();
+    var objUrl = URL.createObjectURL(file);
+    img.onload = function () {
+      URL.revokeObjectURL(objUrl);
+      var w = img.width, h = img.height;
+      if (w > maxSize || h > maxSize) {
+        if (w > h) { h = Math.round(h * maxSize / w); w = maxSize; }
+        else { w = Math.round(w * maxSize / h); h = maxSize; }
+      }
+      var canvas = document.createElement('canvas');
+      canvas.width = w; canvas.height = h;
+      canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+      callback(canvas.toDataURL('image/jpeg', quality));
+    };
+    img.onerror = function () {
+      URL.revokeObjectURL(objUrl);
+      var fr = new FileReader();
+      fr.onload = function (e) { callback(e.target.result); };
+      fr.readAsDataURL(file);
+    };
+    img.src = objUrl;
+  }
+
+  var POLL_INTERVAL_MS = 3000;
+  var POLL_TIMEOUT_MS = 2 * 60 * 1000;
+
+  function fetchJson(url, opts) {
+    return fetch(url, opts).then(function (res) {
+      return res.json().then(function (data) { return { ok: res.ok, status: res.status, data: data }; });
+    });
+  }
+
+  function extractResultImages(data) {
+    if (!data) return null;
+    if (Array.isArray(data.images) && data.images.length) return data.images;
+    if (data.image && data.image.url) return [data.image];
+    if (data.output && Array.isArray(data.output.images) && data.output.images.length) return data.output.images;
+    if (data.response && Array.isArray(data.response.images) && data.response.images.length) return data.response.images;
+    if (data.data && Array.isArray(data.data.images) && data.data.images.length) return data.data.images;
+    return null;
+  }
+
+  function pollForResult(requestId, model, startTime) {
+    return new Promise(function (resolve) {
+      function tick() {
+        var elapsed = Date.now() - startTime;
+        if (elapsed >= POLL_TIMEOUT_MS) {
+          setStatus('This is taking longer than expected. Please try again.', true);
+          resolve(null);
+          return;
+        }
+        fetchJson('/api/status?request_id=' + encodeURIComponent(requestId) + '&model=' + encodeURIComponent(model))
+          .then(function (result) {
+            if (!result.ok) {
+              setStatus('Error generating image. Please try again.', true);
+              resolve(null);
+              return;
+            }
+            var status = (result.data.status || '').toString().toUpperCase();
+            if (status === 'COMPLETED') {
+              fetchJson('/api/status?request_id=' + encodeURIComponent(requestId) + '&model=' + encodeURIComponent(model) + '&mode=result')
+                .then(function (resultResp) {
+                  if (!resultResp.ok) {
+                    setStatus('Error generating image. Please try again.', true);
+                    resolve(null);
+                    return;
+                  }
+                  var images = extractResultImages(resultResp.data);
+                  resolve(images && images.length ? images[0] : null);
+                })
+                .catch(function () {
+                  setStatus('Connection error. Please try again.', true);
+                  resolve(null);
+                });
+            } else if (status === 'FAILED' || status === 'ERROR') {
+              setStatus('Generation failed. Please try again.', true);
+              resolve(null);
+            } else {
+              setTimeout(tick, POLL_INTERVAL_MS);
+            }
+          })
+          .catch(function () {
+            setStatus('Connection error. Please try again.', true);
+            resolve(null);
+          });
+      }
+      tick();
+    });
+  }
+
+  function createDownloadBtn(url, filename) {
+    var wrap = document.createElement('div');
+    wrap.style.cssText = 'display:flex;gap:10px;margin-bottom:10px;';
+
+    var saveBtn = document.createElement('button');
+    saveBtn.style.cssText = 'flex:1;background:var(--gold);color:var(--black);border:none;' +
+      'padding:12px;border-radius:10px;font-weight:900;font-size:13px;cursor:pointer;font-family:Tajawal,sans-serif;';
+    saveBtn.textContent = 'Save Image';
+    saveBtn.onclick = function () {
+      fetch('/api/download-image?url=' + encodeURIComponent(url) + '&filename=' + encodeURIComponent(filename))
+        .then(function (resp) { return resp.blob(); })
+        .then(function (blob) {
+          var file = new File([blob], filename, { type: blob.type || 'image/jpeg' });
+          if (navigator.canShare && navigator.canShare({ files: [file] })) return navigator.share({ files: [file] });
+          var blobUrl = URL.createObjectURL(blob);
+          var link = document.createElement('a');
+          link.href = blobUrl; link.download = filename;
+          document.body.appendChild(link); link.click(); document.body.removeChild(link);
+          URL.revokeObjectURL(blobUrl);
+        })
+        .catch(function () { window.open(url, '_blank'); });
+    };
+
+    wrap.appendChild(saveBtn);
+    return wrap;
+  }
+
+  async function runStyleGeneration(dataUrl, mimeType) {
+    setBusy(true, 'Processing...');
+    genResultWrap.style.display = 'none';
+    downloadBtnWrap.innerHTML = '';
+    resetBtn.style.display = 'none';
+    loadingDots.classList.add('show');
+    try {
+      setStatus('Uploading your room photo...');
+      var uploadRes = await fetchJson('/api/upload', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ image_data: dataUrl, mime_type: mimeType })
+      });
+      if (!uploadRes.ok || !uploadRes.data.url) {
+        throw new Error(uploadRes.data.error || 'Image upload failed');
+      }
+      var roomImageUrl = uploadRes.data.url;
+
+      setStatus('Applying the style with AI... this can take up to 30 seconds');
+      var prompt = 'Redesign the interior of the room in the first image so its overall style, ' +
+        'color palette, materials, furniture, and decor look match the second reference image as ' +
+        'closely as possible. Keep the room structure exactly identical: same walls, same doors, ' +
+        'same windows, same positions and sizes. Do not add, remove, move, or resize any wall, ' +
+        'door, or window. Only change decor, furniture, wall colors, flooring, and lighting to match ' +
+        'the reference style.';
+
+      var genRes = await fetchJson('/api/generate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ prompt: prompt, image_url: roomImageUrl, reference_image_url: currentStyleUrl })
+      });
+
+      if (genRes.status === 401) {
+        window.location.replace('lamsa-auth.html');
+        return;
+      }
+      if (genRes.status === 402) {
+        loadingDots.classList.remove('show');
+        setBusy(false, 'Use This Style');
+        setStatus('');
+        showCreditsModal("You're out of credits — buy more to continue");
+        refreshCreditBalance();
+        return;
+      }
+      if (!genRes.ok || !genRes.data.requests || !genRes.data.requests[0]) {
+        throw new Error(genRes.data.error || 'Could not start generation');
+      }
+
+      var req = genRes.data.requests[0];
+      var resultImage = await pollForResult(req.request_id, req.model || 'nano', Date.now());
+      if (!resultImage) { setBusy(false, 'Try Again'); loadingDots.classList.remove('show'); return; }
+
+      loadingDots.classList.remove('show');
+      genOriginalImg.src = roomImageUrl;
+      genResultImg.src = resultImage.url;
+      genResultWrap.style.display = 'block';
+      downloadBtnWrap.appendChild(createDownloadBtn(resultImage.url, 'lamsa-style-transfer.jpg'));
+      setStatus('Done — compare the result with your original photo.');
+      useStyleBtn.style.display = 'none';
+      resetBtn.style.display = 'block';
+      busy = false;
+      refreshCreditBalance();
+    } catch (err) {
+      loadingDots.classList.remove('show');
+      setStatus('Error: ' + err.message, true);
+      setBusy(false, 'Try Again');
+    }
+  }
+
+  // ===== AUTH (real server session) + CREDITS / PAYMENTS =====
+  var CREDIT_PACKAGES = [
+    { id: 'x1',  credits: 1,  price: '€1', label: '1 Design' },
+    { id: 'x5',  credits: 5,  price: '€4', label: '5 Designs' },
+    { id: 'x10', credits: 10, price: '€7', label: '10 Designs' }
+  ];
+  var isAndroidTWA = document.referrer.indexOf('android-app://') === 0;
+  var currentUser = null;
+
+  function checkAuth() {
+    return fetch('/api/me', { credentials: 'include' })
+      .then(function (r) { return r.json().then(function (data) { return { ok: r.ok, data: data }; }); })
+      .then(function (result) {
+        if (!result.ok) {
+          window.location.replace('lamsa-auth.html');
+          return null;
+        }
+        currentUser = result.data;
+        try { localStorage.setItem('lamsa_user', JSON.stringify({ username: currentUser.username, email: currentUser.email, loggedIn: true })); } catch (e) {}
+        return currentUser;
+      })
+      .catch(function () {
+        window.location.replace('lamsa-auth.html');
+        return null;
+      });
+  }
+
+  function logout() {
+    fetch('/api/auth-logout', { method: 'POST', credentials: 'include' })
+      .catch(function () {})
+      .then(function () {
+        try { localStorage.removeItem('lamsa_user'); } catch (e) {}
+        window.location.replace('lamsa-auth.html');
+      });
+  }
+
+  function refreshCreditBalance() {
+    var badge = document.getElementById('creditsBadge');
+    if (!badge) return;
+    fetch('/api/credits', { credentials: 'include' })
+      .then(function (r) { return r.json(); })
+      .then(function (data) {
+        if (typeof data.credits !== 'number') return;
+        badge.innerHTML = 'Your balance: <b>' + data.credits + '</b> credit' + (data.credits === 1 ? '' : 's') +
+          (isAndroidTWA ? '' : ' &middot; <a href="javascript:void(0)" onclick="showCreditsModal()" style="color:var(--gold);text-decoration:underline;">Buy more</a>');
+      })
+      .catch(function () {});
+  }
+
+  function showCreditsModal(message) {
+    var existing = document.getElementById('creditsModalOverlay');
+    if (existing) existing.remove();
+
+    var overlay = document.createElement('div');
+    overlay.id = 'creditsModalOverlay';
+    overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.9);z-index:9999;display:flex;align-items:center;justify-content:center;padding:20px;overflow-y:auto;';
+
+    var box = document.createElement('div');
+    box.style.cssText = 'background:var(--dark);border:1px solid var(--gold);border-radius:20px;padding:32px 24px;max-width:420px;width:100%;text-align:center;';
+
+    if (isAndroidTWA) {
+      box.innerHTML =
+        '<div style="font-size:22px;font-weight:900;color:var(--gold);margin-bottom:8px;">Buy Designs</div>' +
+        '<div style="font-size:13px;color:var(--gray);margin-bottom:20px;line-height:1.6;">Buying credits is currently only available on our website in a browser. Open lamsa-ten.vercel.app in your phone\'s browser to complete the purchase.</div>' +
+        '<button type="button" onclick="document.getElementById(\'creditsModalOverlay\').remove()" ' +
+        'style="width:100%;background:transparent;border:1px solid var(--border);color:var(--gray);padding:10px;border-radius:10px;font-size:13px;cursor:pointer;margin-top:8px;font-family:Tajawal,sans-serif;">Close</button>';
+      overlay.appendChild(box);
+      document.body.appendChild(overlay);
+      return;
+    }
+
+    var sub = message || 'Each design uses 1 credit from your balance';
+    var packagesHtml = CREDIT_PACKAGES.map(function (pkg) {
+      return '<button type="button" class="credits-pkg-btn" data-pkg="' + pkg.id + '" ' +
+        'style="width:100%;display:flex;justify-content:space-between;align-items:center;background:var(--black);border:1px solid var(--border);border-radius:12px;padding:14px 16px;margin-bottom:10px;cursor:pointer;color:var(--white);font-family:Tajawal,sans-serif;font-size:14px;">' +
+        '<span style="font-weight:700;">' + pkg.label + '</span>' +
+        '<span style="color:var(--gold);font-weight:900;">' + pkg.price + '</span>' +
+        '</button>';
+    }).join('');
+
+    box.innerHTML =
+      '<div style="font-size:22px;font-weight:900;color:var(--gold);margin-bottom:8px;">Buy Designs</div>' +
+      '<div style="font-size:13px;color:var(--gray);margin-bottom:20px;line-height:1.6;">' + sub + '</div>' +
+      '<div id="creditsPkgList">' + packagesHtml + '</div>' +
+      '<div id="creditsModalError" style="color:#e06060;font-size:12px;margin-top:6px;min-height:16px;"></div>' +
+      '<button type="button" onclick="document.getElementById(\'creditsModalOverlay\').remove()" ' +
+      'style="width:100%;background:transparent;border:1px solid var(--border);color:var(--gray);padding:10px;border-radius:10px;font-size:13px;cursor:pointer;margin-top:8px;font-family:Tajawal,sans-serif;">Close</button>';
+
+    overlay.appendChild(box);
+    document.body.appendChild(overlay);
+
+    Array.prototype.forEach.call(box.querySelectorAll('.credits-pkg-btn'), function (btn) {
+      btn.onclick = function () { startCheckout(btn.getAttribute('data-pkg')); };
+    });
+  }
+
+  function startCheckout(packageId) {
+    var errorEl = document.getElementById('creditsModalError');
+    var buttons = document.querySelectorAll('.credits-pkg-btn');
+    Array.prototype.forEach.call(buttons, function (b) { b.disabled = true; b.style.opacity = '0.5'; });
+
+    fetch('/api/create-checkout-session', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+      body: JSON.stringify({ package: packageId, return_page: 'inspirations.html' })
+    })
+    .then(function (r) { return r.json().then(function (data) { return { ok: r.ok, status: r.status, data: data }; }); })
+    .then(function (result) {
+      if (result.status === 401) { window.location.replace('lamsa-auth.html'); return; }
+      if (!result.ok || !result.data || !result.data.url) {
+        if (errorEl) errorEl.textContent = (result.data && result.data.error) || 'Something went wrong, please try again';
+        Array.prototype.forEach.call(buttons, function (b) { b.disabled = false; b.style.opacity = '1'; });
+        return;
+      }
+      window.location.href = result.data.url;
+    })
+    .catch(function () {
+      if (errorEl) errorEl.textContent = 'Connection error';
+      Array.prototype.forEach.call(buttons, function (b) { b.disabled = false; b.style.opacity = '1'; });
+    });
+  }
+
+  function showStatusBanner(message) {
+    var existing = document.getElementById('statusBanner');
+    if (existing) existing.remove();
+
+    var el = document.createElement('div');
+    el.id = 'statusBanner';
+    el.style.cssText = 'position:fixed;top:20px;left:50%;transform:translateX(-50%) translateY(-16px);z-index:10001;'
+      + 'background:var(--card);border:1px solid var(--border);border-left:4px solid var(--gold);border-radius:12px;'
+      + 'padding:14px 18px;box-shadow:0 24px 60px -20px rgba(20,20,20,0.35);display:flex;align-items:center;gap:10px;'
+      + 'font-family:Tajawal,sans-serif;font-size:14px;color:var(--white);max-width:calc(100vw - 32px);'
+      + 'opacity:0;transition:opacity 0.25s ease, transform 0.25s ease;';
+    el.innerHTML = '<span>' + message + '</span>';
+    document.body.appendChild(el);
+
+    requestAnimationFrame(function () {
+      el.style.opacity = '1';
+      el.style.transform = 'translateX(-50%) translateY(0)';
+    });
+    setTimeout(function () {
+      el.style.opacity = '0';
+      el.style.transform = 'translateX(-50%) translateY(-16px)';
+      setTimeout(function () { el.remove(); }, 300);
+    }, 4500);
+  }
+
+  function handleCheckoutRedirect() {
+    var params = new URLSearchParams(window.location.search);
+    var checkout = params.get('checkout');
+    if (!checkout) return;
+    if (checkout === 'success') {
+      showStatusBanner('Payment successful! Your balance will update in a few seconds.');
+      [500, 2000, 4000].forEach(function (delay) { setTimeout(refreshCreditBalance, delay); });
+    }
+    params.delete('checkout');
+    var newUrl = window.location.pathname + (params.toString() ? '?' + params.toString() : '');
+    window.history.replaceState({}, '', newUrl);
+  }
+
+  window.addEventListener('DOMContentLoaded', function () {
+    checkAuth().then(function (user) {
+      if (!user) return;
+      refreshCreditBalance();
+      handleCheckoutRedirect();
+    });
+  });
+</script>
+</body>
+</html>

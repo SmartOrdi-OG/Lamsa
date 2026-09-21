@@ -91,7 +91,7 @@ export default async function handler(req, res) {
     return res.status(500).json({ error: 'FAL_API_KEY not configured' });
   }
 
-  const { prompt, image_url, num_images = 1, guidance_scale = 3.5, aspect_ratio = '16:9', strength, refine_token } = req.body;
+  const { prompt, image_url, num_images = 1, guidance_scale = 3.5, aspect_ratio = '16:9', strength, refine_token, reference_image_url } = req.body;
 
   if (!prompt) return res.status(400).json({ error: 'prompt is required' });
 
@@ -106,6 +106,46 @@ export default async function handler(req, res) {
   const normalizedEmail = await requireSessionEmail(req);
   if (!normalizedEmail) {
     return res.status(401).json({ error: 'Please log in', code: 'not_logged_in' });
+  }
+
+  // === STYLE-REFERENCE STAGE (Inspirations Gallery) ===
+  // Applies a curated inspirations-gallery style photo to the user's own
+  // room photo via Nano Banana Pro's multi-image input, skipping Flux
+  // entirely — a single model call is enough since this isn't a full
+  // from-scratch redesign, just a style transfer onto the user's existing
+  // room. Costs the same 1 credit as a normal generation.
+  if (reference_image_url) {
+    if (!image_url) return res.status(400).json({ error: 'image_url is required' });
+
+    await ensureWelcomeCredit(normalizedEmail);
+
+    if (CREDIT_BYPASS_EMAILS.has(normalizedEmail)) {
+      await addCredits(normalizedEmail, 1);
+    }
+
+    const newBalance = await deductCredit(normalizedEmail);
+    if (newBalance === null) {
+      console.log('[api/generate] blocked - no credits remaining for', normalizedEmail);
+      return res.status(402).json({ error: 'No credits remaining', code: 'no_credits' });
+    }
+    console.log('[api/generate] deducted 1 credit from', normalizedEmail, '(style-reference) - remaining:', newBalance);
+
+    const nanoBody = buildNanoBody({ prompt, image_url, count: 1 });
+    nanoBody.image_urls = [image_url, reference_image_url];
+    console.log('[api/generate] style-reference stage — submitting to nano-banana-pro:', JSON.stringify(nanoBody));
+
+    try {
+      const request_id = await submitToFal(FAL_API_KEY, NANO_SUBMIT_URL, nanoBody);
+      return res.status(200).json({ requests: [{ model: 'nano', request_id }] });
+    } catch (err) {
+      console.error('[api/generate] style-reference submit failed:', err.message);
+      try {
+        await addCredits(normalizedEmail, 1);
+      } catch (refundErr) {
+        console.error('[api/generate] refund failed for', normalizedEmail, '-', refundErr.message);
+      }
+      return res.status(502).json({ error: err.message });
+    }
   }
 
   // === REFINE STAGE ===
