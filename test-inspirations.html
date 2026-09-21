@@ -134,11 +134,30 @@
     max-width: calc(100vw - 32px); text-align: center;
   }
   .toast.show { opacity: 1; }
+  .gen-status {
+    font-size: 12.5px;
+    color: #6b7480;
+    margin-bottom: 10px;
+    min-height: 16px;
+  }
+  .gen-status.error { color: #b3261e; }
+  .gen-result-wrap { margin-bottom: 10px; }
+  .gen-result-wrap img {
+    width: 100%; border-radius: 10px; display: block; margin-bottom: 4px;
+  }
+  .gen-result-label {
+    font-size: 11px; color: #9aa0a8; margin-bottom: 8px;
+  }
+  .reset-btn {
+    width: 100%; background: transparent; border: 1px solid var(--gold); color: var(--gold);
+    padding: 10px; border-radius: 10px; font-size: 13px; cursor: pointer;
+    margin-top: 8px; font-family: 'Tajawal', sans-serif; font-weight: 700;
+  }
 </style>
 </head>
 <body>
 
-  <div class="banner">صفحة محاكاة داخلية فقط — الصور مأخوذة مؤقتًا من صور التطبيق الحالية لتجربة فكرة العرض، وليست المحتوى النهائي</div>
+  <div class="banner">صفحة تجربة داخلية — المعرض والتصنيفات للتجربة فقط، بس زر "استخدام هذا الستايل" بيستدعي التوليد الفعلي بالـAI على صورة غرفتك (لازم تكوني مسجلة دخول بهذا المتصفح). بدون خصم رصيد.</div>
 
   <header>
     <span style="font-size:20px;">‹</span>
@@ -245,8 +264,16 @@
       <img id="lightboxImg" src="" alt="">
       <div class="lightbox-body">
         <h3 id="lightboxName"></h3>
-        <p>محاكاة فقط — الزر أدناه لا يستدعي التوليد الفعلي بعد</p>
+        <p id="lightboxHint">اختاري صورة غرفتك الحقيقية ليتم تطبيق هذا النمط عليها فعليًا بالـAI — تجربة حقيقية وليست محاكاة بصرية فقط</p>
+        <input type="file" id="roomFileInput" accept="image/*" style="display:none;">
+        <div class="gen-result-wrap" id="genResultWrap" style="display:none;">
+          <img id="genResultImg" src="" alt="">
+          <div class="gen-result-label">النتيجة (فوق) — صورة غرفتك الأصلية (تحت)</div>
+          <img id="genOriginalImg" src="" alt="">
+        </div>
+        <div class="gen-status" id="genStatus"></div>
         <button class="use-style-btn" id="useStyleBtn">استخدام هذا الستايل</button>
+        <button class="reset-btn" id="resetBtn" style="display:none;">جرّب صورة تانية</button>
         <button class="close-lightbox" id="closeLightboxBtn">إغلاق</button>
       </div>
     </div>
@@ -293,12 +320,35 @@
   var lightbox = document.getElementById('lightbox');
   var lightboxImg = document.getElementById('lightboxImg');
   var lightboxName = document.getElementById('lightboxName');
+  var useStyleBtn = document.getElementById('useStyleBtn');
+  var resetBtn = document.getElementById('resetBtn');
+  var roomFileInput = document.getElementById('roomFileInput');
+  var genStatus = document.getElementById('genStatus');
+  var genResultWrap = document.getElementById('genResultWrap');
+  var genResultImg = document.getElementById('genResultImg');
+  var genOriginalImg = document.getElementById('genOriginalImg');
+
+  var currentStyleUrl = '';
+  var busy = false;
+
+  function resetLightboxState() {
+    genResultWrap.style.display = 'none';
+    genStatus.textContent = '';
+    genStatus.classList.remove('error');
+    useStyleBtn.style.display = 'block';
+    useStyleBtn.disabled = false;
+    useStyleBtn.textContent = 'استخدام هذا الستايل';
+    resetBtn.style.display = 'none';
+    busy = false;
+  }
 
   document.body.addEventListener('click', function (e) {
     var card = e.target.closest('.card');
     if (!card) return;
     lightboxImg.src = card.dataset.img;
     lightboxName.textContent = card.dataset.name;
+    currentStyleUrl = new URL(card.dataset.img, window.location.origin).href;
+    resetLightboxState();
     lightbox.classList.add('open');
   });
 
@@ -306,9 +356,126 @@
     lightbox.classList.remove('open');
   });
 
-  document.getElementById('useStyleBtn').addEventListener('click', function () {
-    showToast('محاكاة: هنا رح نودّي المستخدم لمعالج التصميم مع هذا الستايل محددًا مسبقًا');
+  useStyleBtn.addEventListener('click', function () {
+    if (busy) return;
+    roomFileInput.value = '';
+    roomFileInput.click();
   });
+
+  resetBtn.addEventListener('click', function () {
+    resetLightboxState();
+  });
+
+  roomFileInput.addEventListener('change', function () {
+    var file = roomFileInput.files && roomFileInput.files[0];
+    if (!file) return;
+    var reader = new FileReader();
+    reader.onload = function () {
+      runRealGeneration(reader.result, file.type || 'image/jpeg');
+    };
+    reader.onerror = function () {
+      setStatus('تعذّرت قراءة الصورة، جربي صورة تانية', true);
+    };
+    reader.readAsDataURL(file);
+  });
+
+  function setStatus(msg, isError) {
+    genStatus.textContent = msg;
+    genStatus.classList.toggle('error', !!isError);
+  }
+
+  function setBusy(isBusy, btnLabel) {
+    busy = isBusy;
+    useStyleBtn.disabled = isBusy;
+    if (btnLabel) useStyleBtn.textContent = btnLabel;
+  }
+
+  async function runRealGeneration(dataUrl, mimeType) {
+    setBusy(true, 'جاري المعالجة...');
+    genResultWrap.style.display = 'none';
+    resetBtn.style.display = 'none';
+    try {
+      setStatus('جاري رفع صورة غرفتك...');
+      var uploadRes = await fetch('/api/upload', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ image_data: dataUrl, mime_type: mimeType })
+      });
+      var uploadData = await uploadRes.json();
+      if (!uploadRes.ok || !uploadData.url) {
+        throw new Error(uploadData.error || 'فشل رفع الصورة');
+      }
+      var roomImageUrl = uploadData.url;
+
+      setStatus('جاري تطبيق النمط بالـAI... قد يستغرق حتى 30 ثانية');
+      var prompt = 'Redesign the interior of the room in the first image so its overall style, ' +
+        'color palette, materials, furniture, and decor look match the second reference image as ' +
+        'closely as possible. Keep the room structure exactly identical: same walls, same doors, ' +
+        'same windows, same positions and sizes. Do not add, remove, move, or resize any wall, ' +
+        'door, or window. Only change decor, furniture, wall colors, flooring, and lighting to match ' +
+        'the reference style.';
+
+      var genRes = await fetch('/api/generate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          prompt: prompt,
+          image_url: roomImageUrl,
+          reference_image_url: currentStyleUrl
+        })
+      });
+      var genData = await genRes.json();
+      if (genRes.status === 401) {
+        throw new Error('يلزم تسجيل الدخول بهذا المتصفح أولاً، ثم إعادة المحاولة');
+      }
+      if (!genRes.ok || !genData.requests || !genData.requests[0]) {
+        throw new Error(genData.error || 'فشل بدء التوليد');
+      }
+      var requestId = genData.requests[0].request_id;
+      var model = genData.requests[0].model || 'nano';
+
+      var resultUrl = await pollForResult(requestId, model);
+      genOriginalImg.src = roomImageUrl;
+      genResultImg.src = resultUrl;
+      genResultWrap.style.display = 'block';
+      setStatus('جاهز — قارني النتيجة مع صورتك الأصلية');
+      useStyleBtn.style.display = 'none';
+      resetBtn.style.display = 'block';
+      busy = false;
+    } catch (err) {
+      setStatus('خطأ: ' + err.message, true);
+      setBusy(false, 'أعد المحاولة');
+    }
+  }
+
+  async function pollForResult(requestId, model) {
+    var maxAttempts = 20;
+    for (var i = 0; i < maxAttempts; i++) {
+      await new Promise(function (r) { setTimeout(r, 3000); });
+      var statusRes = await fetch('/api/status?request_id=' + encodeURIComponent(requestId) + '&model=' + model);
+      var statusData = await statusRes.json();
+      if (statusData.status === 'COMPLETED') {
+        var resultRes = await fetch('/api/status?request_id=' + encodeURIComponent(requestId) + '&model=' + model + '&mode=result');
+        var resultData = await resultRes.json();
+        var url = extractResultImage(resultData);
+        if (!url) throw new Error('لم يتم إيجاد صورة بالنتيجة');
+        return url;
+      }
+      if (statusData.status === 'FAILED' || statusData.status === 'ERROR') {
+        throw new Error('فشل التوليد من طرف fal.ai');
+      }
+    }
+    throw new Error('استغرق التوليد وقتًا أطول من المتوقع، جربي مرة تانية');
+  }
+
+  function extractResultImage(data) {
+    if (data.images && data.images[0] && data.images[0].url) return data.images[0].url;
+    if (data.image && data.image.url) return data.image.url;
+    if (data.output && data.output.images && data.output.images[0]) return data.output.images[0].url || data.output.images[0];
+    if (data.response && data.response.images && data.response.images[0]) return data.response.images[0].url || data.response.images[0];
+    if (data.data && data.data.images && data.data.images[0]) return data.data.images[0].url || data.data.images[0];
+    return null;
+  }
 
   function showToast(msg) {
     var t = document.getElementById('toast');
