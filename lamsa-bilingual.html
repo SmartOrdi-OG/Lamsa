@@ -2592,9 +2592,10 @@
 
   // ===== AUTH (real server session) + CREDITS / PAYMENTS =====
   var CREDIT_PACKAGES = [
-    { id: 'x1',  credits: 1,  price: '€1', label: '1 Design' },
-    { id: 'x5',  credits: 5,  price: '€4', label: '5 Designs' },
-    { id: 'x10', credits: 10, price: '€7', label: '10 Designs' }
+    { id: 'x1',  credits: 1,  price: '€1',  label: '1 Design' },
+    { id: 'x5',  credits: 5,  price: '€4',  label: '5 Designs' },
+    { id: 'x10', credits: 10, price: '€7',  label: '10 Designs' },
+    { id: 'x20', credits: 20, price: '€12', label: '20 Designs' }
   ];
 
   var currentUser = null; // { username, email } — populated by checkAuth(), source of truth is the server session, not localStorage
@@ -2791,7 +2792,8 @@
     var PKG_META = {
       x1:  { color: '#5b7fdb', tag: '' },
       x5:  { color: '#9b5bdb', tag: isAr ? 'الأكثر طلباً' : 'Popular' },
-      x10: { color: '#e0a52e', tag: isAr ? 'أفضل قيمة' : 'Best Value' }
+      x10: { color: '#e0a52e', tag: '' },
+      x20: { color: '#2fae7a', tag: isAr ? 'أفضل قيمة' : 'Best Value' }
     };
 
     var packagesHtml = CREDIT_PACKAGES.map(function(pkg) {
