@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Lamsa — Reference Image Test (internal, temporary)</title>
+<script>
+  (function() {
+    try {
+      var user = JSON.parse(localStorage.getItem('lamsa_user') || 'null');
+      if (!user || !user.loggedIn) window.location.replace('lamsa-auth.html');
+    } catch (e) {
+      window.location.replace('lamsa-auth.html');
+    }
+  })();
+</script>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: -apple-system, sans-serif; background: #f6f7f8; color: #1b1e22; padding: 20px; max-width: 480px; margin: 0 auto; }
+  h1 { font-size: 18px; margin-bottom: 4px; }
+  p.note { font-size: 12px; color: #a3abb5; margin-bottom: 20px; }
+  .field { margin-bottom: 18px; }
+  label { display: block; font-size: 13px; font-weight: 700; margin-bottom: 6px; }
+  .drop { border: 2px dashed #dfe2e6; border-radius: 12px; padding: 18px; text-align: center; cursor: pointer; position: relative; background: #fff; }
+  .drop input { position: absolute; inset: 0; opacity: 0; cursor: pointer; }
+  .drop img { max-width: 100%; max-height: 160px; border-radius: 8px; display: block; margin: 0 auto; }
+  .drop .placeholder { color: #a3abb5; font-size: 13px; }
+  .preset-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+  .preset-item { border: 2px solid transparent; border-radius: 10px; overflow: hidden; cursor: pointer; background: #fff; }
+  .preset-item img { width: 100%; height: 80px; object-fit: cover; display: block; }
+  .preset-item.selected { border-color: #3d434b; }
+  .preset-item .preset-label { font-size: 10px; text-align: center; padding: 3px 2px; color: #767d86; }
+  textarea { width: 100%; border: 1px solid #dfe2e6; border-radius: 10px; padding: 10px; font-size: 13px; font-family: inherit; resize: vertical; }
+  button#genBtn { width: 100%; background: #3d434b; color: #fff; border: none; padding: 14px; border-radius: 10px; font-size: 15px; font-weight: 800; cursor: pointer; }
+  button#genBtn:disabled { opacity: 0.5; cursor: default; }
+  #resultBox { margin-top: 20px; text-align: center; font-size: 13px; color: #767d86; }
+  #resultBox img { max-width: 100%; border-radius: 10px; margin-top: 10px; }
+</style>
+</head>
+<body>
+  <h1>🧪 Reference Image Test</h1>
+  <p class="note">Internal test only — checks whether the AI can replicate a specific object's shape from a reference photo. Not part of the real app flow, no credits used.</p>
+
+  <div class="field">
+    <label>Room photo</label>
+    <div class="drop" id="roomDrop">
+      <input type="file" id="roomInput" accept="image/*">
+      <div class="placeholder" id="roomPlaceholder">Click to upload the room photo</div>
+    </div>
+  </div>
+
+  <div class="field">
+    <label>Pick the exact fixture shape to apply</label>
+    <div class="preset-grid" id="presetGrid">
+      <div class="preset-item" data-file="light-ref-tracklight.jpg">
+        <img src="assets/light-ref-tracklight.jpg">
+        <div class="preset-label">Track light</div>
+      </div>
+      <div class="preset-item" data-file="light-ref-flushmount.jpg">
+        <img src="assets/light-ref-flushmount.jpg">
+        <div class="preset-label">Flush mount</div>
+      </div>
+      <div class="preset-item" data-file="light-ref-globependant.jpg">
+        <img src="assets/light-ref-globependant.jpg">
+        <div class="preset-label">Glass globe</div>
+      </div>
+      <div class="preset-item" data-file="light-ref-fabricpendant.jpg">
+        <img src="assets/light-ref-fabricpendant.jpg">
+        <div class="preset-label">Fabric pendant</div>
+      </div>
+      <div class="preset-item" data-file="light-ref-recessedspot.jpg">
+        <img src="assets/light-ref-recessedspot.jpg">
+        <div class="preset-label">Recessed spot</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="field">
+    <label>Instruction</label>
+    <textarea id="promptInput" rows="3">Add a ceiling lighting fixture to this room shaped exactly like the object in the second image. Keep everything else in the room — walls, windows, doors, furniture — completely unchanged.</textarea>
+  </div>
+
+  <button id="genBtn" disabled>Generate</button>
+
+  <div id="resultBox"></div>
+
+  <script>
+    var roomDataUrl = null;
+    var roomUrl = null;
+    var refUrl = null; // absolute URL to a preset asset — no /api/upload needed, it's already public
+
+    Array.prototype.forEach.call(document.querySelectorAll('.preset-item'), function(item) {
+      item.onclick = function() {
+        Array.prototype.forEach.call(document.querySelectorAll('.preset-item'), function(el) { el.classList.remove('selected'); });
+        item.classList.add('selected');
+        refUrl = window.location.origin + '/assets/' + item.getAttribute('data-file');
+        checkReady();
+      };
+    });
+
+    function compressImage(file, maxSize, quality, callback) {
+      var img = new Image();
+      var objUrl = URL.createObjectURL(file);
+      img.onload = function() {
+        URL.revokeObjectURL(objUrl);
+        var w = img.width, h = img.height;
+        if (w > maxSize || h > maxSize) {
+          if (w > h) { h = Math.round(h * maxSize / w); w = maxSize; }
+          else { w = Math.round(w * maxSize / h); h = maxSize; }
+        }
+        var canvas = document.createElement('canvas');
+        canvas.width = w; canvas.height = h;
+        canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+        callback(canvas.toDataURL('image/jpeg', quality));
+      };
+      img.src = objUrl;
+    }
+
+    function wireDrop(inputId, dropId, placeholderId, onReady) {
+      var input = document.getElementById(inputId);
+      var drop = document.getElementById(dropId);
+      var placeholder = document.getElementById(placeholderId);
+      input.addEventListener('change', function() {
+        var file = input.files[0];
+        if (!file) return;
+        compressImage(file, 1280, 0.85, function(dataUrl) {
+          placeholder.outerHTML = '<img src="' + dataUrl + '">';
+          onReady(dataUrl);
+        });
+      });
+    }
+
+    function checkReady() {
+      document.getElementById('genBtn').disabled = !(roomDataUrl && refUrl);
+    }
+
+    wireDrop('roomInput', 'roomDrop', 'roomPlaceholder', function(dataUrl) { roomDataUrl = dataUrl; checkReady(); });
+
+    function uploadImage(dataUrl) {
+      return fetch('/api/upload', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ image_data: dataUrl, mime_type: 'image/jpeg' })
+      }).then(function(r) { return r.json(); }).then(function(data) {
+        if (!data.url) throw new Error(data.error || 'Upload failed');
+        return data.url;
+      });
+    }
+
+    // Same fallback shapes as the main app's extractResultImages() — fal.ai's
+    // queue result payload shape varies by endpoint/version.
+    function extractResultImages(data) {
+      if (!data) return null;
+      if (Array.isArray(data.images) && data.images.length) return data.images;
+      if (data.image && data.image.url) return [data.image];
+      if (data.output && Array.isArray(data.output.images) && data.output.images.length) return data.output.images;
+      if (data.response && Array.isArray(data.response.images) && data.response.images.length) return data.response.images;
+      if (data.data && Array.isArray(data.data.images) && data.data.images.length) return data.data.images;
+      return null;
+    }
+
+    function pollResult(requestId) {
+      var attempts = 0;
+      return new Promise(function(resolve, reject) {
+        function tick() {
+          attempts++;
+          if (attempts > 60) return reject(new Error('Timed out waiting for result'));
+          fetch('/api/status?request_id=' + encodeURIComponent(requestId) + '&model=nano')
+            .then(function(r) { return r.json(); })
+            .then(function(data) {
+              var status = (data.status || '').toString().toUpperCase();
+              if (status === 'COMPLETED') {
+                fetch('/api/status?request_id=' + encodeURIComponent(requestId) + '&model=nano&mode=result')
+                  .then(function(r) { return r.json(); })
+                  .then(function(result) {
+                    var images = extractResultImages(result);
+                    if (images && images[0] && images[0].url) resolve(images[0].url);
+                    else reject(new Error('No image in result'));
+                  })
+                  .catch(reject);
+              } else if (status === 'FAILED' || status === 'ERROR') {
+                reject(new Error('Generation failed'));
+              } else {
+                setTimeout(tick, 2500);
+              }
+            })
+            .catch(reject);
+        }
+        tick();
+      });
+    }
+
+    document.getElementById('genBtn').onclick = function() {
+      var btn = this;
+      btn.disabled = true;
+      var resultBox = document.getElementById('resultBox');
+      resultBox.textContent = 'Uploading room photo...';
+
+      uploadImage(roomDataUrl)
+        .then(function(url) {
+          roomUrl = url;
+          resultBox.textContent = 'Generating (this can take 15-30s)...';
+          return fetch('/api/generate', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'include',
+            body: JSON.stringify({
+              prompt: document.getElementById('promptInput').value,
+              image_url: roomUrl,
+              reference_image_url: refUrl
+            })
+          });
+        })
+        .then(function(r) { return r.json(); })
+        .then(function(data) {
+          if (!data.requests || !data.requests[0]) throw new Error(data.error || 'No request returned');
+          return pollResult(data.requests[0].request_id);
+        })
+        .then(function(imageUrl) {
+          resultBox.innerHTML = 'Done — <a href="' + imageUrl + '" target="_blank">open full size</a><br><img src="' + imageUrl + '">';
+        })
+        .catch(function(err) {
+          resultBox.textContent = 'Error: ' + err.message;
+        })
+        .finally(function() { btn.disabled = false; });
+    };
+  </script>
+</body>
+</html>
