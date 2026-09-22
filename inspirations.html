@@ -659,12 +659,15 @@
       var roomImageUrl = uploadRes.data.url;
 
       setStatus('Applying the style with AI... this can take up to 30 seconds');
-      var prompt = 'Redesign the interior of the room in the first image so its overall style, ' +
-        'color palette, materials, furniture, and decor look match the second reference image as ' +
-        'closely as possible. Keep the room structure exactly identical: same walls, same doors, ' +
-        'same windows, same positions and sizes. Do not add, remove, move, or resize any wall, ' +
-        'door, or window. Only change decor, furniture, wall colors, flooring, and lighting to match ' +
-        'the reference style.';
+      // Generic enough to cover every gallery category, not just interior
+      // rooms — "walls, doors, windows" alone would be the wrong structural
+      // lock for a garden or exterior/facade photo, which has no room.
+      var prompt = 'Redesign the space in the first image so its overall style, color palette, ' +
+        'materials, furniture, and decor look match the second reference image as closely as ' +
+        'possible. Keep the existing structure, layout, and architecture exactly identical — same ' +
+        'walls, floors, doors, windows, paths, and boundaries, same positions and sizes. Do not add, ' +
+        'remove, move, or resize any structural element. Only change decor, furniture, colors, ' +
+        'materials, plants, and lighting to match the reference style.';
 
       var genRes = await fetchJson('/api/generate', {
         method: 'POST',
