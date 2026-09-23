@@ -1133,6 +1133,13 @@
     /* Before/After result: side-by-side halves each image on a phone —
        stack them full-width instead so the result is actually visible. */
     .before-after-grid { grid-template-columns: 1fr !important; }
+    /* Less side padding on the result screen than the wizard form above it
+       — the generated photo is the whole point of this screen, so give it
+       more of the available width instead of the same 32px side margins
+       used for form inputs/buttons. The negative margin cancels out
+       #form-section's own 24px side padding (from .section), which
+       .result-area sits inside and would otherwise stack with its own. */
+    .result-area { padding: 32px 12px; margin-left: -24px; margin-right: -24px; }
 
     /* Ambient before/after band behind the wizard — a framed card (not a
        full-bleed background) sized to the photos' real aspect ratio so the
