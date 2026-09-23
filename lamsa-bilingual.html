@@ -2488,6 +2488,68 @@
     drawFloorPlan();
   }
 
+  // Renders the room as an open-corner "dollhouse" cutaway (floor + the two
+  // walls furthest from the viewer, front walls left open so you can see
+  // inside) — a simple isometric projection, not a 3D model: fal.ai's models
+  // are 2D image editors with no depth data to build a real 3D room from, so
+  // this is a schematic companion to the generated photo, built from the
+  // same length/width and door/window markers the floor plan step collected.
+  // Only items on the 'N' and 'W' walls are drawn, since those are the two
+  // walls this view keeps — matches drawFloorPlan()'s wall/t convention.
+  function buildDollhouseView(roomLen, roomWid, items) {
+    var L = Math.max(1, roomLen), W = Math.max(1, roomWid), H = 2.7;
+    var cos30 = Math.cos(Math.PI / 6), sin30 = Math.sin(Math.PI / 6);
+    function proj(x, y, z) {
+      return { x: (x - y) * cos30, y: (x + y) * sin30 - z };
+    }
+
+    var corners = [proj(0, 0, 0), proj(L, 0, 0), proj(L, W, 0), proj(0, W, 0), proj(0, 0, H), proj(L, 0, H), proj(0, W, H)];
+    var minX = Math.min.apply(null, corners.map(function(p) { return p.x; }));
+    var maxX = Math.max.apply(null, corners.map(function(p) { return p.x; }));
+    var minY = Math.min.apply(null, corners.map(function(p) { return p.y; }));
+    var maxY = Math.max.apply(null, corners.map(function(p) { return p.y; }));
+
+    var VIEW_W = 320, VIEW_H = 260, pad = 22;
+    var scale = Math.min((VIEW_W - 2 * pad) / (maxX - minX), (VIEW_H - 2 * pad) / (maxY - minY));
+
+    function toSvg(x, y, z) {
+      var p = proj(x, y, z);
+      return ((pad + (p.x - minX) * scale).toFixed(1)) + ',' + ((pad + (p.y - minY) * scale).toFixed(1));
+    }
+    function pathFor(pts3d) {
+      return pts3d.map(function(p) { return toSvg(p[0], p[1], p[2]); }).join(' ');
+    }
+
+    var floor = pathFor([[0, 0, 0], [L, 0, 0], [L, W, 0], [0, W, 0]]);
+    var wallW = pathFor([[0, 0, 0], [0, W, 0], [0, W, H], [0, 0, H]]);
+    var wallN = pathFor([[0, 0, 0], [L, 0, 0], [L, 0, H], [0, 0, H]]);
+
+    var markerShapes = items
+      .filter(function(it) { return it.wall === 'N' || it.wall === 'W'; })
+      .map(function(it) {
+        var isDoor = it.type === 'door';
+        var span = it.wall === 'N' ? L : W;
+        var w = Math.min(isDoor ? 0.9 : 1.1, span * (isDoor ? 0.25 : 0.3));
+        var h = isDoor ? 2.05 : 1.1;
+        var baseZ = isDoor ? 0 : 0.9;
+        var pos = it.t * span;
+        var lo = Math.max(0.05, Math.min(span - 0.05, pos - w / 2));
+        var hi = Math.max(0.05, Math.min(span - 0.05, pos + w / 2));
+        var quad = it.wall === 'N'
+          ? [[lo, 0, baseZ], [hi, 0, baseZ], [hi, 0, baseZ + h], [lo, 0, baseZ + h]]
+          : [[0, lo, baseZ], [0, hi, baseZ], [0, hi, baseZ + h], [0, lo, baseZ + h]];
+        var fill = isDoor ? 'rgba(61,67,75,0.85)' : 'rgba(163,171,181,0.6)';
+        return '<polygon points="' + pathFor(quad) + '" fill="' + fill + '" stroke="#fff" stroke-width="1"/>';
+      }).join('');
+
+    return '<svg viewBox="0 0 ' + VIEW_W + ' ' + VIEW_H + '" style="width:100%;max-width:320px;display:block;margin:0 auto;">' +
+      '<polygon points="' + floor + '" fill="#edeff1" stroke="#a3abb5" stroke-width="1.5"/>' +
+      '<polygon points="' + wallW + '" fill="#f7f7f8" stroke="#6b7480" stroke-width="1.5"/>' +
+      '<polygon points="' + wallN + '" fill="#fbfbfc" stroke="#6b7480" stroke-width="1.5"/>' +
+      markerShapes +
+      '</svg>';
+  }
+
   // Single-select for color chips in panel 5
   function selectColor(el) {
     var parent = el.closest('.chips');
@@ -3750,6 +3812,20 @@
               imgWrap.appendChild(createDownloadBtn(img.url, 'lamsa-design-' + (i+1) + '.jpg'));
             });
           }
+
+          // Dollhouse view: a schematic 2-wall cutaway alongside the AI photo,
+          // built from the same room dimensions/door/window markers Panel 2
+          // collected — not a replacement for that floor-plan editor.
+          var dhLenInput = document.getElementById('roomLengthInput');
+          var dhWidInput = document.getElementById('roomWidthInput');
+          var dhRoomLen = parseFloat(dhLenInput && dhLenInput.value) || 5;
+          var dhRoomWid = parseFloat(dhWidInput && dhWidInput.value) || 4;
+          var dollhouseCard = document.createElement('div');
+          dollhouseCard.style.cssText = 'margin-top:14px;background:var(--card-2);border:1px solid var(--border);border-radius:14px;padding:14px 16px;text-align:center;';
+          dollhouseCard.innerHTML = '<p style="color:var(--gold);font-weight:900;font-size:13px;margin-bottom:10px;">' +
+            (currentLang === 'ar' ? 'مخطط ثلاثي الأبعاد' : 'Dollhouse View') + '</p>' +
+            buildDollhouseView(dhRoomLen, dhRoomWid, fpItems);
+          imgWrap.appendChild(dollhouseCard);
 
           if (window.NearbyStores) {
             NearbyStores.render('nearbyStoresContainer', {
