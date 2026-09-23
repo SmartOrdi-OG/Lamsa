@@ -3798,31 +3798,44 @@
 
           // Dollhouse view: an AI-rendered isometric cutaway of this SAME
           // design (same furniture/colors/layout, two front walls removed)
-          // — not a replacement for the floor-plan editor, just an extra
-          // view of the result. dollhouseToken authorizes one such call per
-          // generated image, bundled into the credit already spent above.
-          var dollhouseCard = document.createElement('div');
-          dollhouseCard.style.cssText = 'margin-top:14px;background:var(--card-2);border:1px solid var(--border);border-radius:14px;padding:14px 16px;text-align:center;';
-          dollhouseCard.innerHTML = '<p style="color:var(--gold);font-weight:900;font-size:13px;margin-bottom:10px;">' +
-            (currentLang === 'ar' ? 'مخطط ثلاثي الأبعاد' : 'Dollhouse View') + '</p>' +
-            '<div id="dollhouseViewWrap" style="min-height:120px;display:flex;align-items:center;justify-content:center;color:var(--gray);font-size:12px;">' +
-            (currentLang === 'ar' ? 'جاري توليد المخطط...' : 'Generating dollhouse view...') + '</div>';
-          imgWrap.appendChild(dollhouseCard);
-
+          // — not a replacement for the floor-plan editor, just an extra,
+          // opt-in view of the result. Triggered on demand (button click)
+          // rather than automatically on every generation, since it's a
+          // real extra fal.ai call and not every user wants it.
+          // dollhouseToken authorizes one such call per generated image,
+          // bundled into the credit already spent above — no extra charge
+          // when the user does ask for it.
           if (data.dollhouseToken && images[0] && images[0].url) {
-            requestDollhouseView(images[0].url, data.dollhouseToken).then(function(dollhouseUrl) {
+            var dollhouseImageUrl = images[0].url;
+            var dollhouseToken = data.dollhouseToken;
+            var dollhouseCard = document.createElement('div');
+            dollhouseCard.style.cssText = 'margin-top:14px;background:var(--card-2);border:1px solid var(--border);border-radius:14px;padding:14px 16px;text-align:center;';
+            dollhouseCard.innerHTML = '<p style="color:var(--gold);font-weight:900;font-size:13px;margin-bottom:10px;">' +
+              (currentLang === 'ar' ? 'مخطط ثلاثي الأبعاد' : 'Dollhouse View') + '</p>' +
+              '<div id="dollhouseViewWrap"></div>';
+            imgWrap.appendChild(dollhouseCard);
+
+            var dollhouseBtn = document.createElement('button');
+            dollhouseBtn.type = 'button';
+            dollhouseBtn.style.cssText = 'width:100%;background:transparent;color:var(--gold);border:1.5px solid var(--gold);' +
+              'padding:10px;border-radius:10px;font-weight:900;font-size:13px;cursor:pointer;font-family:Tajawal,sans-serif;';
+            dollhouseBtn.textContent = currentLang === 'ar' ? 'عرض مخطط ثلاثي الأبعاد' : 'Show Dollhouse View';
+            dollhouseBtn.onclick = function() {
+              dollhouseBtn.disabled = true;
               var wrap = document.getElementById('dollhouseViewWrap');
-              if (!wrap) return;
-              if (dollhouseUrl) {
-                wrap.style.display = 'block';
-                wrap.innerHTML = '<img src="' + dollhouseUrl + '" style="width:100%;border-radius:10px;border:1px solid var(--border);">';
-              } else {
-                wrap.textContent = currentLang === 'ar' ? 'تعذر توليد المخطط' : "Couldn't generate the dollhouse view";
-              }
-            });
-          } else {
-            document.getElementById('dollhouseViewWrap').textContent =
-              currentLang === 'ar' ? 'تعذر توليد المخطط' : "Couldn't generate the dollhouse view";
+              wrap.style.cssText = 'margin-top:10px;min-height:120px;display:flex;align-items:center;justify-content:center;color:var(--gray);font-size:12px;';
+              wrap.textContent = currentLang === 'ar' ? 'جاري توليد المخطط...' : 'Generating dollhouse view...';
+              requestDollhouseView(dollhouseImageUrl, dollhouseToken).then(function(dollhouseUrl) {
+                dollhouseBtn.remove();
+                if (dollhouseUrl) {
+                  wrap.style.cssText = 'margin-top:10px;';
+                  wrap.innerHTML = '<img src="' + dollhouseUrl + '" style="width:100%;border-radius:10px;border:1px solid var(--border);">';
+                } else {
+                  wrap.textContent = currentLang === 'ar' ? 'تعذر توليد المخطط' : "Couldn't generate the dollhouse view";
+                }
+              });
+            };
+            dollhouseCard.insertBefore(dollhouseBtn, document.getElementById('dollhouseViewWrap'));
           }
 
           if (window.NearbyStores) {
