@@ -2496,7 +2496,7 @@
   // same length/width and door/window markers the floor plan step collected.
   // Only items on the 'N' and 'W' walls are drawn, since those are the two
   // walls this view keeps — matches drawFloorPlan()'s wall/t convention.
-  function buildDollhouseView(roomLen, roomWid, items) {
+  function buildDollhouseView(roomLen, roomWid, items, palette) {
     var L = Math.max(1, roomLen), W = Math.max(1, roomWid), H = 2.7;
     var cos30 = Math.cos(Math.PI / 6), sin30 = Math.sin(Math.PI / 6);
     function proj(x, y, z) {
@@ -2542,12 +2542,85 @@
         return '<polygon points="' + pathFor(quad) + '" fill="' + fill + '" stroke="#fff" stroke-width="1"/>';
       }).join('');
 
+    var floorFill = (palette && palette.floor) || '#edeff1';
+    var wallWFill = (palette && palette.wallW) || '#f7f7f8';
+    var wallNFill = (palette && palette.wallN) || '#fbfbfc';
+
     return '<svg viewBox="0 0 ' + VIEW_W + ' ' + VIEW_H + '" style="width:100%;max-width:320px;display:block;margin:0 auto;">' +
-      '<polygon points="' + floor + '" fill="#edeff1" stroke="#a3abb5" stroke-width="1.5"/>' +
-      '<polygon points="' + wallW + '" fill="#f7f7f8" stroke="#6b7480" stroke-width="1.5"/>' +
-      '<polygon points="' + wallN + '" fill="#fbfbfc" stroke="#6b7480" stroke-width="1.5"/>' +
+      '<polygon points="' + floor + '" fill="' + floorFill + '" stroke="#a3abb5" stroke-width="1.5"/>' +
+      '<polygon points="' + wallW + '" fill="' + wallWFill + '" stroke="#6b7480" stroke-width="1.5"/>' +
+      '<polygon points="' + wallN + '" fill="' + wallNFill + '" stroke="#6b7480" stroke-width="1.5"/>' +
       markerShapes +
       '</svg>';
+  }
+
+  // Best-effort recoloring of the dollhouse schematic using the generated
+  // photo's own tones (sampled floor/wall regions), so it reads as "this
+  // room" rather than a generic gray outline — not real wall/floor
+  // segmentation, just a coarse average of where those surfaces usually
+  // land in a redesign photo. Resolves null on any failure (decode error,
+  // network) so the caller can silently keep the plain gray version.
+  function extractDollhousePalette(imageUrl) {
+    return fetch('/api/download-image?url=' + encodeURIComponent(imageUrl))
+      .then(function(resp) {
+        if (!resp.ok) throw new Error('fetch failed');
+        return resp.blob();
+      })
+      .then(function(blob) {
+        return new Promise(function(resolve) {
+          var blobUrl = URL.createObjectURL(blob);
+          var img = new Image();
+          img.onload = function() {
+            try {
+              var canvas = document.createElement('canvas');
+              canvas.width = img.naturalWidth;
+              canvas.height = img.naturalHeight;
+              var ctx = canvas.getContext('2d');
+              ctx.drawImage(img, 0, 0);
+              var w = canvas.width, h = canvas.height;
+              // Upper band ~ walls/backdrop, lower-center band ~ floor in
+              // most redesign photos (camera roughly head-height, floor
+              // filling the bottom of the frame).
+              var wallRgb = sampleRegionAverage(ctx, Math.round(w * 0.1), Math.round(h * 0.08), Math.round(w * 0.8), Math.round(h * 0.22));
+              var floorRgb = sampleRegionAverage(ctx, Math.round(w * 0.25), Math.round(h * 0.82), Math.round(w * 0.5), Math.round(h * 0.14));
+              resolve({
+                wallN: shadeColor(wallRgb, 1),
+                wallW: shadeColor(wallRgb, 0.87), // slightly darker — reads as the shaded/side wall
+                floor: shadeColor(floorRgb, 1)
+              });
+            } catch (e) {
+              resolve(null);
+            } finally {
+              URL.revokeObjectURL(blobUrl);
+            }
+          };
+          img.onerror = function() { URL.revokeObjectURL(blobUrl); resolve(null); };
+          img.src = blobUrl;
+        });
+      })
+      .catch(function() { return null; });
+  }
+
+  function sampleRegionAverage(ctx, x, y, w, h) {
+    if (w <= 0 || h <= 0) return [200, 200, 200];
+    var step = Math.max(1, Math.round(Math.min(w, h) / 24));
+    var data = ctx.getImageData(x, y, w, h).data;
+    var rSum = 0, gSum = 0, bSum = 0, n = 0;
+    var rowStride = w * 4;
+    for (var yy = 0; yy < h; yy += step) {
+      for (var xx = 0; xx < w; xx += step) {
+        var i = yy * rowStride + xx * 4;
+        rSum += data[i]; gSum += data[i + 1]; bSum += data[i + 2];
+        n++;
+      }
+    }
+    if (!n) return [200, 200, 200];
+    return [rSum / n, gSum / n, bSum / n];
+  }
+
+  function shadeColor(rgb, factor) {
+    function c(v) { return Math.max(0, Math.min(255, Math.round(v * factor))); }
+    return 'rgb(' + c(rgb[0]) + ',' + c(rgb[1]) + ',' + c(rgb[2]) + ')';
   }
 
   // Single-select for color chips in panel 5
@@ -3824,8 +3897,18 @@
           dollhouseCard.style.cssText = 'margin-top:14px;background:var(--card-2);border:1px solid var(--border);border-radius:14px;padding:14px 16px;text-align:center;';
           dollhouseCard.innerHTML = '<p style="color:var(--gold);font-weight:900;font-size:13px;margin-bottom:10px;">' +
             (currentLang === 'ar' ? 'مخطط ثلاثي الأبعاد' : 'Dollhouse View') + '</p>' +
-            buildDollhouseView(dhRoomLen, dhRoomWid, fpItems);
+            '<div id="dollhouseSvgWrap">' + buildDollhouseView(dhRoomLen, dhRoomWid, fpItems) + '</div>';
           imgWrap.appendChild(dollhouseCard);
+
+          // Recolor the schematic with tones sampled from the generated
+          // photo once it's ready — plain gray above stands if this fails.
+          if (images[0] && images[0].url) {
+            extractDollhousePalette(images[0].url).then(function(palette) {
+              if (!palette) return;
+              var wrap = document.getElementById('dollhouseSvgWrap');
+              if (wrap) wrap.innerHTML = buildDollhouseView(dhRoomLen, dhRoomWid, fpItems, palette);
+            });
+          }
 
           if (window.NearbyStores) {
             NearbyStores.render('nearbyStoresContainer', {
