@@ -3373,6 +3373,18 @@
       ' Do NOT change anything about the room itself — keep the exact same room shape, wall count, window count, door count, and proportions, and the exact same furniture pieces already shown in this image, in their exact same positions.' +
       ' Do not add, remove, move, or restyle any object. This is a quality-enhancement pass only, not a redesign.';
 
+    // Feeds the finished design photo back in a third time to get an
+    // isometric "dollhouse" cutaway of it (real-estate/Matterport 3D-tour
+    // style): same furniture, colors, materials and layout, just with the
+    // two nearest walls removed so the room reads as an open box seen from
+    // above at an angle.
+    var dollhousePrompt =
+      'Convert this photo of a fully redesigned ' + roomTypeLabel + (styleText ? ' in ' + styleText + ' style' : '') +
+      ' into an isometric "dollhouse" cutaway view, like a real-estate 3D-tour dollhouse view.' +
+      ' Keep the exact same furniture, decor, colors, materials, and layout shown in this photo, in the exact same relative positions.' +
+      ' Remove only the two walls closest to the camera (and the ceiling) so the room is open and fully visible from a slightly elevated 3/4 angle, like looking down into an open box.' +
+      ' Keep the two far walls, the floor, and every door and window shown in the photo. Do not add, remove, or restyle any furniture or object — this is a viewpoint change only, not a redesign.';
+
     // Compress image before upload (max 1280px, JPEG) — much faster upload & generation
     function compressImage(file, maxSize, quality, callback) {
       var img = new Image();
@@ -3492,7 +3504,7 @@
           return;
         }
 
-        pollFluxThenRefine(result.data.requests[0], result.data.refineToken);
+        pollFluxThenRefine(result.data.requests[0], result.data.refineToken, result.data.dollhouseToken);
       })
       .catch(function(err) {
         console.error('[generate] submit error:', err);
@@ -3592,7 +3604,7 @@
       });
     }
 
-    function pollFluxThenRefine(fluxRequest, refineToken) {
+    function pollFluxThenRefine(fluxRequest, refineToken, dollhouseToken) {
       pollSingleRequest(fluxRequest.request_id, fluxRequest.model, 0).then(function(fluxImages) {
         if (!fluxImages.length) {
           showGenerateError('Error generating image. Please try again.');
@@ -3600,8 +3612,41 @@
         }
         Promise.all(fluxImages.map(function(img) { return refineWithNano(img.url, refineToken); }))
           .then(function(finalImages) {
-            renderResult({ images: finalImages });
+            renderResult({ images: finalImages, dollhouseToken: dollhouseToken });
           });
+      });
+    }
+
+    // Asks Flux Kontext Pro to redraw the already-finished design as an
+    // isometric "dollhouse" cutaway — same furniture, colors and layout,
+    // just with the two front walls removed — instead of drawing a
+    // schematic ourselves: there's no real furniture-position data to
+    // place shapes from, so only the model that made the room can show
+    // what's actually in it. Bundled into the same 1-credit generation via
+    // dollhouseToken (minted alongside refineToken in the initial stage),
+    // so this never runs as a free-standing paid call. Resolves null on
+    // any failure so the caller can show a "couldn't generate" message.
+    function requestDollhouseView(imageUrl, dollhouseToken) {
+      if (!dollhouseToken) return Promise.resolve(null);
+
+      return fetchJson('/api/generate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ prompt: dollhousePrompt, image_url: imageUrl, dollhouse_token: dollhouseToken })
+      })
+      .then(function(result) {
+        if (!result.ok || !result.data || !Array.isArray(result.data.requests) || !result.data.requests.length) {
+          console.error('[dollhouse] submit failed:', result.data);
+          return null;
+        }
+        var req = result.data.requests[0];
+        return pollSingleRequest(req.request_id, req.model, 0).then(function(images) {
+          return (images && images.length) ? images[0].url : null;
+        });
+      })
+      .catch(function(err) {
+        console.error('[dollhouse] request error:', err);
+        return null;
       });
     }
 
@@ -3749,6 +3794,48 @@
               imgWrap.appendChild(imgEl);
               imgWrap.appendChild(createDownloadBtn(img.url, 'lamsa-design-' + (i+1) + '.jpg'));
             });
+          }
+
+          // Dollhouse view: an AI-rendered isometric cutaway of this SAME
+          // design (same furniture/colors/layout, two front walls removed)
+          // — not a replacement for the floor-plan editor, just an extra,
+          // opt-in view of the result. Triggered on demand (button click)
+          // rather than automatically on every generation, since it's a
+          // real extra fal.ai call and not every user wants it.
+          // dollhouseToken authorizes one such call per generated image,
+          // bundled into the credit already spent above — no extra charge
+          // when the user does ask for it.
+          if (data.dollhouseToken && images[0] && images[0].url) {
+            var dollhouseImageUrl = images[0].url;
+            var dollhouseToken = data.dollhouseToken;
+            var dollhouseCard = document.createElement('div');
+            dollhouseCard.style.cssText = 'margin-top:14px;background:var(--card-2);border:1px solid var(--border);border-radius:14px;padding:14px 16px;text-align:center;';
+            dollhouseCard.innerHTML = '<p style="color:var(--gold);font-weight:900;font-size:13px;margin-bottom:10px;">' +
+              (currentLang === 'ar' ? 'مخطط ثلاثي الأبعاد' : 'Dollhouse View') + '</p>' +
+              '<div id="dollhouseViewWrap"></div>';
+            imgWrap.appendChild(dollhouseCard);
+
+            var dollhouseBtn = document.createElement('button');
+            dollhouseBtn.type = 'button';
+            dollhouseBtn.style.cssText = 'width:100%;background:transparent;color:var(--gold);border:1.5px solid var(--gold);' +
+              'padding:10px;border-radius:10px;font-weight:900;font-size:13px;cursor:pointer;font-family:Tajawal,sans-serif;';
+            dollhouseBtn.textContent = currentLang === 'ar' ? 'عرض مخطط ثلاثي الأبعاد' : 'Show Dollhouse View';
+            dollhouseBtn.onclick = function() {
+              dollhouseBtn.disabled = true;
+              var wrap = document.getElementById('dollhouseViewWrap');
+              wrap.style.cssText = 'margin-top:10px;min-height:120px;display:flex;align-items:center;justify-content:center;color:var(--gray);font-size:12px;';
+              wrap.textContent = currentLang === 'ar' ? 'جاري توليد المخطط...' : 'Generating dollhouse view...';
+              requestDollhouseView(dollhouseImageUrl, dollhouseToken).then(function(dollhouseUrl) {
+                dollhouseBtn.remove();
+                if (dollhouseUrl) {
+                  wrap.style.cssText = 'margin-top:10px;';
+                  wrap.innerHTML = '<img src="' + dollhouseUrl + '" style="width:100%;border-radius:10px;border:1px solid var(--border);">';
+                } else {
+                  wrap.textContent = currentLang === 'ar' ? 'تعذر توليد المخطط' : "Couldn't generate the dollhouse view";
+                }
+              });
+            };
+            dollhouseCard.insertBefore(dollhouseBtn, document.getElementById('dollhouseViewWrap'));
           }
 
           if (window.NearbyStores) {
