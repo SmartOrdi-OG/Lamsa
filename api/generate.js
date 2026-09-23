@@ -21,6 +21,10 @@ function refineTokenKey(token) {
   return 'lamsa:refine:' + token;
 }
 
+function dollhouseTokenKey(token) {
+  return 'lamsa:dollhouse:' + token;
+}
+
 function buildFluxBody({ prompt, image_url, count, guidance_scale, aspect_ratio, strength }) {
   const body = {
     prompt,
@@ -91,7 +95,7 @@ export default async function handler(req, res) {
     return res.status(500).json({ error: 'FAL_API_KEY not configured' });
   }
 
-  const { prompt, image_url, num_images = 1, guidance_scale = 3.5, aspect_ratio = '16:9', strength, refine_token, reference_image_url } = req.body;
+  const { prompt, image_url, num_images = 1, guidance_scale = 3.5, aspect_ratio = '16:9', strength, refine_token, reference_image_url, dollhouse_token } = req.body;
 
   if (!prompt) return res.status(400).json({ error: 'prompt is required' });
 
@@ -187,6 +191,42 @@ export default async function handler(req, res) {
     }
   }
 
+  // === DOLLHOUSE STAGE ===
+  // The frontend calls back in here once the final (refined) design image
+  // is ready, asking Flux Kontext Pro to redraw it as an isometric
+  // "dollhouse" cutaway — same furniture/colors/layout, just with the two
+  // nearest walls removed. No credit deducted: bundled into the same
+  // 1-credit generation via dollhouseToken (minted alongside refineToken
+  // in the initial stage below), scoped the same way refine_token is so
+  // this can't be called on its own as a free generation.
+  if (dollhouse_token) {
+    if (!image_url) return res.status(400).json({ error: 'image_url is required for the dollhouse stage' });
+
+    const tokenKey = dollhouseTokenKey(dollhouse_token);
+    const tokenData = await redis.get(tokenKey);
+    if (!tokenData || tokenData.email !== normalizedEmail || tokenData.remaining <= 0) {
+      return res.status(403).json({ error: 'Invalid or expired dollhouse token' });
+    }
+
+    const remaining = tokenData.remaining - 1;
+    if (remaining <= 0) {
+      await redis.del(tokenKey);
+    } else {
+      await redis.set(tokenKey, { email: normalizedEmail, remaining }, { ex: 900 });
+    }
+
+    const fluxBody = buildFluxBody({ prompt, image_url, count: 1, guidance_scale: 10, aspect_ratio: '4:3', strength: 0.9 });
+    console.log('[api/generate] dollhouse stage — submitting to flux:', JSON.stringify(fluxBody));
+
+    try {
+      const request_id = await submitToFal(FAL_API_KEY, FLUX_SUBMIT_URL, fluxBody);
+      return res.status(200).json({ requests: [{ model: 'flux', request_id }] });
+    } catch (err) {
+      console.error('[api/generate] dollhouse submit failed:', err.message);
+      return res.status(502).json({ error: err.message });
+    }
+  }
+
   // === INITIAL STAGE ===
   // Defensive fallback — the welcome credit is normally granted right at
   // registration, but this covers any account that predates that or was
@@ -239,5 +279,11 @@ export default async function handler(req, res) {
   // partial fal.ai response could return fewer).
   await redis.set(refineTokenKey(refineToken), { email: normalizedEmail, remaining: count }, { ex: 600 });
 
-  return res.status(200).json({ requests: [{ model: 'flux', request_id }], refineToken });
+  // Same scoping as refineToken, just a longer TTL — the dollhouse call
+  // happens after the refine stage completes, so it needs to still be
+  // valid a bit further out.
+  const dollhouseToken = randomUUID();
+  await redis.set(dollhouseTokenKey(dollhouseToken), { email: normalizedEmail, remaining: count }, { ex: 900 });
+
+  return res.status(200).json({ requests: [{ model: 'flux', request_id }], refineToken, dollhouseToken });
 }

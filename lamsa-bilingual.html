@@ -2488,141 +2488,6 @@
     drawFloorPlan();
   }
 
-  // Renders the room as an open-corner "dollhouse" cutaway (floor + the two
-  // walls furthest from the viewer, front walls left open so you can see
-  // inside) — a simple isometric projection, not a 3D model: fal.ai's models
-  // are 2D image editors with no depth data to build a real 3D room from, so
-  // this is a schematic companion to the generated photo, built from the
-  // same length/width and door/window markers the floor plan step collected.
-  // Only items on the 'N' and 'W' walls are drawn, since those are the two
-  // walls this view keeps — matches drawFloorPlan()'s wall/t convention.
-  function buildDollhouseView(roomLen, roomWid, items, palette) {
-    var L = Math.max(1, roomLen), W = Math.max(1, roomWid), H = 2.7;
-    var cos30 = Math.cos(Math.PI / 6), sin30 = Math.sin(Math.PI / 6);
-    function proj(x, y, z) {
-      return { x: (x - y) * cos30, y: (x + y) * sin30 - z };
-    }
-
-    var corners = [proj(0, 0, 0), proj(L, 0, 0), proj(L, W, 0), proj(0, W, 0), proj(0, 0, H), proj(L, 0, H), proj(0, W, H)];
-    var minX = Math.min.apply(null, corners.map(function(p) { return p.x; }));
-    var maxX = Math.max.apply(null, corners.map(function(p) { return p.x; }));
-    var minY = Math.min.apply(null, corners.map(function(p) { return p.y; }));
-    var maxY = Math.max.apply(null, corners.map(function(p) { return p.y; }));
-
-    var VIEW_W = 320, VIEW_H = 260, pad = 22;
-    var scale = Math.min((VIEW_W - 2 * pad) / (maxX - minX), (VIEW_H - 2 * pad) / (maxY - minY));
-
-    function toSvg(x, y, z) {
-      var p = proj(x, y, z);
-      return ((pad + (p.x - minX) * scale).toFixed(1)) + ',' + ((pad + (p.y - minY) * scale).toFixed(1));
-    }
-    function pathFor(pts3d) {
-      return pts3d.map(function(p) { return toSvg(p[0], p[1], p[2]); }).join(' ');
-    }
-
-    var floor = pathFor([[0, 0, 0], [L, 0, 0], [L, W, 0], [0, W, 0]]);
-    var wallW = pathFor([[0, 0, 0], [0, W, 0], [0, W, H], [0, 0, H]]);
-    var wallN = pathFor([[0, 0, 0], [L, 0, 0], [L, 0, H], [0, 0, H]]);
-
-    var markerShapes = items
-      .filter(function(it) { return it.wall === 'N' || it.wall === 'W'; })
-      .map(function(it) {
-        var isDoor = it.type === 'door';
-        var span = it.wall === 'N' ? L : W;
-        var w = Math.min(isDoor ? 0.9 : 1.1, span * (isDoor ? 0.25 : 0.3));
-        var h = isDoor ? 2.05 : 1.1;
-        var baseZ = isDoor ? 0 : 0.9;
-        var pos = it.t * span;
-        var lo = Math.max(0.05, Math.min(span - 0.05, pos - w / 2));
-        var hi = Math.max(0.05, Math.min(span - 0.05, pos + w / 2));
-        var quad = it.wall === 'N'
-          ? [[lo, 0, baseZ], [hi, 0, baseZ], [hi, 0, baseZ + h], [lo, 0, baseZ + h]]
-          : [[0, lo, baseZ], [0, hi, baseZ], [0, hi, baseZ + h], [0, lo, baseZ + h]];
-        var fill = isDoor ? 'rgba(61,67,75,0.85)' : 'rgba(163,171,181,0.6)';
-        return '<polygon points="' + pathFor(quad) + '" fill="' + fill + '" stroke="#fff" stroke-width="1"/>';
-      }).join('');
-
-    var floorFill = (palette && palette.floor) || '#edeff1';
-    var wallWFill = (palette && palette.wallW) || '#f7f7f8';
-    var wallNFill = (palette && palette.wallN) || '#fbfbfc';
-
-    return '<svg viewBox="0 0 ' + VIEW_W + ' ' + VIEW_H + '" style="width:100%;max-width:320px;display:block;margin:0 auto;">' +
-      '<polygon points="' + floor + '" fill="' + floorFill + '" stroke="#a3abb5" stroke-width="1.5"/>' +
-      '<polygon points="' + wallW + '" fill="' + wallWFill + '" stroke="#6b7480" stroke-width="1.5"/>' +
-      '<polygon points="' + wallN + '" fill="' + wallNFill + '" stroke="#6b7480" stroke-width="1.5"/>' +
-      markerShapes +
-      '</svg>';
-  }
-
-  // Best-effort recoloring of the dollhouse schematic using the generated
-  // photo's own tones (sampled floor/wall regions), so it reads as "this
-  // room" rather than a generic gray outline — not real wall/floor
-  // segmentation, just a coarse average of where those surfaces usually
-  // land in a redesign photo. Resolves null on any failure (decode error,
-  // network) so the caller can silently keep the plain gray version.
-  function extractDollhousePalette(imageUrl) {
-    return fetch('/api/download-image?url=' + encodeURIComponent(imageUrl))
-      .then(function(resp) {
-        if (!resp.ok) throw new Error('fetch failed');
-        return resp.blob();
-      })
-      .then(function(blob) {
-        return new Promise(function(resolve) {
-          var blobUrl = URL.createObjectURL(blob);
-          var img = new Image();
-          img.onload = function() {
-            try {
-              var canvas = document.createElement('canvas');
-              canvas.width = img.naturalWidth;
-              canvas.height = img.naturalHeight;
-              var ctx = canvas.getContext('2d');
-              ctx.drawImage(img, 0, 0);
-              var w = canvas.width, h = canvas.height;
-              // Upper band ~ walls/backdrop, lower-center band ~ floor in
-              // most redesign photos (camera roughly head-height, floor
-              // filling the bottom of the frame).
-              var wallRgb = sampleRegionAverage(ctx, Math.round(w * 0.1), Math.round(h * 0.08), Math.round(w * 0.8), Math.round(h * 0.22));
-              var floorRgb = sampleRegionAverage(ctx, Math.round(w * 0.25), Math.round(h * 0.82), Math.round(w * 0.5), Math.round(h * 0.14));
-              resolve({
-                wallN: shadeColor(wallRgb, 1),
-                wallW: shadeColor(wallRgb, 0.87), // slightly darker — reads as the shaded/side wall
-                floor: shadeColor(floorRgb, 1)
-              });
-            } catch (e) {
-              resolve(null);
-            } finally {
-              URL.revokeObjectURL(blobUrl);
-            }
-          };
-          img.onerror = function() { URL.revokeObjectURL(blobUrl); resolve(null); };
-          img.src = blobUrl;
-        });
-      })
-      .catch(function() { return null; });
-  }
-
-  function sampleRegionAverage(ctx, x, y, w, h) {
-    if (w <= 0 || h <= 0) return [200, 200, 200];
-    var step = Math.max(1, Math.round(Math.min(w, h) / 24));
-    var data = ctx.getImageData(x, y, w, h).data;
-    var rSum = 0, gSum = 0, bSum = 0, n = 0;
-    var rowStride = w * 4;
-    for (var yy = 0; yy < h; yy += step) {
-      for (var xx = 0; xx < w; xx += step) {
-        var i = yy * rowStride + xx * 4;
-        rSum += data[i]; gSum += data[i + 1]; bSum += data[i + 2];
-        n++;
-      }
-    }
-    if (!n) return [200, 200, 200];
-    return [rSum / n, gSum / n, bSum / n];
-  }
-
-  function shadeColor(rgb, factor) {
-    function c(v) { return Math.max(0, Math.min(255, Math.round(v * factor))); }
-    return 'rgb(' + c(rgb[0]) + ',' + c(rgb[1]) + ',' + c(rgb[2]) + ')';
-  }
-
   // Single-select for color chips in panel 5
   function selectColor(el) {
     var parent = el.closest('.chips');
@@ -3508,6 +3373,18 @@
       ' Do NOT change anything about the room itself — keep the exact same room shape, wall count, window count, door count, and proportions, and the exact same furniture pieces already shown in this image, in their exact same positions.' +
       ' Do not add, remove, move, or restyle any object. This is a quality-enhancement pass only, not a redesign.';
 
+    // Feeds the finished design photo back in a third time to get an
+    // isometric "dollhouse" cutaway of it (real-estate/Matterport 3D-tour
+    // style): same furniture, colors, materials and layout, just with the
+    // two nearest walls removed so the room reads as an open box seen from
+    // above at an angle.
+    var dollhousePrompt =
+      'Convert this photo of a fully redesigned ' + roomTypeLabel + (styleText ? ' in ' + styleText + ' style' : '') +
+      ' into an isometric "dollhouse" cutaway view, like a real-estate 3D-tour dollhouse view.' +
+      ' Keep the exact same furniture, decor, colors, materials, and layout shown in this photo, in the exact same relative positions.' +
+      ' Remove only the two walls closest to the camera (and the ceiling) so the room is open and fully visible from a slightly elevated 3/4 angle, like looking down into an open box.' +
+      ' Keep the two far walls, the floor, and every door and window shown in the photo. Do not add, remove, or restyle any furniture or object — this is a viewpoint change only, not a redesign.';
+
     // Compress image before upload (max 1280px, JPEG) — much faster upload & generation
     function compressImage(file, maxSize, quality, callback) {
       var img = new Image();
@@ -3627,7 +3504,7 @@
           return;
         }
 
-        pollFluxThenRefine(result.data.requests[0], result.data.refineToken);
+        pollFluxThenRefine(result.data.requests[0], result.data.refineToken, result.data.dollhouseToken);
       })
       .catch(function(err) {
         console.error('[generate] submit error:', err);
@@ -3727,7 +3604,7 @@
       });
     }
 
-    function pollFluxThenRefine(fluxRequest, refineToken) {
+    function pollFluxThenRefine(fluxRequest, refineToken, dollhouseToken) {
       pollSingleRequest(fluxRequest.request_id, fluxRequest.model, 0).then(function(fluxImages) {
         if (!fluxImages.length) {
           showGenerateError('Error generating image. Please try again.');
@@ -3735,8 +3612,41 @@
         }
         Promise.all(fluxImages.map(function(img) { return refineWithNano(img.url, refineToken); }))
           .then(function(finalImages) {
-            renderResult({ images: finalImages });
+            renderResult({ images: finalImages, dollhouseToken: dollhouseToken });
           });
+      });
+    }
+
+    // Asks Flux Kontext Pro to redraw the already-finished design as an
+    // isometric "dollhouse" cutaway — same furniture, colors and layout,
+    // just with the two front walls removed — instead of drawing a
+    // schematic ourselves: there's no real furniture-position data to
+    // place shapes from, so only the model that made the room can show
+    // what's actually in it. Bundled into the same 1-credit generation via
+    // dollhouseToken (minted alongside refineToken in the initial stage),
+    // so this never runs as a free-standing paid call. Resolves null on
+    // any failure so the caller can show a "couldn't generate" message.
+    function requestDollhouseView(imageUrl, dollhouseToken) {
+      if (!dollhouseToken) return Promise.resolve(null);
+
+      return fetchJson('/api/generate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ prompt: dollhousePrompt, image_url: imageUrl, dollhouse_token: dollhouseToken })
+      })
+      .then(function(result) {
+        if (!result.ok || !result.data || !Array.isArray(result.data.requests) || !result.data.requests.length) {
+          console.error('[dollhouse] submit failed:', result.data);
+          return null;
+        }
+        var req = result.data.requests[0];
+        return pollSingleRequest(req.request_id, req.model, 0).then(function(images) {
+          return (images && images.length) ? images[0].url : null;
+        });
+      })
+      .catch(function(err) {
+        console.error('[dollhouse] request error:', err);
+        return null;
       });
     }
 
@@ -3886,28 +3796,33 @@
             });
           }
 
-          // Dollhouse view: a schematic 2-wall cutaway alongside the AI photo,
-          // built from the same room dimensions/door/window markers Panel 2
-          // collected — not a replacement for that floor-plan editor.
-          var dhLenInput = document.getElementById('roomLengthInput');
-          var dhWidInput = document.getElementById('roomWidthInput');
-          var dhRoomLen = parseFloat(dhLenInput && dhLenInput.value) || 5;
-          var dhRoomWid = parseFloat(dhWidInput && dhWidInput.value) || 4;
+          // Dollhouse view: an AI-rendered isometric cutaway of this SAME
+          // design (same furniture/colors/layout, two front walls removed)
+          // — not a replacement for the floor-plan editor, just an extra
+          // view of the result. dollhouseToken authorizes one such call per
+          // generated image, bundled into the credit already spent above.
           var dollhouseCard = document.createElement('div');
           dollhouseCard.style.cssText = 'margin-top:14px;background:var(--card-2);border:1px solid var(--border);border-radius:14px;padding:14px 16px;text-align:center;';
           dollhouseCard.innerHTML = '<p style="color:var(--gold);font-weight:900;font-size:13px;margin-bottom:10px;">' +
             (currentLang === 'ar' ? 'مخطط ثلاثي الأبعاد' : 'Dollhouse View') + '</p>' +
-            '<div id="dollhouseSvgWrap">' + buildDollhouseView(dhRoomLen, dhRoomWid, fpItems) + '</div>';
+            '<div id="dollhouseViewWrap" style="min-height:120px;display:flex;align-items:center;justify-content:center;color:var(--gray);font-size:12px;">' +
+            (currentLang === 'ar' ? 'جاري توليد المخطط...' : 'Generating dollhouse view...') + '</div>';
           imgWrap.appendChild(dollhouseCard);
 
-          // Recolor the schematic with tones sampled from the generated
-          // photo once it's ready — plain gray above stands if this fails.
-          if (images[0] && images[0].url) {
-            extractDollhousePalette(images[0].url).then(function(palette) {
-              if (!palette) return;
-              var wrap = document.getElementById('dollhouseSvgWrap');
-              if (wrap) wrap.innerHTML = buildDollhouseView(dhRoomLen, dhRoomWid, fpItems, palette);
+          if (data.dollhouseToken && images[0] && images[0].url) {
+            requestDollhouseView(images[0].url, data.dollhouseToken).then(function(dollhouseUrl) {
+              var wrap = document.getElementById('dollhouseViewWrap');
+              if (!wrap) return;
+              if (dollhouseUrl) {
+                wrap.style.display = 'block';
+                wrap.innerHTML = '<img src="' + dollhouseUrl + '" style="width:100%;border-radius:10px;border:1px solid var(--border);">';
+              } else {
+                wrap.textContent = currentLang === 'ar' ? 'تعذر توليد المخطط' : "Couldn't generate the dollhouse view";
+              }
             });
+          } else {
+            document.getElementById('dollhouseViewWrap').textContent =
+              currentLang === 'ar' ? 'تعذر توليد المخطط' : "Couldn't generate the dollhouse view";
           }
 
           if (window.NearbyStores) {
