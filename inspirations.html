@@ -710,23 +710,25 @@
       // Generic enough to cover every gallery category, not just interior
       // rooms — "walls, doors, windows" alone would be the wrong structural
       // lock for a garden or exterior/facade photo, which has no room.
-      // Spelled out this explicitly (not just "keep the structure identical")
-      // because the model was sometimes just handing back something very
-      // close to the second (reference) image itself instead of actually
-      // editing the first — most noticeable on an unusual first photo (an
-      // unfinished/bare space) that gives the model little to anchor a
-      // "redesign" on, so it defaulted to leaning on the reference instead.
-      var prompt = 'You are given two images. The FIRST image is the user\'s own real space — this is ' +
-        'the ONLY space you are allowed to show in your output. The SECOND image is a style reference ' +
-        'ONLY: never output its room, its camera angle, or its layout — look at it only to see which ' +
-        'colors, materials, furniture style, and decor to borrow. ' +
-        'Redesign the FIRST image so its color palette, materials, furniture, and decor match the ' +
-        'SECOND image\'s style as closely as possible, while keeping the first image\'s own structure, ' +
-        'layout, and architecture exactly identical — same walls, floors, doors, windows, paths, and ' +
-        'boundaries, same camera angle, same positions and sizes as the first image. Do not add, ' +
-        'remove, move, or resize any structural element from the first image. Do not reproduce the ' +
-        'second image\'s room, shape, or framing — the output must be recognizable as the same physical ' +
-        'space shown in the first image, just redecorated in the second image\'s style.';
+      // A first rewrite spelled out "don't reproduce the reference image's
+      // room" explicitly and still wasn't enough on a bare/unfinished source
+      // photo (confirmed by a real test) — the model kept generating a
+      // generic furnished room close to the reference instead of the user's
+      // actual (odd, empty) space. Reframed as "virtual staging" — the
+      // specific real-estate-tech task of furnishing an empty/unfinished
+      // room while leaving the room itself untouched — since that's a
+      // narrower, more concrete task than generic "redesign", with a
+      // pixel-identical-geometry constraint spelled out explicitly.
+      var prompt = 'This is a VIRTUAL STAGING task, not a room-generation task. The FIRST image is an ' +
+        'empty or unfinished real room that needs to be virtually furnished and decorated — exactly ' +
+        'like real-estate virtual staging software does. The room itself in your output — its walls, ' +
+        'floor, ceiling, doors, windows, room shape, proportions, and camera angle — must be pixel-' +
+        'identical to the FIRST image. Do not change, replace, or regenerate the room. Only ADD ' +
+        'furniture, decor, paint/material colors, and lighting into that exact same room. ' +
+        'The SECOND image is a style reference ONLY, used purely to choose which colors, materials, ' +
+        'and furniture style to add — its own room, walls, and camera angle must NEVER appear in your ' +
+        'output. If the first image is empty, unfinished, or unusual, you must still stage THAT exact ' +
+        'room — never substitute a different, more typical-looking room instead.';
 
       var genRes = await fetchJson('/api/generate', {
         method: 'POST',
