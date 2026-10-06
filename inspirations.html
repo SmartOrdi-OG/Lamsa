@@ -724,11 +724,16 @@
         'like real-estate virtual staging software does. The room itself in your output — its walls, ' +
         'floor, ceiling, doors, windows, room shape, proportions, and camera angle — must be pixel-' +
         'identical to the FIRST image. Do not change, replace, or regenerate the room. Only ADD ' +
-        'furniture, decor, paint/material colors, and lighting into that exact same room. ' +
+        'furniture, decor, plants, paint/material colors, and lighting into that exact same room. ' +
+        'Never add any new structure, building, room, wall, roof, or extension that is not already ' +
+        'present in the FIRST image, even if the SECOND image shows one — if the second image\'s scene ' +
+        'includes extra buildings, rooms, or structures beyond the first image, leave them out entirely. ' +
         'The SECOND image is a style reference ONLY, used purely to choose which colors, materials, ' +
-        'and furniture style to add — its own room, walls, and camera angle must NEVER appear in your ' +
-        'output. If the first image is empty, unfinished, or unusual, you must still stage THAT exact ' +
-        'room — never substitute a different, more typical-looking room instead.';
+        'and furniture style to add — its own room, walls, structures, and camera angle must NEVER ' +
+        'appear in your output. If the first image is empty, unfinished, or unusual, you must still ' +
+        'stage THAT exact room — never substitute a different, more typical-looking room instead. If ' +
+        'the first image contains people, keep them exactly as they are — same identity, pose, position, ' +
+        'and size — do not move, shrink, restyle, or alter them in any way.';
 
       var genRes = await fetchJson('/api/generate', {
         method: 'POST',
