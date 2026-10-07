@@ -135,6 +135,9 @@
   }
   .chip:hover { border-color: var(--gold); color: var(--gold); }
   .chip.selected { background: var(--gold-dim); border-color: var(--gold); color: var(--gold); }
+  .d3d-icon-chip { display: inline-flex; align-items: center; gap: 6px; }
+  .d3d-chip-icon { font-size: 14px; display: inline-flex; flex-shrink: 0; }
+  .d3d-chip-icon .icon-svg { width: 1em; height: 1em; }
 
   .floorplan-wrap { margin-top: 4px; }
   .floorplan-title { font-size: 14px; font-weight: 700; margin-bottom: 4px; }
@@ -188,12 +191,35 @@
   .btn-edit-again:hover { background: var(--gold-dim); }
 
   .d3d-palette-hint { font-size: 11.5px; color: var(--gray); margin-bottom: 10px; line-height: 1.5; }
-  .d3d-palette-row, .d3d-action-row {
-    display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 10px; justify-content: center;
+  .d3d-action-row {
+    display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 14px; justify-content: center;
   }
-  .d3d-palette-row .fp-tool-btn, .d3d-action-row .fp-tool-btn {
+  .d3d-action-row .fp-tool-btn {
     flex: 0 1 auto; min-width: 64px; padding: 8px 10px; font-size: 11.5px;
   }
+  .d3d-action-row .fp-tool-btn.active { border-color: var(--gold); background: var(--gold-dim); color: var(--gold-deep); }
+
+  .d3d-category-tabs { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 10px; justify-content: center; }
+  .d3d-category-tab {
+    background: var(--card); border: 1.5px solid var(--border); color: var(--gray);
+    font-family: 'Tajawal', sans-serif; font-size: 11.5px; font-weight: 700; padding: 8px 12px;
+    border-radius: 20px; cursor: pointer; display: flex; align-items: center; gap: 5px; transition: all 0.2s;
+  }
+  .d3d-category-tab .icon-svg { width: 1em; height: 1em; }
+  .d3d-category-tab:hover { border-color: var(--gold); }
+  .d3d-category-tab.active { border-color: var(--gold); background: var(--gold-dim); color: var(--gold-deep); }
+
+  .d3d-card-grid { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 14px; justify-content: center; }
+  .d3d-card {
+    background: var(--card); border: 1.5px solid var(--border); border-radius: 12px; padding: 10px 8px;
+    min-width: 72px; text-align: center; cursor: pointer; transition: all 0.2s;
+  }
+  .d3d-card:hover { border-color: var(--gold); }
+  .d3d-card.active { border-color: var(--gold); background: var(--gold-dim); }
+  .d3d-card-icon { font-size: 22px; margin-bottom: 4px; color: var(--gold-deep); }
+  .d3d-card-icon .icon-svg { width: 1em; height: 1em; }
+  .d3d-card-label { font-size: 10.5px; color: var(--gray); font-weight: 600; }
+  .d3d-card.active .d3d-card-label { color: var(--gold-deep); }
 </style>
 </head>
 <body>
@@ -280,19 +306,19 @@
         <div class="form-group" style="margin-top:20px;">
           <label>Door Style (optional)</label>
           <div class="chips" id="d3dDoorStyleChips">
-            <div class="chip" onclick="selectColor(this)">Classic Panel</div>
-            <div class="chip" onclick="selectColor(this)">Modern Flush</div>
-            <div class="chip" onclick="selectColor(this)">Glass Panel</div>
-            <div class="chip" onclick="selectColor(this)">Sliding</div>
+            <div class="chip d3d-icon-chip" data-icon-key="door" onclick="selectColor(this)">Classic Panel</div>
+            <div class="chip d3d-icon-chip" data-icon-key="door" onclick="selectColor(this)">Modern Flush</div>
+            <div class="chip d3d-icon-chip" data-icon-key="door" onclick="selectColor(this)">Glass Panel</div>
+            <div class="chip d3d-icon-chip" data-icon-key="door" onclick="selectColor(this)">Sliding</div>
           </div>
         </div>
         <div class="form-group">
           <label>Window Style (optional)</label>
           <div class="chips" id="d3dWindowStyleChips">
-            <div class="chip" onclick="selectColor(this)">Classic Grid</div>
-            <div class="chip" onclick="selectColor(this)">Modern Large Pane</div>
-            <div class="chip" onclick="selectColor(this)">Arched</div>
-            <div class="chip" onclick="selectColor(this)">Sliding/French</div>
+            <div class="chip d3d-icon-chip" data-icon-key="windowIcon" onclick="selectColor(this)">Classic Grid</div>
+            <div class="chip d3d-icon-chip" data-icon-key="windowIcon" onclick="selectColor(this)">Modern Large Pane</div>
+            <div class="chip d3d-icon-chip" data-icon-key="windowIcon" onclick="selectColor(this)">Arched</div>
+            <div class="chip d3d-icon-chip" data-icon-key="windowIcon" onclick="selectColor(this)">Sliding/French</div>
           </div>
         </div>
 
@@ -310,13 +336,13 @@
         <div class="form-group">
           <label>Wall Color</label>
           <div class="chips" id="d3dColorChips">
-            <div class="chip" onclick="selectColor(this)">Neutral/Gray</div>
-            <div class="chip" onclick="selectColor(this)">Warm/Wood</div>
-            <div class="chip" onclick="selectColor(this)">Cool/Blue</div>
-            <div class="chip" onclick="selectColor(this)">Pink/Soft</div>
-            <div class="chip" onclick="selectColor(this)">Green/Natural</div>
-            <div class="chip" onclick="selectColor(this)">Black/Gold</div>
-            <div class="chip" onclick="selectColor(this)">Pure White</div>
+            <div class="chip d3d-icon-chip" data-icon-key="swatchNeutral" onclick="selectColor(this)">Neutral/Gray</div>
+            <div class="chip d3d-icon-chip" data-icon-key="swatchWarm" onclick="selectColor(this)">Warm/Wood</div>
+            <div class="chip d3d-icon-chip" data-icon-key="swatchCool" onclick="selectColor(this)">Cool/Blue</div>
+            <div class="chip d3d-icon-chip" data-icon-key="swatchPink" onclick="selectColor(this)">Pink/Soft</div>
+            <div class="chip d3d-icon-chip" data-icon-key="swatchGreen" onclick="selectColor(this)">Green/Natural</div>
+            <div class="chip d3d-icon-chip" data-icon-key="swatchBlackGold" onclick="selectColor(this)">Black/Gold</div>
+            <div class="chip d3d-icon-chip" data-icon-key="swatchWhite" onclick="selectColor(this)">Pure White</div>
           </div>
         </div>
         <div class="form-group">
@@ -332,13 +358,13 @@
         <div class="form-group">
           <label>Furniture Color (optional)</label>
           <div class="chips" id="d3dFurnitureColorChips">
-            <div class="chip" onclick="selectColor(this)">Neutral/Gray</div>
-            <div class="chip" onclick="selectColor(this)">Warm/Wood</div>
-            <div class="chip" onclick="selectColor(this)">Cool/Blue</div>
-            <div class="chip" onclick="selectColor(this)">Pink/Soft</div>
-            <div class="chip" onclick="selectColor(this)">Green/Natural</div>
-            <div class="chip" onclick="selectColor(this)">Black/Gold</div>
-            <div class="chip" onclick="selectColor(this)">Pure White</div>
+            <div class="chip d3d-icon-chip" data-icon-key="swatchNeutral" onclick="selectColor(this)">Neutral/Gray</div>
+            <div class="chip d3d-icon-chip" data-icon-key="swatchWarm" onclick="selectColor(this)">Warm/Wood</div>
+            <div class="chip d3d-icon-chip" data-icon-key="swatchCool" onclick="selectColor(this)">Cool/Blue</div>
+            <div class="chip d3d-icon-chip" data-icon-key="swatchPink" onclick="selectColor(this)">Pink/Soft</div>
+            <div class="chip d3d-icon-chip" data-icon-key="swatchGreen" onclick="selectColor(this)">Green/Natural</div>
+            <div class="chip d3d-icon-chip" data-icon-key="swatchBlackGold" onclick="selectColor(this)">Black/Gold</div>
+            <div class="chip d3d-icon-chip" data-icon-key="swatchWhite" onclick="selectColor(this)">Pure White</div>
           </div>
         </div>
         <div class="form-group">
@@ -390,9 +416,11 @@
   <div class="result-area" id="d3dResultArea">
     <div class="result-card">
       <div class="result-title">Your 3D Room</div>
-      <div class="d3d-palette-hint" id="d3dPaletteHint">Pick a piece below, then click inside the room to place it.</div>
-      <div class="d3d-palette-row" id="d3dStampRow"></div>
+      <div class="d3d-palette-hint" id="d3dPaletteHint">Pick a category, then a piece, then click inside the room to place it.</div>
+      <div class="d3d-category-tabs" id="d3dCategoryTabs"></div>
+      <div class="d3d-card-grid" id="d3dStampRow"></div>
       <div class="d3d-action-row">
+        <button type="button" class="fp-tool-btn" id="d3dSelectMoveBtn" onclick="d3dSetTool('select')">Select / Move</button>
         <button type="button" class="fp-tool-btn" onclick="d3dRotateSelected(-15)">⟲ Rotate</button>
         <button type="button" class="fp-tool-btn" onclick="d3dRotateSelected(15)">Rotate ⟳</button>
         <button type="button" class="fp-tool-btn" onclick="d3dDeleteSelected()">Delete Selected</button>
@@ -1031,10 +1059,48 @@
   // INTERACTIVE PLACEMENT — click inside the 3D room to add/select/
   // rotate/delete furniture and switches by hand.
   // ═══════════════════════════════════════════════
-  var D3D_STAMPS = [
-    'Bed', 'Nightstand', 'Sofa', 'Wardrobe', 'Bookshelf', 'TV Unit', 'Desk',
-    'Coffee Table', 'Dining Table', 'Chair', 'Kitchen Island', 'Vanity',
-    'Mirror', 'Bathtub', 'Shower', 'Toilet', 'Play Area'
+  // Catalog-style palette: pick a category tab, then a piece (card) from
+  // that category. Each item's key matches an FP3D_DEFS lookup exactly
+  // (or 'switch', handled separately) — the icon is just presentation,
+  // picked from the shared js/icons.js set rather than a real product
+  // photo, since there's no licensed catalog behind this.
+  var D3D_CATEGORIES = [
+    { key: 'bedroom', label: 'Bedroom', icon: 'bed', items: [
+      { key: 'Bed', icon: 'bed' },
+      { key: 'Nightstand', icon: 'cabinet' },
+      { key: 'Wardrobe', icon: 'cabinet' }
+    ] },
+    { key: 'living', label: 'Living', icon: 'sofa', items: [
+      { key: 'Sofa', icon: 'sofa' },
+      { key: 'Coffee Table', icon: 'table' },
+      { key: 'TV Unit', icon: 'tv' },
+      { key: 'Bookshelf', icon: 'books' }
+    ] },
+    { key: 'dining', label: 'Dining', icon: 'table', items: [
+      { key: 'Dining Table', icon: 'table' },
+      { key: 'Chair', icon: 'chair' }
+    ] },
+    { key: 'office', label: 'Office', icon: 'books', items: [
+      { key: 'Desk', icon: 'table' },
+      { key: 'Chair', icon: 'chair' },
+      { key: 'Bookshelf', icon: 'books' }
+    ] },
+    { key: 'kitchen', label: 'Kitchen', icon: 'table', items: [
+      { key: 'Kitchen Island', icon: 'table' }
+    ] },
+    { key: 'bathroom', label: 'Bathroom', icon: 'bathtub', items: [
+      { key: 'Vanity', icon: 'sink' },
+      { key: 'Mirror', icon: 'mirror' },
+      { key: 'Bathtub', icon: 'bathtub' },
+      { key: 'Shower', icon: 'shower' },
+      { key: 'Toilet', icon: 'toilet' }
+    ] },
+    { key: 'kids', label: 'Kids', icon: 'teddy', items: [
+      { key: 'Play Area', icon: 'teddy' }
+    ] },
+    { key: 'electrical', label: 'Electrical', icon: 'switchPlate', items: [
+      { key: 'switch', label: 'Switch', icon: 'switchPlate' }
+    ] }
   ];
 
   var d3dScene = null, d3dCamera = null, d3dRenderer = null;
@@ -1044,53 +1110,65 @@
   var d3dPlacedGroup = null;
   var d3dPlacedItems = []; // { key, isWall, wallSide, x, y, z, rotY }
   var d3dSelectedIndex = -1;
-  var d3dTool = null; // null | 'select' | 'switch' | one of D3D_STAMPS
+  var d3dTool = null; // null | 'select' | 'switch' | an FP3D_DEFS-matching key
+  var d3dActiveCategory = D3D_CATEGORIES[0].key;
   var d3dRaycaster = (typeof THREE !== 'undefined') ? new THREE.Raycaster() : null;
   var d3dMouse = (typeof THREE !== 'undefined') ? new THREE.Vector2() : null;
 
-  function d3dBuildPalette() {
+  function d3dRenderCategoryItems(categoryKey) {
     var row = document.getElementById('d3dStampRow');
-    if (!row) return;
+    var cat = D3D_CATEGORIES.filter(function(c) { return c.key === categoryKey; })[0];
+    if (!row || !cat) return;
     row.innerHTML = '';
-
-    D3D_STAMPS.forEach(function(label) {
-      var btn = document.createElement('button');
-      btn.type = 'button';
-      btn.className = 'fp-tool-btn';
-      btn.setAttribute('data-key', label);
-      btn.textContent = label;
-      btn.onclick = function() { d3dSetTool(label); };
-      row.appendChild(btn);
+    cat.items.forEach(function(item) {
+      var card = document.createElement('div');
+      card.className = 'd3d-card';
+      card.setAttribute('data-key', item.key);
+      if (item.key === d3dTool) card.classList.add('active');
+      var iconHtml = window.icon ? window.icon(item.icon) : '';
+      card.innerHTML = '<div class="d3d-card-icon">' + iconHtml + '</div><div class="d3d-card-label">' + (item.label || item.key) + '</div>';
+      card.onclick = function() { d3dSetTool(item.key); };
+      row.appendChild(card);
     });
+  }
 
-    var switchBtn = document.createElement('button');
-    switchBtn.type = 'button';
-    switchBtn.className = 'fp-tool-btn';
-    switchBtn.setAttribute('data-key', 'switch');
-    switchBtn.textContent = 'Switch';
-    switchBtn.onclick = function() { d3dSetTool('switch'); };
-    row.appendChild(switchBtn);
+  function d3dSetCategory(categoryKey) {
+    d3dActiveCategory = categoryKey;
+    document.querySelectorAll('#d3dCategoryTabs .d3d-category-tab').forEach(function(tab) {
+      tab.classList.toggle('active', tab.getAttribute('data-key') === categoryKey);
+    });
+    d3dRenderCategoryItems(categoryKey);
+  }
 
-    var selectBtn = document.createElement('button');
-    selectBtn.type = 'button';
-    selectBtn.className = 'fp-tool-btn';
-    selectBtn.setAttribute('data-key', 'select');
-    selectBtn.textContent = 'Select / Move';
-    selectBtn.onclick = function() { d3dSetTool('select'); };
-    row.appendChild(selectBtn);
+  function d3dBuildPalette() {
+    var tabsRow = document.getElementById('d3dCategoryTabs');
+    if (!tabsRow) return;
+    tabsRow.innerHTML = '';
+    D3D_CATEGORIES.forEach(function(cat) {
+      var tab = document.createElement('button');
+      tab.type = 'button';
+      tab.className = 'd3d-category-tab';
+      tab.setAttribute('data-key', cat.key);
+      tab.innerHTML = (window.icon ? window.icon(cat.icon) : '') + '<span>' + cat.label + '</span>';
+      tab.onclick = function() { d3dSetCategory(cat.key); };
+      tabsRow.appendChild(tab);
+    });
+    d3dSetCategory(d3dActiveCategory);
   }
 
   function d3dSetTool(tool) {
     d3dTool = tool;
-    document.querySelectorAll('#d3dStampRow .fp-tool-btn').forEach(function(btn) {
-      btn.classList.toggle('active', btn.getAttribute('data-key') === tool);
+    document.querySelectorAll('#d3dStampRow .d3d-card').forEach(function(card) {
+      card.classList.toggle('active', card.getAttribute('data-key') === tool);
     });
+    var selectBtn = document.getElementById('d3dSelectMoveBtn');
+    if (selectBtn) selectBtn.classList.toggle('active', tool === 'select');
     var hint = document.getElementById('d3dPaletteHint');
     if (!hint) return;
     if (tool === 'select') hint.textContent = 'Click a placed piece to select it, then rotate or delete it.';
     else if (tool === 'switch') hint.textContent = 'Click a wall to place a switch there.';
     else if (tool) hint.textContent = 'Click inside the room to place a ' + tool + '.';
-    else hint.textContent = 'Pick a piece above, then click inside the room to place it.';
+    else hint.textContent = 'Pick a category, then a piece, then click inside the room to place it.';
   }
 
   function d3dGetIntersects(event, objects) {
@@ -1265,10 +1343,24 @@
       });
   }
 
+  // Injects a shared icon (from js/icons.js) in front of each chip's label
+  // text — a cheap, static-asset "catalog card" look (icon + name) instead
+  // of a plain text pill, without needing any real product photos.
+  function d3dInjectChipIcons() {
+    document.querySelectorAll('[data-icon-key]').forEach(function(el) {
+      if (el.querySelector('.d3d-chip-icon')) return;
+      var span = document.createElement('span');
+      span.className = 'd3d-chip-icon';
+      span.innerHTML = window.icon ? window.icon(el.getAttribute('data-icon-key')) : '';
+      el.insertBefore(span, el.firstChild);
+    });
+  }
+
   window.addEventListener('DOMContentLoaded', function() {
     checkAuth();
     drawFloorPlan();
     d3dBuildPalette();
+    d3dInjectChipIcons();
   });
 </script>
 </body>
