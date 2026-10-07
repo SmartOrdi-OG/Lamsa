@@ -202,12 +202,18 @@ export default async function handler(req, res) {
 
   // === DOLLHOUSE STAGE ===
   // The frontend calls back in here once the final (refined) design image
-  // is ready, asking Flux Kontext Pro to redraw it as an isometric
+  // is ready, asking Nano Banana Pro to redraw it as an isometric
   // "dollhouse" cutaway — same furniture/colors/layout, just with the two
-  // nearest walls removed. No credit deducted: bundled into the same
-  // 1-credit generation via dollhouseToken (minted alongside refineToken
-  // in the initial stage below), scoped the same way refine_token is so
-  // this can't be called on its own as a free generation.
+  // nearest walls removed. Originally tried on Flux Kontext Pro from a text
+  // description alone ("isometric dollhouse cutaway") with no visual
+  // anchor for what that should look like; switched to the same
+  // multi-image technique proven on the Inspirations style-transfer flow
+  // (#166-168) — a real reference photo of the target look, so the model
+  // has something concrete to imitate instead of guessing from words.
+  // No credit deducted: bundled into the same 1-credit generation via
+  // dollhouseToken (minted alongside refineToken in the initial stage
+  // below), scoped the same way refine_token is so this can't be called on
+  // its own as a free generation.
   if (dollhouse_token) {
     if (!image_url) return res.status(400).json({ error: 'image_url is required for the dollhouse stage' });
 
@@ -224,12 +230,19 @@ export default async function handler(req, res) {
       await redis.set(tokenKey, { email: normalizedEmail, remaining }, { ex: 900 });
     }
 
-    const fluxBody = buildFluxBody({ prompt, image_url, count: 1, guidance_scale: 10, aspect_ratio: '4:3', strength: 0.9 });
-    console.log('[api/generate] dollhouse stage — submitting to flux:', JSON.stringify(fluxBody));
+    // Same pattern as create-checkout-session.js: the request's own origin,
+    // so this resolves correctly on preview deployments too, not just
+    // production.
+    const origin = req.headers.origin || ('https://' + req.headers.host);
+    const dollhouseReferenceUrl = origin + '/assets/dollhouse-reference.jpg';
+
+    const nanoBody = buildNanoBody({ prompt, image_url, count: 1 });
+    nanoBody.image_urls = [image_url, dollhouseReferenceUrl];
+    console.log('[api/generate] dollhouse stage — submitting to nano-banana-pro:', JSON.stringify(nanoBody));
 
     try {
-      const request_id = await submitToFal(FAL_API_KEY, FLUX_SUBMIT_URL, fluxBody);
-      return res.status(200).json({ requests: [{ model: 'flux', request_id }] });
+      const request_id = await submitToFal(FAL_API_KEY, NANO_SUBMIT_URL, nanoBody);
+      return res.status(200).json({ requests: [{ model: 'nano', request_id }] });
     } catch (err) {
       console.error('[api/generate] dollhouse submit failed:', err.message);
       return res.status(502).json({ error: err.message });

@@ -3375,17 +3375,31 @@
       ' Do NOT change anything about the room itself — keep the exact same room shape, wall count, window count, door count, and proportions, and the exact same furniture pieces already shown in this image, in their exact same positions.' +
       ' Do not add, remove, move, or restyle any object. This is a quality-enhancement pass only, not a redesign.';
 
-    // Feeds the finished design photo back in a third time to get an
-    // isometric "dollhouse" cutaway of it (real-estate/Matterport 3D-tour
-    // style): same furniture, colors, materials and layout, just with the
-    // two nearest walls removed so the room reads as an open box seen from
-    // above at an angle.
+    // Feeds the finished design photo back in a third time, together with
+    // a curated reference photo of an actual isometric dollhouse-style
+    // render (assets/dollhouse-reference.jpg, attached server-side in
+    // api/generate.js), to get a dollhouse cutaway of THIS design: same
+    // furniture, colors, materials and layout, just with two walls removed
+    // so the room reads as an open box seen from above at an angle. A
+    // first version asked for this from a text description alone ("convert
+    // to an isometric dollhouse view") with no visual anchor for what that
+    // should actually look like — giving the model a real reference image
+    // of the target rendering style, the same multi-image technique
+    // proven on the Inspirations style-transfer flow, should be far more
+    // reliable than hoping the model imagines the right thing from words.
     var dollhousePrompt =
-      'Convert this photo of a fully redesigned ' + roomTypeLabel + (styleText ? ' in ' + styleText + ' style' : '') +
-      ' into an isometric "dollhouse" cutaway view, like a real-estate 3D-tour dollhouse view.' +
-      ' Keep the exact same furniture, decor, colors, materials, and layout shown in this photo, in the exact same relative positions.' +
-      ' Remove only the two walls closest to the camera (and the ceiling) so the room is open and fully visible from a slightly elevated 3/4 angle, like looking down into an open box.' +
-      ' Keep the two far walls, the floor, and every door and window shown in the photo. Do not add, remove, or restyle any furniture or object — this is a viewpoint change only, not a redesign.';
+      'You are given two images. The FIRST image is a fully redesigned ' + roomTypeLabel +
+      (styleText ? ' in ' + styleText + ' style' : '') + ' — this is the ONLY room you are allowed to show ' +
+      'in your output, with its own exact furniture, decor, colors, materials, and layout, in the exact same ' +
+      'relative positions. The SECOND image is a RENDERING STYLE reference ONLY, showing an isometric ' +
+      '"dollhouse" cutaway view (two walls and the ceiling removed, seen from a slightly elevated 3/4 angle, ' +
+      'like looking down into an open box) — copy ONLY that camera angle, cutaway technique, and rendering ' +
+      'style from it. Never reproduce the second image\'s own room, its own furniture, or its own layout. ' +
+      'Apply that dollhouse-cutaway treatment to the FIRST image: remove only the two walls and the ceiling ' +
+      'closest to the camera, keep the two far walls, the floor, and every door and window exactly as shown ' +
+      'in the first image. Do not add, remove, move, or restyle any furniture or object, and do not add any ' +
+      'new structure, column, or wall not already present in the first image — this is a viewpoint and ' +
+      'rendering-style change only, not a redesign.';
 
     // Compress image before upload (max 1280px, JPEG) — much faster upload & generation
     function compressImage(file, maxSize, quality, callback) {
