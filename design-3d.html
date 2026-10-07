@@ -218,6 +218,7 @@
   .d3d-card.active { border-color: var(--gold); background: var(--gold-dim); }
   .d3d-card-icon { font-size: 22px; margin-bottom: 4px; color: var(--gold-deep); }
   .d3d-card-icon .icon-svg { width: 1em; height: 1em; }
+  .d3d-card-icon img { width: 42px; height: 42px; display: block; margin: 0 auto; object-fit: contain; }
   .d3d-card-label { font-size: 10.5px; color: var(--gray); font-weight: 600; }
   .d3d-card.active .d3d-card-label { color: var(--gold-deep); }
 </style>
@@ -747,6 +748,21 @@
     return g;
   }
 
+  function fp3dBuildFloorLamp(w, d, h, color) {
+    var g = new THREE.Group();
+    var poleR = Math.min(w, d) * 0.08;
+    var base = new THREE.Mesh(new THREE.CylinderGeometry(w * 0.42, w * 0.46, h * 0.03, 12), new THREE.MeshLambertMaterial({ color: 0x4A4D52 }));
+    base.position.y = h * 0.015;
+    g.add(base);
+    var pole = new THREE.Mesh(new THREE.CylinderGeometry(poleR, poleR, h * 0.82, 8), new THREE.MeshLambertMaterial({ color: 0x8A8A86 }));
+    pole.position.y = h * 0.44;
+    g.add(pole);
+    var shade = new THREE.Mesh(new THREE.ConeGeometry(w * 0.46, h * 0.22, 12), new THREE.MeshLambertMaterial({ color: color }));
+    shade.position.y = h * 0.89;
+    g.add(shade);
+    return g;
+  }
+
   // Order matters: more specific keywords must be checked before the
   // generic ones they're substrings of (e.g. "bedside" before "bed",
   // "dining table" before "table"). Also doubles as the lookup used by
@@ -772,6 +788,13 @@
     { keys: ['shower'], w: 0.9, d: 0.9, h: 1.9, build: fp3dBuildShower },
     { keys: ['toilet'], w: 0.4, d: 0.6, h: 0.4, build: fp3dBuildToilet },
     { keys: ['towel'], w: 0.6, d: 0.08, h: 0.6, build: fp3dBuildBox },
+    { keys: ['dresser'], w: 1.0, d: 0.5, h: 0.9, build: fp3dBuildBox },
+    { keys: ['ottoman', 'pouf'], w: 0.5, d: 0.5, h: 0.4, build: fp3dBuildBox },
+    { keys: ['armchair'], w: 1.0, d: 0.9, h: 0.8, build: fp3dBuildSofa },
+    { keys: ['floor lamp'], w: 0.3, d: 0.3, h: 1.5, build: fp3dBuildFloorLamp },
+    { keys: ['rug'], w: 1.6, d: 1.0, h: 0.02, build: fp3dBuildMat },
+    { keys: ['toy box', 'toybox'], w: 0.6, d: 0.4, h: 0.4, build: fp3dBuildBox },
+    { keys: ['fridge', 'refrigerator'], w: 0.75, d: 0.7, h: 1.8, build: fp3dBuildBox },
     { keys: ['chair', 'stool'], w: 0.45, d: 0.45, h: 0.45, build: fp3dBuildChair },
     { keys: ['play area'], w: 1.3, d: 1.3, h: 0.02, build: fp3dBuildMat }
   ];
@@ -1035,6 +1058,12 @@
     renderer.setSize(width, height);
     container.appendChild(renderer.domElement);
     renderer.domElement.addEventListener('click', d3dHandleCanvasClick);
+    renderer.domElement.addEventListener('mousedown', d3dHandlePointerDown);
+    renderer.domElement.addEventListener('mousemove', d3dHandlePointerMove);
+    if (!d3dGlobalListenersBound) {
+      window.addEventListener('mouseup', d3dHandlePointerUp);
+      d3dGlobalListenersBound = true;
+    }
 
     d3dScene = scene;
     d3dCamera = camera;
@@ -1051,6 +1080,7 @@
     d3dPlacedItems = [];
     d3dSelectedIndex = -1;
     d3dPlacedGroup = null;
+    d3dThumbCache = {}; // the room's actual furniture color/shape is now known — old default-colored thumbnails are stale
 
     renderer.render(scene, camera);
   }
@@ -1068,41 +1098,56 @@
     { key: 'bedroom', label: 'Bedroom', icon: 'bed', items: [
       { key: 'Bed', icon: 'bed' },
       { key: 'Nightstand', icon: 'cabinet' },
-      { key: 'Wardrobe', icon: 'cabinet' }
+      { key: 'Wardrobe', icon: 'cabinet' },
+      { key: 'Dresser', icon: 'cabinet' },
+      { key: 'Ottoman', icon: 'chair' }
     ] },
     { key: 'living', label: 'Living', icon: 'sofa', items: [
       { key: 'Sofa', icon: 'sofa' },
+      { key: 'Armchair', icon: 'chair' },
       { key: 'Coffee Table', icon: 'table' },
+      { key: 'Console Table', icon: 'table' },
       { key: 'TV Unit', icon: 'tv' },
-      { key: 'Bookshelf', icon: 'books' }
+      { key: 'Bookshelf', icon: 'books' },
+      { key: 'Floor Lamp', icon: 'sparkle' },
+      { key: 'Rug', icon: 'cube' }
     ] },
     { key: 'dining', label: 'Dining', icon: 'table', items: [
       { key: 'Dining Table', icon: 'table' },
-      { key: 'Chair', icon: 'chair' }
+      { key: 'Chair', icon: 'chair' },
+      { key: 'Sideboard', icon: 'cabinet' }
     ] },
     { key: 'office', label: 'Office', icon: 'books', items: [
       { key: 'Desk', icon: 'table' },
       { key: 'Chair', icon: 'chair' },
-      { key: 'Bookshelf', icon: 'books' }
+      { key: 'Bookshelf', icon: 'books' },
+      { key: 'Cabinet', icon: 'cabinet' },
+      { key: 'Floor Lamp', icon: 'sparkle' }
     ] },
     { key: 'kitchen', label: 'Kitchen', icon: 'table', items: [
-      { key: 'Kitchen Island', icon: 'table' }
+      { key: 'Kitchen Island', icon: 'table' },
+      { key: 'Sink', icon: 'sink' },
+      { key: 'Fridge', icon: 'cabinet' }
     ] },
     { key: 'bathroom', label: 'Bathroom', icon: 'bathtub', items: [
       { key: 'Vanity', icon: 'sink' },
       { key: 'Mirror', icon: 'mirror' },
       { key: 'Bathtub', icon: 'bathtub' },
       { key: 'Shower', icon: 'shower' },
-      { key: 'Toilet', icon: 'toilet' }
+      { key: 'Toilet', icon: 'toilet' },
+      { key: 'Shelf', icon: 'books' }
     ] },
     { key: 'kids', label: 'Kids', icon: 'teddy', items: [
-      { key: 'Play Area', icon: 'teddy' }
+      { key: 'Play Area', icon: 'teddy' },
+      { key: 'Toy Box', icon: 'cube' },
+      { key: 'Rug', icon: 'cube' }
     ] },
     { key: 'electrical', label: 'Electrical', icon: 'switchPlate', items: [
       { key: 'switch', label: 'Switch', icon: 'switchPlate' }
     ] }
   ];
 
+  var d3dGlobalListenersBound = false;
   var d3dScene = null, d3dCamera = null, d3dRenderer = null;
   var d3dRoomLen = 4, d3dRoomWid = 4, d3dWallH = 2.6, d3dWallT = 0.1;
   var d3dFloorMesh = null, d3dNWallMesh = null, d3dWWallMesh = null;
@@ -1114,6 +1159,61 @@
   var d3dActiveCategory = D3D_CATEGORIES[0].key;
   var d3dRaycaster = (typeof THREE !== 'undefined') ? new THREE.Raycaster() : null;
   var d3dMouse = (typeof THREE !== 'undefined') ? new THREE.Vector2() : null;
+  var d3dThumbRenderer = null, d3dThumbCache = {};
+
+  // Small isometric render of the actual piece (its real geometry + the
+  // currently chosen furniture color/shape), shown on its catalog card
+  // instead of a flat line icon. There's no licensed product photo
+  // catalog behind this, so this is the closest "real picture" we can
+  // honestly offer: a true preview of what will be placed.
+  function d3dGetThumbRenderer() {
+    if (!d3dThumbRenderer) {
+      d3dThumbRenderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+      d3dThumbRenderer.setSize(96, 96);
+    }
+    return d3dThumbRenderer;
+  }
+
+  function d3dRenderThumb(itemKey) {
+    if (typeof THREE === 'undefined') return '';
+    var cacheKey = itemKey + '|' + d3dFurnColor + '|' + d3dFurnShapeText;
+    if (d3dThumbCache[cacheKey]) return d3dThumbCache[cacheKey];
+    try {
+      var scene = new THREE.Scene();
+      scene.add(new THREE.AmbientLight(0xffffff, 0.9));
+      var light = new THREE.DirectionalLight(0xffffff, 0.55);
+      light.position.set(1.5, 2.5, 1.5);
+      scene.add(light);
+
+      var w, d, h, mesh;
+      if (itemKey === 'switch') {
+        w = 0.3; d = 0.2; h = 0.4;
+        mesh = d3dBuildSwitchMesh();
+        mesh.rotation.x = -0.3;
+        mesh.rotation.y = 0.5;
+      } else {
+        var def = fp3dClassify(itemKey.toLowerCase());
+        w = def.w; d = def.d; h = def.h;
+        mesh = def.build(def.w, def.d, def.h, d3dFurnColor);
+        fp3dApplyShapeVariant(mesh, def.w, def.d, def.h, d3dFurnShapeText, d3dFurnColor);
+      }
+      scene.add(mesh);
+
+      var maxDim = Math.max(w, d, h, 0.3);
+      var viewSize = maxDim * 0.78;
+      var camera = new THREE.OrthographicCamera(-viewSize, viewSize, viewSize, -viewSize, 0.01, 50);
+      camera.position.set(maxDim * 1.4, maxDim * 1.25, maxDim * 1.4);
+      camera.lookAt(0, h * 0.4, 0);
+
+      var renderer = d3dGetThumbRenderer();
+      renderer.render(scene, camera);
+      var dataUrl = renderer.domElement.toDataURL('image/png');
+      d3dThumbCache[cacheKey] = dataUrl;
+      return dataUrl;
+    } catch (e) {
+      return '';
+    }
+  }
 
   function d3dRenderCategoryItems(categoryKey) {
     var row = document.getElementById('d3dStampRow');
@@ -1125,7 +1225,8 @@
       card.className = 'd3d-card';
       card.setAttribute('data-key', item.key);
       if (item.key === d3dTool) card.classList.add('active');
-      var iconHtml = window.icon ? window.icon(item.icon) : '';
+      var thumb = d3dRenderThumb(item.key);
+      var iconHtml = thumb ? '<img src="' + thumb + '" alt="">' : (window.icon ? window.icon(item.icon) : '');
       card.innerHTML = '<div class="d3d-card-icon">' + iconHtml + '</div><div class="d3d-card-label">' + (item.label || item.key) + '</div>';
       card.onclick = function() { d3dSetTool(item.key); };
       row.appendChild(card);
@@ -1257,6 +1358,40 @@
     d3dRebuildPlacedGroup();
   }
 
+  // Drag-to-move: press on a placed (non-wall) piece while in Select/Move
+  // mode, drag across the floor, release to drop — finer control than a
+  // single fixed click. The plain 'click' listener above still fires on
+  // release and just re-selects whatever is now under the cursor, which
+  // is harmless since the drag already moved the item there.
+  var d3dDragIndex = -1;
+
+  function d3dHandlePointerDown(event) {
+    if (!d3dScene || d3dTool !== 'select') return;
+    var hits = d3dGetIntersects(event, d3dPlacedGroup ? d3dPlacedGroup.children : []);
+    if (!hits.length) return;
+    var idx = d3dFindPlacedIndex(hits[0].object);
+    if (idx < 0 || d3dPlacedItems[idx].isWall) return;
+    d3dDragIndex = idx;
+    d3dSelectedIndex = idx;
+    event.preventDefault();
+  }
+
+  function d3dHandlePointerMove(event) {
+    if (d3dDragIndex < 0) return;
+    var floorHits = d3dGetIntersects(event, d3dFloorMesh ? [d3dFloorMesh] : []);
+    if (!floorHits.length) return;
+    var item = d3dPlacedItems[d3dDragIndex];
+    var def = fp3dClassify(item.key.toLowerCase());
+    var p = floorHits[0].point;
+    item.x = fp3dClamp(p.x, def.w / 2, d3dRoomLen - def.w / 2);
+    item.z = fp3dClamp(p.z, def.d / 2, d3dRoomWid - def.d / 2);
+    d3dRebuildPlacedGroup();
+  }
+
+  function d3dHandlePointerUp() {
+    d3dDragIndex = -1;
+  }
+
   function d3dRotateSelected(deltaDeg) {
     if (d3dSelectedIndex < 0) return;
     var item = d3dPlacedItems[d3dSelectedIndex];
@@ -1309,6 +1444,7 @@
     });
 
     d3dSetTool(null);
+    d3dRenderCategoryItems(d3dActiveCategory); // re-render cards' thumbnails with the real furniture color/shape just selected
     document.getElementById('d3dResultArea').classList.add('show');
     document.getElementById('d3dResultArea').scrollIntoView({ behavior: 'smooth', block: 'start' });
   }
