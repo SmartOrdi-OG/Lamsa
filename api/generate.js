@@ -21,10 +21,6 @@ function refineTokenKey(token) {
   return 'lamsa:refine:' + token;
 }
 
-function dollhouseTokenKey(token) {
-  return 'lamsa:dollhouse:' + token;
-}
-
 function buildFluxBody({ prompt, image_url, count, guidance_scale, aspect_ratio, strength }) {
   const body = {
     prompt,
@@ -95,7 +91,7 @@ export default async function handler(req, res) {
     return res.status(500).json({ error: 'FAL_API_KEY not configured' });
   }
 
-  const { prompt, image_url, num_images = 1, guidance_scale = 3.5, aspect_ratio, strength, refine_token, reference_image_url, dollhouse_token } = req.body;
+  const { prompt, image_url, num_images = 1, guidance_scale = 3.5, aspect_ratio, strength, refine_token, reference_image_url } = req.body;
   // '16:9' only makes sense as a default for the photo-less (planner-only)
   // path — forcing it onto an actual image edit was making Flux Kontext Pro
   // reframe the source photo into a different aspect ratio than it was
@@ -200,55 +196,6 @@ export default async function handler(req, res) {
     }
   }
 
-  // === DOLLHOUSE STAGE ===
-  // The frontend calls back in here once the final (refined) design image
-  // is ready, asking Nano Banana Pro to redraw it as an isometric
-  // "dollhouse" cutaway — same furniture/colors/layout, just with the two
-  // nearest walls removed. Originally tried on Flux Kontext Pro from a text
-  // description alone ("isometric dollhouse cutaway") with no visual
-  // anchor for what that should look like; switched to the same
-  // multi-image technique proven on the Inspirations style-transfer flow
-  // (#166-168) — a real reference photo of the target look, so the model
-  // has something concrete to imitate instead of guessing from words.
-  // No credit deducted: bundled into the same 1-credit generation via
-  // dollhouseToken (minted alongside refineToken in the initial stage
-  // below), scoped the same way refine_token is so this can't be called on
-  // its own as a free generation.
-  if (dollhouse_token) {
-    if (!image_url) return res.status(400).json({ error: 'image_url is required for the dollhouse stage' });
-
-    const tokenKey = dollhouseTokenKey(dollhouse_token);
-    const tokenData = await redis.get(tokenKey);
-    if (!tokenData || tokenData.email !== normalizedEmail || tokenData.remaining <= 0) {
-      return res.status(403).json({ error: 'Invalid or expired dollhouse token' });
-    }
-
-    const remaining = tokenData.remaining - 1;
-    if (remaining <= 0) {
-      await redis.del(tokenKey);
-    } else {
-      await redis.set(tokenKey, { email: normalizedEmail, remaining }, { ex: 900 });
-    }
-
-    // Same pattern as create-checkout-session.js: the request's own origin,
-    // so this resolves correctly on preview deployments too, not just
-    // production.
-    const origin = req.headers.origin || ('https://' + req.headers.host);
-    const dollhouseReferenceUrl = origin + '/assets/dollhouse-reference.jpg';
-
-    const nanoBody = buildNanoBody({ prompt, image_url, count: 1 });
-    nanoBody.image_urls = [image_url, dollhouseReferenceUrl];
-    console.log('[api/generate] dollhouse stage — submitting to nano-banana-pro:', JSON.stringify(nanoBody));
-
-    try {
-      const request_id = await submitToFal(FAL_API_KEY, NANO_SUBMIT_URL, nanoBody);
-      return res.status(200).json({ requests: [{ model: 'nano', request_id }] });
-    } catch (err) {
-      console.error('[api/generate] dollhouse submit failed:', err.message);
-      return res.status(502).json({ error: err.message });
-    }
-  }
-
   // === INITIAL STAGE ===
   // Defensive fallback — the welcome credit is normally granted right at
   // registration, but this covers any account that predates that or was
@@ -301,11 +248,5 @@ export default async function handler(req, res) {
   // partial fal.ai response could return fewer).
   await redis.set(refineTokenKey(refineToken), { email: normalizedEmail, remaining: count }, { ex: 600 });
 
-  // Same scoping as refineToken, just a longer TTL — the dollhouse call
-  // happens after the refine stage completes, so it needs to still be
-  // valid a bit further out.
-  const dollhouseToken = randomUUID();
-  await redis.set(dollhouseTokenKey(dollhouseToken), { email: normalizedEmail, remaining: count }, { ex: 900 });
-
-  return res.status(200).json({ requests: [{ model: 'flux', request_id }], refineToken, dollhouseToken });
+  return res.status(200).json({ requests: [{ model: 'flux', request_id }], refineToken });
 }
