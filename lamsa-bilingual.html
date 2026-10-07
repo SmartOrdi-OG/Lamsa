@@ -1338,6 +1338,28 @@
           <div class="floorplan-hint" data-en="Click a wall edge to place, or switch to Remove and click a marker" data-ar="اضغط على حافة الجدار للإضافة، أو اختر «حذف» ثم اضغط على العلامة">Click a wall edge to place, or switch to Remove and click a marker</div>
         </div>
 
+        <!-- DOOR STYLE -->
+        <div class="form-group" style="margin-top:16px;">
+          <label data-en="Door Style (optional)" data-ar="شكل الباب (اختياري)">Door Style (optional)</label>
+          <div class="chips" id="doorStyleChips">
+            <div class="chip" onclick="selectColor(this)" data-en="Classic Panel" data-ar="كلاسيكي بألواح">Classic Panel</div>
+            <div class="chip" onclick="selectColor(this)" data-en="Modern Flush" data-ar="مودرن مسطح">Modern Flush</div>
+            <div class="chip" onclick="selectColor(this)" data-en="Glass Panel" data-ar="زجاجي">Glass Panel</div>
+            <div class="chip" onclick="selectColor(this)" data-en="Sliding" data-ar="سحّاب">Sliding</div>
+          </div>
+        </div>
+
+        <!-- WINDOW STYLE -->
+        <div class="form-group" style="margin-top:12px;">
+          <label data-en="Window Style (optional)" data-ar="شكل النافذة (اختياري)">Window Style (optional)</label>
+          <div class="chips" id="windowStyleChips">
+            <div class="chip" onclick="selectColor(this)" data-en="Classic Grid" data-ar="كلاسيكي بقضبان">Classic Grid</div>
+            <div class="chip" onclick="selectColor(this)" data-en="Modern Large Pane" data-ar="مودرن زجاج كبير">Modern Large Pane</div>
+            <div class="chip" onclick="selectColor(this)" data-en="Arched" data-ar="مقوّس">Arched</div>
+            <div class="chip" onclick="selectColor(this)" data-en="Sliding/French" data-ar="سحّاب/فرنسي">Sliding/French</div>
+          </div>
+        </div>
+
         <div class="panel-nav">
           <button class="btn-prev" onclick="prev()" data-icon="arrowLeft" data-ar="السابق" data-en="Back">Back</button>
           <button class="btn-next" onclick="next()" data-icon="arrowRight" data-icon-pos="after" data-ar="التالي" data-en="Next">Next</button>
@@ -1581,6 +1603,27 @@
             <div class="chip" onclick="selectColor(this)" data-icon="swatchWhite" data-en="Pure White" data-ar="أبيض نقي">Pure White</div>
           </div>
           <p style="font-size:11px;color:var(--gray);margin-top:6px;" data-en="Leave unselected to match the overall color scheme" data-ar="اتركه بدون اختيار ليتناسق مع لوحة الألوان العامة">Leave unselected to match the overall color scheme</p>
+        </div>
+
+        <!-- FURNITURE SHAPE -->
+        <div class="form-group" style="margin-bottom:16px;">
+          <label data-en="Furniture Shape (optional)" data-ar="شكل العفش (اختياري)">Furniture Shape (optional)</label>
+          <div class="chips" id="furnitureShapeChips">
+            <div class="chip" onclick="selectColor(this)" data-en="Sharp & Angular" data-ar="حاد وزاوي">Sharp & Angular</div>
+            <div class="chip" onclick="selectColor(this)" data-en="Curved & Rounded" data-ar="منحني ومدور">Curved & Rounded</div>
+            <div class="chip" onclick="selectColor(this)" data-en="Classic & Ornate" data-ar="كلاسيكي ومزخرف">Classic & Ornate</div>
+          </div>
+        </div>
+
+        <!-- SWITCH & OUTLET STYLE -->
+        <div class="form-group" style="margin-bottom:16px;">
+          <label data-en="Switch & Outlet Style (optional)" data-ar="شكل مفاتيح وأفيشات الكهرباء (اختياري)">Switch & Outlet Style (optional)</label>
+          <div class="chips" id="switchStyleChips">
+            <div class="chip" onclick="selectColor(this)" data-en="White Flush" data-ar="أبيض مسطح">White Flush</div>
+            <div class="chip" onclick="selectColor(this)" data-en="Black Modern" data-ar="أسود مودرن">Black Modern</div>
+            <div class="chip" onclick="selectColor(this)" data-en="Brass/Gold" data-ar="نحاسي/ذهبي">Brass/Gold</div>
+            <div class="chip" onclick="selectColor(this)" data-en="Classic Toggle" data-ar="كلاسيكي">Classic Toggle</div>
+          </div>
         </div>
 
         <!-- FREE DESCRIPTION -->
@@ -3200,6 +3243,12 @@
     var selectedFloorEl = document.querySelector('#floorChips .chip.selected');
     var floorText = selectedFloorEl ? (selectedFloorEl.getAttribute('data-en') || selectedFloorEl.textContent.trim()) : '';
 
+    // --- PANEL 2: Door/Window style ---
+    var selectedDoorStyleEl = document.querySelector('#doorStyleChips .chip.selected');
+    var doorStyleText = selectedDoorStyleEl ? (selectedDoorStyleEl.getAttribute('data-en') || selectedDoorStyleEl.textContent.trim()) : '';
+    var selectedWindowStyleEl = document.querySelector('#windowStyleChips .chip.selected');
+    var windowStyleText = selectedWindowStyleEl ? (selectedWindowStyleEl.getAttribute('data-en') || selectedWindowStyleEl.textContent.trim()) : '';
+
     // --- PANEL 5: Mood, Notes ---
     var moods = [];
     var moodOptions = ['Cozy & Warm','Bright & Airy','Romantic','Minimalist','Luxury & Bold','Kid-Friendly'];
@@ -3214,6 +3263,10 @@
     });
     var selectedFurnitureColorEl = document.querySelector('#furnitureColorChips .chip.selected');
     var furnitureColorText = selectedFurnitureColorEl ? (selectedFurnitureColorEl.getAttribute('data-en') || selectedFurnitureColorEl.textContent.trim()) : '';
+    var selectedFurnitureShapeEl = document.querySelector('#furnitureShapeChips .chip.selected');
+    var furnitureShapeText = selectedFurnitureShapeEl ? (selectedFurnitureShapeEl.getAttribute('data-en') || selectedFurnitureShapeEl.textContent.trim()) : '';
+    var selectedSwitchStyleEl = document.querySelector('#switchStyleChips .chip.selected');
+    var switchStyleText = selectedSwitchStyleEl ? (selectedSwitchStyleEl.getAttribute('data-en') || selectedSwitchStyleEl.textContent.trim()) : '';
 
     // Free-text boxes on panels 2-4 (room, budget, style/color) plus the
     // main panel-5 vision box all feed the same USER VISION prompt section
@@ -3267,6 +3320,19 @@
 
     var fpInfo = typeof getFpDescription === 'function' ? getFpDescription() : '';
 
+    // Door/window STYLE is deliberately kept separate from the STRUCTURAL
+    // LOCK's position/size/count/type rules below — this only restyles the
+    // door leaf or window frame's design, never what kind of opening it is
+    // or where it sits, so it can't reintroduce the "door became a window"
+    // failure mode that section exists to prevent.
+    var doorWindowStyleInstruction = '';
+    if (doorStyleText || windowStyleText) {
+      doorWindowStyleInstruction = '\n\n=== DOOR & WINDOW STYLE ===' +
+        '\nThe STRUCTURAL LOCK above still applies in full: do not change any door or window\'s position, size, count, or type.' +
+        (doorStyleText ? '\nRestyle the door leaf/panel design to: ' + doorStyleText + ' — same opening, same position, same size, only the door\'s own design and finish changes.' : '') +
+        (windowStyleText ? '\nRestyle the window frame design to: ' + windowStyleText + ' — same opening, same position, same size, only the window\'s own frame design and finish changes.' : '');
+    }
+
     // ═══════════════════════════════════════════════
     // BUILD COMPREHENSIVE AI PROMPT
     // ═══════════════════════════════════════════════
@@ -3285,6 +3351,9 @@
       '\nEach opening keeps its exact original type: never turn a door into a window, a window into a door, or change which wall an opening sits on — a door stays a door (same size, same swing/position), a window stays a window.' +
       '\nDo not add any new structural element that is not already visible in the original photo — no new columns, pillars, beams, half-walls, niches, alcoves, or partitions. If the original photo looks empty, unfinished, or has an unusual layout, you must still redesign THAT exact room — never substitute a more typical-looking or more "complete" room shape instead.' +
 
+      // ── DOOR & WINDOW STYLE ──
+      doorWindowStyleInstruction +
+
       // ── ROOM CONTEXT ──
       '\n\n=== ROOM CONTEXT ===' +
       '\nRoom Type: ' + roomTypeLabel +
@@ -3297,6 +3366,8 @@
       '\nPrimary style(s): ' + styleText +
       '\nStyle description: ' + stylePromptText +
       '\nApply this style to EVERY element: furniture silhouettes, materials, textures, decorative details, hardware finishes, and accessories.' +
+      (furnitureShapeText ? '\nFurniture shape language: ' + furnitureShapeText + ' — apply this silhouette to every furniture piece\'s form and lines.' : '') +
+      (switchStyleText ? '\nElectrical switch plates and outlet covers: ' + switchStyleText + ' finish throughout.' : '') +
 
       // ── SURFACES ──
       (surfacesInstruction ? '\n\n=== SURFACES & FINISHES ===\n' + surfacesInstruction : '') +
@@ -4134,12 +4205,21 @@
     var selectedFloorEl = document.querySelector('#floorChips .chip.selected');
     var floorText = selectedFloorEl ? (selectedFloorEl.getAttribute('data-en') || selectedFloorEl.textContent.trim()) : '';
 
+    var selectedDoorStyleEl = document.querySelector('#doorStyleChips .chip.selected');
+    var doorStyleText = selectedDoorStyleEl ? (selectedDoorStyleEl.getAttribute('data-en') || selectedDoorStyleEl.textContent.trim()) : '';
+    var selectedWindowStyleEl = document.querySelector('#windowStyleChips .chip.selected');
+    var windowStyleText = selectedWindowStyleEl ? (selectedWindowStyleEl.getAttribute('data-en') || selectedWindowStyleEl.textContent.trim()) : '';
+
     var extraFurniture = [];
     document.querySelectorAll('#extraFurnitureChips .chip.selected').forEach(function(el) {
       extraFurniture.push(el.getAttribute('data-en') || el.textContent.trim());
     });
     var selectedFurnitureColorEl = document.querySelector('#furnitureColorChips .chip.selected');
     var furnitureColorText = selectedFurnitureColorEl ? (selectedFurnitureColorEl.getAttribute('data-en') || selectedFurnitureColorEl.textContent.trim()) : '';
+    var selectedFurnitureShapeEl = document.querySelector('#furnitureShapeChips .chip.selected');
+    var furnitureShapeText = selectedFurnitureShapeEl ? (selectedFurnitureShapeEl.getAttribute('data-en') || selectedFurnitureShapeEl.textContent.trim()) : '';
+    var selectedSwitchStyleEl = document.querySelector('#switchStyleChips .chip.selected');
+    var switchStyleText = selectedSwitchStyleEl ? (selectedSwitchStyleEl.getAttribute('data-en') || selectedSwitchStyleEl.textContent.trim()) : '';
 
     // Kept in sync with doGenerate()'s own fallbackFurniture — duplicated
     // rather than shared so this standalone preview can never affect the
@@ -4167,7 +4247,11 @@
       floorText: floorText,
       furnitureColorText: furnitureColorText,
       furnitureText: furnitureText,
-      fpItems: fpItems.slice()
+      fpItems: fpItems.slice(),
+      doorStyleText: doorStyleText,
+      windowStyleText: windowStyleText,
+      furnitureShapeText: furnitureShapeText,
+      switchStyleText: switchStyleText
     });
     wrap.scrollIntoView({ behavior: 'smooth', block: 'center' });
   }
@@ -4469,6 +4553,97 @@
     return placed;
   }
 
+  // Builds the visual for one door/window opening as a small group of
+  // planes rather than a single flat rectangle, so the chosen door/window
+  // style shows up as an actual (if simplified) shape difference — a grid
+  // of mullions, a split sliding pair, an arched top — not just a color
+  // swap. Never touches the opening's own position/size/type.
+  function fp3dBuildOpeningMark(isDoor, styleText, w, h) {
+    var s = (styleText || '').toLowerCase();
+    var g = new THREE.Group();
+
+    if (isDoor) {
+      var color = 0x6B4A2E;
+      if (s.indexOf('modern') !== -1 || s.indexOf('flush') !== -1) color = 0x3A3A3C;
+      else if (s.indexOf('glass') !== -1) color = 0xBFE3F0;
+
+      if (s.indexOf('sliding') !== -1) {
+        var leaf1 = new THREE.Mesh(new THREE.PlaneGeometry(w * 0.56, h), new THREE.MeshBasicMaterial({ color: color, side: THREE.DoubleSide }));
+        leaf1.position.set(-w * 0.2, 0, 0.004);
+        g.add(leaf1);
+        var leaf2 = new THREE.Mesh(new THREE.PlaneGeometry(w * 0.56, h), new THREE.MeshBasicMaterial({ color: color, side: THREE.DoubleSide, transparent: true, opacity: 0.9 }));
+        leaf2.position.set(w * 0.2, 0, 0);
+        g.add(leaf2);
+        return g;
+      }
+
+      var panel = new THREE.Mesh(new THREE.PlaneGeometry(w, h), new THREE.MeshBasicMaterial({
+        color: color, side: THREE.DoubleSide,
+        transparent: s.indexOf('glass') !== -1, opacity: s.indexOf('glass') !== -1 ? 0.55 : 1
+      }));
+      g.add(panel);
+      if (s.indexOf('classic') !== -1 || s.indexOf('panel') !== -1) {
+        [0.26, -0.26].forEach(function(fy) {
+          var line = new THREE.Mesh(new THREE.PlaneGeometry(w * 0.68, 0.025), new THREE.MeshBasicMaterial({ color: 0x45301d, side: THREE.DoubleSide }));
+          line.position.set(0, fy * h, 0.003);
+          g.add(line);
+        });
+      }
+      return g;
+    }
+
+    // Window
+    var wcolor = (s.indexOf('modern') !== -1 || s.indexOf('large') !== -1) ? 0xA9D4E8 : 0xBFE3F0;
+    var pane = new THREE.Mesh(new THREE.PlaneGeometry(w, h), new THREE.MeshBasicMaterial({ color: wcolor, side: THREE.DoubleSide }));
+    g.add(pane);
+    if (s.indexOf('grid') !== -1 || s.indexOf('classic') !== -1) {
+      var vLine = new THREE.Mesh(new THREE.PlaneGeometry(0.025, h), new THREE.MeshBasicMaterial({ color: 0xffffff, side: THREE.DoubleSide }));
+      vLine.position.z = 0.003;
+      g.add(vLine);
+      var hLine = new THREE.Mesh(new THREE.PlaneGeometry(w, 0.025), new THREE.MeshBasicMaterial({ color: 0xffffff, side: THREE.DoubleSide }));
+      hLine.position.z = 0.003;
+      g.add(hLine);
+    } else if (s.indexOf('sliding') !== -1 || s.indexOf('french') !== -1) {
+      var vLine2 = new THREE.Mesh(new THREE.PlaneGeometry(0.025, h), new THREE.MeshBasicMaterial({ color: 0xffffff, side: THREE.DoubleSide }));
+      vLine2.position.z = 0.003;
+      g.add(vLine2);
+    } else if (s.indexOf('arch') !== -1) {
+      var arc = new THREE.Mesh(new THREE.CircleGeometry(w / 2, 16, Math.PI, Math.PI), new THREE.MeshBasicMaterial({ color: wcolor, side: THREE.DoubleSide }));
+      arc.position.set(0, h / 2, 0.002);
+      g.add(arc);
+    }
+    return g;
+  }
+
+  function fp3dSwitchColor(text) {
+    var t = (text || '').toLowerCase();
+    if (t.indexOf('black') !== -1) return 0x2B2B2E;
+    if (t.indexOf('brass') !== -1 || t.indexOf('gold') !== -1) return 0xC2A05E;
+    if (t.indexOf('classic') !== -1) return 0xE8E4DA;
+    return 0xF5F3EE;
+  }
+
+  // Cheap, honest furniture-shape differentiation that works on top of any
+  // existing template rather than needing a separate geometry per shape:
+  // rounded corner posts for "Curved & Rounded", a trim band for "Classic
+  // & Ornate", nothing extra for the default "Sharp & Angular" look.
+  function fp3dApplyShapeVariant(group, w, d, h, shapeText, furnColor) {
+    var s = (shapeText || '').toLowerCase();
+    if (s.indexOf('round') !== -1 || s.indexOf('curv') !== -1) {
+      var r = Math.min(w, d, h) * 0.08;
+      if (r <= 0) return;
+      [[-1, -1], [1, -1], [-1, 1], [1, 1]].forEach(function(c) {
+        var rod = new THREE.Mesh(new THREE.CylinderGeometry(r, r, h, 8), new THREE.MeshLambertMaterial({ color: furnColor }));
+        rod.position.set(c[0] * Math.max(0, w / 2 - r), h / 2, c[1] * Math.max(0, d / 2 - r));
+        group.add(rod);
+      });
+    } else if (s.indexOf('classic') !== -1 || s.indexOf('ornate') !== -1) {
+      var trim = new THREE.Mesh(new THREE.BoxGeometry(w * 1.04, 0.035, d * 1.04), new THREE.MeshLambertMaterial({ color: 0xC2A05E }));
+      trim.position.y = 0.018;
+      group.add(trim);
+    }
+  }
+
   // Renders a flat, clean isometric "floor-plan software" style schematic
   // into `container` — real-time, client-side, zero AI cost. Not a
   // furniture-accurate recreation of any specific photo; see the comment
@@ -4515,8 +4690,7 @@
       var isDoor = item.type === 'door';
       var markH = isDoor ? 2.0 : 1.0, markW = isDoor ? 0.8 : 1.1;
       var markY = isDoor ? markH / 2 : 1.35;
-      var markColor = isDoor ? 0x6B4A2E : 0xBFE3F0;
-      var mark = new THREE.Mesh(new THREE.PlaneGeometry(markW, markH), new THREE.MeshBasicMaterial({ color: markColor, side: THREE.DoubleSide }));
+      var mark = fp3dBuildOpeningMark(isDoor, isDoor ? opts.doorStyleText : opts.windowStyleText, markW, markH);
       if (item.wall === 'N') {
         mark.position.set(item.t * roomLen, markY, -wallT / 2 - 0.01);
       } else {
@@ -4524,12 +4698,27 @@
         mark.rotation.y = Math.PI / 2;
       }
       scene.add(mark);
+
+      // A small switch plate next to each door, since the opening's own
+      // mark above only shows the door/window itself.
+      if (isDoor && opts.switchStyleText) {
+        var switchColor = fp3dSwitchColor(opts.switchStyleText);
+        var switchPlate = new THREE.Mesh(new THREE.PlaneGeometry(0.09, 0.14), new THREE.MeshBasicMaterial({ color: switchColor, side: THREE.DoubleSide }));
+        if (item.wall === 'N') {
+          switchPlate.position.set(fp3dClamp(item.t * roomLen + markW / 2 + 0.18, 0.1, roomLen - 0.1), 1.1, -wallT / 2 - 0.01);
+        } else {
+          switchPlate.position.set(-wallT / 2 - 0.01, 1.1, fp3dClamp(item.t * roomWid + markW / 2 + 0.18, 0.1, roomWid - 0.1));
+          switchPlate.rotation.y = Math.PI / 2;
+        }
+        scene.add(switchPlate);
+      }
     });
 
     var items = (opts.furnitureText || '').split(',').map(function(s) { return s.trim(); }).filter(Boolean).slice(0, 10);
     var placed = fp3dLayout(items, roomLen, roomWid, fpItemsList, wallT);
     placed.forEach(function(p) {
       var piece = p.build(p.w, p.d, p.h, furnColor);
+      fp3dApplyShapeVariant(piece, p.w, p.d, p.h, opts.furnitureShapeText, furnColor);
       piece.position.set(p.x, 0, p.z);
       piece.rotation.y = p.rotY;
       scene.add(piece);
