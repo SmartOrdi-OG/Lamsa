@@ -1628,6 +1628,16 @@
           </div>
         </div>
 
+        <!-- 3D PREVIEW — a free, instant, client-side schematic built from
+             the selections above (room size, door/window positions,
+             furniture, colors). Separate from the paid AI generation
+             below: no photo, no credit, no network call. -->
+        <button type="button" class="generate-btn" style="background:transparent;border:1.5px solid var(--gold);color:var(--gold);margin-bottom:12px;" onclick="previewDollhouse3D()">
+          <span data-ar="معاينة ثلاثية الأبعاد" data-en="3D Preview">3D Preview</span>
+          <span class="gen-sub" data-ar="معاينة فورية ومجانية — بدون توليد صورة" data-en="Instant, free preview — no image generation needed">Instant, free preview — no image generation needed</span>
+        </button>
+        <div id="dollhousePreviewWrap" style="display:none;margin-bottom:16px;border-radius:14px;overflow:hidden;"></div>
+
         <button class="generate-btn" onclick="generate()">
           <span data-icon="sparkle" data-ar="أنشئ تصميمي الآن" data-en="Generate My Design Now">Generate My Design Now</span>
           <span class="gen-sub" id="genSubText" data-ar="الذكاء الاصطناعي سيولد صورة واقعية لغرفتك" data-en="AI will generate a realistic image of your room">AI will generate a realistic image of your room</span>
@@ -3762,45 +3772,6 @@
             });
           }
 
-          // Dollhouse view: a client-side, zero-cost 3D schematic built
-          // straight from this room's own wizard selections (type,
-          // dimensions, door/window positions, furniture list, colors) —
-          // not a copy of the generated photo (a photo has no structured
-          // 3D data to copy from), so it's a generic isometric room
-          // layout rather than a pixel-faithful recreation. No network
-          // call, no credit, no waiting — the scene is built the instant
-          // the button is clicked.
-          if (images[0] && images[0].url) {
-            var fpItemsSnapshot = fpItems.slice();
-            var dollhouseCard = document.createElement('div');
-            dollhouseCard.style.cssText = 'margin-top:14px;background:var(--card-2);border:1px solid var(--border);border-radius:14px;padding:14px 16px;text-align:center;';
-            dollhouseCard.innerHTML = '<p style="color:var(--gold);font-weight:900;font-size:13px;margin-bottom:10px;">' +
-              (currentLang === 'ar' ? 'مخطط ثلاثي الأبعاد' : 'Dollhouse View') + '</p>' +
-              '<div id="dollhouseViewWrap"></div>';
-            imgWrap.appendChild(dollhouseCard);
-
-            var dollhouseBtn = document.createElement('button');
-            dollhouseBtn.type = 'button';
-            dollhouseBtn.style.cssText = 'width:100%;background:transparent;color:var(--gold);border:1.5px solid var(--gold);' +
-              'padding:10px;border-radius:10px;font-weight:900;font-size:13px;cursor:pointer;font-family:Tajawal,sans-serif;';
-            dollhouseBtn.textContent = currentLang === 'ar' ? 'عرض مخطط ثلاثي الأبعاد' : 'Show Dollhouse View';
-            dollhouseBtn.onclick = function() {
-              dollhouseBtn.remove();
-              var wrap = document.getElementById('dollhouseViewWrap');
-              wrap.style.cssText = 'margin-top:10px;border-radius:10px;overflow:hidden;background:#EDEAE2;';
-              renderDollhouse3D(wrap, {
-                roomLen: roomLength,
-                roomWid: roomWidth,
-                colorText: colorText,
-                floorText: floorText,
-                furnitureColorText: furnitureColorText,
-                furnitureText: furnitureText,
-                fpItems: fpItemsSnapshot
-              });
-            };
-            dollhouseCard.insertBefore(dollhouseBtn, document.getElementById('dollhouseViewWrap'));
-          }
-
           if (window.NearbyStores) {
             NearbyStores.render('nearbyStoresContainer', {
               countryCode: NearbyStores.countryFromLocale(),
@@ -4142,6 +4113,64 @@
   // colors) — not a copy of the AI-generated photo, since a photo has no
   // structured 3D data to copy from. Runs entirely in the browser: no
   // network call, no credit cost.
+
+  // Entry point for the "3D Preview" button in panel 5 — reads the same
+  // form fields doGenerate() does, but standalone: no photo, no credit,
+  // no AI call, so it works even before/without ever running a real
+  // generation.
+  function previewDollhouse3D() {
+    var roomType = document.querySelector('#panel-2 select') ? document.querySelector('#panel-2 select').value : 'bedroom';
+    var panel2Inputs = document.querySelectorAll('#panel-2 input[type=number]');
+    var roomLength = panel2Inputs[1] ? panel2Inputs[1].value : '';
+    var roomWidth = panel2Inputs[2] ? panel2Inputs[2].value : '';
+
+    var selectedColors = [];
+    document.querySelectorAll('#panel-4 .chip.selected').forEach(function(el) {
+      if (el.closest('#floorChips')) return;
+      selectedColors.push(el.getAttribute('data-en') || el.textContent.trim());
+    });
+    var colorText = selectedColors.length > 0 ? selectedColors.join(', ') : '';
+
+    var selectedFloorEl = document.querySelector('#floorChips .chip.selected');
+    var floorText = selectedFloorEl ? (selectedFloorEl.getAttribute('data-en') || selectedFloorEl.textContent.trim()) : '';
+
+    var extraFurniture = [];
+    document.querySelectorAll('#extraFurnitureChips .chip.selected').forEach(function(el) {
+      extraFurniture.push(el.getAttribute('data-en') || el.textContent.trim());
+    });
+    var selectedFurnitureColorEl = document.querySelector('#furnitureColorChips .chip.selected');
+    var furnitureColorText = selectedFurnitureColorEl ? (selectedFurnitureColorEl.getAttribute('data-en') || selectedFurnitureColorEl.textContent.trim()) : '';
+
+    // Kept in sync with doGenerate()'s own fallbackFurniture — duplicated
+    // rather than shared so this standalone preview can never affect the
+    // AI prompt-building code on the critical generation path.
+    var fallbackFurniture = {
+      bedroom:  'bed, wardrobe, bedside tables, desk',
+      kids:     'bed, wardrobe, play area, study desk',
+      living:   'sofa, TV unit, coffee table, bookshelf',
+      kitchen:  'kitchen cabinets, countertop, kitchen island, bar stools',
+      office:   'desk, ergonomic office chair, bookshelf, filing cabinet',
+      dining:   'dining table, dining chairs, sideboard, pendant light',
+      bathroom: 'walk-in shower with glass partition, freestanding bathtub, double vanity with undermount sinks, large wall mirror, floating storage cabinet, towel rack, toilet'
+    };
+    var furnitureText = fallbackFurniture[roomType] || fallbackFurniture.bedroom;
+    if (extraFurniture.length > 0) furnitureText += ', ' + extraFurniture.join(', ');
+
+    var wrap = document.getElementById('dollhousePreviewWrap');
+    if (!wrap) return;
+    wrap.style.display = 'block';
+    wrap.style.background = '#EDEAE2';
+    renderDollhouse3D(wrap, {
+      roomLen: roomLength,
+      roomWid: roomWidth,
+      colorText: colorText,
+      floorText: floorText,
+      furnitureColorText: furnitureColorText,
+      furnitureText: furnitureText,
+      fpItems: fpItems.slice()
+    });
+    wrap.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  }
 
   function fp3dColorHex(text, fallback) {
     if (!text) return fallback;
