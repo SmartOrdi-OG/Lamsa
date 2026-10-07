@@ -3442,9 +3442,17 @@
         // for, and a higher guidance_scale should make the model follow
         // that instruction more closely too, not less).
         guidance_scale: 12,
-        aspect_ratio: '16:9',
         safety_tolerance: '2'
       };
+      // '16:9' is only a sensible aspect ratio to request when there's no
+      // source photo to edit (planner-only mode, generating a room from
+      // scratch). Forcing it onto an actual photo upload was making Flux
+      // Kontext Pro reframe the source into a different shape than it was
+      // shot in (e.g. a 4:3 upload coming back as 16:9), which requires
+      // inventing or trimming content at the edges — a real cause of "the
+      // door moved" / "the room shape changed" reports. With an image to
+      // edit, omit it so fal.ai matches the source photo's own dimensions.
+      if (!imageUrl) requestBody.aspect_ratio = '16:9';
       // fal.ai's `strength` (0-1) caps how much the output may differ from
       // the source photo, separately from guidance_scale (prompt weight).
       // It defaults to 0.1 when omitted — meant for light touch-ups. This
