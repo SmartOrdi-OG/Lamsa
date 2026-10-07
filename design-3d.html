@@ -178,14 +178,22 @@
   .result-card {
     background: var(--dark); border: 1px solid var(--border); border-radius: 18px; padding: 20px; text-align: center;
   }
-  .result-title { font-size: 16px; font-weight: 900; margin-bottom: 14px; }
-  #d3dResultWrap { border-radius: 14px; overflow: hidden; background: #EDEAE2; }
+  .result-title { font-size: 16px; font-weight: 900; margin-bottom: 10px; }
+  #d3dResultWrap { border-radius: 14px; overflow: hidden; background: #EDEAE2; cursor: crosshair; }
   .btn-edit-again {
     margin-top: 16px; background: transparent; border: 1.5px solid var(--gold); color: var(--gold-deep);
     padding: 10px 20px; border-radius: 10px; font-family: 'Tajawal', sans-serif; font-size: 13px; font-weight: 700;
     cursor: pointer; transition: all 0.2s;
   }
   .btn-edit-again:hover { background: var(--gold-dim); }
+
+  .d3d-palette-hint { font-size: 11.5px; color: var(--gray); margin-bottom: 10px; line-height: 1.5; }
+  .d3d-palette-row, .d3d-action-row {
+    display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 10px; justify-content: center;
+  }
+  .d3d-palette-row .fp-tool-btn, .d3d-action-row .fp-tool-btn {
+    flex: 0 1 auto; min-width: 64px; padding: 8px 10px; font-size: 11.5px;
+  }
 </style>
 </head>
 <body>
@@ -204,16 +212,14 @@
 <div class="wrap">
   <div class="hero">
     <h1><svg class="icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 7.5 12 3 3 7.5l9 4.5 9-4.5z"/><path d="M3 7.5v9l9 4.5 9-4.5v-9"/><path d="M12 12v9"/></svg> 3D Room Designer</h1>
-    <p class="sub">Build a free, instant 3D schematic of your room — no photo, no credit. Set your room's size, openings, furniture, colors and finishing touches, then see it come together in 3D.</p>
+    <p class="sub">Build a free, instant 3D schematic of your room — no photo, no credit. Set the room's size, openings and finishes, then place the furniture and switches yourself, piece by piece, directly in the 3D view.</p>
   </div>
 
   <div class="steps-wrap">
     <div class="progress-bar">
       <div class="progress-step active" id="d3dStepTab1"><span class="step-num-badge">1</span>Room Size</div>
       <div class="progress-step" id="d3dStepTab2"><span class="step-num-badge">2</span>Windows &amp; Doors</div>
-      <div class="progress-step" id="d3dStepTab3"><span class="step-num-badge">3</span>Furniture</div>
-      <div class="progress-step" id="d3dStepTab4"><span class="step-num-badge">4</span>Wall Colors</div>
-      <div class="progress-step" id="d3dStepTab5"><span class="step-num-badge">5</span>Finishing Touches</div>
+      <div class="progress-step" id="d3dStepTab3"><span class="step-num-badge">3</span>Finishes</div>
     </div>
 
     <div class="form-panels">
@@ -296,55 +302,10 @@
         </div>
       </div>
 
-      <!-- STEP 3: FURNITURE -->
+      <!-- STEP 3: FINISHES -->
       <div class="panel" id="d3dPanel3">
-        <div class="panel-title">Furniture</div>
-        <div class="panel-sub">Your room type already comes with a default furniture set — add anything extra, pick a color and a shape language.</div>
-
-        <div class="form-group">
-          <label>Add Furniture (optional)</label>
-          <div class="chips" id="d3dExtraFurnitureChips">
-            <div class="chip" onclick="toggleChip(this)">Bookshelf</div>
-            <div class="chip" onclick="toggleChip(this)">Accent Chair</div>
-            <div class="chip" onclick="toggleChip(this)">TV Console</div>
-            <div class="chip" onclick="toggleChip(this)">Console Table</div>
-            <div class="chip" onclick="toggleChip(this)">Ottoman</div>
-            <div class="chip" onclick="toggleChip(this)">Bench</div>
-            <div class="chip" onclick="toggleChip(this)">Wall Mirror</div>
-            <div class="chip" onclick="toggleChip(this)">Bar Cart</div>
-          </div>
-        </div>
-        <div class="form-group">
-          <label>Furniture Color (optional)</label>
-          <div class="chips" id="d3dFurnitureColorChips">
-            <div class="chip" onclick="selectColor(this)">Neutral/Gray</div>
-            <div class="chip" onclick="selectColor(this)">Warm/Wood</div>
-            <div class="chip" onclick="selectColor(this)">Cool/Blue</div>
-            <div class="chip" onclick="selectColor(this)">Pink/Soft</div>
-            <div class="chip" onclick="selectColor(this)">Green/Natural</div>
-            <div class="chip" onclick="selectColor(this)">Black/Gold</div>
-            <div class="chip" onclick="selectColor(this)">Pure White</div>
-          </div>
-        </div>
-        <div class="form-group">
-          <label>Furniture Shape (optional)</label>
-          <div class="chips" id="d3dFurnitureShapeChips">
-            <div class="chip" onclick="selectColor(this)">Sharp &amp; Angular</div>
-            <div class="chip" onclick="selectColor(this)">Curved &amp; Rounded</div>
-            <div class="chip" onclick="selectColor(this)">Classic &amp; Ornate</div>
-          </div>
-        </div>
-
-        <div class="panel-nav">
-          <button class="btn-prev" onclick="d3dPrev()">Back</button>
-          <button class="btn-next" onclick="d3dNext()">Next <svg class="icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></button>
-        </div>
-      </div>
-
-      <!-- STEP 4: WALL COLORS -->
-      <div class="panel" id="d3dPanel4">
-        <div class="panel-title">Wall Colors</div>
-        <div class="panel-sub">Pick a wall color and flooring material.</div>
+        <div class="panel-title">Finishes</div>
+        <div class="panel-sub">Wall and floor finishes, plus the overall look of whatever furniture and switches you place yourself next.</div>
 
         <div class="form-group">
           <label>Wall Color</label>
@@ -368,18 +329,26 @@
             <div class="chip" onclick="selectColor(this)">Carpet</div>
           </div>
         </div>
-
-        <div class="panel-nav">
-          <button class="btn-prev" onclick="d3dPrev()">Back</button>
-          <button class="btn-next" onclick="d3dNext()">Next <svg class="icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></button>
+        <div class="form-group">
+          <label>Furniture Color (optional)</label>
+          <div class="chips" id="d3dFurnitureColorChips">
+            <div class="chip" onclick="selectColor(this)">Neutral/Gray</div>
+            <div class="chip" onclick="selectColor(this)">Warm/Wood</div>
+            <div class="chip" onclick="selectColor(this)">Cool/Blue</div>
+            <div class="chip" onclick="selectColor(this)">Pink/Soft</div>
+            <div class="chip" onclick="selectColor(this)">Green/Natural</div>
+            <div class="chip" onclick="selectColor(this)">Black/Gold</div>
+            <div class="chip" onclick="selectColor(this)">Pure White</div>
+          </div>
         </div>
-      </div>
-
-      <!-- STEP 5: FINISHING TOUCHES -->
-      <div class="panel" id="d3dPanel5">
-        <div class="panel-title">Finishing Touches</div>
-        <div class="panel-sub">The small details — switches, curtains, lighting.</div>
-
+        <div class="form-group">
+          <label>Furniture Shape (optional)</label>
+          <div class="chips" id="d3dFurnitureShapeChips">
+            <div class="chip" onclick="selectColor(this)">Sharp &amp; Angular</div>
+            <div class="chip" onclick="selectColor(this)">Curved &amp; Rounded</div>
+            <div class="chip" onclick="selectColor(this)">Classic &amp; Ornate</div>
+          </div>
+        </div>
         <div class="form-group">
           <label>Switch &amp; Outlet Style (optional)</label>
           <div class="chips" id="d3dSwitchStyleChips">
@@ -411,7 +380,7 @@
 
         <div class="panel-nav">
           <button class="btn-prev" onclick="d3dPrev()">Back</button>
-          <button class="btn-next" onclick="buildDollhouse3D()">Build My 3D View <svg class="icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 7.5 12 3 3 7.5l9 4.5 9-4.5z"/><path d="M3 7.5v9l9 4.5 9-4.5v-9"/></svg></button>
+          <button class="btn-next" onclick="d3dBuildRoom()">Build Room <svg class="icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 7.5 12 3 3 7.5l9 4.5 9-4.5z"/><path d="M3 7.5v9l9 4.5 9-4.5v-9"/></svg></button>
         </div>
       </div>
 
@@ -421,6 +390,14 @@
   <div class="result-area" id="d3dResultArea">
     <div class="result-card">
       <div class="result-title">Your 3D Room</div>
+      <div class="d3d-palette-hint" id="d3dPaletteHint">Pick a piece below, then click inside the room to place it.</div>
+      <div class="d3d-palette-row" id="d3dStampRow"></div>
+      <div class="d3d-action-row">
+        <button type="button" class="fp-tool-btn" onclick="d3dRotateSelected(-15)">⟲ Rotate</button>
+        <button type="button" class="fp-tool-btn" onclick="d3dRotateSelected(15)">Rotate ⟳</button>
+        <button type="button" class="fp-tool-btn" onclick="d3dDeleteSelected()">Delete Selected</button>
+        <button type="button" class="fp-tool-btn" onclick="d3dClearPlaced()">Clear All</button>
+      </div>
       <div id="d3dResultWrap"></div>
       <button type="button" class="btn-edit-again" onclick="d3dEditAgain()">Edit Selections</button>
     </div>
@@ -432,7 +409,7 @@
   // STEP NAVIGATION
   // ═══════════════════════════════════════════════
   var d3dCurrentPanel = 1;
-  var D3D_TOTAL_PANELS = 5;
+  var D3D_TOTAL_PANELS = 3;
 
   function d3dShowPanel(n) {
     for (var i = 1; i <= D3D_TOTAL_PANELS; i++) {
@@ -475,6 +452,10 @@
     if (!parent) return;
     parent.querySelectorAll('.chip').forEach(function(c) { c.classList.remove('selected'); });
     el.classList.add('selected');
+  }
+  function d3dSelectedText(containerId) {
+    var el = document.querySelector('#' + containerId + ' .chip.selected');
+    return el ? el.textContent.trim() : '';
   }
 
   // ═══════════════════════════════════════════════
@@ -592,14 +573,13 @@
   }
 
   // ═══════════════════════════════════════════════
-  // DOLLHOUSE VIEW — client-side 3D schematic (Three.js)
+  // ROOM SHELL — client-side 3D schematic (Three.js)
   // ═══════════════════════════════════════════════
-  // Builds a generic isometric room schematic from this page's own
-  // selections (dimensions, door/window positions, furniture list,
-  // colors, finishing touches) — no AI, no network call, no credit cost.
-  // Ported from lamsa-bilingual.html's dollhouse engine; curtains and the
-  // ceiling light fixture are new here since this standalone flow collects
-  // those selections and the main wizard's embedded copy doesn't.
+  // Builds the room's structure (floor, walls, door/window cutouts,
+  // curtains, ceiling fixture) from this page's selections — no AI, no
+  // network call, no credit cost. Furniture and switches are NOT built
+  // here: they're placed by hand afterwards (see the INTERACTIVE
+  // PLACEMENT section below), so this only ever constructs the shell.
 
   function fp3dColorHex(text, fallback) {
     if (!text) return fallback;
@@ -739,45 +719,35 @@
     return g;
   }
 
-  function fp3dBuildPendant(w, d, h, color) {
-    var g = new THREE.Group();
-    var cord = new THREE.Mesh(new THREE.BoxGeometry(0.02, 1.0, 0.02), new THREE.MeshLambertMaterial({ color: 0x444444 }));
-    cord.position.y = 2.1;
-    g.add(cord);
-    var shade = new THREE.Mesh(new THREE.ConeGeometry(0.18, 0.2, 12), new THREE.MeshLambertMaterial({ color: color }));
-    shade.position.y = 1.55;
-    g.add(shade);
-    return g;
-  }
-
   // Order matters: more specific keywords must be checked before the
   // generic ones they're substrings of (e.g. "bedside" before "bed",
-  // "dining table" before "table").
+  // "dining table" before "table"). Also doubles as the lookup used by
+  // the manual placement palette below (each stamp label is one of
+  // these keys, matched exactly).
   var FP3D_DEFS = [
-    { keys: ['nightstand', 'bedside'], w: 0.45, d: 0.4, h: 0.5, wallBacked: true, category: 'box', build: fp3dBuildBox },
-    { keys: ['bed'], w: 1.6, d: 2.0, h: 0.55, wallBacked: true, category: 'bed', build: fp3dBuildBed },
-    { keys: ['sofa', 'couch'], w: 2.0, d: 0.9, h: 0.8, wallBacked: true, category: 'sofa', build: fp3dBuildSofa },
-    { keys: ['wardrobe', 'closet'], w: 1.2, d: 0.6, h: 2.0, wallBacked: true, category: 'box', build: fp3dBuildBox },
-    { keys: ['bookshelf', 'shelf'], w: 0.9, d: 0.35, h: 1.9, wallBacked: true, category: 'box', build: fp3dBuildBox },
-    { keys: ['filing cabinet', 'cabinet', 'storage', 'sideboard'], w: 0.9, d: 0.45, h: 1.0, wallBacked: true, category: 'box', build: fp3dBuildBox },
-    { keys: ['tv unit', 'tv stand', 'television'], w: 1.4, d: 0.4, h: 0.5, wallBacked: true, category: 'box', build: fp3dBuildBox },
-    { keys: ['desk'], w: 1.2, d: 0.6, h: 0.75, wallBacked: true, category: 'table', build: fp3dBuildTable },
-    { keys: ['coffee table'], w: 1.0, d: 0.55, h: 0.42, wallBacked: false, category: 'table', build: fp3dBuildTable },
-    { keys: ['dining table'], w: 1.5, d: 0.9, h: 0.75, wallBacked: false, category: 'table', build: fp3dBuildTable },
-    { keys: ['table'], w: 1.2, d: 0.7, h: 0.75, wallBacked: false, category: 'table', build: fp3dBuildTable },
-    { keys: ['countertop', 'counter'], w: 1.3, d: 0.6, h: 0.9, wallBacked: true, category: 'box', build: fp3dBuildBox },
-    { keys: ['island'], w: 1.3, d: 0.65, h: 0.9, wallBacked: false, category: 'box', build: fp3dBuildBox },
-    { keys: ['vanity', 'sink'], w: 1.3, d: 0.55, h: 0.85, wallBacked: true, category: 'box', build: fp3dBuildBox },
-    { keys: ['mirror'], w: 0.9, d: 0.04, h: 1.1, wallBacked: true, category: 'mirror', build: fp3dBuildMirror },
-    { keys: ['bathtub'], w: 1.7, d: 0.75, h: 0.55, wallBacked: true, category: 'bathtub', build: fp3dBuildBathtub },
-    { keys: ['shower'], w: 0.9, d: 0.9, h: 1.9, wallBacked: true, category: 'shower', build: fp3dBuildShower },
-    { keys: ['toilet'], w: 0.4, d: 0.6, h: 0.4, wallBacked: true, category: 'toilet', build: fp3dBuildToilet },
-    { keys: ['towel'], w: 0.6, d: 0.08, h: 0.6, wallBacked: true, category: 'box', build: fp3dBuildBox },
-    { keys: ['chair', 'stool'], w: 0.45, d: 0.45, h: 0.45, wallBacked: false, category: 'chair', build: fp3dBuildChair },
-    { keys: ['play area'], w: 1.3, d: 1.3, h: 0.02, wallBacked: false, category: 'mat', build: fp3dBuildMat },
-    { keys: ['pendant', 'light'], w: 0.3, d: 0.3, h: 0.1, wallBacked: false, category: 'light', build: fp3dBuildPendant }
+    { keys: ['nightstand', 'bedside'], w: 0.45, d: 0.4, h: 0.5, build: fp3dBuildBox },
+    { keys: ['bed'], w: 1.6, d: 2.0, h: 0.55, build: fp3dBuildBed },
+    { keys: ['sofa', 'couch'], w: 2.0, d: 0.9, h: 0.8, build: fp3dBuildSofa },
+    { keys: ['wardrobe', 'closet'], w: 1.2, d: 0.6, h: 2.0, build: fp3dBuildBox },
+    { keys: ['bookshelf', 'shelf'], w: 0.9, d: 0.35, h: 1.9, build: fp3dBuildBox },
+    { keys: ['filing cabinet', 'cabinet', 'storage', 'sideboard'], w: 0.9, d: 0.45, h: 1.0, build: fp3dBuildBox },
+    { keys: ['tv unit', 'tv stand', 'television'], w: 1.4, d: 0.4, h: 0.5, build: fp3dBuildBox },
+    { keys: ['desk'], w: 1.2, d: 0.6, h: 0.75, build: fp3dBuildTable },
+    { keys: ['coffee table'], w: 1.0, d: 0.55, h: 0.42, build: fp3dBuildTable },
+    { keys: ['dining table'], w: 1.5, d: 0.9, h: 0.75, build: fp3dBuildTable },
+    { keys: ['table'], w: 1.2, d: 0.7, h: 0.75, build: fp3dBuildTable },
+    { keys: ['countertop', 'counter'], w: 1.3, d: 0.6, h: 0.9, build: fp3dBuildBox },
+    { keys: ['island'], w: 1.3, d: 0.65, h: 0.9, build: fp3dBuildBox },
+    { keys: ['vanity', 'sink'], w: 1.3, d: 0.55, h: 0.85, build: fp3dBuildBox },
+    { keys: ['mirror'], w: 0.9, d: 0.04, h: 1.1, build: fp3dBuildMirror },
+    { keys: ['bathtub'], w: 1.7, d: 0.75, h: 0.55, build: fp3dBuildBathtub },
+    { keys: ['shower'], w: 0.9, d: 0.9, h: 1.9, build: fp3dBuildShower },
+    { keys: ['toilet'], w: 0.4, d: 0.6, h: 0.4, build: fp3dBuildToilet },
+    { keys: ['towel'], w: 0.6, d: 0.08, h: 0.6, build: fp3dBuildBox },
+    { keys: ['chair', 'stool'], w: 0.45, d: 0.45, h: 0.45, build: fp3dBuildChair },
+    { keys: ['play area'], w: 1.3, d: 1.3, h: 0.02, build: fp3dBuildMat }
   ];
-  var FP3D_DEFAULT_DEF = { keys: [], w: 0.8, d: 0.5, h: 0.6, wallBacked: false, category: 'box', build: fp3dBuildBox };
+  var FP3D_DEFAULT_DEF = { keys: [], w: 0.8, d: 0.5, h: 0.6, build: fp3dBuildBox };
 
   function fp3dClassify(nameLower) {
     for (var i = 0; i < FP3D_DEFS.length; i++) {
@@ -787,106 +757,6 @@
       }
     }
     return FP3D_DEFAULT_DEF;
-  }
-
-  // Lays furniture out against the two solid walls (N, W — the back
-  // corner of the dollhouse cutaway) first, skipping door/window gaps,
-  // then falls back to freestanding center placement for tables and
-  // anything the walls have no room left for. Chairs/stools pair up next
-  // to the most recently placed anchor piece instead of taking their own
-  // wall slot; a pendant light hangs above the most recent table.
-  function fp3dLayout(items, roomLen, roomWid, fpItems, wallT) {
-    var nOpenings = fpItems.filter(function(i) { return i.wall === 'N'; }).map(function(i) { return i.t; });
-    var wOpenings = fpItems.filter(function(i) { return i.wall === 'W'; }).map(function(i) { return i.t; });
-
-    function overlapsOpening(openings, roomSpan, centerPos, halfSpan) {
-      for (var i = 0; i < openings.length; i++) {
-        if (Math.abs(openings[i] * roomSpan - centerPos) < halfSpan + 0.5) return true;
-      }
-      return false;
-    }
-
-    var placed = [];
-    var cursorN = 0.3, cursorW = 0.3;
-    var freeRowX = roomLen * 0.45, freeRowZ = roomWid * 0.45, freeRowMaxD = 0;
-    var lastAnchor = null, lastTableAnchor = null;
-
-    items.forEach(function(raw) {
-      var name = raw.toLowerCase();
-      var def = fp3dClassify(name);
-
-      if (def.category === 'chair') {
-        var count = 1;
-        if (name.indexOf('chair') !== -1 && (name.indexOf('dining') !== -1 || name.indexOf('chairs') !== -1)) count = 4;
-        else if (name.indexOf('stool') !== -1) count = 3;
-        if (lastAnchor) {
-          for (var c = 0; c < count; c++) {
-            var frac = (c + 1) / (count + 1);
-            var cx, cz;
-            if (lastAnchor.rotY === 0) {
-              cx = lastAnchor.x - lastAnchor.w / 2 + frac * lastAnchor.w;
-              cz = lastAnchor.z + lastAnchor.d / 2 + def.d / 2 + 0.12;
-            } else {
-              cx = lastAnchor.x + lastAnchor.d / 2 + def.d / 2 + 0.12;
-              cz = lastAnchor.z - lastAnchor.w / 2 + frac * lastAnchor.w;
-            }
-            placed.push({
-              name: raw, w: def.w, d: def.d, h: def.h, build: def.build, rotY: 0,
-              x: fp3dClamp(cx, def.w / 2 + 0.1, roomLen - def.w / 2 - 0.1),
-              z: fp3dClamp(cz, def.d / 2 + 0.1, roomWid - def.d / 2 - 0.1)
-            });
-          }
-          return;
-        }
-      }
-
-      if (def.category === 'light') {
-        if (lastTableAnchor) {
-          placed.push({ name: raw, w: def.w, d: def.d, h: def.h, build: def.build, rotY: 0, x: lastTableAnchor.x, z: lastTableAnchor.z });
-        }
-        return;
-      }
-
-      if (def.wallBacked) {
-        if (cursorN + def.w <= roomLen - 0.3 && !overlapsOpening(nOpenings, roomLen, cursorN + def.w / 2, def.w / 2)) {
-          var x = cursorN + def.w / 2, z = def.d / 2 + wallT / 2;
-          var piece = { name: raw, w: def.w, d: def.d, h: def.h, build: def.build, rotY: 0, x: x, z: z };
-          placed.push(piece);
-          lastAnchor = piece;
-          if (def.category === 'table') lastTableAnchor = piece;
-          cursorN += def.w + 0.2;
-          return;
-        }
-        if (cursorW + def.w <= roomWid - 0.3 && !overlapsOpening(wOpenings, roomWid, cursorW + def.w / 2, def.w / 2)) {
-          var z2 = cursorW + def.w / 2, x2 = def.d / 2 + wallT / 2;
-          var piece2 = { name: raw, w: def.w, d: def.d, h: def.h, build: def.build, rotY: Math.PI / 2, x: x2, z: z2 };
-          placed.push(piece2);
-          lastAnchor = piece2;
-          if (def.category === 'table') lastTableAnchor = piece2;
-          cursorW += def.w + 0.2;
-          return;
-        }
-      }
-
-      if (freeRowX + def.w > roomLen - 0.3) {
-        freeRowZ += freeRowMaxD + 0.3;
-        freeRowX = roomLen * 0.45;
-        freeRowMaxD = 0;
-      }
-      if (placed.length > 0 && freeRowZ + def.d / 2 > roomWid - 0.3) {
-        return;
-      }
-      var cx2 = fp3dClamp(freeRowX + def.w / 2, def.w / 2 + 0.3, roomLen - def.w / 2 - 0.3);
-      var cz2 = fp3dClamp(freeRowZ + def.d / 2, def.d / 2 + 0.3, roomWid - def.d / 2 - 0.3);
-      freeRowX += def.w + 0.3;
-      freeRowMaxD = Math.max(freeRowMaxD, def.d);
-      var piece3 = { name: raw, w: def.w, d: def.d, h: def.h, build: def.build, rotY: 0, x: cx2, z: cz2 };
-      placed.push(piece3);
-      lastAnchor = piece3;
-      if (def.category === 'table') lastTableAnchor = piece3;
-    });
-
-    return placed;
   }
 
   function fp3dBuildOpeningMark(isDoor, styleText, w, h) {
@@ -970,9 +840,9 @@
     }
   }
 
-  // New in this standalone flow: curtains hung at a window opening. Built
-  // in the opening's own local frame (y measured from the floor) so the
-  // caller can position/rotate it exactly like fp3dBuildOpeningMark.
+  // Curtains hung at a window opening. Built in the opening's own local
+  // frame (y measured from the floor) so the caller can position/rotate
+  // it exactly like fp3dBuildOpeningMark.
   function fp3dBuildCurtains(windowW, styleText) {
     var s = (styleText || '').toLowerCase();
     if (!s || s.indexOf('none') !== -1) return null;
@@ -1007,8 +877,8 @@
     return g;
   }
 
-  // New in this standalone flow: one ceiling fixture at the room's center,
-  // independent of the per-room-type "pendant light" furniture item.
+  // One ceiling fixture at the room's center — a global ambient choice,
+  // separate from anything placed by hand.
   function fp3dBuildCeilingFixture(shapeText, color) {
     var s = (shapeText || '').toLowerCase();
     var g = new THREE.Group();
@@ -1042,7 +912,6 @@
       }
       return g;
     }
-    // Default: pendant
     var cordP = new THREE.Mesh(new THREE.BoxGeometry(0.02, 0.5, 0.02), new THREE.MeshLambertMaterial({ color: 0x444444 }));
     cordP.position.y = -0.25;
     g.add(cordP);
@@ -1052,7 +921,10 @@
     return g;
   }
 
-  function renderDollhouse3D(container, opts) {
+  // Builds the empty room shell and stores scene/camera/renderer + the
+  // floor/wall meshes at page scope so the interactive placement layer
+  // below can raycast against them.
+  function d3dBuildRoomShell(container, opts) {
     if (typeof THREE === 'undefined') {
       container.textContent = 'Could not load the 3D viewer';
       return;
@@ -1062,7 +934,7 @@
     var roomLen = fp3dClamp(parseFloat(opts.roomLen) || 4, 2, 12);
     var roomWid = fp3dClamp(parseFloat(opts.roomWid) || 4, 2, 12);
     var wallH = 2.6, wallT = 0.1;
-    var width = container.clientWidth || 320, height = 280;
+    var width = container.clientWidth || 320, height = 320;
     container.style.height = height + 'px';
 
     var scene = new THREE.Scene();
@@ -1103,18 +975,6 @@
       }
       scene.add(mark);
 
-      if (isDoor && opts.switchStyleText) {
-        var switchColor = fp3dSwitchColor(opts.switchStyleText);
-        var switchPlate = new THREE.Mesh(new THREE.PlaneGeometry(0.09, 0.14), new THREE.MeshBasicMaterial({ color: switchColor, side: THREE.DoubleSide }));
-        if (item.wall === 'N') {
-          switchPlate.position.set(fp3dClamp(item.t * roomLen + markW / 2 + 0.18, 0.1, roomLen - 0.1), 1.1, -wallT / 2 - 0.01);
-        } else {
-          switchPlate.position.set(-wallT / 2 - 0.01, 1.1, fp3dClamp(item.t * roomWid + markW / 2 + 0.18, 0.1, roomWid - 0.1));
-          switchPlate.rotation.y = Math.PI / 2;
-        }
-        scene.add(switchPlate);
-      }
-
       if (!isDoor && opts.curtainStyleText) {
         var curtainGroup = fp3dBuildCurtains(markW, opts.curtainStyleText);
         if (curtainGroup) {
@@ -1135,16 +995,6 @@
       scene.add(ceilingFixture);
     }
 
-    var items = (opts.furnitureText || '').split(',').map(function(s) { return s.trim(); }).filter(Boolean).slice(0, 10);
-    var placed = fp3dLayout(items, roomLen, roomWid, fpItemsList, wallT);
-    placed.forEach(function(p) {
-      var piece = p.build(p.w, p.d, p.h, furnColor);
-      fp3dApplyShapeVariant(piece, p.w, p.d, p.h, opts.furnitureShapeText, furnColor);
-      piece.position.set(p.x, 0, p.z);
-      piece.rotation.y = p.rotY;
-      scene.add(piece);
-    });
-
     var maxDim = Math.max(roomLen, roomWid);
     var viewSize = maxDim * 0.85;
     var aspect = width / height;
@@ -1156,68 +1006,231 @@
     renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
     renderer.setSize(width, height);
     container.appendChild(renderer.domElement);
+    renderer.domElement.addEventListener('click', d3dHandleCanvasClick);
+
+    d3dScene = scene;
+    d3dCamera = camera;
+    d3dRenderer = renderer;
+    d3dRoomLen = roomLen;
+    d3dRoomWid = roomWid;
+    d3dWallH = wallH;
+    d3dWallT = wallT;
+    d3dFloorMesh = floor;
+    d3dNWallMesh = nWall;
+    d3dWWallMesh = wWall;
+    d3dFurnColor = furnColor;
+    d3dFurnShapeText = opts.furnitureShapeText || '';
+    d3dPlacedItems = [];
+    d3dSelectedIndex = -1;
+    d3dPlacedGroup = null;
+
     renderer.render(scene, camera);
+  }
+
+  // ═══════════════════════════════════════════════
+  // INTERACTIVE PLACEMENT — click inside the 3D room to add/select/
+  // rotate/delete furniture and switches by hand.
+  // ═══════════════════════════════════════════════
+  var D3D_STAMPS = [
+    'Bed', 'Nightstand', 'Sofa', 'Wardrobe', 'Bookshelf', 'TV Unit', 'Desk',
+    'Coffee Table', 'Dining Table', 'Chair', 'Kitchen Island', 'Vanity',
+    'Mirror', 'Bathtub', 'Shower', 'Toilet', 'Play Area'
+  ];
+
+  var d3dScene = null, d3dCamera = null, d3dRenderer = null;
+  var d3dRoomLen = 4, d3dRoomWid = 4, d3dWallH = 2.6, d3dWallT = 0.1;
+  var d3dFloorMesh = null, d3dNWallMesh = null, d3dWWallMesh = null;
+  var d3dFurnColor = 0x8C6D46, d3dFurnShapeText = '';
+  var d3dPlacedGroup = null;
+  var d3dPlacedItems = []; // { key, isWall, wallSide, x, y, z, rotY }
+  var d3dSelectedIndex = -1;
+  var d3dTool = null; // null | 'select' | 'switch' | one of D3D_STAMPS
+  var d3dRaycaster = (typeof THREE !== 'undefined') ? new THREE.Raycaster() : null;
+  var d3dMouse = (typeof THREE !== 'undefined') ? new THREE.Vector2() : null;
+
+  function d3dBuildPalette() {
+    var row = document.getElementById('d3dStampRow');
+    if (!row) return;
+    row.innerHTML = '';
+
+    D3D_STAMPS.forEach(function(label) {
+      var btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'fp-tool-btn';
+      btn.setAttribute('data-key', label);
+      btn.textContent = label;
+      btn.onclick = function() { d3dSetTool(label); };
+      row.appendChild(btn);
+    });
+
+    var switchBtn = document.createElement('button');
+    switchBtn.type = 'button';
+    switchBtn.className = 'fp-tool-btn';
+    switchBtn.setAttribute('data-key', 'switch');
+    switchBtn.textContent = 'Switch';
+    switchBtn.onclick = function() { d3dSetTool('switch'); };
+    row.appendChild(switchBtn);
+
+    var selectBtn = document.createElement('button');
+    selectBtn.type = 'button';
+    selectBtn.className = 'fp-tool-btn';
+    selectBtn.setAttribute('data-key', 'select');
+    selectBtn.textContent = 'Select / Move';
+    selectBtn.onclick = function() { d3dSetTool('select'); };
+    row.appendChild(selectBtn);
+  }
+
+  function d3dSetTool(tool) {
+    d3dTool = tool;
+    document.querySelectorAll('#d3dStampRow .fp-tool-btn').forEach(function(btn) {
+      btn.classList.toggle('active', btn.getAttribute('data-key') === tool);
+    });
+    var hint = document.getElementById('d3dPaletteHint');
+    if (!hint) return;
+    if (tool === 'select') hint.textContent = 'Click a placed piece to select it, then rotate or delete it.';
+    else if (tool === 'switch') hint.textContent = 'Click a wall to place a switch there.';
+    else if (tool) hint.textContent = 'Click inside the room to place a ' + tool + '.';
+    else hint.textContent = 'Pick a piece above, then click inside the room to place it.';
+  }
+
+  function d3dGetIntersects(event, objects) {
+    if (!d3dRaycaster || !d3dRenderer || !objects.length) return [];
+    var rect = d3dRenderer.domElement.getBoundingClientRect();
+    d3dMouse.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
+    d3dMouse.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
+    d3dRaycaster.setFromCamera(d3dMouse, d3dCamera);
+    return d3dRaycaster.intersectObjects(objects, true);
+  }
+
+  function d3dFindPlacedIndex(obj) {
+    while (obj) {
+      if (obj.userData && obj.userData.placedIndex !== undefined) return obj.userData.placedIndex;
+      obj = obj.parent;
+    }
+    return -1;
+  }
+
+  function d3dBuildSwitchMesh() {
+    var color = fp3dSwitchColor(d3dSelectedText('d3dSwitchStyleChips'));
+    return new THREE.Mesh(new THREE.PlaneGeometry(0.09, 0.14), new THREE.MeshBasicMaterial({ color: color, side: THREE.DoubleSide }));
+  }
+
+  function d3dRebuildPlacedGroup() {
+    if (!d3dScene) return;
+    if (d3dPlacedGroup) d3dScene.remove(d3dPlacedGroup);
+    d3dPlacedGroup = new THREE.Group();
+
+    d3dPlacedItems.forEach(function(item, i) {
+      var mesh;
+      if (item.key === 'switch') {
+        mesh = d3dBuildSwitchMesh();
+        mesh.position.set(item.x, item.y, item.z);
+        if (item.wallSide === 'W') mesh.rotation.y = Math.PI / 2;
+      } else {
+        var def = fp3dClassify(item.key.toLowerCase());
+        mesh = def.build(def.w, def.d, def.h, d3dFurnColor);
+        fp3dApplyShapeVariant(mesh, def.w, def.d, def.h, d3dFurnShapeText, d3dFurnColor);
+        mesh.position.set(item.x, 0, item.z);
+        mesh.rotation.y = item.rotY || 0;
+      }
+      mesh.userData.placedIndex = i;
+      // Simple selection cue: lift the selected piece slightly.
+      if (i === d3dSelectedIndex) mesh.position.y += 0.04;
+      d3dPlacedGroup.add(mesh);
+    });
+
+    d3dScene.add(d3dPlacedGroup);
+    if (d3dRenderer && d3dCamera) d3dRenderer.render(d3dScene, d3dCamera);
+  }
+
+  function d3dHandleCanvasClick(event) {
+    if (!d3dScene || !d3dTool) return;
+
+    if (d3dTool === 'select') {
+      var hits = d3dGetIntersects(event, d3dPlacedGroup ? d3dPlacedGroup.children : []);
+      d3dSelectedIndex = hits.length ? d3dFindPlacedIndex(hits[0].object) : -1;
+      d3dRebuildPlacedGroup();
+      return;
+    }
+
+    if (d3dTool === 'switch') {
+      var wallObjs = [d3dNWallMesh, d3dWWallMesh].filter(Boolean);
+      var wallHits = d3dGetIntersects(event, wallObjs);
+      if (!wallHits.length) return;
+      var hit = wallHits[0];
+      var isNWall = hit.object === d3dNWallMesh;
+      d3dPlacedItems.push({
+        key: 'switch', isWall: true, wallSide: isNWall ? 'N' : 'W',
+        x: hit.point.x, y: fp3dClamp(hit.point.y, 0.3, d3dWallH - 0.3), z: hit.point.z, rotY: 0
+      });
+      d3dSelectedIndex = d3dPlacedItems.length - 1;
+      d3dRebuildPlacedGroup();
+      return;
+    }
+
+    var floorHits = d3dGetIntersects(event, d3dFloorMesh ? [d3dFloorMesh] : []);
+    if (!floorHits.length) return;
+    var p = floorHits[0].point;
+    var def = fp3dClassify(d3dTool.toLowerCase());
+    var x = fp3dClamp(p.x, def.w / 2, d3dRoomLen - def.w / 2);
+    var z = fp3dClamp(p.z, def.d / 2, d3dRoomWid - def.d / 2);
+    d3dPlacedItems.push({ key: d3dTool, isWall: false, x: x, z: z, rotY: 0 });
+    d3dSelectedIndex = d3dPlacedItems.length - 1;
+    d3dRebuildPlacedGroup();
+  }
+
+  function d3dRotateSelected(deltaDeg) {
+    if (d3dSelectedIndex < 0) return;
+    var item = d3dPlacedItems[d3dSelectedIndex];
+    if (!item || item.isWall) return;
+    item.rotY = (item.rotY || 0) + deltaDeg * Math.PI / 180;
+    d3dRebuildPlacedGroup();
+  }
+
+  function d3dDeleteSelected() {
+    if (d3dSelectedIndex < 0) return;
+    d3dPlacedItems.splice(d3dSelectedIndex, 1);
+    d3dSelectedIndex = -1;
+    d3dRebuildPlacedGroup();
+  }
+
+  function d3dClearPlaced() {
+    d3dPlacedItems = [];
+    d3dSelectedIndex = -1;
+    d3dRebuildPlacedGroup();
   }
 
   // ═══════════════════════════════════════════════
   // COLLECT FORM DATA + BUILD
   // ═══════════════════════════════════════════════
-  var D3D_FALLBACK_FURNITURE = {
-    bedroom:  'bed, wardrobe, bedside tables, desk',
-    kids:     'bed, wardrobe, play area, study desk',
-    living:   'sofa, TV unit, coffee table, bookshelf',
-    kitchen:  'kitchen cabinets, countertop, kitchen island, bar stools',
-    office:   'desk, ergonomic office chair, bookshelf, filing cabinet',
-    dining:   'dining table, dining chairs, sideboard, pendant light',
-    bathroom: 'walk-in shower with glass partition, freestanding bathtub, double vanity with undermount sinks, large wall mirror, floating storage cabinet, towel rack, toilet'
-  };
-
-  function d3dSelectedText(containerId) {
-    var el = document.querySelector('#' + containerId + ' .chip.selected');
-    return el ? el.textContent.trim() : '';
-  }
-
-  function buildDollhouse3D() {
-    var roomType = document.getElementById('d3dRoomType').value;
+  function d3dBuildRoom() {
     var roomLength = document.getElementById('roomLengthInput').value;
     var roomWidth = document.getElementById('roomWidthInput').value;
 
     var doorStyleText = d3dSelectedText('d3dDoorStyleChips');
     var windowStyleText = d3dSelectedText('d3dWindowStyleChips');
-
-    var extraFurniture = [];
-    document.querySelectorAll('#d3dExtraFurnitureChips .chip.selected').forEach(function(el) {
-      extraFurniture.push(el.textContent.trim());
-    });
-    var furnitureColorText = d3dSelectedText('d3dFurnitureColorChips');
-    var furnitureShapeText = d3dSelectedText('d3dFurnitureShapeChips');
-
     var colorText = d3dSelectedText('d3dColorChips');
     var floorText = d3dSelectedText('d3dFloorChips');
-
-    var switchStyleText = d3dSelectedText('d3dSwitchStyleChips');
+    var furnitureColorText = d3dSelectedText('d3dFurnitureColorChips');
+    var furnitureShapeText = d3dSelectedText('d3dFurnitureShapeChips');
     var curtainStyleText = d3dSelectedText('d3dCurtainChips');
     var lightingShapeText = d3dSelectedText('d3dLightingChips');
 
-    var furnitureText = D3D_FALLBACK_FURNITURE[roomType] || D3D_FALLBACK_FURNITURE.bedroom;
-    if (extraFurniture.length > 0) furnitureText += ', ' + extraFurniture.join(', ');
-
-    renderDollhouse3D(document.getElementById('d3dResultWrap'), {
+    d3dBuildRoomShell(document.getElementById('d3dResultWrap'), {
       roomLen: roomLength,
       roomWid: roomWidth,
       colorText: colorText,
       floorText: floorText,
       furnitureColorText: furnitureColorText,
-      furnitureText: furnitureText,
+      furnitureShapeText: furnitureShapeText,
       fpItems: fpItems.slice(),
       doorStyleText: doorStyleText,
       windowStyleText: windowStyleText,
-      furnitureShapeText: furnitureShapeText,
-      switchStyleText: switchStyleText,
       curtainStyleText: curtainStyleText,
       lightingShapeText: lightingShapeText
     });
 
+    d3dSetTool(null);
     document.getElementById('d3dResultArea').classList.add('show');
     document.getElementById('d3dResultArea').scrollIntoView({ behavior: 'smooth', block: 'start' });
   }
@@ -1255,6 +1268,7 @@
   window.addEventListener('DOMContentLoaded', function() {
     checkAuth();
     drawFloorPlan();
+    d3dBuildPalette();
   });
 </script>
 </body>
