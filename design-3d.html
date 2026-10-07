@@ -639,7 +639,43 @@
     return fp3dColorHex(text, fallback);
   }
 
+  function fp3dFloorRoughness(text) {
+    var t = (text || '').toLowerCase();
+    if (t.indexOf('marble') !== -1) return 0.12;
+    if (t.indexOf('tile') !== -1 || t.indexOf('ceramic') !== -1) return 0.22;
+    if (t.indexOf('concrete') !== -1) return 0.75;
+    if (t.indexOf('carpet') !== -1) return 0.95;
+    return 0.5; // wood/parquet default
+  }
+
   function fp3dClamp(v, lo, hi) { return Math.max(lo, Math.min(hi, v)); }
+
+  // Upgrades a flat-shaded MeshLambertMaterial to a PBR MeshStandardMaterial
+  // (so it actually responds to the soft shadows/warm lighting below) and
+  // turns on shadow casting/receiving — applied to every built mesh group
+  // via fp3dPolish rather than touching each of the ~20 build functions
+  // above. Materials already using MeshBasicMaterial (curtains, switch
+  // plates, glass) are left alone on purpose: those want a flat, unlit look.
+  function fp3dUpgradeMaterial(mesh, roughness, metalness) {
+    var m = mesh.material;
+    if (!m || !(m instanceof THREE.MeshLambertMaterial)) return;
+    mesh.material = new THREE.MeshStandardMaterial({
+      color: m.color, roughness: (roughness !== undefined) ? roughness : 0.72,
+      metalness: (metalness !== undefined) ? metalness : 0.04,
+      transparent: m.transparent, opacity: m.opacity, side: m.side
+    });
+  }
+
+  function fp3dPolish(obj, roughness, metalness) {
+    obj.traverse(function(node) {
+      if (node.isMesh) {
+        fp3dUpgradeMaterial(node, roughness, metalness);
+        node.castShadow = true;
+        node.receiveShadow = true;
+      }
+    });
+    return obj;
+  }
 
   function fp3dBuildBox(w, d, h, color) {
     var g = new THREE.Group();
@@ -993,22 +1029,41 @@
     var floorColor = fp3dFloorHex(opts.floorText, 0xC9A877);
     var furnColor = fp3dColorHex(opts.furnitureColorText, 0x8C6D46);
 
-    scene.add(new THREE.AmbientLight(0xffffff, 0.75));
-    var dirLight = new THREE.DirectionalLight(0xffffff, 0.6);
-    dirLight.position.set(roomLen, wallH * 3, roomWid);
+    scene.add(new THREE.AmbientLight(0xFFF1DE, 0.48));
+    var fillLight = new THREE.DirectionalLight(0xDCE8FF, 0.22);
+    fillLight.position.set(-roomLen * 0.6, wallH * 2, -roomWid * 0.3);
+    scene.add(fillLight);
+    var dirLight = new THREE.DirectionalLight(0xFFEBCF, 0.85);
+    dirLight.position.set(roomLen * 1.1, wallH * 3.2, roomWid * 1.1);
+    dirLight.target.position.set(roomLen / 2, 0, roomWid / 2);
+    scene.add(dirLight.target);
+    dirLight.castShadow = true;
+    dirLight.shadow.mapSize.set(1024, 1024);
+    dirLight.shadow.bias = -0.0015;
+    var shadowSpan = Math.max(roomLen, roomWid) * 1.3;
+    dirLight.shadow.camera.left = -shadowSpan;
+    dirLight.shadow.camera.right = shadowSpan;
+    dirLight.shadow.camera.top = shadowSpan;
+    dirLight.shadow.camera.bottom = -shadowSpan;
+    dirLight.shadow.camera.near = 0.5;
+    dirLight.shadow.camera.far = shadowSpan * 6;
+    dirLight.shadow.camera.updateProjectionMatrix();
     scene.add(dirLight);
 
     var floor = new THREE.Mesh(new THREE.PlaneGeometry(roomLen, roomWid), new THREE.MeshLambertMaterial({ color: floorColor, side: THREE.DoubleSide }));
     floor.rotation.x = -Math.PI / 2;
     floor.position.set(roomLen / 2, 0, roomWid / 2);
+    fp3dPolish(floor, fp3dFloorRoughness(opts.floorText), 0.05);
     scene.add(floor);
 
     var wallMat = new THREE.MeshLambertMaterial({ color: wallColor });
     var nWall = new THREE.Mesh(new THREE.BoxGeometry(roomLen, wallH, wallT), wallMat);
     nWall.position.set(roomLen / 2, wallH / 2, 0);
-    scene.add(nWall);
     var wWall = new THREE.Mesh(new THREE.BoxGeometry(wallT, wallH, roomWid), wallMat);
     wWall.position.set(0, wallH / 2, roomWid / 2);
+    fp3dPolish(nWall, 0.88, 0);
+    fp3dPolish(wWall, 0.88, 0);
+    scene.add(nWall);
     scene.add(wWall);
 
     var fpItemsList = opts.fpItems || [];
@@ -1017,7 +1072,7 @@
       var isDoor = item.type === 'door';
       var markH = isDoor ? 2.0 : 1.0, markW = isDoor ? 0.8 : 1.1;
       var markY = isDoor ? markH / 2 : 1.35;
-      var mark = fp3dBuildOpeningMark(isDoor, isDoor ? opts.doorStyleText : opts.windowStyleText, markW, markH);
+      var mark = fp3dPolish(fp3dBuildOpeningMark(isDoor, isDoor ? opts.doorStyleText : opts.windowStyleText, markW, markH), 0.5, 0.1);
       if (item.wall === 'N') {
         mark.position.set(item.t * roomLen, markY, -wallT / 2 - 0.01);
       } else {
@@ -1041,7 +1096,7 @@
     });
 
     if (opts.lightingShapeText) {
-      var ceilingFixture = fp3dBuildCeilingFixture(opts.lightingShapeText, furnColor);
+      var ceilingFixture = fp3dPolish(fp3dBuildCeilingFixture(opts.lightingShapeText, furnColor), 0.35, 0.3);
       ceilingFixture.position.set(roomLen / 2, wallH - 0.05, roomWid / 2);
       scene.add(ceilingFixture);
     }
@@ -1056,6 +1111,8 @@
     var renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
     renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
     renderer.setSize(width, height);
+    renderer.shadowMap.enabled = true;
+    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
     container.appendChild(renderer.domElement);
     renderer.domElement.addEventListener('click', d3dHandleCanvasClick);
     renderer.domElement.addEventListener('mousedown', d3dHandlePointerDown);
@@ -1196,6 +1253,7 @@
         w = def.w; d = def.d; h = def.h;
         mesh = def.build(def.w, def.d, def.h, d3dFurnColor);
         fp3dApplyShapeVariant(mesh, def.w, def.d, def.h, d3dFurnShapeText, d3dFurnColor);
+        fp3dPolish(mesh);
       }
       scene.add(mesh);
 
@@ -1309,6 +1367,7 @@
         var def = fp3dClassify(item.key.toLowerCase());
         mesh = def.build(def.w, def.d, def.h, d3dFurnColor);
         fp3dApplyShapeVariant(mesh, def.w, def.d, def.h, d3dFurnShapeText, d3dFurnColor);
+        fp3dPolish(mesh);
         mesh.position.set(item.x, 0, item.z);
         mesh.rotation.y = item.rotY || 0;
       }
