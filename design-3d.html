@@ -113,6 +113,20 @@
   }
   input:focus, select:focus, textarea:focus { border-color: var(--gold); }
   select option { background: var(--dark); }
+  .dim-val { color: var(--gold-deep); font-weight: 900; }
+
+  input[type="range"] {
+    padding: 0; border: none; background: transparent; height: 28px; cursor: pointer;
+  }
+  input[type="range"]::-webkit-slider-runnable-track { height: 6px; border-radius: 4px; background: var(--border); }
+  input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none; appearance: none; width: 20px; height: 20px; border-radius: 50%;
+    background: var(--gold); border: 2px solid var(--card); box-shadow: 0 2px 6px rgba(0,0,0,0.25); margin-top: -7px;
+  }
+  input[type="range"]::-moz-range-track { height: 6px; border-radius: 4px; background: var(--border); }
+  input[type="range"]::-moz-range-thumb {
+    width: 20px; height: 20px; border-radius: 50%; background: var(--gold); border: 2px solid var(--card); box-shadow: 0 2px 6px rgba(0,0,0,0.25);
+  }
 
   .chips { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 4px; }
   .chip {
@@ -221,19 +235,17 @@
             <option value="dining">Dining Room</option>
           </select>
         </div>
-        <div class="form-grid">
-          <div class="form-group">
-            <label>Area (sqm)</label>
-            <input type="number" id="d3dRoomArea" placeholder="e.g. 20" min="5" max="200">
-          </div>
-          <div class="form-group">
-            <label>Length (m)</label>
-            <input type="number" id="roomLengthInput" placeholder="e.g. 5" step="0.5" min="1" oninput="drawFloorPlan()">
-          </div>
-          <div class="form-group full" style="max-width:calc(50% - 8px);">
-            <label>Width (m)</label>
-            <input type="number" id="roomWidthInput" placeholder="e.g. 4" step="0.5" min="1" oninput="drawFloorPlan()">
-          </div>
+        <div class="form-group">
+          <label>Area (sqm)</label>
+          <input type="number" id="d3dRoomArea" placeholder="e.g. 20" min="5" max="200">
+        </div>
+        <div class="form-group">
+          <label>Length: <span id="roomLengthVal" class="dim-val">5.0</span> m</label>
+          <input type="range" id="roomLengthInput" min="2" max="12" step="0.1" value="5" oninput="d3dUpdateDimLabel('roomLengthInput','roomLengthVal'); drawFloorPlan();">
+        </div>
+        <div class="form-group">
+          <label>Width: <span id="roomWidthVal" class="dim-val">4.0</span> m</label>
+          <input type="range" id="roomWidthInput" min="2" max="12" step="0.1" value="4" oninput="d3dUpdateDimLabel('roomWidthInput','roomWidthVal'); drawFloorPlan();">
         </div>
 
         <div class="panel-nav">
@@ -451,6 +463,12 @@
   // ═══════════════════════════════════════════════
   // CHIP HELPERS
   // ═══════════════════════════════════════════════
+  function d3dUpdateDimLabel(inputId, labelId) {
+    var input = document.getElementById(inputId);
+    var label = document.getElementById(labelId);
+    if (input && label) label.textContent = parseFloat(input.value).toFixed(1);
+  }
+
   function toggleChip(el) { el.classList.toggle('selected'); }
   function selectColor(el) {
     var parent = el.closest('.chips');
