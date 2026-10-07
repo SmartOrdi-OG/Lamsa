@@ -95,7 +95,16 @@ export default async function handler(req, res) {
     return res.status(500).json({ error: 'FAL_API_KEY not configured' });
   }
 
-  const { prompt, image_url, num_images = 1, guidance_scale = 3.5, aspect_ratio = '16:9', strength, refine_token, reference_image_url, dollhouse_token } = req.body;
+  const { prompt, image_url, num_images = 1, guidance_scale = 3.5, aspect_ratio, strength, refine_token, reference_image_url, dollhouse_token } = req.body;
+  // '16:9' only makes sense as a default for the photo-less (planner-only)
+  // path — forcing it onto an actual image edit was making Flux Kontext Pro
+  // reframe the source photo into a different aspect ratio than it was
+  // shot in (e.g. a 4:3 upload coming back as 16:9), which requires it to
+  // invent or trim content at the edges — a real cause of "the door moved"
+  // / "the room shape changed" reports, separate from the structural-lock
+  // prompt wording. With an image_url, leave it unset so fal.ai matches
+  // the source image's own dimensions instead.
+  const effectiveAspectRatio = aspect_ratio || (image_url ? undefined : '16:9');
 
   if (!prompt) return res.status(400).json({ error: 'prompt is required' });
 
@@ -254,7 +263,7 @@ export default async function handler(req, res) {
   // /api/status for completion, then calls back in here with a
   // refine_token once Flux's result is ready.
   const count = Math.max(1, Number(num_images) || 1);
-  const fluxBody = buildFluxBody({ prompt, image_url, count, guidance_scale, aspect_ratio, strength });
+  const fluxBody = buildFluxBody({ prompt, image_url, count, guidance_scale, aspect_ratio: effectiveAspectRatio, strength });
   console.log('[api/generate] submitting to flux:', JSON.stringify(fluxBody));
 
   let request_id;

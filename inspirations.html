@@ -250,6 +250,22 @@
         <img src="assets/inspiration/bedroom-silver-glam.jpg" alt="Silver glam bedroom">
         <div class="label">Silver Glam</div>
       </div>
+      <div class="style-card" data-img="assets/inspiration/bedroom-japanese-zen.jpg" data-name="Japanese Zen">
+        <img src="assets/inspiration/bedroom-japanese-zen.jpg" alt="Japanese zen bedroom with shoji screens and platform bed">
+        <div class="label">Japanese Zen</div>
+      </div>
+      <div class="style-card" data-img="assets/inspiration/bedroom-modern-elegance.jpg" data-name="Modern Elegance">
+        <img src="assets/inspiration/bedroom-modern-elegance.jpg" alt="Modern bedroom with gray tufted headboard and blue curtains">
+        <div class="label">Modern Elegance</div>
+      </div>
+      <div class="style-card" data-img="assets/inspiration/bedroom-japanese-walnut.jpg" data-name="Japanese Walnut">
+        <img src="assets/inspiration/bedroom-japanese-walnut.jpg" alt="Japanese-style walnut bedroom with crane artwork and green curtains">
+        <div class="label">Japanese Walnut</div>
+      </div>
+      <div class="style-card" data-img="assets/inspiration/bedroom-arabic-luxury.jpg" data-name="Arabic Luxury">
+        <img src="assets/inspiration/bedroom-arabic-luxury.jpg" alt="Arabic-style luxury bedroom with gold calligraphy wall and mashrabiya divider">
+        <div class="label">Arabic Luxury</div>
+      </div>
     </div>
     <div class="cat-grid" id="grid-bedroom"></div>
   </div>
@@ -287,6 +303,18 @@
       <div class="style-card" data-img="assets/inspiration/kitchen-navy-artdeco.jpg" data-name="Navy Art Deco">
         <img src="assets/inspiration/kitchen-navy-artdeco.jpg" alt="Navy art deco kitchen and dining">
         <div class="label">Navy Art Deco</div>
+      </div>
+      <div class="style-card" data-img="assets/inspiration/kitchen-japanese-walnut.jpg" data-name="Japanese Walnut">
+        <img src="assets/inspiration/kitchen-japanese-walnut.jpg" alt="Japanese-style walnut kitchen and dining with garden view">
+        <div class="label">Japanese Walnut</div>
+      </div>
+      <div class="style-card" data-img="assets/inspiration/kitchen-marble-garden.jpg" data-name="Marble &amp; Garden">
+        <img src="assets/inspiration/kitchen-marble-garden.jpg" alt="Light wood kitchen with marble backsplash and garden fountain view">
+        <div class="label">Marble &amp; Garden</div>
+      </div>
+      <div class="style-card" data-img="assets/inspiration/kitchen-japanese-zen.jpg" data-name="Japanese Zen">
+        <img src="assets/inspiration/kitchen-japanese-zen.jpg" alt="Japanese zen kitchen and dining with tatami flooring and rock garden view">
+        <div class="label">Japanese Zen</div>
       </div>
     </div>
     <div class="cat-grid" id="grid-kitchen"></div>
@@ -391,6 +419,26 @@
       <div class="style-card" data-img="assets/inspiration/garden-bougainvillea-wall.jpg" data-name="Bougainvillea Wall">
         <img src="assets/inspiration/garden-bougainvillea-wall.jpg" alt="Rooftop lounge with a flowering bougainvillea trellis wall">
         <div class="label">Bougainvillea Wall</div>
+      </div>
+      <div class="style-card" data-img="assets/inspiration/garden-french-courtyard.jpg" data-name="French Courtyard">
+        <img src="assets/inspiration/garden-french-courtyard.jpg" alt="Glass-roofed French courtyard with fountain, roses, and topiary">
+        <div class="label">French Courtyard</div>
+      </div>
+      <div class="style-card" data-img="assets/inspiration/garden-zen-courtyard.jpg" data-name="Zen Courtyard">
+        <img src="assets/inspiration/garden-zen-courtyard.jpg" alt="Japanese zen indoor courtyard with raked gravel and bonsai">
+        <div class="label">Zen Courtyard</div>
+      </div>
+      <div class="style-card" data-img="assets/inspiration/garden-andalusian-courtyard.jpg" data-name="Andalusian Courtyard">
+        <img src="assets/inspiration/garden-andalusian-courtyard.jpg" alt="Arabic-style courtyard with mashrabiya walls, lawn, and swing daybed">
+        <div class="label">Andalusian Courtyard</div>
+      </div>
+      <div class="style-card" data-img="assets/inspiration/garden-marble-atrium.jpg" data-name="Marble Atrium">
+        <img src="assets/inspiration/garden-marble-atrium.jpg" alt="Minimalist white marble atrium courtyard with skylight, olive trees, and water feature">
+        <div class="label">Marble Atrium</div>
+      </div>
+      <div class="style-card" data-img="assets/inspiration/garden-sandstone-atrium.jpg" data-name="Sandstone Atrium">
+        <img src="assets/inspiration/garden-sandstone-atrium.jpg" alt="Warm sandstone atrium courtyard with skylight, olive trees, and water feature">
+        <div class="label">Sandstone Atrium</div>
       </div>
     </div>
     <div class="cat-grid" id="grid-garden"></div>
@@ -662,12 +710,30 @@
       // Generic enough to cover every gallery category, not just interior
       // rooms — "walls, doors, windows" alone would be the wrong structural
       // lock for a garden or exterior/facade photo, which has no room.
-      var prompt = 'Redesign the space in the first image so its overall style, color palette, ' +
-        'materials, furniture, and decor look match the second reference image as closely as ' +
-        'possible. Keep the existing structure, layout, and architecture exactly identical — same ' +
-        'walls, floors, doors, windows, paths, and boundaries, same positions and sizes. Do not add, ' +
-        'remove, move, or resize any structural element. Only change decor, furniture, colors, ' +
-        'materials, plants, and lighting to match the reference style.';
+      // A first rewrite spelled out "don't reproduce the reference image's
+      // room" explicitly and still wasn't enough on a bare/unfinished source
+      // photo (confirmed by a real test) — the model kept generating a
+      // generic furnished room close to the reference instead of the user's
+      // actual (odd, empty) space. Reframed as "virtual staging" — the
+      // specific real-estate-tech task of furnishing an empty/unfinished
+      // room while leaving the room itself untouched — since that's a
+      // narrower, more concrete task than generic "redesign", with a
+      // pixel-identical-geometry constraint spelled out explicitly.
+      var prompt = 'This is a VIRTUAL STAGING task, not a room-generation task. The FIRST image is an ' +
+        'empty or unfinished real room that needs to be virtually furnished and decorated — exactly ' +
+        'like real-estate virtual staging software does. The room itself in your output — its walls, ' +
+        'floor, ceiling, doors, windows, room shape, proportions, and camera angle — must be pixel-' +
+        'identical to the FIRST image. Do not change, replace, or regenerate the room. Only ADD ' +
+        'furniture, decor, plants, paint/material colors, and lighting into that exact same room. ' +
+        'Never add any new structure, building, room, wall, roof, or extension that is not already ' +
+        'present in the FIRST image, even if the SECOND image shows one — if the second image\'s scene ' +
+        'includes extra buildings, rooms, or structures beyond the first image, leave them out entirely. ' +
+        'The SECOND image is a style reference ONLY, used purely to choose which colors, materials, ' +
+        'and furniture style to add — its own room, walls, structures, and camera angle must NEVER ' +
+        'appear in your output. If the first image is empty, unfinished, or unusual, you must still ' +
+        'stage THAT exact room — never substitute a different, more typical-looking room instead. If ' +
+        'the first image contains people, keep them exactly as they are — same identity, pose, position, ' +
+        'and size — do not move, shrink, restyle, or alter them in any way.';
 
       var genRes = await fetchJson('/api/generate', {
         method: 'POST',
