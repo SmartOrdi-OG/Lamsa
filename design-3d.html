@@ -1108,15 +1108,32 @@
     camera.position.set(roomLen * 1.5, maxDim * 1.15, roomWid * 1.5);
     camera.lookAt(roomLen / 2, wallH * 0.3, roomWid / 2);
 
+    // Orbit state is derived from the camera position/target just set above,
+    // so the initial framing is unchanged — dragging only moves it from there.
+    d3dOrbitTarget = { x: roomLen / 2, y: wallH * 0.3, z: roomWid / 2 };
+    var odx = camera.position.x - d3dOrbitTarget.x;
+    var ody = camera.position.y - d3dOrbitTarget.y;
+    var odz = camera.position.z - d3dOrbitTarget.z;
+    d3dOrbitRadius = Math.sqrt(odx * odx + ody * ody + odz * odz);
+    d3dOrbitPolar = Math.acos(fp3dClamp(ody / d3dOrbitRadius, -1, 1));
+    d3dOrbitAzimuth = Math.atan2(odx, odz);
+    d3dOrbitDragging = false;
+    d3dOrbitMoved = false;
+    d3dSuppressNextClick = false;
+    d3dDragIndex = -1;
+
     var renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
     renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
     renderer.setSize(width, height);
     renderer.shadowMap.enabled = true;
     renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+    renderer.domElement.style.cursor = 'grab';
+    renderer.domElement.style.touchAction = 'none';
     container.appendChild(renderer.domElement);
     renderer.domElement.addEventListener('click', d3dHandleCanvasClick);
     renderer.domElement.addEventListener('mousedown', d3dHandlePointerDown);
     renderer.domElement.addEventListener('mousemove', d3dHandlePointerMove);
+    renderer.domElement.addEventListener('wheel', d3dHandleWheel, { passive: false });
     if (!d3dGlobalListenersBound) {
       window.addEventListener('mouseup', d3dHandlePointerUp);
       d3dGlobalListenersBound = true;
@@ -1206,6 +1223,14 @@
 
   var d3dGlobalListenersBound = false;
   var d3dScene = null, d3dCamera = null, d3dRenderer = null;
+  // Orbit camera control: drag on empty space to spin 360° around the room,
+  // scroll to zoom. Spherical coords around a fixed target point; dragging a
+  // placed item (Select/Move tool) still takes priority over orbiting.
+  var d3dOrbitTarget = { x: 0, y: 0, z: 0 }, d3dOrbitRadius = 1;
+  var d3dOrbitAzimuth = 0, d3dOrbitPolar = Math.PI / 4;
+  var d3dOrbitDragging = false, d3dOrbitMoved = false;
+  var d3dOrbitStartX = 0, d3dOrbitStartY = 0, d3dOrbitStartAzimuth = 0, d3dOrbitStartPolar = 0;
+  var d3dSuppressNextClick = false;
   var d3dRoomLen = 4, d3dRoomWid = 4, d3dWallH = 2.6, d3dWallT = 0.1;
   var d3dFloorMesh = null, d3dNWallMesh = null, d3dWWallMesh = null;
   var d3dFurnColor = 0x8C6D46, d3dFurnShapeText = '';
@@ -1382,6 +1407,7 @@
   }
 
   function d3dHandleCanvasClick(event) {
+    if (d3dSuppressNextClick) { d3dSuppressNextClick = false; return; } // this click ended an orbit/furniture drag, not a tap
     if (!d3dScene || !d3dTool) return;
 
     if (d3dTool === 'select') {
@@ -1425,30 +1451,79 @@
   var d3dDragIndex = -1;
 
   function d3dHandlePointerDown(event) {
-    if (!d3dScene || d3dTool !== 'select') return;
-    var hits = d3dGetIntersects(event, d3dPlacedGroup ? d3dPlacedGroup.children : []);
-    if (!hits.length) return;
-    var idx = d3dFindPlacedIndex(hits[0].object);
-    if (idx < 0 || d3dPlacedItems[idx].isWall) return;
-    d3dDragIndex = idx;
-    d3dSelectedIndex = idx;
+    if (!d3dScene) return;
+    if (d3dTool === 'select') {
+      var hits = d3dGetIntersects(event, d3dPlacedGroup ? d3dPlacedGroup.children : []);
+      if (hits.length) {
+        var idx = d3dFindPlacedIndex(hits[0].object);
+        if (idx >= 0 && !d3dPlacedItems[idx].isWall) {
+          d3dDragIndex = idx;
+          d3dSelectedIndex = idx;
+          event.preventDefault();
+          return;
+        }
+      }
+    }
+    // Didn't grab a placed item — drag orbits the view instead.
+    d3dOrbitDragging = true;
+    d3dOrbitMoved = false;
+    d3dOrbitStartX = event.clientX;
+    d3dOrbitStartY = event.clientY;
+    d3dOrbitStartAzimuth = d3dOrbitAzimuth;
+    d3dOrbitStartPolar = d3dOrbitPolar;
+    if (d3dRenderer) d3dRenderer.domElement.style.cursor = 'grabbing';
     event.preventDefault();
   }
 
+  function d3dApplyOrbitCamera() {
+    if (!d3dCamera) return;
+    var t = d3dOrbitTarget;
+    d3dCamera.position.set(
+      t.x + d3dOrbitRadius * Math.sin(d3dOrbitPolar) * Math.sin(d3dOrbitAzimuth),
+      t.y + d3dOrbitRadius * Math.cos(d3dOrbitPolar),
+      t.z + d3dOrbitRadius * Math.sin(d3dOrbitPolar) * Math.cos(d3dOrbitAzimuth)
+    );
+    d3dCamera.lookAt(t.x, t.y, t.z);
+    if (d3dRenderer && d3dScene) d3dRenderer.render(d3dScene, d3dCamera);
+  }
+
   function d3dHandlePointerMove(event) {
-    if (d3dDragIndex < 0) return;
-    var floorHits = d3dGetIntersects(event, d3dFloorMesh ? [d3dFloorMesh] : []);
-    if (!floorHits.length) return;
-    var item = d3dPlacedItems[d3dDragIndex];
-    var def = fp3dClassify(item.key.toLowerCase());
-    var p = floorHits[0].point;
-    item.x = fp3dClamp(p.x, def.w / 2, d3dRoomLen - def.w / 2);
-    item.z = fp3dClamp(p.z, def.d / 2, d3dRoomWid - def.d / 2);
-    d3dRebuildPlacedGroup();
+    if (d3dDragIndex >= 0) {
+      var floorHits = d3dGetIntersects(event, d3dFloorMesh ? [d3dFloorMesh] : []);
+      if (!floorHits.length) return;
+      var item = d3dPlacedItems[d3dDragIndex];
+      var def = fp3dClassify(item.key.toLowerCase());
+      var p = floorHits[0].point;
+      item.x = fp3dClamp(p.x, def.w / 2, d3dRoomLen - def.w / 2);
+      item.z = fp3dClamp(p.z, def.d / 2, d3dRoomWid - def.d / 2);
+      d3dRebuildPlacedGroup();
+      return;
+    }
+    if (d3dOrbitDragging) {
+      var dx = event.clientX - d3dOrbitStartX;
+      var dy = event.clientY - d3dOrbitStartY;
+      if (!d3dOrbitMoved && (Math.abs(dx) > 3 || Math.abs(dy) > 3)) d3dOrbitMoved = true;
+      d3dOrbitAzimuth = d3dOrbitStartAzimuth - dx * 0.012; // full 360°, wraps naturally via sin/cos
+      d3dOrbitPolar = fp3dClamp(d3dOrbitStartPolar - dy * 0.012, 0.22, 1.45); // stay above the floor / below straight-down
+      d3dApplyOrbitCamera();
+    }
   }
 
   function d3dHandlePointerUp() {
+    if (d3dDragIndex >= 0 || (d3dOrbitDragging && d3dOrbitMoved)) d3dSuppressNextClick = true;
     d3dDragIndex = -1;
+    d3dOrbitDragging = false;
+    d3dOrbitMoved = false;
+    if (d3dRenderer) d3dRenderer.domElement.style.cursor = 'grab';
+  }
+
+  function d3dHandleWheel(event) {
+    if (!d3dCamera) return;
+    event.preventDefault();
+    var factor = event.deltaY > 0 ? 0.92 : 1.08; // scroll down = zoom out, scroll up = zoom in
+    d3dCamera.zoom = fp3dClamp((d3dCamera.zoom || 1) * factor, 0.5, 3);
+    d3dCamera.updateProjectionMatrix();
+    if (d3dRenderer && d3dScene) d3dRenderer.render(d3dScene, d3dCamera);
   }
 
   function d3dRotateSelected(deltaDeg) {
