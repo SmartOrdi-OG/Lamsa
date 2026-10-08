@@ -1473,6 +1473,7 @@
       });
       d3dSelectedIndex = d3dPlacedItems.length - 1;
       d3dRebuildPlacedGroup();
+      d3dSetTool('select'); // one tap places it, already selected — ready to move/rotate, not stamp another
       return;
     }
 
@@ -1485,6 +1486,7 @@
     d3dPlacedItems.push({ key: d3dTool, isWall: false, x: x, z: z, rotY: 0 });
     d3dSelectedIndex = d3dPlacedItems.length - 1;
     d3dRebuildPlacedGroup();
+    d3dSetTool('select'); // one tap places it, already selected — ready to move/rotate, not stamp another
   }
 
   // Drag-to-move: press on a placed (non-wall) piece while in Select/Move
