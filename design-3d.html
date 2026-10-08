@@ -666,6 +666,21 @@
     });
   }
 
+  // A flat, always-visible "grounding" shadow blob under a furniture piece.
+  // The real shadow map above is physically correct but reads as very
+  // subtle at this schematic's small on-screen scale — this guarantees the
+  // piece visibly sits ON the floor regardless of light angle or zoom.
+  function fp3dBuildContactShadow(w, d) {
+    var mesh = new THREE.Mesh(
+      new THREE.CircleGeometry(1, 20),
+      new THREE.MeshBasicMaterial({ color: 0x000000, transparent: true, opacity: 0.28, depthWrite: false })
+    );
+    mesh.rotation.x = -Math.PI / 2;
+    mesh.scale.set(Math.max(w, 0.2) * 0.62, Math.max(d, 0.2) * 0.62, 1);
+    mesh.position.y = 0.004;
+    return mesh;
+  }
+
   function fp3dPolish(obj, roughness, metalness) {
     obj.traverse(function(node) {
       if (node.isMesh) {
@@ -1021,7 +1036,7 @@
     var roomLen = fp3dClamp(parseFloat(opts.roomLen) || 4, 2, 12);
     var roomWid = fp3dClamp(parseFloat(opts.roomWid) || 4, 2, 12);
     var wallH = 2.6, wallT = 0.1;
-    var width = container.clientWidth || 320, height = 320;
+    var width = container.clientWidth || 320, height = 420;
     container.style.height = height + 'px';
 
     var scene = new THREE.Scene();
@@ -1029,11 +1044,11 @@
     var floorColor = fp3dFloorHex(opts.floorText, 0xC9A877);
     var furnColor = fp3dColorHex(opts.furnitureColorText, 0x8C6D46);
 
-    scene.add(new THREE.AmbientLight(0xFFF1DE, 0.48));
-    var fillLight = new THREE.DirectionalLight(0xDCE8FF, 0.22);
+    scene.add(new THREE.AmbientLight(0xFFF1DE, 0.3));
+    var fillLight = new THREE.DirectionalLight(0xDCE8FF, 0.12);
     fillLight.position.set(-roomLen * 0.6, wallH * 2, -roomWid * 0.3);
     scene.add(fillLight);
-    var dirLight = new THREE.DirectionalLight(0xFFEBCF, 0.85);
+    var dirLight = new THREE.DirectionalLight(0xFFEBCF, 1.15);
     dirLight.position.set(roomLen * 1.1, wallH * 3.2, roomWid * 1.1);
     dirLight.target.position.set(roomLen / 2, 0, roomWid / 2);
     scene.add(dirLight.target);
@@ -1393,6 +1408,7 @@
         mesh = def.build(def.w, def.d, def.h, d3dFurnColor);
         fp3dApplyShapeVariant(mesh, def.w, def.d, def.h, d3dFurnShapeText, d3dFurnColor);
         fp3dPolish(mesh);
+        mesh.add(fp3dBuildContactShadow(def.w, def.d));
         mesh.position.set(item.x, 0, item.z);
         mesh.rotation.y = item.rotY || 0;
       }
