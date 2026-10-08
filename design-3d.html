@@ -1087,11 +1087,15 @@
       var isDoor = item.type === 'door';
       var markH = isDoor ? 2.0 : 1.0, markW = isDoor ? 0.8 : 1.1;
       var markY = isDoor ? markH / 2 : 1.35;
+      // Marks sit just off the wall's INTERIOR face (the side facing the
+      // camera/room) — the wall slab itself spans -wallT/2..+wallT/2, so a
+      // negative offset here would place the mark on the exterior face,
+      // hidden behind the opaque wall and never visible from the camera.
       var mark = fp3dPolish(fp3dBuildOpeningMark(isDoor, isDoor ? opts.doorStyleText : opts.windowStyleText, markW, markH), 0.5, 0.1);
       if (item.wall === 'N') {
-        mark.position.set(item.t * roomLen, markY, -wallT / 2 - 0.01);
+        mark.position.set(item.t * roomLen, markY, wallT / 2 + 0.01);
       } else {
-        mark.position.set(-wallT / 2 - 0.01, markY, item.t * roomWid);
+        mark.position.set(wallT / 2 + 0.01, markY, item.t * roomWid);
         mark.rotation.y = Math.PI / 2;
       }
       scene.add(mark);
@@ -1100,9 +1104,9 @@
         var curtainGroup = fp3dBuildCurtains(markW, opts.curtainStyleText);
         if (curtainGroup) {
           if (item.wall === 'N') {
-            curtainGroup.position.set(item.t * roomLen, 0, -wallT / 2 - 0.015);
+            curtainGroup.position.set(item.t * roomLen, 0, wallT / 2 + 0.015);
           } else {
-            curtainGroup.position.set(-wallT / 2 - 0.015, 0, item.t * roomWid);
+            curtainGroup.position.set(wallT / 2 + 0.015, 0, item.t * roomWid);
             curtainGroup.rotation.y = Math.PI / 2;
           }
           scene.add(curtainGroup);
