@@ -1158,6 +1158,9 @@
     renderer.domElement.addEventListener('touchstart', d3dHandlePointerDown, { passive: false });
     renderer.domElement.addEventListener('touchmove', d3dHandlePointerMove, { passive: false });
     renderer.domElement.addEventListener('touchend', d3dHandleTouchEnd, { passive: false });
+    // The OS can abort a gesture mid-touch (e.g. an incoming notification) —
+    // reset state like a release, but don't treat it as a completed tap.
+    renderer.domElement.addEventListener('touchcancel', d3dHandlePointerUp, { passive: false });
     if (!d3dGlobalListenersBound) {
       window.addEventListener('mouseup', d3dHandlePointerUp);
       d3dGlobalListenersBound = true;
@@ -1441,6 +1444,14 @@
 
   function d3dHandleCanvasClick(event) {
     if (d3dSuppressNextClick) { d3dSuppressNextClick = false; return; } // this click ended an orbit/furniture drag, not a tap
+    d3dPerformClickAction(event);
+  }
+
+  // The actual place/select/switch logic, factored out so a confirmed touch
+  // tap (see d3dHandleTouchEnd) can run it directly without going through
+  // the suppress-flag check above — that check exists for the native
+  // 'click' event a mouse drag-release still fires, which touch doesn't.
+  function d3dPerformClickAction(event) {
     if (!d3dScene || !d3dTool) return;
 
     if (d3dTool === 'select') {
@@ -1538,10 +1549,19 @@
       var xy = d3dEventXY(event);
       var dx = xy.x - d3dOrbitStartX;
       var dy = xy.y - d3dOrbitStartY;
-      if (!d3dOrbitMoved && (Math.abs(dx) > 3 || Math.abs(dy) > 3)) d3dOrbitMoved = true;
-      d3dOrbitAzimuth = d3dOrbitStartAzimuth - dx * 0.012; // full 360°, wraps naturally via sin/cos
-      d3dOrbitPolar = fp3dClamp(d3dOrbitStartPolar - dy * 0.012, 0.22, 1.45); // stay above the floor / below straight-down
-      d3dApplyOrbitCamera();
+      // 10px, not 3: a real finger tap on glass easily drifts a few px from
+      // sensor noise alone, and 3px was misreading plain taps as a tiny
+      // drag — which silently ate the tap instead of placing anything.
+      if (!d3dOrbitMoved && (Math.abs(dx) > 10 || Math.abs(dy) > 10)) d3dOrbitMoved = true;
+      // Only actually move the camera past that deadzone — otherwise sub-
+      // threshold jitter from consecutive taps was still nudging the
+      // camera a hair each time, and it quietly accumulated until a later
+      // tap's ray no longer landed on the floor at all.
+      if (d3dOrbitMoved) {
+        d3dOrbitAzimuth = d3dOrbitStartAzimuth - dx * 0.012; // full 360°, wraps naturally via sin/cos
+        d3dOrbitPolar = fp3dClamp(d3dOrbitStartPolar - dy * 0.012, 0.22, 1.45); // stay above the floor / below straight-down
+        d3dApplyOrbitCamera();
+      }
       event.preventDefault();
     }
   }
@@ -1560,10 +1580,10 @@
   function d3dHandleTouchEnd(event) {
     var wasTap = d3dDragIndex < 0 && !(d3dOrbitDragging && d3dOrbitMoved);
     d3dHandlePointerUp();
-    if (wasTap) {
-      d3dHandleCanvasClick(event);
-      d3dSuppressNextClick = true; // swallow a synthetic click some browsers still fire for this same tap
-    }
+    // Reliably kills the browser's synthetic click for this touch — without
+    // it, a stray second click could double-place/double-select right after.
+    event.preventDefault();
+    if (wasTap) d3dPerformClickAction(event);
   }
 
   function d3dHandleWheel(event) {
