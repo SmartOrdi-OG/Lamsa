@@ -138,6 +138,7 @@
   .d3d-icon-chip { display: inline-flex; align-items: center; gap: 6px; }
   .d3d-chip-icon { font-size: 14px; display: inline-flex; flex-shrink: 0; }
   .d3d-chip-icon .icon-svg { width: 1em; height: 1em; }
+  .d3d-chip-icon img { width: 26px; height: 26px; object-fit: contain; }
 
   .floorplan-wrap { margin-top: 4px; }
   .floorplan-title { font-size: 14px; font-weight: 700; margin-bottom: 4px; }
@@ -307,19 +308,19 @@
         <div class="form-group" style="margin-top:20px;">
           <label>Door Style (optional)</label>
           <div class="chips" id="d3dDoorStyleChips">
-            <div class="chip d3d-icon-chip" data-icon-key="door" onclick="selectColor(this)">Classic Panel</div>
-            <div class="chip d3d-icon-chip" data-icon-key="door" onclick="selectColor(this)">Modern Flush</div>
-            <div class="chip d3d-icon-chip" data-icon-key="door" onclick="selectColor(this)">Glass Panel</div>
-            <div class="chip d3d-icon-chip" data-icon-key="door" onclick="selectColor(this)">Sliding</div>
+            <div class="chip d3d-icon-chip" data-opening="door:Classic Panel" onclick="selectColor(this)">Classic Panel</div>
+            <div class="chip d3d-icon-chip" data-opening="door:Modern Flush" onclick="selectColor(this)">Modern Flush</div>
+            <div class="chip d3d-icon-chip" data-opening="door:Glass Panel" onclick="selectColor(this)">Glass Panel</div>
+            <div class="chip d3d-icon-chip" data-opening="door:Sliding" onclick="selectColor(this)">Sliding</div>
           </div>
         </div>
         <div class="form-group">
           <label>Window Style (optional)</label>
           <div class="chips" id="d3dWindowStyleChips">
-            <div class="chip d3d-icon-chip" data-icon-key="windowIcon" onclick="selectColor(this)">Classic Grid</div>
-            <div class="chip d3d-icon-chip" data-icon-key="windowIcon" onclick="selectColor(this)">Modern Large Pane</div>
-            <div class="chip d3d-icon-chip" data-icon-key="windowIcon" onclick="selectColor(this)">Arched</div>
-            <div class="chip d3d-icon-chip" data-icon-key="windowIcon" onclick="selectColor(this)">Sliding/French</div>
+            <div class="chip d3d-icon-chip" data-opening="window:Classic Grid" onclick="selectColor(this)">Classic Grid</div>
+            <div class="chip d3d-icon-chip" data-opening="window:Modern Large Pane" onclick="selectColor(this)">Modern Large Pane</div>
+            <div class="chip d3d-icon-chip" data-opening="window:Arched" onclick="selectColor(this)">Arched</div>
+            <div class="chip d3d-icon-chip" data-opening="window:Sliding/French" onclick="selectColor(this)">Sliding/French</div>
           </div>
         </div>
 
@@ -861,6 +862,11 @@
     return FP3D_DEFAULT_DEF;
   }
 
+  // Real boxes (frame, leaf, sill, mullions) instead of flat painted
+  // rectangles — gives doors/windows actual depth and trim so they read as
+  // objects, not decals, and the per-style differences (handle vs. bar,
+  // raised panels vs. flush, glass insert vs. full pane) are now distinct
+  // 3D shapes rather than just a different flat color.
   function fp3dBuildOpeningMark(isDoor, styleText, w, h) {
     var s = (styleText || '').toLowerCase();
     var g = new THREE.Group();
@@ -868,52 +874,99 @@
     if (isDoor) {
       var color = 0x6B4A2E;
       if (s.indexOf('modern') !== -1 || s.indexOf('flush') !== -1) color = 0x3A3A3C;
-      else if (s.indexOf('glass') !== -1) color = 0xBFE3F0;
+      else if (s.indexOf('glass') !== -1) color = 0x5C4530;
+      var frameT = 0.05;
+      var frame = new THREE.Mesh(new THREE.BoxGeometry(w + frameT * 2, h + frameT, 0.03), new THREE.MeshLambertMaterial({ color: 0xE8E4DA }));
+      frame.position.set(0, frameT / 2, -0.012);
+      g.add(frame);
 
       if (s.indexOf('sliding') !== -1) {
-        var leaf1 = new THREE.Mesh(new THREE.PlaneGeometry(w * 0.56, h), new THREE.MeshBasicMaterial({ color: color, side: THREE.DoubleSide }));
-        leaf1.position.set(-w * 0.2, 0, 0.004);
+        var leafD = 0.03;
+        var leaf1 = new THREE.Mesh(new THREE.BoxGeometry(w * 0.54, h, leafD), new THREE.MeshLambertMaterial({ color: color }));
+        leaf1.position.set(-w * 0.21, 0, 0.01);
         g.add(leaf1);
-        var leaf2 = new THREE.Mesh(new THREE.PlaneGeometry(w * 0.56, h), new THREE.MeshBasicMaterial({ color: color, side: THREE.DoubleSide, transparent: true, opacity: 0.9 }));
-        leaf2.position.set(w * 0.2, 0, 0);
+        var leaf2 = new THREE.Mesh(new THREE.BoxGeometry(w * 0.54, h, leafD), new THREE.MeshLambertMaterial({ color: color, transparent: true, opacity: 0.92 }));
+        leaf2.position.set(w * 0.21, 0, 0.025);
         g.add(leaf2);
+        var track = new THREE.Mesh(new THREE.BoxGeometry(w * 1.05, 0.03, 0.045), new THREE.MeshLambertMaterial({ color: 0x3A3A3C }));
+        track.position.set(0, h / 2 + 0.02, 0.018);
+        g.add(track);
         return g;
       }
 
-      var panel = new THREE.Mesh(new THREE.PlaneGeometry(w, h), new THREE.MeshBasicMaterial({
-        color: color, side: THREE.DoubleSide,
-        transparent: s.indexOf('glass') !== -1, opacity: s.indexOf('glass') !== -1 ? 0.55 : 1
-      }));
+      var leafD = 0.035;
+      var panel = new THREE.Mesh(new THREE.BoxGeometry(w, h, leafD), new THREE.MeshLambertMaterial({ color: color }));
       g.add(panel);
+
       if (s.indexOf('classic') !== -1 || s.indexOf('panel') !== -1) {
         [0.26, -0.26].forEach(function(fy) {
-          var line = new THREE.Mesh(new THREE.PlaneGeometry(w * 0.68, 0.025), new THREE.MeshBasicMaterial({ color: 0x45301d, side: THREE.DoubleSide }));
-          line.position.set(0, fy * h, 0.003);
-          g.add(line);
+          var raised = new THREE.Mesh(new THREE.BoxGeometry(w * 0.64, h * 0.3, 0.014), new THREE.MeshLambertMaterial({ color: 0x4A331E }));
+          raised.position.set(0, fy * h, leafD / 2 + 0.007);
+          g.add(raised);
         });
+      } else if (s.indexOf('glass') !== -1) {
+        var glass = new THREE.Mesh(new THREE.PlaneGeometry(w * 0.6, h * 0.55), new THREE.MeshBasicMaterial({ color: 0xBFE3F0, transparent: true, opacity: 0.55, side: THREE.DoubleSide }));
+        glass.position.set(0, h * 0.08, leafD / 2 + 0.003);
+        g.add(glass);
+        var glassTrim = new THREE.Mesh(new THREE.BoxGeometry(w * 0.64, h * 0.59, 0.01), new THREE.MeshLambertMaterial({ color: color }));
+        glassTrim.position.set(0, h * 0.08, leafD / 2 - 0.004);
+        g.add(glassTrim);
+      } else if (s.indexOf('modern') !== -1 || s.indexOf('flush') !== -1) {
+        var bar = new THREE.Mesh(new THREE.BoxGeometry(0.02, h * 0.18, 0.025), new THREE.MeshStandardMaterial({ color: 0xC9C9C9, metalness: 0.7, roughness: 0.25 }));
+        bar.position.set(w * 0.36, 0, leafD / 2 + 0.013);
+        g.add(bar);
+        return g;
       }
+
+      var handle = new THREE.Mesh(new THREE.SphereGeometry(0.025, 8, 8), new THREE.MeshStandardMaterial({ color: 0xC9A860, metalness: 0.6, roughness: 0.3 }));
+      handle.position.set(w * 0.36, 0, leafD / 2 + 0.03);
+      g.add(handle);
       return g;
     }
 
-    var wcolor = (s.indexOf('modern') !== -1 || s.indexOf('large') !== -1) ? 0xA9D4E8 : 0xBFE3F0;
-    var pane = new THREE.Mesh(new THREE.PlaneGeometry(w, h), new THREE.MeshBasicMaterial({ color: wcolor, side: THREE.DoubleSide }));
-    g.add(pane);
-    if (s.indexOf('grid') !== -1 || s.indexOf('classic') !== -1) {
-      var vLine = new THREE.Mesh(new THREE.PlaneGeometry(0.025, h), new THREE.MeshBasicMaterial({ color: 0xffffff, side: THREE.DoubleSide }));
-      vLine.position.z = 0.003;
-      g.add(vLine);
-      var hLine = new THREE.Mesh(new THREE.PlaneGeometry(w, 0.025), new THREE.MeshBasicMaterial({ color: 0xffffff, side: THREE.DoubleSide }));
-      hLine.position.z = 0.003;
-      g.add(hLine);
-    } else if (s.indexOf('sliding') !== -1 || s.indexOf('french') !== -1) {
-      var vLine2 = new THREE.Mesh(new THREE.PlaneGeometry(0.025, h), new THREE.MeshBasicMaterial({ color: 0xffffff, side: THREE.DoubleSide }));
-      vLine2.position.z = 0.003;
-      g.add(vLine2);
-    } else if (s.indexOf('arch') !== -1) {
-      var arc = new THREE.Mesh(new THREE.CircleGeometry(w / 2, 16, Math.PI, Math.PI), new THREE.MeshBasicMaterial({ color: wcolor, side: THREE.DoubleSide }));
-      arc.position.set(0, h / 2, 0.002);
-      g.add(arc);
+    var isClassic = s.indexOf('classic') !== -1 || s.indexOf('arch') !== -1;
+    var frameColor = isClassic ? 0xF2EEE4 : 0xFFFFFF;
+    var glassColor = (s.indexOf('modern') !== -1 || s.indexOf('large') !== -1) ? 0xA9D4E8 : 0xBFE3F0;
+    var frameT2 = 0.045;
+
+    // Frame sits recessed in the wall; glass sits just in front of the
+    // frame's own front face (not inside its depth, or the opaque frame
+    // would fully hide it); mullions sit a hair further forward still, on
+    // top of the glass.
+    var frameDepth = 0.025;
+    var frameFrontZ = frameDepth / 2; // frame is centered on the wall plane (local z=0), like before
+    var glassZ = frameFrontZ + 0.006;
+    var mullionZ = glassZ + 0.006;
+
+    var outerFrame = new THREE.Mesh(new THREE.BoxGeometry(w + frameT2 * 2, h + frameT2 * 2, frameDepth), new THREE.MeshLambertMaterial({ color: frameColor }));
+    g.add(outerFrame);
+
+    var glass = new THREE.Mesh(new THREE.PlaneGeometry(w, h), new THREE.MeshBasicMaterial({ color: glassColor, transparent: true, opacity: 0.6, side: THREE.DoubleSide }));
+    glass.position.z = glassZ;
+    g.add(glass);
+
+    var sill = new THREE.Mesh(new THREE.BoxGeometry(w + frameT2 * 3, 0.03, 0.06), new THREE.MeshLambertMaterial({ color: frameColor }));
+    sill.position.set(0, -h / 2 - frameT2 - 0.01, 0.02);
+    g.add(sill);
+
+    function mullion(mw, mh, x, y) {
+      var m = new THREE.Mesh(new THREE.BoxGeometry(mw, mh, 0.018), new THREE.MeshLambertMaterial({ color: frameColor }));
+      m.position.set(x, y, mullionZ);
+      g.add(m);
     }
+
+    if (s.indexOf('arch') !== -1) {
+      var arc = new THREE.Mesh(new THREE.CircleGeometry(w / 2, 16, Math.PI, Math.PI), new THREE.MeshBasicMaterial({ color: glassColor, transparent: true, opacity: 0.6, side: THREE.DoubleSide }));
+      arc.position.set(0, h / 2, glassZ);
+      g.add(arc);
+      mullion(0.025, h, 0, 0);
+    } else if (s.indexOf('grid') !== -1) {
+      mullion(0.025, h, 0, 0);
+      mullion(w, 0.025, 0, 0);
+    } else if (s.indexOf('sliding') !== -1 || s.indexOf('french') !== -1) {
+      mullion(0.03, h, 0, 0);
+    }
+    // 'Modern Large Pane' falls through with no mullions: one big clean pane.
     return g;
   }
 
@@ -1325,6 +1378,52 @@
     }
   }
 
+  // Same idea for the door/window style chips, but framed face-on (not
+  // isometric) since that's the clearer angle for judging a door/window
+  // style — and it never needs the furniture color/shape in its cache key,
+  // since door/window style doesn't depend on either.
+  function d3dRenderOpeningThumb(isDoor, styleText) {
+    if (typeof THREE === 'undefined') return '';
+    var cacheKey = 'opening|' + (isDoor ? 'door' : 'window') + '|' + styleText;
+    if (d3dThumbCache[cacheKey]) return d3dThumbCache[cacheKey];
+    try {
+      var scene = new THREE.Scene();
+      scene.add(new THREE.AmbientLight(0xffffff, 0.7));
+      var light = new THREE.DirectionalLight(0xffffff, 0.75);
+      light.position.set(1, 1, 2.5);
+      scene.add(light);
+
+      var w = isDoor ? 0.8 : 1.1, h = isDoor ? 2.0 : 1.0;
+      // A light wall-colored backdrop behind it — on the room's actual wall
+      // a cream/white frame reads fine against a tinted wall, but on this
+      // thumbnail's transparent background it was rendering invisible
+      // against the chip's own white background.
+      var backdrop = new THREE.Mesh(new THREE.PlaneGeometry(w * 1.6, h * 1.5), new THREE.MeshBasicMaterial({ color: 0x8A8276 }));
+      backdrop.position.z = -0.08;
+      scene.add(backdrop);
+      var mark = fp3dPolish(fp3dBuildOpeningMark(isDoor, styleText, w, h), 0.5, 0.1);
+      scene.add(mark);
+
+      // Frustum matches the door/window's own aspect ratio (not a square
+      // crop sized to its longer side) so a tall narrow door still fills
+      // this tiny square thumbnail instead of rendering as a thin sliver
+      // with empty space on both sides.
+      var padding = 1.2;
+      var halfW = (w / 2) * padding, halfH = (h / 2) * padding;
+      var camera = new THREE.OrthographicCamera(-halfW, halfW, halfH, -halfH, 0.01, 50);
+      camera.position.set(0, 0, 2);
+      camera.lookAt(0, 0, 0);
+
+      var renderer = d3dGetThumbRenderer();
+      renderer.render(scene, camera);
+      var dataUrl = renderer.domElement.toDataURL('image/png');
+      d3dThumbCache[cacheKey] = dataUrl;
+      return dataUrl;
+    } catch (e) {
+      return '';
+    }
+  }
+
   function d3dRenderCategoryItems(categoryKey) {
     var row = document.getElementById('d3dStampRow');
     var cat = D3D_CATEGORIES.filter(function(c) { return c.key === categoryKey; })[0];
@@ -1697,11 +1796,32 @@
     });
   }
 
+  // Door/window style chips get a real rendered thumbnail of that exact
+  // style instead of a flat line icon — same reasoning as the furniture
+  // catalog cards: no licensed photo to show, but a true preview of the
+  // actual shape beats a generic symbol.
+  function d3dInjectOpeningThumbs() {
+    document.querySelectorAll('[data-opening]').forEach(function(el) {
+      var parts = el.getAttribute('data-opening').split(':');
+      var isDoor = parts[0] === 'door';
+      var styleText = parts.slice(1).join(':');
+      var thumb = d3dRenderOpeningThumb(isDoor, styleText);
+      if (!thumb) return;
+      var existing = el.querySelector('.d3d-chip-icon');
+      if (existing) existing.remove();
+      var span = document.createElement('span');
+      span.className = 'd3d-chip-icon';
+      span.innerHTML = '<img src="' + thumb + '" alt="">';
+      el.insertBefore(span, el.firstChild);
+    });
+  }
+
   window.addEventListener('DOMContentLoaded', function() {
     checkAuth();
     drawFloorPlan();
     d3dBuildPalette();
     d3dInjectChipIcons();
+    d3dInjectOpeningThumbs();
   });
 </script>
 </body>
