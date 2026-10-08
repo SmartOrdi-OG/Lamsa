@@ -1149,6 +1149,11 @@
     renderer.domElement.addEventListener('mousedown', d3dHandlePointerDown);
     renderer.domElement.addEventListener('mousemove', d3dHandlePointerMove);
     renderer.domElement.addEventListener('wheel', d3dHandleWheel, { passive: false });
+    // Touch (phone/tablet): a drag fires touchstart/touchmove/touchend, not
+    // mouse events, so orbiting and furniture-dragging need their own listeners.
+    renderer.domElement.addEventListener('touchstart', d3dHandlePointerDown, { passive: false });
+    renderer.domElement.addEventListener('touchmove', d3dHandlePointerMove, { passive: false });
+    renderer.domElement.addEventListener('touchend', d3dHandleTouchEnd, { passive: false });
     if (!d3dGlobalListenersBound) {
       window.addEventListener('mouseup', d3dHandlePointerUp);
       d3dGlobalListenersBound = true;
@@ -1370,11 +1375,19 @@
     else hint.textContent = 'Pick a category, then a piece, then click inside the room to place it.';
   }
 
+  // Touch drags (phone/tablet) don't fire mousemove, so every handler below
+  // reads coordinates through this instead of event.clientX/clientY directly.
+  function d3dEventXY(event) {
+    var t = (event.touches && event.touches[0]) || (event.changedTouches && event.changedTouches[0]);
+    return t ? { x: t.clientX, y: t.clientY } : { x: event.clientX, y: event.clientY };
+  }
+
   function d3dGetIntersects(event, objects) {
     if (!d3dRaycaster || !d3dRenderer || !objects.length) return [];
+    var xy = d3dEventXY(event);
     var rect = d3dRenderer.domElement.getBoundingClientRect();
-    d3dMouse.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
-    d3dMouse.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
+    d3dMouse.x = ((xy.x - rect.left) / rect.width) * 2 - 1;
+    d3dMouse.y = -((xy.y - rect.top) / rect.height) * 2 + 1;
     d3dRaycaster.setFromCamera(d3dMouse, d3dCamera);
     return d3dRaycaster.intersectObjects(objects, true);
   }
@@ -1481,10 +1494,11 @@
       }
     }
     // Didn't grab a placed item — drag orbits the view instead.
+    var xy = d3dEventXY(event);
     d3dOrbitDragging = true;
     d3dOrbitMoved = false;
-    d3dOrbitStartX = event.clientX;
-    d3dOrbitStartY = event.clientY;
+    d3dOrbitStartX = xy.x;
+    d3dOrbitStartY = xy.y;
     d3dOrbitStartAzimuth = d3dOrbitAzimuth;
     d3dOrbitStartPolar = d3dOrbitPolar;
     if (d3dRenderer) d3dRenderer.domElement.style.cursor = 'grabbing';
@@ -1513,15 +1527,18 @@
       item.x = fp3dClamp(p.x, def.w / 2, d3dRoomLen - def.w / 2);
       item.z = fp3dClamp(p.z, def.d / 2, d3dRoomWid - def.d / 2);
       d3dRebuildPlacedGroup();
+      event.preventDefault();
       return;
     }
     if (d3dOrbitDragging) {
-      var dx = event.clientX - d3dOrbitStartX;
-      var dy = event.clientY - d3dOrbitStartY;
+      var xy = d3dEventXY(event);
+      var dx = xy.x - d3dOrbitStartX;
+      var dy = xy.y - d3dOrbitStartY;
       if (!d3dOrbitMoved && (Math.abs(dx) > 3 || Math.abs(dy) > 3)) d3dOrbitMoved = true;
       d3dOrbitAzimuth = d3dOrbitStartAzimuth - dx * 0.012; // full 360°, wraps naturally via sin/cos
       d3dOrbitPolar = fp3dClamp(d3dOrbitStartPolar - dy * 0.012, 0.22, 1.45); // stay above the floor / below straight-down
       d3dApplyOrbitCamera();
+      event.preventDefault();
     }
   }
 
@@ -1531,6 +1548,18 @@
     d3dOrbitDragging = false;
     d3dOrbitMoved = false;
     if (d3dRenderer) d3dRenderer.domElement.style.cursor = 'grab';
+  }
+
+  // Touch has no native 'click' once touchstart calls preventDefault (needed
+  // to stop the page scrolling while orbiting), so a plain tap — no drag
+  // happened — is turned into the same click-to-place/select logic by hand.
+  function d3dHandleTouchEnd(event) {
+    var wasTap = d3dDragIndex < 0 && !(d3dOrbitDragging && d3dOrbitMoved);
+    d3dHandlePointerUp();
+    if (wasTap) {
+      d3dHandleCanvasClick(event);
+      d3dSuppressNextClick = true; // swallow a synthetic click some browsers still fire for this same tap
+    }
   }
 
   function d3dHandleWheel(event) {
