@@ -666,6 +666,21 @@
     });
   }
 
+  // A flat, always-visible "grounding" shadow blob under a furniture piece.
+  // The real shadow map above is physically correct but reads as very
+  // subtle at this schematic's small on-screen scale — this guarantees the
+  // piece visibly sits ON the floor regardless of light angle or zoom.
+  function fp3dBuildContactShadow(w, d) {
+    var mesh = new THREE.Mesh(
+      new THREE.CircleGeometry(1, 20),
+      new THREE.MeshBasicMaterial({ color: 0x000000, transparent: true, opacity: 0.28, depthWrite: false })
+    );
+    mesh.rotation.x = -Math.PI / 2;
+    mesh.scale.set(Math.max(w, 0.2) * 0.62, Math.max(d, 0.2) * 0.62, 1);
+    mesh.position.y = 0.004;
+    return mesh;
+  }
+
   function fp3dPolish(obj, roughness, metalness) {
     obj.traverse(function(node) {
       if (node.isMesh) {
@@ -1021,7 +1036,7 @@
     var roomLen = fp3dClamp(parseFloat(opts.roomLen) || 4, 2, 12);
     var roomWid = fp3dClamp(parseFloat(opts.roomWid) || 4, 2, 12);
     var wallH = 2.6, wallT = 0.1;
-    var width = container.clientWidth || 320, height = 320;
+    var width = container.clientWidth || 320, height = 420;
     container.style.height = height + 'px';
 
     var scene = new THREE.Scene();
@@ -1029,11 +1044,11 @@
     var floorColor = fp3dFloorHex(opts.floorText, 0xC9A877);
     var furnColor = fp3dColorHex(opts.furnitureColorText, 0x8C6D46);
 
-    scene.add(new THREE.AmbientLight(0xFFF1DE, 0.48));
-    var fillLight = new THREE.DirectionalLight(0xDCE8FF, 0.22);
+    scene.add(new THREE.AmbientLight(0xFFF1DE, 0.3));
+    var fillLight = new THREE.DirectionalLight(0xDCE8FF, 0.12);
     fillLight.position.set(-roomLen * 0.6, wallH * 2, -roomWid * 0.3);
     scene.add(fillLight);
-    var dirLight = new THREE.DirectionalLight(0xFFEBCF, 0.85);
+    var dirLight = new THREE.DirectionalLight(0xFFEBCF, 1.15);
     dirLight.position.set(roomLen * 1.1, wallH * 3.2, roomWid * 1.1);
     dirLight.target.position.set(roomLen / 2, 0, roomWid / 2);
     scene.add(dirLight.target);
@@ -1072,11 +1087,15 @@
       var isDoor = item.type === 'door';
       var markH = isDoor ? 2.0 : 1.0, markW = isDoor ? 0.8 : 1.1;
       var markY = isDoor ? markH / 2 : 1.35;
+      // Marks sit just off the wall's INTERIOR face (the side facing the
+      // camera/room) — the wall slab itself spans -wallT/2..+wallT/2, so a
+      // negative offset here would place the mark on the exterior face,
+      // hidden behind the opaque wall and never visible from the camera.
       var mark = fp3dPolish(fp3dBuildOpeningMark(isDoor, isDoor ? opts.doorStyleText : opts.windowStyleText, markW, markH), 0.5, 0.1);
       if (item.wall === 'N') {
-        mark.position.set(item.t * roomLen, markY, -wallT / 2 - 0.01);
+        mark.position.set(item.t * roomLen, markY, wallT / 2 + 0.01);
       } else {
-        mark.position.set(-wallT / 2 - 0.01, markY, item.t * roomWid);
+        mark.position.set(wallT / 2 + 0.01, markY, item.t * roomWid);
         mark.rotation.y = Math.PI / 2;
       }
       scene.add(mark);
@@ -1085,9 +1104,9 @@
         var curtainGroup = fp3dBuildCurtains(markW, opts.curtainStyleText);
         if (curtainGroup) {
           if (item.wall === 'N') {
-            curtainGroup.position.set(item.t * roomLen, 0, -wallT / 2 - 0.015);
+            curtainGroup.position.set(item.t * roomLen, 0, wallT / 2 + 0.015);
           } else {
-            curtainGroup.position.set(-wallT / 2 - 0.015, 0, item.t * roomWid);
+            curtainGroup.position.set(wallT / 2 + 0.015, 0, item.t * roomWid);
             curtainGroup.rotation.y = Math.PI / 2;
           }
           scene.add(curtainGroup);
@@ -1134,6 +1153,11 @@
     renderer.domElement.addEventListener('mousedown', d3dHandlePointerDown);
     renderer.domElement.addEventListener('mousemove', d3dHandlePointerMove);
     renderer.domElement.addEventListener('wheel', d3dHandleWheel, { passive: false });
+    // Touch (phone/tablet): a drag fires touchstart/touchmove/touchend, not
+    // mouse events, so orbiting and furniture-dragging need their own listeners.
+    renderer.domElement.addEventListener('touchstart', d3dHandlePointerDown, { passive: false });
+    renderer.domElement.addEventListener('touchmove', d3dHandlePointerMove, { passive: false });
+    renderer.domElement.addEventListener('touchend', d3dHandleTouchEnd, { passive: false });
     if (!d3dGlobalListenersBound) {
       window.addEventListener('mouseup', d3dHandlePointerUp);
       d3dGlobalListenersBound = true;
@@ -1355,11 +1379,19 @@
     else hint.textContent = 'Pick a category, then a piece, then click inside the room to place it.';
   }
 
+  // Touch drags (phone/tablet) don't fire mousemove, so every handler below
+  // reads coordinates through this instead of event.clientX/clientY directly.
+  function d3dEventXY(event) {
+    var t = (event.touches && event.touches[0]) || (event.changedTouches && event.changedTouches[0]);
+    return t ? { x: t.clientX, y: t.clientY } : { x: event.clientX, y: event.clientY };
+  }
+
   function d3dGetIntersects(event, objects) {
     if (!d3dRaycaster || !d3dRenderer || !objects.length) return [];
+    var xy = d3dEventXY(event);
     var rect = d3dRenderer.domElement.getBoundingClientRect();
-    d3dMouse.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
-    d3dMouse.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
+    d3dMouse.x = ((xy.x - rect.left) / rect.width) * 2 - 1;
+    d3dMouse.y = -((xy.y - rect.top) / rect.height) * 2 + 1;
     d3dRaycaster.setFromCamera(d3dMouse, d3dCamera);
     return d3dRaycaster.intersectObjects(objects, true);
   }
@@ -1393,6 +1425,7 @@
         mesh = def.build(def.w, def.d, def.h, d3dFurnColor);
         fp3dApplyShapeVariant(mesh, def.w, def.d, def.h, d3dFurnShapeText, d3dFurnColor);
         fp3dPolish(mesh);
+        mesh.add(fp3dBuildContactShadow(def.w, def.d));
         mesh.position.set(item.x, 0, item.z);
         mesh.rotation.y = item.rotY || 0;
       }
@@ -1465,10 +1498,11 @@
       }
     }
     // Didn't grab a placed item — drag orbits the view instead.
+    var xy = d3dEventXY(event);
     d3dOrbitDragging = true;
     d3dOrbitMoved = false;
-    d3dOrbitStartX = event.clientX;
-    d3dOrbitStartY = event.clientY;
+    d3dOrbitStartX = xy.x;
+    d3dOrbitStartY = xy.y;
     d3dOrbitStartAzimuth = d3dOrbitAzimuth;
     d3dOrbitStartPolar = d3dOrbitPolar;
     if (d3dRenderer) d3dRenderer.domElement.style.cursor = 'grabbing';
@@ -1497,15 +1531,18 @@
       item.x = fp3dClamp(p.x, def.w / 2, d3dRoomLen - def.w / 2);
       item.z = fp3dClamp(p.z, def.d / 2, d3dRoomWid - def.d / 2);
       d3dRebuildPlacedGroup();
+      event.preventDefault();
       return;
     }
     if (d3dOrbitDragging) {
-      var dx = event.clientX - d3dOrbitStartX;
-      var dy = event.clientY - d3dOrbitStartY;
+      var xy = d3dEventXY(event);
+      var dx = xy.x - d3dOrbitStartX;
+      var dy = xy.y - d3dOrbitStartY;
       if (!d3dOrbitMoved && (Math.abs(dx) > 3 || Math.abs(dy) > 3)) d3dOrbitMoved = true;
       d3dOrbitAzimuth = d3dOrbitStartAzimuth - dx * 0.012; // full 360°, wraps naturally via sin/cos
       d3dOrbitPolar = fp3dClamp(d3dOrbitStartPolar - dy * 0.012, 0.22, 1.45); // stay above the floor / below straight-down
       d3dApplyOrbitCamera();
+      event.preventDefault();
     }
   }
 
@@ -1515,6 +1552,18 @@
     d3dOrbitDragging = false;
     d3dOrbitMoved = false;
     if (d3dRenderer) d3dRenderer.domElement.style.cursor = 'grab';
+  }
+
+  // Touch has no native 'click' once touchstart calls preventDefault (needed
+  // to stop the page scrolling while orbiting), so a plain tap — no drag
+  // happened — is turned into the same click-to-place/select logic by hand.
+  function d3dHandleTouchEnd(event) {
+    var wasTap = d3dDragIndex < 0 && !(d3dOrbitDragging && d3dOrbitMoved);
+    d3dHandlePointerUp();
+    if (wasTap) {
+      d3dHandleCanvasClick(event);
+      d3dSuppressNextClick = true; // swallow a synthetic click some browsers still fire for this same tap
+    }
   }
 
   function d3dHandleWheel(event) {
