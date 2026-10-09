@@ -682,8 +682,12 @@
 
   function fp3dFloorRoughness(text) {
     var t = (text || '').toLowerCase();
-    if (t.indexOf('marble') !== -1) return 0.12;
-    if (t.indexOf('tile') !== -1 || t.indexOf('ceramic') !== -1) return 0.22;
+    // Kept well above a mirror-like value even for "glossy" floors: this
+    // scene has no environment map, so a low roughness here means the
+    // direct light's specular highlight blows the whole floor out to
+    // near-white instead of reading as a shiny surface.
+    if (t.indexOf('marble') !== -1) return 0.55;
+    if (t.indexOf('tile') !== -1 || t.indexOf('ceramic') !== -1) return 0.58;
     if (t.indexOf('concrete') !== -1) return 0.75;
     if (t.indexOf('carpet') !== -1) return 0.95;
     return 0.5; // wood/parquet default
@@ -703,19 +707,135 @@
     return (r << 16) | (g << 8) | b;
   }
 
+  // Real photographic textures aren't an option here (no network access to
+  // fetch/license image assets, and this file has never depended on any
+  // external asset — every shape, color and material is generated in code).
+  // Canvas-drawn patterns applied as texture maps are the practical
+  // equivalent: a shared, cached, zero-dependency "map" that tints with the
+  // mesh's own material.color, so one generated pattern serves every color
+  // choice instead of needing a texture per color.
+  var fp3dFabricTextureCache = null;
+  function fp3dGetFabricTexture() {
+    if (fp3dFabricTextureCache) return fp3dFabricTextureCache;
+    var size = 128;
+    var canvas = document.createElement('canvas');
+    canvas.width = size; canvas.height = size;
+    var ctx = canvas.getContext('2d');
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(0, 0, size, size);
+    ctx.strokeStyle = 'rgba(0,0,0,0.1)';
+    ctx.lineWidth = 1;
+    for (var i = 0; i <= size; i += 4) {
+      ctx.beginPath(); ctx.moveTo(i, 0); ctx.lineTo(i, size); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(0, i); ctx.lineTo(size, i); ctx.stroke();
+    }
+    for (var n = 0; n < 900; n++) {
+      var v = 190 + Math.random() * 50;
+      ctx.fillStyle = 'rgba(' + v + ',' + v + ',' + v + ',0.22)';
+      ctx.fillRect(Math.random() * size, Math.random() * size, 1, 1);
+    }
+    var tex = new THREE.CanvasTexture(canvas);
+    tex.wrapS = tex.wrapT = THREE.RepeatWrapping;
+    tex.repeat.set(2.2, 2.2);
+    fp3dFabricTextureCache = tex;
+    return tex;
+  }
+
+  var fp3dFloorTextureCache = {};
+  function fp3dGetFloorPatternTexture(floorText) {
+    var t = (floorText || '').toLowerCase();
+    var kind = 'wood';
+    if (t.indexOf('marble') !== -1) kind = 'marble';
+    else if (t.indexOf('tile') !== -1 || t.indexOf('ceramic') !== -1) kind = 'tile';
+    else if (t.indexOf('concrete') !== -1) kind = 'concrete';
+    else if (t.indexOf('carpet') !== -1) kind = 'carpet';
+    if (fp3dFloorTextureCache[kind]) return fp3dFloorTextureCache[kind];
+
+    var size = 256;
+    var canvas = document.createElement('canvas');
+    canvas.width = size; canvas.height = size;
+    var ctx = canvas.getContext('2d');
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(0, 0, size, size);
+
+    if (kind === 'wood') {
+      var plankCount = 6, plankH = size / plankCount;
+      for (var p = 0; p < plankCount; p++) {
+        var shade = 205 + Math.floor(Math.random() * 35);
+        ctx.fillStyle = 'rgb(' + shade + ',' + shade + ',' + shade + ')';
+        ctx.fillRect(0, p * plankH, size, plankH - 2);
+        ctx.strokeStyle = 'rgba(0,0,0,0.05)';
+        ctx.lineWidth = 1;
+        for (var g = 0; g < 8; g++) {
+          var gy = p * plankH + 3 + Math.random() * (plankH - 6);
+          ctx.beginPath();
+          ctx.moveTo(0, gy);
+          for (var gx = 16; gx <= size; gx += 16) {
+            ctx.lineTo(gx, gy + (Math.random() - 0.5) * 3);
+          }
+          ctx.stroke();
+        }
+      }
+    } else if (kind === 'marble') {
+      ctx.fillStyle = '#f4f2ee';
+      ctx.fillRect(0, 0, size, size);
+      for (var v2 = 0; v2 < 11; v2++) {
+        ctx.strokeStyle = 'rgba(95,95,95,' + (0.14 + Math.random() * 0.16) + ')';
+        ctx.lineWidth = 1 + Math.random() * 1.8;
+        var sx = Math.random() * size, sy = Math.random() * size;
+        ctx.beginPath();
+        ctx.moveTo(sx, sy);
+        for (var k = 0; k < 5; k++) {
+          sx += (Math.random() - 0.5) * 130;
+          sy += (Math.random() - 0.5) * 130;
+          ctx.lineTo(sx, sy);
+        }
+        ctx.stroke();
+      }
+    } else if (kind === 'tile') {
+      var tileSize = size / 4;
+      ctx.strokeStyle = 'rgba(0,0,0,0.22)';
+      ctx.lineWidth = 3;
+      for (var ti = 0; ti <= 4; ti++) {
+        ctx.beginPath(); ctx.moveTo(ti * tileSize, 0); ctx.lineTo(ti * tileSize, size); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(0, ti * tileSize); ctx.lineTo(size, ti * tileSize); ctx.stroke();
+      }
+    } else if (kind === 'concrete') {
+      for (var c = 0; c < 2200; c++) {
+        var cv = 160 + Math.random() * 65;
+        ctx.fillStyle = 'rgba(' + cv + ',' + cv + ',' + cv + ',0.28)';
+        ctx.fillRect(Math.random() * size, Math.random() * size, 2, 2);
+      }
+    } else if (kind === 'carpet') {
+      for (var f = 0; f < 3600; f++) {
+        var fv = 175 + Math.random() * 55;
+        ctx.fillStyle = 'rgba(' + fv + ',' + fv + ',' + fv + ',0.32)';
+        ctx.fillRect(Math.random() * size, Math.random() * size, 1, 1);
+      }
+    }
+
+    var ftex = new THREE.CanvasTexture(canvas);
+    ftex.wrapS = ftex.wrapT = THREE.RepeatWrapping;
+    fp3dFloorTextureCache[kind] = ftex;
+    return ftex;
+  }
+
   // Upgrades a flat-shaded MeshLambertMaterial to a PBR MeshStandardMaterial
   // (so it actually responds to the soft shadows/warm lighting below) and
   // turns on shadow casting/receiving — applied to every built mesh group
   // via fp3dPolish rather than touching each of the ~20 build functions
   // above. Materials already using MeshBasicMaterial (curtains, switch
   // plates, glass) are left alone on purpose: those want a flat, unlit look.
-  function fp3dUpgradeMaterial(mesh, roughness, metalness) {
+  // `fabric`, when true, layers the shared woven-texture map onto the
+  // upgraded material (tinted by its own color) for upholstered pieces.
+  function fp3dUpgradeMaterial(mesh, roughness, metalness, fabric) {
     var m = mesh.material;
     if (!m || !(m instanceof THREE.MeshLambertMaterial)) return;
     mesh.material = new THREE.MeshStandardMaterial({
       color: m.color, roughness: (roughness !== undefined) ? roughness : 0.72,
       metalness: (metalness !== undefined) ? metalness : 0.04,
-      transparent: m.transparent, opacity: m.opacity, side: m.side
+      transparent: m.transparent, opacity: m.opacity, side: m.side,
+      map: fabric ? fp3dGetFabricTexture() : null
     });
   }
 
@@ -734,15 +854,27 @@
     return mesh;
   }
 
-  function fp3dPolish(obj, roughness, metalness) {
+  function fp3dPolish(obj, roughness, metalness, fabric) {
     obj.traverse(function(node) {
       if (node.isMesh) {
-        fp3dUpgradeMaterial(node, roughness, metalness);
+        fp3dUpgradeMaterial(node, roughness, metalness, fabric);
         node.castShadow = true;
         node.receiveShadow = true;
       }
     });
     return obj;
+  }
+
+  // Keys (matched the same way FP3D_DEFS matches furniture names) whose
+  // pieces are upholstered/soft — these get the fabric texture map; wood,
+  // metal and hard-surface pieces (tables, cabinets, the plain Chair/Bar
+  // Stool) are left on their flat-shaded material.
+  var FP3D_FABRIC_KEYS = ['sofa', 'couch', 'armchair', 'recliner', 'wingback', 'wing chair', 'bench', 'ottoman', 'pouf', 'dining chair', 'task chair', 'bed'];
+  function fp3dIsFabricItem(nameLower) {
+    for (var i = 0; i < FP3D_FABRIC_KEYS.length; i++) {
+      if (nameLower.indexOf(FP3D_FABRIC_KEYS[i]) !== -1) return true;
+    }
+    return false;
   }
 
   function fp3dBuildBox(w, d, h, color) {
@@ -1768,10 +1900,16 @@
     dirLight.shadow.camera.updateProjectionMatrix();
     scene.add(dirLight);
 
-    var floor = new THREE.Mesh(new THREE.PlaneGeometry(roomLen, roomWid), new THREE.MeshLambertMaterial({ color: floorColor, side: THREE.DoubleSide }));
+    var floorTex = fp3dGetFloorPatternTexture(opts.floorText);
+    floorTex.repeat.set(Math.max(1, roomLen), Math.max(1, roomWid));
+    var floor = new THREE.Mesh(
+      new THREE.PlaneGeometry(roomLen, roomWid),
+      new THREE.MeshStandardMaterial({ color: floorColor, map: floorTex, roughness: fp3dFloorRoughness(opts.floorText), metalness: 0.05, side: THREE.DoubleSide })
+    );
     floor.rotation.x = -Math.PI / 2;
     floor.position.set(roomLen / 2, 0, roomWid / 2);
-    fp3dPolish(floor, fp3dFloorRoughness(opts.floorText), 0.05);
+    floor.castShadow = false;
+    floor.receiveShadow = true;
     scene.add(floor);
 
     var wallMat = new THREE.MeshLambertMaterial({ color: wallColor });
@@ -1849,6 +1987,13 @@
     renderer.setSize(width, height);
     renderer.shadowMap.enabled = true;
     renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+    // Without tone mapping, a light material (pale marble, white bedding)
+    // under this scene's warm lighting easily exceeds 1.0 per channel and
+    // hard-clips straight to flat white — which also wipes out any texture
+    // detail in that clipped region. ACES compresses highlights smoothly
+    // instead, so bright surfaces still show shading/pattern.
+    renderer.toneMapping = THREE.ACESFilmicToneMapping;
+    renderer.toneMappingExposure = 1.0;
     renderer.domElement.style.cursor = 'grab';
     renderer.domElement.style.touchAction = 'none';
     container.appendChild(renderer.domElement);
@@ -2012,6 +2157,8 @@
   function d3dGetThumbRenderer() {
     if (!d3dThumbRenderer) {
       d3dThumbRenderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+      d3dThumbRenderer.toneMapping = THREE.ACESFilmicToneMapping;
+      d3dThumbRenderer.toneMappingExposure = 1.0;
       d3dThumbRenderer.setSize(96, 96);
     }
     return d3dThumbRenderer;
@@ -2043,7 +2190,7 @@
         w = def.w; d = def.d; h = def.h;
         mesh = def.build(def.w, def.d, def.h, d3dFurnColor);
         fp3dApplyShapeVariant(mesh, def.w, def.d, def.h, d3dFurnShapeText, d3dFurnColor);
-        fp3dPolish(mesh);
+        fp3dPolish(mesh, undefined, undefined, fp3dIsFabricItem(itemKey.toLowerCase()));
       }
       scene.add(mesh);
 
@@ -2211,7 +2358,7 @@
         var def = fp3dClassify(item.key.toLowerCase());
         mesh = def.build(def.w, def.d, def.h, d3dFurnColor);
         fp3dApplyShapeVariant(mesh, def.w, def.d, def.h, d3dFurnShapeText, d3dFurnColor);
-        fp3dPolish(mesh);
+        fp3dPolish(mesh, undefined, undefined, fp3dIsFabricItem(item.key.toLowerCase()));
         mesh.add(fp3dBuildContactShadow(def.w, def.d));
         mesh.position.set(item.x, 0, item.z);
         mesh.rotation.y = item.rotY || 0;
