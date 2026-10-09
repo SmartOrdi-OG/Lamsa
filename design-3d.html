@@ -1099,6 +1099,40 @@
     return g;
   }
 
+  function fp3dBuildOvalTable(w, d, h, color) {
+    var g = new THREE.Group();
+    var top = new THREE.Mesh(new THREE.CylinderGeometry(0.5, 0.5, 0.05, 28), new THREE.MeshLambertMaterial({ color: color }));
+    top.scale.set(w, 1, d);
+    top.position.y = h;
+    g.add(top);
+    var legMat = new THREE.MeshLambertMaterial({ color: fp3dDarken(color, 0.85) });
+    var legH = h - 0.05;
+    [-1, 1].forEach(function(side) {
+      var leg = new THREE.Mesh(new THREE.BoxGeometry(0.05, legH, d * 0.5), legMat);
+      leg.position.set(side * (w * 0.32), legH / 2, 0);
+      g.add(leg);
+    });
+    return g;
+  }
+
+  function fp3dBuildLDesk(w, d, h, color) {
+    var g = new THREE.Group();
+    var legH = h - 0.05;
+    function addSurface(sw, sd, ox, oz) {
+      var top = new THREE.Mesh(new THREE.BoxGeometry(sw, 0.05, sd), new THREE.MeshLambertMaterial({ color: color }));
+      top.position.set(ox, h, oz);
+      g.add(top);
+      [[-1, -1], [1, -1], [-1, 1], [1, 1]].forEach(function(pos) {
+        var leg = new THREE.Mesh(new THREE.BoxGeometry(0.04, legH, 0.04), new THREE.MeshLambertMaterial({ color: color }));
+        leg.position.set(ox + pos[0] * (sw / 2 - 0.05), legH / 2, oz + pos[1] * (sd / 2 - 0.05));
+        g.add(leg);
+      });
+    }
+    addSurface(w, d * 0.45, 0, -d * 0.275);
+    addSurface(w * 0.45, d * 0.55, -w * 0.275, d * 0.225);
+    return g;
+  }
+
   function fp3dBuildBarStool(w, d, h, color) {
     var g = new THREE.Group();
     var r = Math.min(w, d) / 2;
@@ -1327,8 +1361,12 @@
     { keys: ['bookshelf', 'shelf'], w: 0.9, d: 0.35, h: 1.9, build: fp3dBuildBookshelf },
     { keys: ['filing cabinet', 'cabinet', 'storage', 'sideboard'], w: 0.9, d: 0.45, h: 1.0, build: fp3dBuildCabinet },
     { keys: ['tv unit', 'tv stand', 'television'], w: 1.4, d: 0.4, h: 0.5, build: fp3dBuildTVUnit },
+    { keys: ['l-shaped desk', 'l shaped desk'], w: 1.4, d: 1.3, h: 0.75, build: fp3dBuildLDesk },
     { keys: ['desk'], w: 1.2, d: 0.6, h: 0.75, build: fp3dBuildTable },
+    { keys: ['round coffee table'], w: 0.9, d: 0.9, h: 0.42, build: fp3dBuildSideTable },
     { keys: ['coffee table'], w: 1.0, d: 0.55, h: 0.42, build: fp3dBuildTable },
+    { keys: ['round dining table'], w: 1.3, d: 1.3, h: 0.75, build: fp3dBuildSideTable },
+    { keys: ['oval table'], w: 1.6, d: 1.0, h: 0.75, build: fp3dBuildOvalTable },
     { keys: ['dining table'], w: 1.5, d: 0.9, h: 0.75, build: fp3dBuildTable },
     { keys: ['side table'], w: 0.45, d: 0.45, h: 0.5, build: fp3dBuildSideTable },
     { keys: ['table'], w: 1.2, d: 0.7, h: 0.75, build: fp3dBuildTable },
@@ -1855,6 +1893,7 @@
       { key: 'Armchair', icon: 'chair' },
       { key: 'Recliner', icon: 'chair' },
       { key: 'Coffee Table', icon: 'table' },
+      { key: 'Round Coffee Table', icon: 'table' },
       { key: 'Console Table', icon: 'table' },
       { key: 'Side Table', icon: 'table' },
       { key: 'TV Unit', icon: 'tv' },
@@ -1864,6 +1903,8 @@
     ] },
     { key: 'dining', label: 'Dining', icon: 'table', items: [
       { key: 'Dining Table', icon: 'table' },
+      { key: 'Round Dining Table', icon: 'table' },
+      { key: 'Oval Table', icon: 'table' },
       { key: 'Chair', icon: 'chair' },
       { key: 'Dining Chair', icon: 'chair' },
       { key: 'Bar Stool', icon: 'chair' },
@@ -1871,6 +1912,7 @@
     ] },
     { key: 'office', label: 'Office', icon: 'books', items: [
       { key: 'Desk', icon: 'table' },
+      { key: 'L-Shaped Desk', icon: 'table' },
       { key: 'Chair', icon: 'chair' },
       { key: 'Task Chair', icon: 'chair' },
       { key: 'Bookshelf', icon: 'books' },
