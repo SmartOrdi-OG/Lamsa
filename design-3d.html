@@ -200,6 +200,30 @@
   }
   .d3d-action-row .fp-tool-btn.active { border-color: var(--gold); background: var(--gold-dim); color: var(--gold-deep); }
 
+  .d3d-viewport-wrap { position: relative; display: inline-block; max-width: 100%; }
+  .d3d-walk-overlay { position: absolute; inset: 0; pointer-events: none; }
+  .d3d-walk-exit-btn {
+    position: absolute; top: 10px; right: 10px; pointer-events: auto;
+    background: rgba(20,20,20,0.72); color: #fff; border: 1.5px solid rgba(255,255,255,0.4);
+    border-radius: 20px; padding: 8px 14px; font-family: 'Tajawal', sans-serif; font-size: 12.5px;
+    font-weight: 700; cursor: pointer;
+  }
+  .d3d-walk-dpad {
+    position: absolute; bottom: 16px; left: 50%; transform: translateX(-50%); pointer-events: auto;
+    display: grid; grid-template-columns: 46px 46px 46px; grid-template-rows: 46px 46px;
+    gap: 4px;
+  }
+  .d3d-walk-dpad-btn {
+    background: rgba(20,20,20,0.6); color: #fff; border: 1.5px solid rgba(255,255,255,0.4);
+    border-radius: 10px; font-size: 18px; cursor: pointer; display: flex; align-items: center; justify-content: center;
+    user-select: none; -webkit-user-select: none; touch-action: none;
+  }
+  .d3d-walk-dpad-btn:active { background: rgba(212,175,55,0.65); }
+  .d3d-walk-dpad-up { grid-column: 2; grid-row: 1; }
+  .d3d-walk-dpad-left { grid-column: 1; grid-row: 2; }
+  .d3d-walk-dpad-right { grid-column: 3; grid-row: 2; }
+  .d3d-walk-dpad-down { grid-column: 2; grid-row: 2; }
+
   .d3d-category-tabs { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 10px; justify-content: center; }
   .d3d-category-tab {
     background: var(--card); border: 1.5px solid var(--border); color: var(--gray);
@@ -427,8 +451,20 @@
         <button type="button" class="fp-tool-btn" onclick="d3dRotateSelected(15)">Rotate ⟳</button>
         <button type="button" class="fp-tool-btn" onclick="d3dDeleteSelected()">Delete Selected</button>
         <button type="button" class="fp-tool-btn" onclick="d3dClearPlaced()">Clear All</button>
+        <button type="button" class="fp-tool-btn" id="d3dWalkToggleBtn" onclick="d3dEnterWalkMode()">🚶 Walk Mode</button>
       </div>
-      <div id="d3dResultWrap"></div>
+      <div class="d3d-viewport-wrap">
+        <div id="d3dResultWrap"></div>
+        <div class="d3d-walk-overlay" id="d3dWalkOverlay" style="display:none;">
+          <button type="button" class="d3d-walk-exit-btn" onclick="d3dExitWalkMode()">✕ Exit Walk</button>
+          <div class="d3d-walk-dpad">
+            <button type="button" class="d3d-walk-dpad-btn d3d-walk-dpad-up" data-dir="forward">▲</button>
+            <button type="button" class="d3d-walk-dpad-btn d3d-walk-dpad-left" data-dir="left">◀</button>
+            <button type="button" class="d3d-walk-dpad-btn d3d-walk-dpad-right" data-dir="right">▶</button>
+            <button type="button" class="d3d-walk-dpad-btn d3d-walk-dpad-down" data-dir="back">▼</button>
+          </div>
+        </div>
+      </div>
       <button type="button" class="btn-edit-again" onclick="d3dEditAgain()">Edit Selections</button>
     </div>
   </div>
@@ -1519,6 +1555,19 @@
   var d3dOrbitDragging = false, d3dOrbitMoved = false;
   var d3dOrbitStartX = 0, d3dOrbitStartY = 0, d3dOrbitStartAzimuth = 0, d3dOrbitStartPolar = 0;
   var d3dSuppressNextClick = false;
+  // Walk Mode: a first-person perspective camera inside the room — drag
+  // anywhere to look around (yaw/pitch), hold a D-pad button to move,
+  // clamped to the room's own floor bounds. Swaps d3dCamera out for a
+  // PerspectiveCamera while active and restores the saved orthographic one
+  // on exit; every other pointer/click handler below checks this flag
+  // first and, if set, handles the drag as "look" instead of orbit/place.
+  var d3dWalkModeActive = false;
+  var d3dWalkSavedCamera = null;
+  var d3dWalkPos = { x: 0, y: 1.6, z: 0 };
+  var d3dWalkYaw = 0, d3dWalkPitch = 0;
+  var d3dWalkLooking = false, d3dWalkLookMoved = false;
+  var d3dWalkLookStartX = 0, d3dWalkLookStartY = 0, d3dWalkLookStartYaw = 0, d3dWalkLookStartPitch = 0;
+  var d3dWalkMoveTimer = null;
   var d3dRoomLen = 4, d3dRoomWid = 4, d3dWallH = 2.6, d3dWallT = 0.1;
   var d3dFloorMesh = null, d3dNWallMesh = null, d3dWWallMesh = null;
   var d3dFurnColor = 0x8C6D46, d3dFurnShapeText = '';
@@ -1809,6 +1858,17 @@
 
   function d3dHandlePointerDown(event) {
     if (!d3dScene) return;
+    if (d3dWalkModeActive) {
+      var wxy0 = d3dEventXY(event);
+      d3dWalkLooking = true;
+      d3dWalkLookMoved = false;
+      d3dWalkLookStartX = wxy0.x;
+      d3dWalkLookStartY = wxy0.y;
+      d3dWalkLookStartYaw = d3dWalkYaw;
+      d3dWalkLookStartPitch = d3dWalkPitch;
+      event.preventDefault();
+      return;
+    }
     if (d3dTool === 'select') {
       var hits = d3dGetIntersects(event, d3dPlacedGroup ? d3dPlacedGroup.children : []);
       if (hits.length) {
@@ -1845,7 +1905,83 @@
     if (d3dRenderer && d3dScene) d3dRenderer.render(d3dScene, d3dCamera);
   }
 
+  function d3dWalkApplyCamera() {
+    if (!d3dCamera) return;
+    var lookX = Math.sin(d3dWalkYaw) * Math.cos(d3dWalkPitch);
+    var lookY = Math.sin(d3dWalkPitch);
+    var lookZ = Math.cos(d3dWalkYaw) * Math.cos(d3dWalkPitch);
+    d3dCamera.position.set(d3dWalkPos.x, d3dWalkPos.y, d3dWalkPos.z);
+    d3dCamera.lookAt(d3dWalkPos.x + lookX, d3dWalkPos.y + lookY, d3dWalkPos.z + lookZ);
+    if (d3dRenderer && d3dScene) d3dRenderer.render(d3dScene, d3dCamera);
+  }
+
+  function d3dWalkMove(dForward, dRight) {
+    var step = 0.1;
+    var fx = Math.sin(d3dWalkYaw), fz = Math.cos(d3dWalkYaw);
+    var rx = Math.cos(d3dWalkYaw), rz = -Math.sin(d3dWalkYaw);
+    d3dWalkPos.x += (fx * dForward + rx * dRight) * step;
+    d3dWalkPos.z += (fz * dForward + rz * dRight) * step;
+    var margin = 0.3;
+    d3dWalkPos.x = fp3dClamp(d3dWalkPos.x, margin, Math.max(margin, d3dRoomLen - margin));
+    d3dWalkPos.z = fp3dClamp(d3dWalkPos.z, margin, Math.max(margin, d3dRoomWid - margin));
+    d3dWalkApplyCamera();
+  }
+
+  function d3dWalkStartMove(dForward, dRight) {
+    d3dWalkMove(dForward, dRight);
+    if (d3dWalkMoveTimer) clearInterval(d3dWalkMoveTimer);
+    d3dWalkMoveTimer = setInterval(function() { d3dWalkMove(dForward, dRight); }, 80);
+  }
+
+  function d3dWalkStopMove() {
+    if (d3dWalkMoveTimer) { clearInterval(d3dWalkMoveTimer); d3dWalkMoveTimer = null; }
+  }
+
+  function d3dEnterWalkMode() {
+    if (!d3dScene || !d3dCamera || d3dWalkModeActive) return;
+    d3dWalkModeActive = true;
+    d3dWalkSavedCamera = d3dCamera;
+    var aspect = d3dRenderer.domElement.clientWidth / d3dRenderer.domElement.clientHeight;
+    d3dCamera = new THREE.PerspectiveCamera(70, aspect, 0.05, 60);
+    d3dWalkPos = { x: d3dRoomLen / 2, y: 1.6, z: d3dRoomWid / 2 };
+    d3dWalkYaw = Math.PI; // face the solid N/W corner by default
+    d3dWalkPitch = 0;
+    d3dWalkApplyCamera();
+    d3dSetTool(null);
+    var overlay = document.getElementById('d3dWalkOverlay');
+    if (overlay) overlay.style.display = 'block';
+    var toggleBtn = document.getElementById('d3dWalkToggleBtn');
+    if (toggleBtn) toggleBtn.classList.add('active');
+  }
+
+  function d3dExitWalkMode() {
+    if (!d3dWalkModeActive) return;
+    d3dWalkModeActive = false;
+    d3dWalkStopMove();
+    d3dWalkLooking = false;
+    if (d3dWalkSavedCamera) d3dCamera = d3dWalkSavedCamera;
+    d3dWalkSavedCamera = null;
+    if (d3dRenderer && d3dScene && d3dCamera) d3dRenderer.render(d3dScene, d3dCamera);
+    var overlay = document.getElementById('d3dWalkOverlay');
+    if (overlay) overlay.style.display = 'none';
+    var toggleBtn = document.getElementById('d3dWalkToggleBtn');
+    if (toggleBtn) toggleBtn.classList.remove('active');
+  }
+
   function d3dHandlePointerMove(event) {
+    if (d3dWalkModeActive) {
+      if (!d3dWalkLooking) return;
+      var wxy = d3dEventXY(event);
+      var dx = wxy.x - d3dWalkLookStartX, dy = wxy.y - d3dWalkLookStartY;
+      if (!d3dWalkLookMoved && (Math.abs(dx) > 10 || Math.abs(dy) > 10)) d3dWalkLookMoved = true;
+      if (d3dWalkLookMoved) {
+        d3dWalkYaw = d3dWalkLookStartYaw - dx * 0.006;
+        d3dWalkPitch = fp3dClamp(d3dWalkLookStartPitch - dy * 0.006, -1.3, 1.3);
+        d3dWalkApplyCamera();
+      }
+      event.preventDefault();
+      return;
+    }
     if (d3dDragIndex >= 0) {
       var floorHits = d3dGetIntersects(event, d3dFloorMesh ? [d3dFloorMesh] : []);
       if (!floorHits.length) return;
@@ -1880,6 +2016,12 @@
   }
 
   function d3dHandlePointerUp() {
+    if (d3dWalkModeActive) {
+      if (d3dWalkLooking && d3dWalkLookMoved) d3dSuppressNextClick = true;
+      d3dWalkLooking = false;
+      d3dWalkLookMoved = false;
+      return;
+    }
     if (d3dDragIndex >= 0 || (d3dOrbitDragging && d3dOrbitMoved)) d3dSuppressNextClick = true;
     d3dDragIndex = -1;
     d3dOrbitDragging = false;
@@ -1900,7 +2042,7 @@
   }
 
   function d3dHandleWheel(event) {
-    if (!d3dCamera) return;
+    if (!d3dCamera || d3dWalkModeActive) return;
     event.preventDefault();
     var factor = event.deltaY > 0 ? 0.92 : 1.08; // scroll down = zoom out, scroll up = zoom in
     d3dCamera.zoom = fp3dClamp((d3dCamera.zoom || 1) * factor, 0.5, 3);
@@ -2028,12 +2170,38 @@
     });
   }
 
+  function d3dSetupWalkDpad() {
+    var dirDeltas = {
+      forward: { f: 1, r: 0 },
+      back: { f: -1, r: 0 },
+      left: { f: 0, r: -1 },
+      right: { f: 0, r: 1 }
+    };
+    var buttons = document.querySelectorAll('.d3d-walk-dpad-btn');
+    for (var i = 0; i < buttons.length; i++) {
+      (function(btn) {
+        var dir = dirDeltas[btn.getAttribute('data-dir')];
+        if (!dir) return;
+        function start(e) { e.preventDefault(); d3dWalkStartMove(dir.f, dir.r); }
+        function stop(e) { if (e) e.preventDefault(); d3dWalkStopMove(); }
+        btn.addEventListener('pointerdown', start);
+        btn.addEventListener('pointerup', stop);
+        btn.addEventListener('pointerleave', stop);
+        btn.addEventListener('pointercancel', stop);
+        btn.addEventListener('touchstart', start, { passive: false });
+        btn.addEventListener('touchend', stop, { passive: false });
+        btn.addEventListener('touchcancel', stop, { passive: false });
+      })(buttons[i]);
+    }
+  }
+
   window.addEventListener('DOMContentLoaded', function() {
     checkAuth();
     drawFloorPlan();
     d3dBuildPalette();
     d3dInjectChipIcons();
     d3dInjectOpeningThumbs();
+    d3dSetupWalkDpad();
   });
 </script>
 </body>
