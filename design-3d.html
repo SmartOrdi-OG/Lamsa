@@ -992,6 +992,84 @@
     return g;
   }
 
+  function fp3dBuildCanopyBed(w, d, h, color) {
+    var g = new THREE.Group();
+    var base = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), new THREE.MeshLambertMaterial({ color: 0xF2EFE8 }));
+    base.position.y = h / 2;
+    g.add(base);
+    var headboard = new THREE.Mesh(new THREE.BoxGeometry(w * 1.04, h * 1.4, 0.06), new THREE.MeshLambertMaterial({ color: color }));
+    headboard.position.set(0, h * 0.75, -d / 2 - 0.02);
+    g.add(headboard);
+    var pillowW = w * 0.42;
+    [-1, 1].forEach(function(side) {
+      var pillow = new THREE.Mesh(new THREE.BoxGeometry(pillowW, 0.1, d * 0.22), new THREE.MeshLambertMaterial({ color: color }));
+      pillow.position.set(side * w * 0.23, h + 0.05, -d / 2 + d * 0.16);
+      g.add(pillow);
+    });
+    var postMat = new THREE.MeshLambertMaterial({ color: fp3dDarken(color, 0.7) });
+    var postH = h * 3.4;
+    [[-1, -1], [1, -1], [-1, 1], [1, 1]].forEach(function(pos) {
+      var post = new THREE.Mesh(new THREE.CylinderGeometry(0.025, 0.025, postH, 8), postMat);
+      post.position.set(pos[0] * (w / 2 - 0.03), postH / 2, pos[1] * (d / 2 - 0.03));
+      g.add(post);
+    });
+    [-1, 1].forEach(function(side) {
+      var railZ = new THREE.Mesh(new THREE.BoxGeometry(w, 0.03, 0.03), postMat);
+      railZ.position.set(0, postH, side * (d / 2 - 0.03));
+      g.add(railZ);
+      var railX = new THREE.Mesh(new THREE.BoxGeometry(0.03, 0.03, d), postMat);
+      railX.position.set(side * (w / 2 - 0.03), postH, 0);
+      g.add(railX);
+    });
+    return g;
+  }
+
+  function fp3dBuildPlatformBed(w, d, h, color) {
+    var g = new THREE.Group();
+    var platformH = h * 0.4;
+    var platform = new THREE.Mesh(new THREE.BoxGeometry(w * 1.06, platformH, d * 1.04), new THREE.MeshLambertMaterial({ color: fp3dDarken(color, 0.85) }));
+    platform.position.y = platformH / 2;
+    g.add(platform);
+    var mattress = new THREE.Mesh(new THREE.BoxGeometry(w, h * 0.5, d), new THREE.MeshLambertMaterial({ color: 0xF2EFE8 }));
+    mattress.position.y = platformH + h * 0.25;
+    g.add(mattress);
+    var headboard = new THREE.Mesh(new THREE.BoxGeometry(w * 1.02, h * 0.9, 0.05), new THREE.MeshLambertMaterial({ color: color }));
+    headboard.position.set(0, h * 0.55, -d / 2 - 0.015);
+    g.add(headboard);
+    var pillowW = w * 0.42;
+    [-1, 1].forEach(function(side) {
+      var pillow = new THREE.Mesh(new THREE.BoxGeometry(pillowW, 0.08, d * 0.2), new THREE.MeshLambertMaterial({ color: color }));
+      pillow.position.set(side * w * 0.23, platformH + h * 0.5 + 0.04, -d / 2 + d * 0.16);
+      g.add(pillow);
+    });
+    return g;
+  }
+
+  function fp3dBuildSleighBed(w, d, h, color) {
+    var g = new THREE.Group();
+    var base = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), new THREE.MeshLambertMaterial({ color: 0xF2EFE8 }));
+    base.position.y = h / 2;
+    g.add(base);
+    function scrollEnd(z, scrollColor) {
+      var panel = new THREE.Mesh(new THREE.BoxGeometry(w * 1.04, h * 1.1, 0.05), new THREE.MeshLambertMaterial({ color: scrollColor }));
+      panel.position.set(0, h * 0.7, z);
+      g.add(panel);
+      var curve = new THREE.Mesh(new THREE.CylinderGeometry(h * 0.35, h * 0.35, w * 1.04, 12, 1, false, 0, Math.PI), new THREE.MeshLambertMaterial({ color: scrollColor }));
+      curve.rotation.z = Math.PI / 2;
+      curve.position.set(0, h * 1.15, z);
+      g.add(curve);
+    }
+    scrollEnd(-d / 2 - 0.02, color);
+    scrollEnd(d / 2 + 0.02, fp3dDarken(color, 0.92));
+    var pillowW = w * 0.42;
+    [-1, 1].forEach(function(side) {
+      var pillow = new THREE.Mesh(new THREE.BoxGeometry(pillowW, 0.1, d * 0.2), new THREE.MeshLambertMaterial({ color: color }));
+      pillow.position.set(side * w * 0.23, h + 0.05, -d / 2 + d * 0.2);
+      g.add(pillow);
+    });
+    return g;
+  }
+
   function fp3dBuildSofa(w, d, h, color) {
     var g = new THREE.Group();
     var seat = new THREE.Mesh(new THREE.BoxGeometry(w, h * 0.55, d), new THREE.MeshLambertMaterial({ color: color }));
@@ -1579,6 +1657,9 @@
     { keys: ['nightstand', 'bedside'], w: 0.45, d: 0.4, h: 0.5, build: fp3dBuildNightstand },
     { keys: ['small bed', 'single bed', 'twin bed'], w: 1.0, d: 1.9, h: 0.5, build: fp3dBuildSingleBed },
     { keys: ['large bed', 'king bed', 'queen bed'], w: 2.0, d: 2.1, h: 0.6, build: fp3dBuildBed },
+    { keys: ['canopy bed'], w: 1.6, d: 2.0, h: 0.55, build: fp3dBuildCanopyBed },
+    { keys: ['platform bed'], w: 1.6, d: 2.0, h: 0.45, build: fp3dBuildPlatformBed },
+    { keys: ['sleigh bed'], w: 1.6, d: 2.0, h: 0.58, build: fp3dBuildSleighBed },
     { keys: ['bed'], w: 1.6, d: 2.0, h: 0.55, build: fp3dBuildBed },
     { keys: ['sofa', 'couch'], w: 2.0, d: 0.9, h: 0.8, build: fp3dBuildSofa },
     { keys: ['wardrobe', 'closet'], w: 1.2, d: 0.6, h: 2.0, build: fp3dBuildWardrobe },
@@ -2160,6 +2241,9 @@
       { key: 'Bed', icon: 'bed' },
       { key: 'Small Bed', icon: 'bed' },
       { key: 'Large Bed', icon: 'bed' },
+      { key: 'Canopy Bed', icon: 'bed' },
+      { key: 'Platform Bed', icon: 'bed' },
+      { key: 'Sleigh Bed', icon: 'bed' },
       { key: 'Bunk Bed', icon: 'bed' },
       { key: 'Nightstand', icon: 'cabinet' },
       { key: 'Wardrobe', icon: 'cabinet' },
