@@ -770,6 +770,24 @@
     return g;
   }
 
+  function fp3dBuildSingleBed(w, d, h, color) {
+    var g = new THREE.Group();
+    var base = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), new THREE.MeshLambertMaterial({ color: 0xF2EFE8 }));
+    base.position.y = h / 2;
+    g.add(base);
+    var headboard = new THREE.Mesh(new THREE.BoxGeometry(w * 1.04, h * 1.6, 0.06), new THREE.MeshLambertMaterial({ color: color }));
+    headboard.position.set(0, h * 0.8, -d / 2 - 0.02);
+    g.add(headboard);
+    var pillow = new THREE.Mesh(new THREE.BoxGeometry(w * 0.68, 0.1, d * 0.24), new THREE.MeshLambertMaterial({ color: color }));
+    pillow.position.set(0, h + 0.05, -d / 2 + d * 0.17);
+    g.add(pillow);
+    var foldW = w * 0.9;
+    var fold = new THREE.Mesh(new THREE.BoxGeometry(foldW, 0.03, d * 0.1), new THREE.MeshLambertMaterial({ color: fp3dDarken(color, 0.9) }));
+    fold.position.set(0, h + 0.015, d * 0.1);
+    g.add(fold);
+    return g;
+  }
+
   function fp3dBuildSofa(w, d, h, color) {
     var g = new THREE.Group();
     var seat = new THREE.Mesh(new THREE.BoxGeometry(w, h * 0.55, d), new THREE.MeshLambertMaterial({ color: color }));
@@ -1355,6 +1373,8 @@
   var FP3D_DEFS = [
     { keys: ['bunk bed'], w: 1.0, d: 2.0, h: 1.6, build: fp3dBuildBunkBed },
     { keys: ['nightstand', 'bedside'], w: 0.45, d: 0.4, h: 0.5, build: fp3dBuildNightstand },
+    { keys: ['small bed', 'single bed', 'twin bed'], w: 1.0, d: 1.9, h: 0.5, build: fp3dBuildSingleBed },
+    { keys: ['large bed', 'king bed', 'queen bed'], w: 2.0, d: 2.1, h: 0.6, build: fp3dBuildBed },
     { keys: ['bed'], w: 1.6, d: 2.0, h: 0.55, build: fp3dBuildBed },
     { keys: ['sofa', 'couch'], w: 2.0, d: 0.9, h: 0.8, build: fp3dBuildSofa },
     { keys: ['wardrobe', 'closet'], w: 1.2, d: 0.6, h: 2.0, build: fp3dBuildWardrobe },
@@ -1881,6 +1901,9 @@
   var D3D_CATEGORIES = [
     { key: 'bedroom', label: 'Bedroom', icon: 'bed', items: [
       { key: 'Bed', icon: 'bed' },
+      { key: 'Small Bed', icon: 'bed' },
+      { key: 'Large Bed', icon: 'bed' },
+      { key: 'Bunk Bed', icon: 'bed' },
       { key: 'Nightstand', icon: 'cabinet' },
       { key: 'Wardrobe', icon: 'cabinet' },
       { key: 'Dresser', icon: 'cabinet' },
