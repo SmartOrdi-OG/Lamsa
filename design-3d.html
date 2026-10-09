@@ -305,6 +305,15 @@
           <label>Width: <span id="roomWidthVal" class="dim-val">4.0</span> m</label>
           <input type="range" id="roomWidthInput" min="2" max="12" step="0.1" value="4" oninput="d3dUpdateDimLabel('roomWidthInput','roomWidthVal'); drawFloorPlan();">
         </div>
+        <div class="form-group">
+          <button type="button" class="fp-tool-btn" id="d3dLShapeToggle" onclick="d3dToggleLShape()">📐 L-Shaped Room</button>
+        </div>
+        <div class="form-group" id="d3dLShapeCuts" style="display:none;">
+          <label>Cut Width: <span id="roomCutWVal" class="dim-val">1.5</span> m</label>
+          <input type="range" id="roomCutWInput" min="0.5" max="6" step="0.1" value="1.5" oninput="d3dUpdateDimLabel('roomCutWInput','roomCutWVal'); drawFloorPlan();">
+          <label>Cut Depth: <span id="roomCutDVal" class="dim-val">1.5</span> m</label>
+          <input type="range" id="roomCutDInput" min="0.5" max="6" step="0.1" value="1.5" oninput="d3dUpdateDimLabel('roomCutDInput','roomCutDVal'); drawFloorPlan();">
+        </div>
 
         <div class="panel-nav">
           <span></span>
@@ -516,6 +525,26 @@
     if (input && label) label.textContent = parseFloat(input.value).toFixed(1);
   }
 
+  function d3dToggleLShape() {
+    d3dRoomIsL = !d3dRoomIsL;
+    var btn = document.getElementById('d3dLShapeToggle');
+    if (btn) btn.classList.toggle('active', d3dRoomIsL);
+    var cuts = document.getElementById('d3dLShapeCuts');
+    if (cuts) cuts.style.display = d3dRoomIsL ? 'block' : 'none';
+    drawFloorPlan();
+  }
+
+  // Shared by the 2D floor-plan preview and the 3D builder so both always
+  // agree on exactly how big the cut corner is, clamped so the remaining
+  // L shape never shrinks to a sliver.
+  function fp3dGetRoomCutDims(roomLen, roomWid) {
+    var cutWInput = document.getElementById('roomCutWInput');
+    var cutDInput = document.getElementById('roomCutDInput');
+    var cutW = fp3dClamp(parseFloat(cutWInput && cutWInput.value) || 1.5, 0.3, roomLen * 0.75);
+    var cutD = fp3dClamp(parseFloat(cutDInput && cutDInput.value) || 1.5, 0.3, roomWid * 0.75);
+    return { cutW: cutW, cutD: cutD };
+  }
+
   function toggleChip(el) { el.classList.toggle('selected'); }
   function selectColor(el) {
     var parent = el.closest('.chips');
@@ -546,8 +575,9 @@
   }
 
   function fpWallPoint(rect, wall, t) {
+    var nw = rect.isL ? (rect.w - rect.cutWpx) : rect.w;
     switch (wall) {
-      case 'N': return { x: rect.x + rect.w * t, y: rect.y };
+      case 'N': return { x: rect.x + nw * t, y: rect.y };
       case 'S': return { x: rect.x + rect.w * t, y: rect.y + rect.h };
       case 'W': return { x: rect.x, y: rect.y + rect.h * t };
       case 'E': return { x: rect.x + rect.w, y: rect.y + rect.h * t };
@@ -567,13 +597,31 @@
 
     var scale = Math.min((W - 2 * pad) / roomLen, (H - 2 * pad) / roomWid);
     var w = roomLen * scale, h = roomWid * scale;
-    var rect = { x: (W - w) / 2, y: (H - h) / 2, w: w, h: h };
+    var rect = { x: (W - w) / 2, y: (H - h) / 2, w: w, h: h, isL: false, cutWpx: 0, cutDpx: 0 };
+    if (d3dRoomIsL) {
+      var cuts = fp3dGetRoomCutDims(roomLen, roomWid);
+      rect.isL = true;
+      rect.cutWpx = cuts.cutW * scale;
+      rect.cutDpx = cuts.cutD * scale;
+    }
     fpRect = rect;
 
     ctx.clearRect(0, 0, W, H);
     ctx.strokeStyle = '#6b7480';
     ctx.lineWidth = 4;
-    ctx.strokeRect(rect.x, rect.y, rect.w, rect.h);
+    if (rect.isL) {
+      ctx.beginPath();
+      ctx.moveTo(rect.x, rect.y);
+      ctx.lineTo(rect.x + rect.w - rect.cutWpx, rect.y);
+      ctx.lineTo(rect.x + rect.w - rect.cutWpx, rect.y + rect.cutDpx);
+      ctx.lineTo(rect.x + rect.w, rect.y + rect.cutDpx);
+      ctx.lineTo(rect.x + rect.w, rect.y + rect.h);
+      ctx.lineTo(rect.x, rect.y + rect.h);
+      ctx.closePath();
+      ctx.stroke();
+    } else {
+      ctx.strokeRect(rect.x, rect.y, rect.w, rect.h);
+    }
 
     fpItems.forEach(function(item) {
       var p = fpWallPoint(rect, item.wall, item.t);
@@ -603,8 +651,13 @@
   }
 
   function fpNearestWall(rect, x, y) {
+    // The N wall is shortened by the cut when the room is L-shaped — both
+    // its hit zone and its t-fraction are relative to that shorter length,
+    // not the full rectangle width, or a door/window could "snap" onto a
+    // stretch of wall that doesn't exist in the 3D room anymore.
+    var nw = rect.isL ? (rect.w - rect.cutWpx) : rect.w;
     var candidates = [
-      { wall: 'N', d: Math.abs(y - rect.y), t: (x - rect.x) / rect.w, inRange: x >= rect.x && x <= rect.x + rect.w },
+      { wall: 'N', d: Math.abs(y - rect.y), t: (x - rect.x) / nw, inRange: x >= rect.x && x <= rect.x + nw },
       { wall: 'S', d: Math.abs(y - (rect.y + rect.h)), t: (x - rect.x) / rect.w, inRange: x >= rect.x && x <= rect.x + rect.w },
       { wall: 'W', d: Math.abs(x - rect.x), t: (y - rect.y) / rect.h, inRange: y >= rect.y && y <= rect.y + rect.h },
       { wall: 'E', d: Math.abs(x - (rect.x + rect.w)), t: (y - rect.y) / rect.h, inRange: y >= rect.y && y <= rect.y + rect.h }
@@ -694,6 +747,25 @@
   }
 
   function fp3dClamp(v, lo, hi) { return Math.max(lo, Math.min(hi, v)); }
+
+  // Keeps a point (furniture center, Walk Mode position) inside the actual
+  // room footprint — the plain rectangle bounds aren't enough once the room
+  // is L-shaped, since they'd still let something end up inside the cut
+  // corner. Pushes back out along whichever axis needs the smaller nudge.
+  function fp3dClampToRoomShape(x, z, marginX, marginZ) {
+    x = fp3dClamp(x, marginX, Math.max(marginX, d3dRoomLen - marginX));
+    z = fp3dClamp(z, marginZ, Math.max(marginZ, d3dRoomWid - marginZ));
+    if (d3dRoomIsL) {
+      var notchX = d3dRoomLen - d3dCutW;
+      if (x > notchX - marginX && z < d3dCutD + marginZ) {
+        var overX = x - (notchX - marginX);
+        var overZ = (d3dCutD + marginZ) - z;
+        if (overX < overZ) x = notchX - marginX;
+        else z = d3dCutD + marginZ;
+      }
+    }
+    return { x: x, z: z };
+  }
 
   // A same-color door/drawer front barely reads as a separate panel at
   // this schematic's small render size — this scene's lighting is close
@@ -1870,6 +1942,10 @@
 
     var roomLen = fp3dClamp(parseFloat(opts.roomLen) || 4, 2, 12);
     var roomWid = fp3dClamp(parseFloat(opts.roomWid) || 4, 2, 12);
+    var roomIsL = !!opts.isL;
+    var cutW = roomIsL ? fp3dClamp(parseFloat(opts.cutW) || 1.5, 0.3, roomLen * 0.75) : 0;
+    var cutD = roomIsL ? fp3dClamp(parseFloat(opts.cutD) || 1.5, 0.3, roomWid * 0.75) : 0;
+    var nWallLen = roomIsL ? (roomLen - cutW) : roomLen;
     var wallH = 2.6, wallT = 0.1;
     var width = container.clientWidth || 320, height = 420;
     container.style.height = height + 'px';
@@ -1900,27 +1976,60 @@
     dirLight.shadow.camera.updateProjectionMatrix();
     scene.add(dirLight);
 
+    // The floor is a Shape (not a plain rectangle) so it can carve out the
+    // cut corner for an L-shaped room; for a regular room it's the same
+    // 4-point rectangle as before, just expressed as a Shape too, so there's
+    // one floor-building code path instead of two. A Shape's local (x,y)
+    // maps to world (x, 0, -y) once rotated flat — see the y = -z points
+    // below — so building it straight in world x/z needs no extra offset.
+    var floorShape = new THREE.Shape();
+    floorShape.moveTo(0, 0);
+    if (roomIsL) {
+      floorShape.lineTo(roomLen - cutW, 0);
+      floorShape.lineTo(roomLen - cutW, -cutD);
+      floorShape.lineTo(roomLen, -cutD);
+    } else {
+      floorShape.lineTo(roomLen, 0);
+    }
+    floorShape.lineTo(roomLen, -roomWid);
+    floorShape.lineTo(0, -roomWid);
+    floorShape.closePath();
+
     var floorTex = fp3dGetFloorPatternTexture(opts.floorText);
     floorTex.repeat.set(Math.max(1, roomLen), Math.max(1, roomWid));
     var floor = new THREE.Mesh(
-      new THREE.PlaneGeometry(roomLen, roomWid),
+      new THREE.ShapeGeometry(floorShape),
       new THREE.MeshStandardMaterial({ color: floorColor, map: floorTex, roughness: fp3dFloorRoughness(opts.floorText), metalness: 0.05, side: THREE.DoubleSide })
     );
     floor.rotation.x = -Math.PI / 2;
-    floor.position.set(roomLen / 2, 0, roomWid / 2);
+    floor.position.set(0, 0, 0);
     floor.castShadow = false;
     floor.receiveShadow = true;
     scene.add(floor);
 
     var wallMat = new THREE.MeshLambertMaterial({ color: wallColor });
-    var nWall = new THREE.Mesh(new THREE.BoxGeometry(roomLen, wallH, wallT), wallMat);
-    nWall.position.set(roomLen / 2, wallH / 2, 0);
+    var nWall = new THREE.Mesh(new THREE.BoxGeometry(nWallLen, wallH, wallT), wallMat);
+    nWall.position.set(nWallLen / 2, wallH / 2, 0);
     var wWall = new THREE.Mesh(new THREE.BoxGeometry(wallT, wallH, roomWid), wallMat);
     wWall.position.set(0, wallH / 2, roomWid / 2);
     fp3dPolish(nWall, 0.88, 0);
     fp3dPolish(wWall, 0.88, 0);
     scene.add(nWall);
     scene.add(wWall);
+
+    // The two short walls that trace the notch cut out of the N/E corner —
+    // one closing it off from the shortened N wall's end, one continuing
+    // parallel to N but set back by the cut depth.
+    if (roomIsL) {
+      var notchWall1 = new THREE.Mesh(new THREE.BoxGeometry(wallT, wallH, cutD), wallMat);
+      notchWall1.position.set(roomLen - cutW, wallH / 2, cutD / 2);
+      var notchWall2 = new THREE.Mesh(new THREE.BoxGeometry(cutW, wallH, wallT), wallMat);
+      notchWall2.position.set(roomLen - cutW / 2, wallH / 2, cutD);
+      fp3dPolish(notchWall1, 0.88, 0);
+      fp3dPolish(notchWall2, 0.88, 0);
+      scene.add(notchWall1);
+      scene.add(notchWall2);
+    }
 
     var fpItemsList = opts.fpItems || [];
     fpItemsList.forEach(function(item) {
@@ -1934,7 +2043,7 @@
       // hidden behind the opaque wall and never visible from the camera.
       var mark = fp3dPolish(fp3dBuildOpeningMark(isDoor, isDoor ? opts.doorStyleText : opts.windowStyleText, markW, markH), 0.5, 0.1);
       if (item.wall === 'N') {
-        mark.position.set(item.t * roomLen, markY, wallT / 2 + 0.01);
+        mark.position.set(item.t * nWallLen, markY, wallT / 2 + 0.01);
       } else {
         mark.position.set(wallT / 2 + 0.01, markY, item.t * roomWid);
         mark.rotation.y = Math.PI / 2;
@@ -1945,7 +2054,7 @@
         var curtainGroup = fp3dBuildCurtains(markW, opts.curtainStyleText);
         if (curtainGroup) {
           if (item.wall === 'N') {
-            curtainGroup.position.set(item.t * roomLen, 0, wallT / 2 + 0.015);
+            curtainGroup.position.set(item.t * nWallLen, 0, wallT / 2 + 0.015);
           } else {
             curtainGroup.position.set(wallT / 2 + 0.015, 0, item.t * roomWid);
             curtainGroup.rotation.y = Math.PI / 2;
@@ -2019,6 +2128,9 @@
     d3dRenderer = renderer;
     d3dRoomLen = roomLen;
     d3dRoomWid = roomWid;
+    d3dRoomIsL = roomIsL;
+    d3dCutW = cutW;
+    d3dCutD = cutD;
     d3dWallH = wallH;
     d3dWallT = wallT;
     d3dFloorMesh = floor;
@@ -2138,6 +2250,12 @@
   var d3dWalkLookStartX = 0, d3dWalkLookStartY = 0, d3dWalkLookStartYaw = 0, d3dWalkLookStartPitch = 0;
   var d3dWalkMoveTimer = null;
   var d3dRoomLen = 4, d3dRoomWid = 4, d3dWallH = 2.6, d3dWallT = 0.1;
+  // L-shaped room: the floor/walls get a rectangular corner (top-right,
+  // where the N wall would meet the open E side) cut away. cutW/cutD are
+  // 0 when d3dRoomIsL is off, so every clamp/placement check below can
+  // stay written in terms of them without an extra "is it even L-shaped"
+  // branch at each call site.
+  var d3dRoomIsL = false, d3dCutW = 0, d3dCutD = 0;
   var d3dFloorMesh = null, d3dNWallMesh = null, d3dWWallMesh = null;
   var d3dFurnColor = 0x8C6D46, d3dFurnShapeText = '';
   var d3dPlacedGroup = null;
@@ -2412,8 +2530,8 @@
     if (!floorHits.length) return;
     var p = floorHits[0].point;
     var def = fp3dClassify(d3dTool.toLowerCase());
-    var x = fp3dClamp(p.x, def.w / 2, d3dRoomLen - def.w / 2);
-    var z = fp3dClamp(p.z, def.d / 2, d3dRoomWid - def.d / 2);
+    var clamped = fp3dClampToRoomShape(p.x, p.z, def.w / 2, def.d / 2);
+    var x = clamped.x, z = clamped.z;
     d3dPlacedItems.push({ key: d3dTool, isWall: false, x: x, z: z, rotY: 0 });
     d3dSelectedIndex = d3dPlacedItems.length - 1;
     d3dRebuildPlacedGroup();
@@ -2493,8 +2611,9 @@
     d3dWalkPos.x += (fx * dForward + rx * dRight) * step;
     d3dWalkPos.z += (fz * dForward + rz * dRight) * step;
     var margin = 0.3;
-    d3dWalkPos.x = fp3dClamp(d3dWalkPos.x, margin, Math.max(margin, d3dRoomLen - margin));
-    d3dWalkPos.z = fp3dClamp(d3dWalkPos.z, margin, Math.max(margin, d3dRoomWid - margin));
+    var walkClamped = fp3dClampToRoomShape(d3dWalkPos.x, d3dWalkPos.z, margin, margin);
+    d3dWalkPos.x = walkClamped.x;
+    d3dWalkPos.z = walkClamped.z;
     d3dWalkApplyCamera();
   }
 
@@ -2559,8 +2678,9 @@
       var item = d3dPlacedItems[d3dDragIndex];
       var def = fp3dClassify(item.key.toLowerCase());
       var p = floorHits[0].point;
-      item.x = fp3dClamp(p.x, def.w / 2, d3dRoomLen - def.w / 2);
-      item.z = fp3dClamp(p.z, def.d / 2, d3dRoomWid - def.d / 2);
+      var dragClamped = fp3dClampToRoomShape(p.x, p.z, def.w / 2, def.d / 2);
+      item.x = dragClamped.x;
+      item.z = dragClamped.z;
       d3dRebuildPlacedGroup();
       event.preventDefault();
       return;
@@ -2648,6 +2768,7 @@
   function d3dBuildRoom() {
     var roomLength = document.getElementById('roomLengthInput').value;
     var roomWidth = document.getElementById('roomWidthInput').value;
+    var roomCuts = fp3dGetRoomCutDims(parseFloat(roomLength) || 4, parseFloat(roomWidth) || 4);
 
     var doorStyleText = d3dSelectedText('d3dDoorStyleChips');
     var windowStyleText = d3dSelectedText('d3dWindowStyleChips');
@@ -2661,6 +2782,9 @@
     d3dBuildRoomShell(document.getElementById('d3dResultWrap'), {
       roomLen: roomLength,
       roomWid: roomWidth,
+      isL: d3dRoomIsL,
+      cutW: roomCuts.cutW,
+      cutD: roomCuts.cutD,
       colorText: colorText,
       floorText: floorText,
       furnitureColorText: furnitureColorText,
