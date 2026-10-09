@@ -465,6 +465,7 @@
         <button type="button" class="fp-tool-btn" onclick="d3dDeleteSelected()">Delete Selected</button>
         <button type="button" class="fp-tool-btn" onclick="d3dClearPlaced()">Clear All</button>
         <button type="button" class="fp-tool-btn" id="d3dWalkToggleBtn" onclick="d3dEnterWalkMode()">🚶 Walk Mode</button>
+        <button type="button" class="fp-tool-btn" onclick="d3dSaveImage()">📷 Save Image</button>
       </div>
       <div class="d3d-viewport-wrap">
         <div id="d3dResultWrap"></div>
@@ -2172,7 +2173,11 @@
     d3dSuppressNextClick = false;
     d3dDragIndex = -1;
 
-    var renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+    // preserveDrawingBuffer so d3dSaveImage() can read back a snapshot on
+    // demand (the user can click Save Image at any point, not necessarily
+    // right after a render() call) without it being blanked by the browser
+    // before toDataURL() runs.
+    var renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, preserveDrawingBuffer: true });
     renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
     renderer.setSize(width, height);
     renderer.shadowMap.enabled = true;
@@ -2844,6 +2849,22 @@
     d3dPlacedItems = [];
     d3dSelectedIndex = -1;
     d3dRebuildPlacedGroup();
+  }
+
+  // Lets the user keep a snapshot of their room off the app — the same
+  // canvas pixels they're already looking at (current camera angle,
+  // furniture, walls), just downloaded as a PNG instead of staying
+  // locked inside the live 3D view.
+  function d3dSaveImage() {
+    if (!d3dRenderer || !d3dScene || !d3dCamera) return;
+    d3dRenderer.render(d3dScene, d3dCamera);
+    var dataUrl = d3dRenderer.domElement.toDataURL('image/png');
+    var link = document.createElement('a');
+    link.href = dataUrl;
+    link.download = 'my-room-design.png';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
   }
 
   // ═══════════════════════════════════════════════
