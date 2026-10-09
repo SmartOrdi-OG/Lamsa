@@ -305,6 +305,15 @@
           <label>Width: <span id="roomWidthVal" class="dim-val">4.0</span> m</label>
           <input type="range" id="roomWidthInput" min="2" max="12" step="0.1" value="4" oninput="d3dUpdateDimLabel('roomWidthInput','roomWidthVal'); drawFloorPlan();">
         </div>
+        <div class="form-group">
+          <button type="button" class="fp-tool-btn" id="d3dLShapeToggle" onclick="d3dToggleLShape()">📐 L-Shaped Room</button>
+        </div>
+        <div class="form-group" id="d3dLShapeCuts" style="display:none;">
+          <label>Cut Width: <span id="roomCutWVal" class="dim-val">1.5</span> m</label>
+          <input type="range" id="roomCutWInput" min="0.5" max="6" step="0.1" value="1.5" oninput="d3dUpdateDimLabel('roomCutWInput','roomCutWVal'); drawFloorPlan();">
+          <label>Cut Depth: <span id="roomCutDVal" class="dim-val">1.5</span> m</label>
+          <input type="range" id="roomCutDInput" min="0.5" max="6" step="0.1" value="1.5" oninput="d3dUpdateDimLabel('roomCutDInput','roomCutDVal'); drawFloorPlan();">
+        </div>
 
         <div class="panel-nav">
           <span></span>
@@ -336,6 +345,8 @@
             <div class="chip d3d-icon-chip" data-opening="door:Modern Flush" onclick="selectColor(this)">Modern Flush</div>
             <div class="chip d3d-icon-chip" data-opening="door:Glass Panel" onclick="selectColor(this)">Glass Panel</div>
             <div class="chip d3d-icon-chip" data-opening="door:Sliding" onclick="selectColor(this)">Sliding</div>
+            <div class="chip d3d-icon-chip" data-opening="door:French Doors" onclick="selectColor(this)">French Doors</div>
+            <div class="chip d3d-icon-chip" data-opening="door:Barn Door" onclick="selectColor(this)">Barn Door</div>
           </div>
         </div>
         <div class="form-group">
@@ -345,6 +356,8 @@
             <div class="chip d3d-icon-chip" data-opening="window:Modern Large Pane" onclick="selectColor(this)">Modern Large Pane</div>
             <div class="chip d3d-icon-chip" data-opening="window:Arched" onclick="selectColor(this)">Arched</div>
             <div class="chip d3d-icon-chip" data-opening="window:Sliding/French" onclick="selectColor(this)">Sliding/French</div>
+            <div class="chip d3d-icon-chip" data-opening="window:Casement" onclick="selectColor(this)">Casement</div>
+            <div class="chip d3d-icon-chip" data-opening="window:Round" onclick="selectColor(this)">Round</div>
           </div>
         </div>
 
@@ -512,6 +525,26 @@
     if (input && label) label.textContent = parseFloat(input.value).toFixed(1);
   }
 
+  function d3dToggleLShape() {
+    d3dRoomIsL = !d3dRoomIsL;
+    var btn = document.getElementById('d3dLShapeToggle');
+    if (btn) btn.classList.toggle('active', d3dRoomIsL);
+    var cuts = document.getElementById('d3dLShapeCuts');
+    if (cuts) cuts.style.display = d3dRoomIsL ? 'block' : 'none';
+    drawFloorPlan();
+  }
+
+  // Shared by the 2D floor-plan preview and the 3D builder so both always
+  // agree on exactly how big the cut corner is, clamped so the remaining
+  // L shape never shrinks to a sliver.
+  function fp3dGetRoomCutDims(roomLen, roomWid) {
+    var cutWInput = document.getElementById('roomCutWInput');
+    var cutDInput = document.getElementById('roomCutDInput');
+    var cutW = fp3dClamp(parseFloat(cutWInput && cutWInput.value) || 1.5, 0.3, roomLen * 0.75);
+    var cutD = fp3dClamp(parseFloat(cutDInput && cutDInput.value) || 1.5, 0.3, roomWid * 0.75);
+    return { cutW: cutW, cutD: cutD };
+  }
+
   function toggleChip(el) { el.classList.toggle('selected'); }
   function selectColor(el) {
     var parent = el.closest('.chips');
@@ -542,8 +575,9 @@
   }
 
   function fpWallPoint(rect, wall, t) {
+    var nw = rect.isL ? (rect.w - rect.cutWpx) : rect.w;
     switch (wall) {
-      case 'N': return { x: rect.x + rect.w * t, y: rect.y };
+      case 'N': return { x: rect.x + nw * t, y: rect.y };
       case 'S': return { x: rect.x + rect.w * t, y: rect.y + rect.h };
       case 'W': return { x: rect.x, y: rect.y + rect.h * t };
       case 'E': return { x: rect.x + rect.w, y: rect.y + rect.h * t };
@@ -563,13 +597,31 @@
 
     var scale = Math.min((W - 2 * pad) / roomLen, (H - 2 * pad) / roomWid);
     var w = roomLen * scale, h = roomWid * scale;
-    var rect = { x: (W - w) / 2, y: (H - h) / 2, w: w, h: h };
+    var rect = { x: (W - w) / 2, y: (H - h) / 2, w: w, h: h, isL: false, cutWpx: 0, cutDpx: 0 };
+    if (d3dRoomIsL) {
+      var cuts = fp3dGetRoomCutDims(roomLen, roomWid);
+      rect.isL = true;
+      rect.cutWpx = cuts.cutW * scale;
+      rect.cutDpx = cuts.cutD * scale;
+    }
     fpRect = rect;
 
     ctx.clearRect(0, 0, W, H);
     ctx.strokeStyle = '#6b7480';
     ctx.lineWidth = 4;
-    ctx.strokeRect(rect.x, rect.y, rect.w, rect.h);
+    if (rect.isL) {
+      ctx.beginPath();
+      ctx.moveTo(rect.x, rect.y);
+      ctx.lineTo(rect.x + rect.w - rect.cutWpx, rect.y);
+      ctx.lineTo(rect.x + rect.w - rect.cutWpx, rect.y + rect.cutDpx);
+      ctx.lineTo(rect.x + rect.w, rect.y + rect.cutDpx);
+      ctx.lineTo(rect.x + rect.w, rect.y + rect.h);
+      ctx.lineTo(rect.x, rect.y + rect.h);
+      ctx.closePath();
+      ctx.stroke();
+    } else {
+      ctx.strokeRect(rect.x, rect.y, rect.w, rect.h);
+    }
 
     fpItems.forEach(function(item) {
       var p = fpWallPoint(rect, item.wall, item.t);
@@ -599,8 +651,13 @@
   }
 
   function fpNearestWall(rect, x, y) {
+    // The N wall is shortened by the cut when the room is L-shaped — both
+    // its hit zone and its t-fraction are relative to that shorter length,
+    // not the full rectangle width, or a door/window could "snap" onto a
+    // stretch of wall that doesn't exist in the 3D room anymore.
+    var nw = rect.isL ? (rect.w - rect.cutWpx) : rect.w;
     var candidates = [
-      { wall: 'N', d: Math.abs(y - rect.y), t: (x - rect.x) / rect.w, inRange: x >= rect.x && x <= rect.x + rect.w },
+      { wall: 'N', d: Math.abs(y - rect.y), t: (x - rect.x) / nw, inRange: x >= rect.x && x <= rect.x + nw },
       { wall: 'S', d: Math.abs(y - (rect.y + rect.h)), t: (x - rect.x) / rect.w, inRange: x >= rect.x && x <= rect.x + rect.w },
       { wall: 'W', d: Math.abs(x - rect.x), t: (y - rect.y) / rect.h, inRange: y >= rect.y && y <= rect.y + rect.h },
       { wall: 'E', d: Math.abs(x - (rect.x + rect.w)), t: (y - rect.y) / rect.h, inRange: y >= rect.y && y <= rect.y + rect.h }
@@ -678,14 +735,37 @@
 
   function fp3dFloorRoughness(text) {
     var t = (text || '').toLowerCase();
-    if (t.indexOf('marble') !== -1) return 0.12;
-    if (t.indexOf('tile') !== -1 || t.indexOf('ceramic') !== -1) return 0.22;
+    // Kept well above a mirror-like value even for "glossy" floors: this
+    // scene has no environment map, so a low roughness here means the
+    // direct light's specular highlight blows the whole floor out to
+    // near-white instead of reading as a shiny surface.
+    if (t.indexOf('marble') !== -1) return 0.55;
+    if (t.indexOf('tile') !== -1 || t.indexOf('ceramic') !== -1) return 0.58;
     if (t.indexOf('concrete') !== -1) return 0.75;
     if (t.indexOf('carpet') !== -1) return 0.95;
     return 0.5; // wood/parquet default
   }
 
   function fp3dClamp(v, lo, hi) { return Math.max(lo, Math.min(hi, v)); }
+
+  // Keeps a point (furniture center, Walk Mode position) inside the actual
+  // room footprint — the plain rectangle bounds aren't enough once the room
+  // is L-shaped, since they'd still let something end up inside the cut
+  // corner. Pushes back out along whichever axis needs the smaller nudge.
+  function fp3dClampToRoomShape(x, z, marginX, marginZ) {
+    x = fp3dClamp(x, marginX, Math.max(marginX, d3dRoomLen - marginX));
+    z = fp3dClamp(z, marginZ, Math.max(marginZ, d3dRoomWid - marginZ));
+    if (d3dRoomIsL) {
+      var notchX = d3dRoomLen - d3dCutW;
+      if (x > notchX - marginX && z < d3dCutD + marginZ) {
+        var overX = x - (notchX - marginX);
+        var overZ = (d3dCutD + marginZ) - z;
+        if (overX < overZ) x = notchX - marginX;
+        else z = d3dCutD + marginZ;
+      }
+    }
+    return { x: x, z: z };
+  }
 
   // A same-color door/drawer front barely reads as a separate panel at
   // this schematic's small render size — this scene's lighting is close
@@ -699,19 +779,135 @@
     return (r << 16) | (g << 8) | b;
   }
 
+  // Real photographic textures aren't an option here (no network access to
+  // fetch/license image assets, and this file has never depended on any
+  // external asset — every shape, color and material is generated in code).
+  // Canvas-drawn patterns applied as texture maps are the practical
+  // equivalent: a shared, cached, zero-dependency "map" that tints with the
+  // mesh's own material.color, so one generated pattern serves every color
+  // choice instead of needing a texture per color.
+  var fp3dFabricTextureCache = null;
+  function fp3dGetFabricTexture() {
+    if (fp3dFabricTextureCache) return fp3dFabricTextureCache;
+    var size = 128;
+    var canvas = document.createElement('canvas');
+    canvas.width = size; canvas.height = size;
+    var ctx = canvas.getContext('2d');
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(0, 0, size, size);
+    ctx.strokeStyle = 'rgba(0,0,0,0.1)';
+    ctx.lineWidth = 1;
+    for (var i = 0; i <= size; i += 4) {
+      ctx.beginPath(); ctx.moveTo(i, 0); ctx.lineTo(i, size); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(0, i); ctx.lineTo(size, i); ctx.stroke();
+    }
+    for (var n = 0; n < 900; n++) {
+      var v = 190 + Math.random() * 50;
+      ctx.fillStyle = 'rgba(' + v + ',' + v + ',' + v + ',0.22)';
+      ctx.fillRect(Math.random() * size, Math.random() * size, 1, 1);
+    }
+    var tex = new THREE.CanvasTexture(canvas);
+    tex.wrapS = tex.wrapT = THREE.RepeatWrapping;
+    tex.repeat.set(2.2, 2.2);
+    fp3dFabricTextureCache = tex;
+    return tex;
+  }
+
+  var fp3dFloorTextureCache = {};
+  function fp3dGetFloorPatternTexture(floorText) {
+    var t = (floorText || '').toLowerCase();
+    var kind = 'wood';
+    if (t.indexOf('marble') !== -1) kind = 'marble';
+    else if (t.indexOf('tile') !== -1 || t.indexOf('ceramic') !== -1) kind = 'tile';
+    else if (t.indexOf('concrete') !== -1) kind = 'concrete';
+    else if (t.indexOf('carpet') !== -1) kind = 'carpet';
+    if (fp3dFloorTextureCache[kind]) return fp3dFloorTextureCache[kind];
+
+    var size = 256;
+    var canvas = document.createElement('canvas');
+    canvas.width = size; canvas.height = size;
+    var ctx = canvas.getContext('2d');
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(0, 0, size, size);
+
+    if (kind === 'wood') {
+      var plankCount = 6, plankH = size / plankCount;
+      for (var p = 0; p < plankCount; p++) {
+        var shade = 205 + Math.floor(Math.random() * 35);
+        ctx.fillStyle = 'rgb(' + shade + ',' + shade + ',' + shade + ')';
+        ctx.fillRect(0, p * plankH, size, plankH - 2);
+        ctx.strokeStyle = 'rgba(0,0,0,0.05)';
+        ctx.lineWidth = 1;
+        for (var g = 0; g < 8; g++) {
+          var gy = p * plankH + 3 + Math.random() * (plankH - 6);
+          ctx.beginPath();
+          ctx.moveTo(0, gy);
+          for (var gx = 16; gx <= size; gx += 16) {
+            ctx.lineTo(gx, gy + (Math.random() - 0.5) * 3);
+          }
+          ctx.stroke();
+        }
+      }
+    } else if (kind === 'marble') {
+      ctx.fillStyle = '#f4f2ee';
+      ctx.fillRect(0, 0, size, size);
+      for (var v2 = 0; v2 < 11; v2++) {
+        ctx.strokeStyle = 'rgba(95,95,95,' + (0.14 + Math.random() * 0.16) + ')';
+        ctx.lineWidth = 1 + Math.random() * 1.8;
+        var sx = Math.random() * size, sy = Math.random() * size;
+        ctx.beginPath();
+        ctx.moveTo(sx, sy);
+        for (var k = 0; k < 5; k++) {
+          sx += (Math.random() - 0.5) * 130;
+          sy += (Math.random() - 0.5) * 130;
+          ctx.lineTo(sx, sy);
+        }
+        ctx.stroke();
+      }
+    } else if (kind === 'tile') {
+      var tileSize = size / 4;
+      ctx.strokeStyle = 'rgba(0,0,0,0.22)';
+      ctx.lineWidth = 3;
+      for (var ti = 0; ti <= 4; ti++) {
+        ctx.beginPath(); ctx.moveTo(ti * tileSize, 0); ctx.lineTo(ti * tileSize, size); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(0, ti * tileSize); ctx.lineTo(size, ti * tileSize); ctx.stroke();
+      }
+    } else if (kind === 'concrete') {
+      for (var c = 0; c < 2200; c++) {
+        var cv = 160 + Math.random() * 65;
+        ctx.fillStyle = 'rgba(' + cv + ',' + cv + ',' + cv + ',0.28)';
+        ctx.fillRect(Math.random() * size, Math.random() * size, 2, 2);
+      }
+    } else if (kind === 'carpet') {
+      for (var f = 0; f < 3600; f++) {
+        var fv = 175 + Math.random() * 55;
+        ctx.fillStyle = 'rgba(' + fv + ',' + fv + ',' + fv + ',0.32)';
+        ctx.fillRect(Math.random() * size, Math.random() * size, 1, 1);
+      }
+    }
+
+    var ftex = new THREE.CanvasTexture(canvas);
+    ftex.wrapS = ftex.wrapT = THREE.RepeatWrapping;
+    fp3dFloorTextureCache[kind] = ftex;
+    return ftex;
+  }
+
   // Upgrades a flat-shaded MeshLambertMaterial to a PBR MeshStandardMaterial
   // (so it actually responds to the soft shadows/warm lighting below) and
   // turns on shadow casting/receiving — applied to every built mesh group
   // via fp3dPolish rather than touching each of the ~20 build functions
   // above. Materials already using MeshBasicMaterial (curtains, switch
   // plates, glass) are left alone on purpose: those want a flat, unlit look.
-  function fp3dUpgradeMaterial(mesh, roughness, metalness) {
+  // `fabric`, when true, layers the shared woven-texture map onto the
+  // upgraded material (tinted by its own color) for upholstered pieces.
+  function fp3dUpgradeMaterial(mesh, roughness, metalness, fabric) {
     var m = mesh.material;
     if (!m || !(m instanceof THREE.MeshLambertMaterial)) return;
     mesh.material = new THREE.MeshStandardMaterial({
       color: m.color, roughness: (roughness !== undefined) ? roughness : 0.72,
       metalness: (metalness !== undefined) ? metalness : 0.04,
-      transparent: m.transparent, opacity: m.opacity, side: m.side
+      transparent: m.transparent, opacity: m.opacity, side: m.side,
+      map: fabric ? fp3dGetFabricTexture() : null
     });
   }
 
@@ -730,15 +926,27 @@
     return mesh;
   }
 
-  function fp3dPolish(obj, roughness, metalness) {
+  function fp3dPolish(obj, roughness, metalness, fabric) {
     obj.traverse(function(node) {
       if (node.isMesh) {
-        fp3dUpgradeMaterial(node, roughness, metalness);
+        fp3dUpgradeMaterial(node, roughness, metalness, fabric);
         node.castShadow = true;
         node.receiveShadow = true;
       }
     });
     return obj;
+  }
+
+  // Keys (matched the same way FP3D_DEFS matches furniture names) whose
+  // pieces are upholstered/soft — these get the fabric texture map; wood,
+  // metal and hard-surface pieces (tables, cabinets, the plain Chair/Bar
+  // Stool) are left on their flat-shaded material.
+  var FP3D_FABRIC_KEYS = ['sofa', 'couch', 'armchair', 'recliner', 'wingback', 'wing chair', 'bench', 'ottoman', 'pouf', 'dining chair', 'task chair', 'bed'];
+  function fp3dIsFabricItem(nameLower) {
+    for (var i = 0; i < FP3D_FABRIC_KEYS.length; i++) {
+      if (nameLower.indexOf(FP3D_FABRIC_KEYS[i]) !== -1) return true;
+    }
+    return false;
   }
 
   function fp3dBuildBox(w, d, h, color) {
@@ -761,6 +969,102 @@
     [-1, 1].forEach(function(side) {
       var pillow = new THREE.Mesh(new THREE.BoxGeometry(pillowW, 0.1, d * 0.22), new THREE.MeshLambertMaterial({ color: color }));
       pillow.position.set(side * w * 0.23, h + 0.05, -d / 2 + d * 0.16);
+      g.add(pillow);
+    });
+    return g;
+  }
+
+  function fp3dBuildSingleBed(w, d, h, color) {
+    var g = new THREE.Group();
+    var base = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), new THREE.MeshLambertMaterial({ color: 0xF2EFE8 }));
+    base.position.y = h / 2;
+    g.add(base);
+    var headboard = new THREE.Mesh(new THREE.BoxGeometry(w * 1.04, h * 1.6, 0.06), new THREE.MeshLambertMaterial({ color: color }));
+    headboard.position.set(0, h * 0.8, -d / 2 - 0.02);
+    g.add(headboard);
+    var pillow = new THREE.Mesh(new THREE.BoxGeometry(w * 0.68, 0.1, d * 0.24), new THREE.MeshLambertMaterial({ color: color }));
+    pillow.position.set(0, h + 0.05, -d / 2 + d * 0.17);
+    g.add(pillow);
+    var foldW = w * 0.9;
+    var fold = new THREE.Mesh(new THREE.BoxGeometry(foldW, 0.03, d * 0.1), new THREE.MeshLambertMaterial({ color: fp3dDarken(color, 0.9) }));
+    fold.position.set(0, h + 0.015, d * 0.1);
+    g.add(fold);
+    return g;
+  }
+
+  function fp3dBuildCanopyBed(w, d, h, color) {
+    var g = new THREE.Group();
+    var base = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), new THREE.MeshLambertMaterial({ color: 0xF2EFE8 }));
+    base.position.y = h / 2;
+    g.add(base);
+    var headboard = new THREE.Mesh(new THREE.BoxGeometry(w * 1.04, h * 1.4, 0.06), new THREE.MeshLambertMaterial({ color: color }));
+    headboard.position.set(0, h * 0.75, -d / 2 - 0.02);
+    g.add(headboard);
+    var pillowW = w * 0.42;
+    [-1, 1].forEach(function(side) {
+      var pillow = new THREE.Mesh(new THREE.BoxGeometry(pillowW, 0.1, d * 0.22), new THREE.MeshLambertMaterial({ color: color }));
+      pillow.position.set(side * w * 0.23, h + 0.05, -d / 2 + d * 0.16);
+      g.add(pillow);
+    });
+    var postMat = new THREE.MeshLambertMaterial({ color: fp3dDarken(color, 0.7) });
+    var postH = h * 3.4;
+    [[-1, -1], [1, -1], [-1, 1], [1, 1]].forEach(function(pos) {
+      var post = new THREE.Mesh(new THREE.CylinderGeometry(0.025, 0.025, postH, 8), postMat);
+      post.position.set(pos[0] * (w / 2 - 0.03), postH / 2, pos[1] * (d / 2 - 0.03));
+      g.add(post);
+    });
+    [-1, 1].forEach(function(side) {
+      var railZ = new THREE.Mesh(new THREE.BoxGeometry(w, 0.03, 0.03), postMat);
+      railZ.position.set(0, postH, side * (d / 2 - 0.03));
+      g.add(railZ);
+      var railX = new THREE.Mesh(new THREE.BoxGeometry(0.03, 0.03, d), postMat);
+      railX.position.set(side * (w / 2 - 0.03), postH, 0);
+      g.add(railX);
+    });
+    return g;
+  }
+
+  function fp3dBuildPlatformBed(w, d, h, color) {
+    var g = new THREE.Group();
+    var platformH = h * 0.4;
+    var platform = new THREE.Mesh(new THREE.BoxGeometry(w * 1.06, platformH, d * 1.04), new THREE.MeshLambertMaterial({ color: fp3dDarken(color, 0.85) }));
+    platform.position.y = platformH / 2;
+    g.add(platform);
+    var mattress = new THREE.Mesh(new THREE.BoxGeometry(w, h * 0.5, d), new THREE.MeshLambertMaterial({ color: 0xF2EFE8 }));
+    mattress.position.y = platformH + h * 0.25;
+    g.add(mattress);
+    var headboard = new THREE.Mesh(new THREE.BoxGeometry(w * 1.02, h * 0.9, 0.05), new THREE.MeshLambertMaterial({ color: color }));
+    headboard.position.set(0, h * 0.55, -d / 2 - 0.015);
+    g.add(headboard);
+    var pillowW = w * 0.42;
+    [-1, 1].forEach(function(side) {
+      var pillow = new THREE.Mesh(new THREE.BoxGeometry(pillowW, 0.08, d * 0.2), new THREE.MeshLambertMaterial({ color: color }));
+      pillow.position.set(side * w * 0.23, platformH + h * 0.5 + 0.04, -d / 2 + d * 0.16);
+      g.add(pillow);
+    });
+    return g;
+  }
+
+  function fp3dBuildSleighBed(w, d, h, color) {
+    var g = new THREE.Group();
+    var base = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), new THREE.MeshLambertMaterial({ color: 0xF2EFE8 }));
+    base.position.y = h / 2;
+    g.add(base);
+    function scrollEnd(z, scrollColor) {
+      var panel = new THREE.Mesh(new THREE.BoxGeometry(w * 1.04, h * 1.1, 0.05), new THREE.MeshLambertMaterial({ color: scrollColor }));
+      panel.position.set(0, h * 0.7, z);
+      g.add(panel);
+      var curve = new THREE.Mesh(new THREE.CylinderGeometry(h * 0.35, h * 0.35, w * 1.04, 12, 1, false, 0, Math.PI), new THREE.MeshLambertMaterial({ color: scrollColor }));
+      curve.rotation.z = Math.PI / 2;
+      curve.position.set(0, h * 1.15, z);
+      g.add(curve);
+    }
+    scrollEnd(-d / 2 - 0.02, color);
+    scrollEnd(d / 2 + 0.02, fp3dDarken(color, 0.92));
+    var pillowW = w * 0.42;
+    [-1, 1].forEach(function(side) {
+      var pillow = new THREE.Mesh(new THREE.BoxGeometry(pillowW, 0.1, d * 0.2), new THREE.MeshLambertMaterial({ color: color }));
+      pillow.position.set(side * w * 0.23, h + 0.05, -d / 2 + d * 0.2);
       g.add(pillow);
     });
     return g;
@@ -1059,22 +1363,317 @@
     return g;
   }
 
+  function fp3dBuildBench(w, d, h, color) {
+    var g = new THREE.Group();
+    var seatH = h * 0.8;
+    var cushion = new THREE.Mesh(new THREE.BoxGeometry(w, h * 0.22, d), new THREE.MeshLambertMaterial({ color: color }));
+    cushion.position.y = seatH;
+    g.add(cushion);
+    var legH = seatH - h * 0.11;
+    [[-1, -1], [1, -1], [-1, 1], [1, 1]].forEach(function(pos) {
+      var leg = new THREE.Mesh(new THREE.BoxGeometry(0.04, legH, 0.04), new THREE.MeshStandardMaterial({ color: 0x3A3A3C, metalness: 0.4, roughness: 0.5 }));
+      leg.position.set(pos[0] * (w / 2 - 0.06), legH / 2, pos[1] * (d / 2 - 0.06));
+      g.add(leg);
+    });
+    [-0.3, 0.3].forEach(function(fx) {
+      var tuft = new THREE.Mesh(new THREE.SphereGeometry(0.012, 6, 6), new THREE.MeshLambertMaterial({ color: fp3dDarken(color, 0.85) }));
+      tuft.position.set(fx * w, seatH + h * 0.11, 0);
+      g.add(tuft);
+    });
+    return g;
+  }
+
+  function fp3dBuildSideTable(w, d, h, color) {
+    var g = new THREE.Group();
+    var r = Math.min(w, d) / 2;
+    var top = new THREE.Mesh(new THREE.CylinderGeometry(r, r, 0.04, 20), new THREE.MeshLambertMaterial({ color: color }));
+    top.position.y = h;
+    g.add(top);
+    var poleR = r * 0.14;
+    var pole = new THREE.Mesh(new THREE.CylinderGeometry(poleR, poleR, h - 0.08, 10), new THREE.MeshLambertMaterial({ color: fp3dDarken(color, 0.85) }));
+    pole.position.y = (h - 0.04) / 2;
+    g.add(pole);
+    var base = new THREE.Mesh(new THREE.CylinderGeometry(r * 0.6, r * 0.6, 0.03, 20), new THREE.MeshLambertMaterial({ color: fp3dDarken(color, 0.85) }));
+    base.position.y = 0.02;
+    g.add(base);
+    return g;
+  }
+
+  function fp3dBuildOvalTable(w, d, h, color) {
+    var g = new THREE.Group();
+    var top = new THREE.Mesh(new THREE.CylinderGeometry(0.5, 0.5, 0.05, 28), new THREE.MeshLambertMaterial({ color: color }));
+    top.scale.set(w, 1, d);
+    top.position.y = h;
+    g.add(top);
+    var legMat = new THREE.MeshLambertMaterial({ color: fp3dDarken(color, 0.85) });
+    var legH = h - 0.05;
+    [-1, 1].forEach(function(side) {
+      var leg = new THREE.Mesh(new THREE.BoxGeometry(0.05, legH, d * 0.5), legMat);
+      leg.position.set(side * (w * 0.32), legH / 2, 0);
+      g.add(leg);
+    });
+    return g;
+  }
+
+  function fp3dBuildLDesk(w, d, h, color) {
+    var g = new THREE.Group();
+    var legH = h - 0.05;
+    function addSurface(sw, sd, ox, oz) {
+      var top = new THREE.Mesh(new THREE.BoxGeometry(sw, 0.05, sd), new THREE.MeshLambertMaterial({ color: color }));
+      top.position.set(ox, h, oz);
+      g.add(top);
+      [[-1, -1], [1, -1], [-1, 1], [1, 1]].forEach(function(pos) {
+        var leg = new THREE.Mesh(new THREE.BoxGeometry(0.04, legH, 0.04), new THREE.MeshLambertMaterial({ color: color }));
+        leg.position.set(ox + pos[0] * (sw / 2 - 0.05), legH / 2, oz + pos[1] * (sd / 2 - 0.05));
+        g.add(leg);
+      });
+    }
+    addSurface(w, d * 0.45, 0, -d * 0.275);
+    addSurface(w * 0.45, d * 0.55, -w * 0.275, d * 0.225);
+    return g;
+  }
+
+  function fp3dBuildBarStool(w, d, h, color) {
+    var g = new THREE.Group();
+    var r = Math.min(w, d) / 2;
+    var seat = new THREE.Mesh(new THREE.CylinderGeometry(r, r, 0.04, 16), new THREE.MeshLambertMaterial({ color: color }));
+    seat.position.y = h;
+    g.add(seat);
+    var poleR = r * 0.2;
+    var metalMat = new THREE.MeshStandardMaterial({ color: 0xC9C9C9, metalness: 0.6, roughness: 0.3 });
+    var pole = new THREE.Mesh(new THREE.CylinderGeometry(poleR, poleR, h * 0.85, 10), metalMat);
+    pole.position.y = h * 0.44;
+    g.add(pole);
+    var ring = new THREE.Mesh(new THREE.TorusGeometry(r * 0.75, poleR * 0.7, 8, 16), metalMat);
+    ring.rotation.x = Math.PI / 2;
+    ring.position.y = h * 0.4;
+    g.add(ring);
+    var base = new THREE.Mesh(new THREE.CylinderGeometry(r * 0.6, r * 0.6, 0.02, 16), metalMat);
+    base.position.y = 0.01;
+    g.add(base);
+    return g;
+  }
+
+  function fp3dBuildTaskChair(w, d, h, color) {
+    var g = new THREE.Group();
+    var seatH = h * 0.55;
+    var seat = new THREE.Mesh(new THREE.BoxGeometry(w, 0.05, d), new THREE.MeshLambertMaterial({ color: color }));
+    seat.position.y = seatH;
+    g.add(seat);
+    var back = new THREE.Mesh(new THREE.BoxGeometry(w * 0.92, h * 0.5, 0.05), new THREE.MeshLambertMaterial({ color: color }));
+    back.position.set(0, seatH + h * 0.25, -d / 2 + 0.03);
+    g.add(back);
+    var darkMetal = new THREE.MeshStandardMaterial({ color: 0x3A3A3C, metalness: 0.4, roughness: 0.5 });
+    [-1, 1].forEach(function(side) {
+      var arm = new THREE.Mesh(new THREE.BoxGeometry(0.03, 0.03, d * 0.6), darkMetal);
+      arm.position.set(side * (w / 2 - 0.02), seatH + 0.08, 0);
+      g.add(arm);
+    });
+    var poleR = Math.min(w, d) * 0.06;
+    var pole = new THREE.Mesh(new THREE.CylinderGeometry(poleR, poleR, seatH - 0.05, 8), darkMetal);
+    pole.position.y = (seatH - 0.02) / 2;
+    g.add(pole);
+    for (var i = 0; i < 5; i++) {
+      var ang = (i / 5) * Math.PI * 2;
+      var baseLeg = new THREE.Mesh(new THREE.BoxGeometry(Math.min(w, d) * 0.42, 0.02, 0.03), darkMetal);
+      baseLeg.position.set(Math.cos(ang) * Math.min(w, d) * 0.2, 0.015, Math.sin(ang) * Math.min(w, d) * 0.2);
+      baseLeg.rotation.y = ang;
+      g.add(baseLeg);
+    }
+    return g;
+  }
+
+  function fp3dBuildDiningChair(w, d, h, color) {
+    var g = new THREE.Group();
+    var seatH = h * 0.5;
+    var seat = new THREE.Mesh(new THREE.BoxGeometry(w, h * 0.08, d), new THREE.MeshLambertMaterial({ color: color }));
+    seat.position.y = seatH;
+    g.add(seat);
+    var back = new THREE.Mesh(new THREE.BoxGeometry(w * 0.88, h * 0.5, h * 0.08), new THREE.MeshLambertMaterial({ color: color }));
+    back.position.set(0, seatH + h * 0.25, -d / 2 + h * 0.04);
+    g.add(back);
+    var legMat = new THREE.MeshLambertMaterial({ color: fp3dDarken(color, 0.65) });
+    [[-1, -1], [1, -1], [-1, 1], [1, 1]].forEach(function(pos) {
+      var leg = new THREE.Mesh(new THREE.CylinderGeometry(0.016, 0.024, seatH - 0.02, 8), legMat);
+      leg.position.set(pos[0] * (w / 2 - 0.04), (seatH - 0.02) / 2, pos[1] * (d / 2 - 0.04));
+      g.add(leg);
+    });
+    return g;
+  }
+
+  function fp3dBuildRecliner(w, d, h, color) {
+    var g = new THREE.Group();
+    var seat = new THREE.Mesh(new THREE.BoxGeometry(w, h * 0.4, d * 0.7), new THREE.MeshLambertMaterial({ color: color }));
+    seat.position.set(0, h * 0.2, -d * 0.05);
+    g.add(seat);
+    var back = new THREE.Mesh(new THREE.BoxGeometry(w, h * 0.72, d * 0.25), new THREE.MeshLambertMaterial({ color: color }));
+    back.rotation.x = -0.25;
+    back.position.set(0, h * 0.52, -d / 2 + 0.05);
+    g.add(back);
+    var footrest = new THREE.Mesh(new THREE.BoxGeometry(w * 0.85, h * 0.22, d * 0.4), new THREE.MeshLambertMaterial({ color: fp3dDarken(color, 0.9) }));
+    footrest.position.set(0, h * 0.11, d / 2 + d * 0.12);
+    g.add(footrest);
+    [-1, 1].forEach(function(side) {
+      var arm = new THREE.Mesh(new THREE.BoxGeometry(w * 0.1, h * 0.32, d * 0.62), new THREE.MeshLambertMaterial({ color: fp3dDarken(color, 0.92) }));
+      arm.position.set(side * (w / 2 - w * 0.05), h * 0.34, -d * 0.05);
+      g.add(arm);
+    });
+    return g;
+  }
+
+  function fp3dBuildWingbackChair(w, d, h, color) {
+    var g = new THREE.Group();
+    var seatH = h * 0.42;
+    var seat = new THREE.Mesh(new THREE.BoxGeometry(w, h * 0.12, d * 0.85), new THREE.MeshLambertMaterial({ color: color }));
+    seat.position.y = seatH;
+    g.add(seat);
+    var back = new THREE.Mesh(new THREE.BoxGeometry(w * 0.82, h * 0.62, d * 0.18), new THREE.MeshLambertMaterial({ color: color }));
+    back.position.set(0, seatH + h * 0.33, -d / 2 + d * 0.09);
+    g.add(back);
+    [-1, 1].forEach(function(side) {
+      var wing = new THREE.Mesh(new THREE.BoxGeometry(w * 0.12, h * 0.4, d * 0.4), new THREE.MeshLambertMaterial({ color: color }));
+      wing.position.set(side * (w / 2 - w * 0.06), seatH + h * 0.38, -d / 2 + d * 0.22);
+      wing.rotation.y = side * 0.35;
+      g.add(wing);
+    });
+    var legMat = new THREE.MeshLambertMaterial({ color: fp3dDarken(color, 0.6) });
+    [[-1, -1], [1, -1], [-1, 1], [1, 1]].forEach(function(pos) {
+      var leg = new THREE.Mesh(new THREE.CylinderGeometry(0.02, 0.02, seatH - 0.02, 8), legMat);
+      leg.position.set(pos[0] * (w / 2 - 0.05), (seatH - 0.02) / 2, pos[1] * (d * 0.85 / 2 - 0.05));
+      g.add(leg);
+    });
+    return g;
+  }
+
+  function fp3dBuildRockingChair(w, d, h, color) {
+    var g = new THREE.Group();
+    var seatH = h * 0.42;
+    var seat = new THREE.Mesh(new THREE.BoxGeometry(w, h * 0.08, d), new THREE.MeshLambertMaterial({ color: color }));
+    seat.position.y = seatH;
+    g.add(seat);
+    var back = new THREE.Mesh(new THREE.BoxGeometry(w * 0.85, h * 0.55, 0.03), new THREE.MeshLambertMaterial({ color: color }));
+    back.position.set(0, seatH + h * 0.28, -d / 2 + 0.02);
+    g.add(back);
+    var woodMat = new THREE.MeshLambertMaterial({ color: fp3dDarken(color, 0.8) });
+    var rockerY = h * 0.08;
+    var legH = seatH - rockerY;
+    [[-1, -1], [1, -1], [-1, 1], [1, 1]].forEach(function(pos) {
+      var leg = new THREE.Mesh(new THREE.BoxGeometry(0.03, legH, 0.03), woodMat);
+      leg.position.set(pos[0] * (w / 2 - 0.03), rockerY + legH / 2, pos[1] * (d / 2 - 0.03));
+      g.add(leg);
+    });
+    [-1, 1].forEach(function(side) {
+      var arm = new THREE.Mesh(new THREE.BoxGeometry(0.03, 0.03, d * 0.8), woodMat);
+      arm.position.set(side * (w / 2 - 0.02), seatH + 0.05, 0);
+      g.add(arm);
+      var rocker = new THREE.Mesh(new THREE.TorusGeometry(d * 0.62, 0.02, 6, 20, Math.PI * 0.55), woodMat);
+      rocker.rotation.y = Math.PI / 2;
+      rocker.rotation.z = Math.PI * 0.77;
+      rocker.position.set(side * (w / 2 - 0.03), rockerY, 0);
+      g.add(rocker);
+    });
+    return g;
+  }
+
+  function fp3dBuildStove(w, d, h, color) {
+    var g = new THREE.Group();
+    var body = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), new THREE.MeshStandardMaterial({ color: 0xE8E4DA, metalness: 0.3, roughness: 0.4 }));
+    body.position.y = h / 2;
+    g.add(body);
+    var topPlate = new THREE.Mesh(new THREE.BoxGeometry(w * 0.96, 0.02, d * 0.96), new THREE.MeshStandardMaterial({ color: 0x2B2B2E, metalness: 0.5, roughness: 0.3 }));
+    topPlate.position.y = h + 0.01;
+    g.add(topPlate);
+    [[-1, -1], [1, -1], [-1, 1], [1, 1]].forEach(function(pos) {
+      var burner = new THREE.Mesh(new THREE.CylinderGeometry(w * 0.11, w * 0.11, 0.015, 16), new THREE.MeshStandardMaterial({ color: 0x1A1A1A, metalness: 0.4, roughness: 0.5 }));
+      burner.position.set(pos[0] * w * 0.26, h + 0.02, pos[1] * d * 0.26);
+      g.add(burner);
+    });
+    var doorFace = new THREE.Mesh(new THREE.BoxGeometry(w * 0.82, h * 0.55, 0.02), new THREE.MeshStandardMaterial({ color: 0x3A3A3C, metalness: 0.4, roughness: 0.3 }));
+    doorFace.position.set(0, h * 0.35, d / 2 + 0.011);
+    g.add(doorFace);
+    var ovenWindow = new THREE.Mesh(new THREE.PlaneGeometry(w * 0.52, h * 0.3), new THREE.MeshBasicMaterial({ color: 0x1A1A1A }));
+    ovenWindow.position.set(0, h * 0.4, d / 2 + 0.022);
+    g.add(ovenWindow);
+    var handle = new THREE.Mesh(new THREE.BoxGeometry(w * 0.6, 0.02, 0.02), new THREE.MeshStandardMaterial({ color: 0xC9C9C9, metalness: 0.7, roughness: 0.25 }));
+    handle.position.set(0, h * 0.63, d / 2 + 0.03);
+    g.add(handle);
+    return g;
+  }
+
+  function fp3dBuildHamper(w, d, h, color) {
+    var g = new THREE.Group();
+    var r = Math.min(w, d) / 2;
+    var body = new THREE.Mesh(new THREE.CylinderGeometry(r, r * 0.88, h * 0.82, 16), new THREE.MeshLambertMaterial({ color: color }));
+    body.position.y = h * 0.41;
+    g.add(body);
+    var lid = new THREE.Mesh(new THREE.CylinderGeometry(r * 1.04, r * 1.04, h * 0.1, 16), new THREE.MeshLambertMaterial({ color: fp3dDarken(color, 0.85) }));
+    lid.position.y = h * 0.87;
+    g.add(lid);
+    var knob = new THREE.Mesh(new THREE.SphereGeometry(r * 0.12, 8, 8), new THREE.MeshLambertMaterial({ color: fp3dDarken(color, 0.7) }));
+    knob.position.y = h * 0.95;
+    g.add(knob);
+    return g;
+  }
+
+  function fp3dBuildBunkBed(w, d, h, color) {
+    var g = new THREE.Group();
+    [h * 0.08, h * 0.56].forEach(function(y) {
+      var base = new THREE.Mesh(new THREE.BoxGeometry(w, h * 0.12, d), new THREE.MeshLambertMaterial({ color: 0xF2EFE8 }));
+      base.position.y = y;
+      g.add(base);
+    });
+    var headboard = new THREE.Mesh(new THREE.BoxGeometry(w * 1.04, h, 0.05), new THREE.MeshLambertMaterial({ color: color }));
+    headboard.position.set(0, h / 2, -d / 2 - 0.02);
+    g.add(headboard);
+    [[-1, -1], [1, -1], [-1, 1], [1, 1]].forEach(function(pos) {
+      var post = new THREE.Mesh(new THREE.BoxGeometry(0.06, h, 0.06), new THREE.MeshLambertMaterial({ color: color }));
+      post.position.set(pos[0] * (w / 2 - 0.03), h / 2, pos[1] * (d / 2 - 0.03));
+      g.add(post);
+    });
+    var railMat = new THREE.MeshStandardMaterial({ color: 0x8A8A86, metalness: 0.3, roughness: 0.5 });
+    var ladderG = new THREE.Group();
+    [-0.16, 0.16].forEach(function(z) {
+      var rail = new THREE.Mesh(new THREE.BoxGeometry(0.03, h * 0.62, 0.03), railMat);
+      rail.position.set(0, h * 0.31, z);
+      ladderG.add(rail);
+    });
+    for (var i = 0; i < 4; i++) {
+      var rung = new THREE.Mesh(new THREE.BoxGeometry(0.03, 0.025, 0.35), railMat);
+      rung.position.set(0, 0.08 + i * (h * 0.55 / 4), 0);
+      ladderG.add(rung);
+    }
+    ladderG.position.set(w / 2 + 0.05, 0, d / 2 - 0.25);
+    g.add(ladderG);
+    return g;
+  }
+
   // Order matters: more specific keywords must be checked before the
   // generic ones they're substrings of (e.g. "bedside" before "bed",
   // "dining table" before "table"). Also doubles as the lookup used by
   // the manual placement palette below (each stamp label is one of
   // these keys, matched exactly).
   var FP3D_DEFS = [
+    { keys: ['bunk bed'], w: 1.0, d: 2.0, h: 1.6, build: fp3dBuildBunkBed },
     { keys: ['nightstand', 'bedside'], w: 0.45, d: 0.4, h: 0.5, build: fp3dBuildNightstand },
+    { keys: ['small bed', 'single bed', 'twin bed'], w: 1.0, d: 1.9, h: 0.5, build: fp3dBuildSingleBed },
+    { keys: ['large bed', 'king bed', 'queen bed'], w: 2.0, d: 2.1, h: 0.6, build: fp3dBuildBed },
+    { keys: ['canopy bed'], w: 1.6, d: 2.0, h: 0.55, build: fp3dBuildCanopyBed },
+    { keys: ['platform bed'], w: 1.6, d: 2.0, h: 0.45, build: fp3dBuildPlatformBed },
+    { keys: ['sleigh bed'], w: 1.6, d: 2.0, h: 0.58, build: fp3dBuildSleighBed },
     { keys: ['bed'], w: 1.6, d: 2.0, h: 0.55, build: fp3dBuildBed },
     { keys: ['sofa', 'couch'], w: 2.0, d: 0.9, h: 0.8, build: fp3dBuildSofa },
     { keys: ['wardrobe', 'closet'], w: 1.2, d: 0.6, h: 2.0, build: fp3dBuildWardrobe },
     { keys: ['bookshelf', 'shelf'], w: 0.9, d: 0.35, h: 1.9, build: fp3dBuildBookshelf },
     { keys: ['filing cabinet', 'cabinet', 'storage', 'sideboard'], w: 0.9, d: 0.45, h: 1.0, build: fp3dBuildCabinet },
     { keys: ['tv unit', 'tv stand', 'television'], w: 1.4, d: 0.4, h: 0.5, build: fp3dBuildTVUnit },
+    { keys: ['l-shaped desk', 'l shaped desk'], w: 1.4, d: 1.3, h: 0.75, build: fp3dBuildLDesk },
     { keys: ['desk'], w: 1.2, d: 0.6, h: 0.75, build: fp3dBuildTable },
+    { keys: ['round coffee table'], w: 0.9, d: 0.9, h: 0.42, build: fp3dBuildSideTable },
     { keys: ['coffee table'], w: 1.0, d: 0.55, h: 0.42, build: fp3dBuildTable },
+    { keys: ['round dining table'], w: 1.3, d: 1.3, h: 0.75, build: fp3dBuildSideTable },
+    { keys: ['oval table'], w: 1.6, d: 1.0, h: 0.75, build: fp3dBuildOvalTable },
     { keys: ['dining table'], w: 1.5, d: 0.9, h: 0.75, build: fp3dBuildTable },
+    { keys: ['side table'], w: 0.45, d: 0.45, h: 0.5, build: fp3dBuildSideTable },
     { keys: ['table'], w: 1.2, d: 0.7, h: 0.75, build: fp3dBuildTable },
     { keys: ['countertop', 'counter'], w: 1.3, d: 0.6, h: 0.9, build: fp3dBuildCounter },
     { keys: ['island'], w: 1.3, d: 0.65, h: 0.9, build: fp3dBuildCounter },
@@ -1084,10 +1683,19 @@
     { keys: ['shower'], w: 0.9, d: 0.9, h: 1.9, build: fp3dBuildShower },
     { keys: ['toilet'], w: 0.4, d: 0.6, h: 0.4, build: fp3dBuildToilet },
     { keys: ['towel'], w: 0.6, d: 0.08, h: 0.6, build: fp3dBuildTowelRail },
+    { keys: ['hamper', 'laundry'], w: 0.4, d: 0.4, h: 0.55, build: fp3dBuildHamper },
     { keys: ['dresser'], w: 1.0, d: 0.5, h: 0.9, build: fp3dBuildDresser },
     { keys: ['ottoman', 'pouf'], w: 0.5, d: 0.5, h: 0.4, build: fp3dBuildOttoman },
+    { keys: ['bench'], w: 0.9, d: 0.35, h: 0.42, build: fp3dBuildBench },
     { keys: ['armchair'], w: 1.0, d: 0.9, h: 0.8, build: fp3dBuildSofa },
     { keys: ['floor lamp'], w: 0.3, d: 0.3, h: 1.5, build: fp3dBuildFloorLamp },
+    { keys: ['stove', 'oven'], w: 0.6, d: 0.6, h: 0.85, build: fp3dBuildStove },
+    { keys: ['bar stool'], w: 0.35, d: 0.35, h: 0.75, build: fp3dBuildBarStool },
+    { keys: ['task chair'], w: 0.55, d: 0.55, h: 0.85, build: fp3dBuildTaskChair },
+    { keys: ['dining chair'], w: 0.45, d: 0.45, h: 0.85, build: fp3dBuildDiningChair },
+    { keys: ['recliner'], w: 0.85, d: 0.95, h: 0.85, build: fp3dBuildRecliner },
+    { keys: ['wingback', 'wing chair'], w: 0.75, d: 0.75, h: 1.05, build: fp3dBuildWingbackChair },
+    { keys: ['rocking chair', 'rocker'], w: 0.5, d: 0.6, h: 0.85, build: fp3dBuildRockingChair },
     { keys: ['rug'], w: 1.6, d: 1.0, h: 0.02, build: fp3dBuildMat },
     { keys: ['toy box', 'toybox'], w: 0.6, d: 0.4, h: 0.4, build: fp3dBuildToyBox },
     { keys: ['fridge', 'refrigerator'], w: 0.75, d: 0.7, h: 1.8, build: fp3dBuildFridge },
@@ -1138,11 +1746,69 @@
         return g;
       }
 
+      if (s.indexOf('barn') !== -1) {
+        var slabD = 0.03;
+        var slab = new THREE.Mesh(new THREE.BoxGeometry(w * 1.04, h, slabD), new THREE.MeshLambertMaterial({ color: color }));
+        g.add(slab);
+        for (var pi = 1; pi <= 3; pi++) {
+          var groove = new THREE.Mesh(new THREE.BoxGeometry(w * 1.0, 0.012, 0.006), new THREE.MeshLambertMaterial({ color: fp3dDarken(color, 0.6) }));
+          groove.position.set(0, -h / 2 + pi * (h / 4), slabD / 2 + 0.004);
+          g.add(groove);
+        }
+        var braceMat = new THREE.MeshLambertMaterial({ color: fp3dDarken(color, 0.75) });
+        var braceLen = Math.sqrt(w * w + h * h) * 0.92;
+        var braceAng = Math.atan2(w, h);
+        var brace1 = new THREE.Mesh(new THREE.BoxGeometry(0.04, braceLen, 0.012), braceMat);
+        brace1.rotation.z = braceAng;
+        brace1.position.set(0, 0, slabD / 2 + 0.008);
+        g.add(brace1);
+        var brace2 = new THREE.Mesh(new THREE.BoxGeometry(0.04, braceLen, 0.012), braceMat);
+        brace2.rotation.z = -braceAng;
+        brace2.position.set(0, 0, slabD / 2 + 0.008);
+        g.add(brace2);
+        var railMat = new THREE.MeshStandardMaterial({ color: 0x2B2B2E, metalness: 0.5, roughness: 0.4 });
+        var rail = new THREE.Mesh(new THREE.BoxGeometry(w * 1.3, 0.04, 0.05), railMat);
+        rail.position.set(0, h / 2 + 0.07, 0.02);
+        g.add(rail);
+        [-0.5, 0.5].forEach(function(fx) {
+          var roller = new THREE.Mesh(new THREE.CylinderGeometry(0.03, 0.03, 0.04, 12), new THREE.MeshStandardMaterial({ color: 0x8A8A86, metalness: 0.6, roughness: 0.3 }));
+          roller.rotation.x = Math.PI / 2;
+          roller.position.set(fx * w * 0.6, h / 2 + 0.05, 0.02);
+          g.add(roller);
+        });
+        return g;
+      }
+
+      if (s.indexOf('french') !== -1) {
+        var leafGap = 0.012;
+        var leafW = w / 2 - leafGap / 2;
+        var leafColor = 0xF2EEE4;
+        [-1, 1].forEach(function(side) {
+          var leafX = side * (leafW / 2 + leafGap / 2);
+          var leaf = new THREE.Mesh(new THREE.BoxGeometry(leafW, h, 0.03), new THREE.MeshLambertMaterial({ color: leafColor }));
+          leaf.position.set(leafX, 0, 0);
+          g.add(leaf);
+          var pane = new THREE.Mesh(new THREE.PlaneGeometry(leafW * 0.58, h * 0.68), new THREE.MeshBasicMaterial({ color: 0xBFE3F0, transparent: true, opacity: 0.55, side: THREE.DoubleSide }));
+          pane.position.set(leafX, 0, 0.022);
+          g.add(pane);
+          var paneTrim = new THREE.Mesh(new THREE.BoxGeometry(leafW * 0.64, h * 0.74, 0.01), new THREE.MeshLambertMaterial({ color: leafColor }));
+          paneTrim.position.set(leafX, 0, 0.016);
+          g.add(paneTrim);
+          var frHandle = new THREE.Mesh(new THREE.SphereGeometry(0.02, 8, 8), new THREE.MeshStandardMaterial({ color: 0xC9A860, metalness: 0.6, roughness: 0.3 }));
+          frHandle.position.set(side * leafGap * 1.6, 0, 0.03);
+          g.add(frHandle);
+        });
+        var centerAstragal = new THREE.Mesh(new THREE.BoxGeometry(0.018, h, 0.028), new THREE.MeshLambertMaterial({ color: leafColor }));
+        centerAstragal.position.set(0, 0, 0.002);
+        g.add(centerAstragal);
+        return g;
+      }
+
       var leafD = 0.035;
       var panel = new THREE.Mesh(new THREE.BoxGeometry(w, h, leafD), new THREE.MeshLambertMaterial({ color: color }));
       g.add(panel);
 
-      if (s.indexOf('classic') !== -1 || s.indexOf('panel') !== -1) {
+      if (s.indexOf('classic') !== -1) {
         [0.26, -0.26].forEach(function(fy) {
           var raised = new THREE.Mesh(new THREE.BoxGeometry(w * 0.64, h * 0.3, 0.014), new THREE.MeshLambertMaterial({ color: 0x4A331E }));
           raised.position.set(0, fy * h, leafD / 2 + 0.007);
@@ -1165,6 +1831,21 @@
       var handle = new THREE.Mesh(new THREE.SphereGeometry(0.025, 8, 8), new THREE.MeshStandardMaterial({ color: 0xC9A860, metalness: 0.6, roughness: 0.3 }));
       handle.position.set(w * 0.36, 0, leafD / 2 + 0.03);
       g.add(handle);
+      return g;
+    }
+
+    if (s.indexOf('round') !== -1 || s.indexOf('porthole') !== -1) {
+      var radius = Math.min(w, h) / 2;
+      var discDepth = 0.025;
+      var frameDisc = new THREE.Mesh(new THREE.CylinderGeometry(radius * 1.18, radius * 1.18, discDepth, 24), new THREE.MeshLambertMaterial({ color: 0xFFFFFF }));
+      frameDisc.rotation.x = Math.PI / 2;
+      g.add(frameDisc);
+      var glassR = new THREE.Mesh(new THREE.CircleGeometry(radius, 24), new THREE.MeshBasicMaterial({ color: 0xBFE3F0, transparent: true, opacity: 0.6, side: THREE.DoubleSide }));
+      glassR.position.z = discDepth / 2 + 0.006;
+      g.add(glassR);
+      var ring = new THREE.Mesh(new THREE.TorusGeometry(radius * 1.02, 0.015, 8, 24), new THREE.MeshStandardMaterial({ color: 0xC9C9C9, metalness: 0.6, roughness: 0.3 }));
+      ring.position.z = discDepth / 2 + 0.012;
+      g.add(ring);
       return g;
     }
 
@@ -1209,6 +1890,16 @@
       mullion(w, 0.025, 0, 0);
     } else if (s.indexOf('sliding') !== -1 || s.indexOf('french') !== -1) {
       mullion(0.03, h, 0, 0);
+    } else if (s.indexOf('casement') !== -1) {
+      // Off-center divider on the hinge side, with visible hinge hardware
+      // on the opposite (frame) edge — reads as a crank-open sash, not a
+      // centered grid.
+      mullion(0.025, h, -w * 0.28, 0);
+      [0.32, -0.32].forEach(function(fy) {
+        var hinge = new THREE.Mesh(new THREE.BoxGeometry(0.02, 0.06, 0.012), new THREE.MeshStandardMaterial({ color: 0x8A8A86, metalness: 0.6, roughness: 0.35 }));
+        hinge.position.set(-w / 2 - 0.01, fy * h, mullionZ);
+        g.add(hinge);
+      });
     }
     // 'Modern Large Pane' falls through with no mullions: one big clean pane.
     return g;
@@ -1332,6 +2023,10 @@
 
     var roomLen = fp3dClamp(parseFloat(opts.roomLen) || 4, 2, 12);
     var roomWid = fp3dClamp(parseFloat(opts.roomWid) || 4, 2, 12);
+    var roomIsL = !!opts.isL;
+    var cutW = roomIsL ? fp3dClamp(parseFloat(opts.cutW) || 1.5, 0.3, roomLen * 0.75) : 0;
+    var cutD = roomIsL ? fp3dClamp(parseFloat(opts.cutD) || 1.5, 0.3, roomWid * 0.75) : 0;
+    var nWallLen = roomIsL ? (roomLen - cutW) : roomLen;
     var wallH = 2.6, wallT = 0.1;
     var width = container.clientWidth || 320, height = 420;
     container.style.height = height + 'px';
@@ -1362,21 +2057,60 @@
     dirLight.shadow.camera.updateProjectionMatrix();
     scene.add(dirLight);
 
-    var floor = new THREE.Mesh(new THREE.PlaneGeometry(roomLen, roomWid), new THREE.MeshLambertMaterial({ color: floorColor, side: THREE.DoubleSide }));
+    // The floor is a Shape (not a plain rectangle) so it can carve out the
+    // cut corner for an L-shaped room; for a regular room it's the same
+    // 4-point rectangle as before, just expressed as a Shape too, so there's
+    // one floor-building code path instead of two. A Shape's local (x,y)
+    // maps to world (x, 0, -y) once rotated flat — see the y = -z points
+    // below — so building it straight in world x/z needs no extra offset.
+    var floorShape = new THREE.Shape();
+    floorShape.moveTo(0, 0);
+    if (roomIsL) {
+      floorShape.lineTo(roomLen - cutW, 0);
+      floorShape.lineTo(roomLen - cutW, -cutD);
+      floorShape.lineTo(roomLen, -cutD);
+    } else {
+      floorShape.lineTo(roomLen, 0);
+    }
+    floorShape.lineTo(roomLen, -roomWid);
+    floorShape.lineTo(0, -roomWid);
+    floorShape.closePath();
+
+    var floorTex = fp3dGetFloorPatternTexture(opts.floorText);
+    floorTex.repeat.set(Math.max(1, roomLen), Math.max(1, roomWid));
+    var floor = new THREE.Mesh(
+      new THREE.ShapeGeometry(floorShape),
+      new THREE.MeshStandardMaterial({ color: floorColor, map: floorTex, roughness: fp3dFloorRoughness(opts.floorText), metalness: 0.05, side: THREE.DoubleSide })
+    );
     floor.rotation.x = -Math.PI / 2;
-    floor.position.set(roomLen / 2, 0, roomWid / 2);
-    fp3dPolish(floor, fp3dFloorRoughness(opts.floorText), 0.05);
+    floor.position.set(0, 0, 0);
+    floor.castShadow = false;
+    floor.receiveShadow = true;
     scene.add(floor);
 
     var wallMat = new THREE.MeshLambertMaterial({ color: wallColor });
-    var nWall = new THREE.Mesh(new THREE.BoxGeometry(roomLen, wallH, wallT), wallMat);
-    nWall.position.set(roomLen / 2, wallH / 2, 0);
+    var nWall = new THREE.Mesh(new THREE.BoxGeometry(nWallLen, wallH, wallT), wallMat);
+    nWall.position.set(nWallLen / 2, wallH / 2, 0);
     var wWall = new THREE.Mesh(new THREE.BoxGeometry(wallT, wallH, roomWid), wallMat);
     wWall.position.set(0, wallH / 2, roomWid / 2);
     fp3dPolish(nWall, 0.88, 0);
     fp3dPolish(wWall, 0.88, 0);
     scene.add(nWall);
     scene.add(wWall);
+
+    // The two short walls that trace the notch cut out of the N/E corner —
+    // one closing it off from the shortened N wall's end, one continuing
+    // parallel to N but set back by the cut depth.
+    if (roomIsL) {
+      var notchWall1 = new THREE.Mesh(new THREE.BoxGeometry(wallT, wallH, cutD), wallMat);
+      notchWall1.position.set(roomLen - cutW, wallH / 2, cutD / 2);
+      var notchWall2 = new THREE.Mesh(new THREE.BoxGeometry(cutW, wallH, wallT), wallMat);
+      notchWall2.position.set(roomLen - cutW / 2, wallH / 2, cutD);
+      fp3dPolish(notchWall1, 0.88, 0);
+      fp3dPolish(notchWall2, 0.88, 0);
+      scene.add(notchWall1);
+      scene.add(notchWall2);
+    }
 
     var fpItemsList = opts.fpItems || [];
     fpItemsList.forEach(function(item) {
@@ -1390,7 +2124,7 @@
       // hidden behind the opaque wall and never visible from the camera.
       var mark = fp3dPolish(fp3dBuildOpeningMark(isDoor, isDoor ? opts.doorStyleText : opts.windowStyleText, markW, markH), 0.5, 0.1);
       if (item.wall === 'N') {
-        mark.position.set(item.t * roomLen, markY, wallT / 2 + 0.01);
+        mark.position.set(item.t * nWallLen, markY, wallT / 2 + 0.01);
       } else {
         mark.position.set(wallT / 2 + 0.01, markY, item.t * roomWid);
         mark.rotation.y = Math.PI / 2;
@@ -1401,7 +2135,7 @@
         var curtainGroup = fp3dBuildCurtains(markW, opts.curtainStyleText);
         if (curtainGroup) {
           if (item.wall === 'N') {
-            curtainGroup.position.set(item.t * roomLen, 0, wallT / 2 + 0.015);
+            curtainGroup.position.set(item.t * nWallLen, 0, wallT / 2 + 0.015);
           } else {
             curtainGroup.position.set(wallT / 2 + 0.015, 0, item.t * roomWid);
             curtainGroup.rotation.y = Math.PI / 2;
@@ -1443,6 +2177,13 @@
     renderer.setSize(width, height);
     renderer.shadowMap.enabled = true;
     renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+    // Without tone mapping, a light material (pale marble, white bedding)
+    // under this scene's warm lighting easily exceeds 1.0 per channel and
+    // hard-clips straight to flat white — which also wipes out any texture
+    // detail in that clipped region. ACES compresses highlights smoothly
+    // instead, so bright surfaces still show shading/pattern.
+    renderer.toneMapping = THREE.ACESFilmicToneMapping;
+    renderer.toneMappingExposure = 1.0;
     renderer.domElement.style.cursor = 'grab';
     renderer.domElement.style.touchAction = 'none';
     container.appendChild(renderer.domElement);
@@ -1468,6 +2209,9 @@
     d3dRenderer = renderer;
     d3dRoomLen = roomLen;
     d3dRoomWid = roomWid;
+    d3dRoomIsL = roomIsL;
+    d3dCutW = cutW;
+    d3dCutD = cutD;
     d3dWallH = wallH;
     d3dWallT = wallT;
     d3dFloorMesh = floor;
@@ -1495,16 +2239,27 @@
   var D3D_CATEGORIES = [
     { key: 'bedroom', label: 'Bedroom', icon: 'bed', items: [
       { key: 'Bed', icon: 'bed' },
+      { key: 'Small Bed', icon: 'bed' },
+      { key: 'Large Bed', icon: 'bed' },
+      { key: 'Canopy Bed', icon: 'bed' },
+      { key: 'Platform Bed', icon: 'bed' },
+      { key: 'Sleigh Bed', icon: 'bed' },
+      { key: 'Bunk Bed', icon: 'bed' },
       { key: 'Nightstand', icon: 'cabinet' },
       { key: 'Wardrobe', icon: 'cabinet' },
       { key: 'Dresser', icon: 'cabinet' },
-      { key: 'Ottoman', icon: 'chair' }
+      { key: 'Ottoman', icon: 'chair' },
+      { key: 'Bench', icon: 'chair' },
+      { key: 'Wingback Chair', icon: 'chair' }
     ] },
     { key: 'living', label: 'Living', icon: 'sofa', items: [
       { key: 'Sofa', icon: 'sofa' },
       { key: 'Armchair', icon: 'chair' },
+      { key: 'Recliner', icon: 'chair' },
       { key: 'Coffee Table', icon: 'table' },
+      { key: 'Round Coffee Table', icon: 'table' },
       { key: 'Console Table', icon: 'table' },
+      { key: 'Side Table', icon: 'table' },
       { key: 'TV Unit', icon: 'tv' },
       { key: 'Bookshelf', icon: 'books' },
       { key: 'Floor Lamp', icon: 'sparkle' },
@@ -1512,12 +2267,18 @@
     ] },
     { key: 'dining', label: 'Dining', icon: 'table', items: [
       { key: 'Dining Table', icon: 'table' },
+      { key: 'Round Dining Table', icon: 'table' },
+      { key: 'Oval Table', icon: 'table' },
       { key: 'Chair', icon: 'chair' },
+      { key: 'Dining Chair', icon: 'chair' },
+      { key: 'Bar Stool', icon: 'chair' },
       { key: 'Sideboard', icon: 'cabinet' }
     ] },
     { key: 'office', label: 'Office', icon: 'books', items: [
       { key: 'Desk', icon: 'table' },
+      { key: 'L-Shaped Desk', icon: 'table' },
       { key: 'Chair', icon: 'chair' },
+      { key: 'Task Chair', icon: 'chair' },
       { key: 'Bookshelf', icon: 'books' },
       { key: 'Cabinet', icon: 'cabinet' },
       { key: 'Floor Lamp', icon: 'sparkle' }
@@ -1525,6 +2286,7 @@
     { key: 'kitchen', label: 'Kitchen', icon: 'table', items: [
       { key: 'Kitchen Island', icon: 'table' },
       { key: 'Sink', icon: 'sink' },
+      { key: 'Stove', icon: 'cabinet' },
       { key: 'Fridge', icon: 'cabinet' }
     ] },
     { key: 'bathroom', label: 'Bathroom', icon: 'bathtub', items: [
@@ -1533,9 +2295,12 @@
       { key: 'Bathtub', icon: 'bathtub' },
       { key: 'Shower', icon: 'shower' },
       { key: 'Toilet', icon: 'toilet' },
-      { key: 'Shelf', icon: 'books' }
+      { key: 'Shelf', icon: 'books' },
+      { key: 'Laundry Hamper', icon: 'cube' }
     ] },
     { key: 'kids', label: 'Kids', icon: 'teddy', items: [
+      { key: 'Bunk Bed', icon: 'bed' },
+      { key: 'Rocking Chair', icon: 'chair' },
       { key: 'Play Area', icon: 'teddy' },
       { key: 'Toy Box', icon: 'cube' },
       { key: 'Rug', icon: 'cube' }
@@ -1569,6 +2334,12 @@
   var d3dWalkLookStartX = 0, d3dWalkLookStartY = 0, d3dWalkLookStartYaw = 0, d3dWalkLookStartPitch = 0;
   var d3dWalkMoveTimer = null;
   var d3dRoomLen = 4, d3dRoomWid = 4, d3dWallH = 2.6, d3dWallT = 0.1;
+  // L-shaped room: the floor/walls get a rectangular corner (top-right,
+  // where the N wall would meet the open E side) cut away. cutW/cutD are
+  // 0 when d3dRoomIsL is off, so every clamp/placement check below can
+  // stay written in terms of them without an extra "is it even L-shaped"
+  // branch at each call site.
+  var d3dRoomIsL = false, d3dCutW = 0, d3dCutD = 0;
   var d3dFloorMesh = null, d3dNWallMesh = null, d3dWWallMesh = null;
   var d3dFurnColor = 0x8C6D46, d3dFurnShapeText = '';
   var d3dPlacedGroup = null;
@@ -1588,6 +2359,8 @@
   function d3dGetThumbRenderer() {
     if (!d3dThumbRenderer) {
       d3dThumbRenderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+      d3dThumbRenderer.toneMapping = THREE.ACESFilmicToneMapping;
+      d3dThumbRenderer.toneMappingExposure = 1.0;
       d3dThumbRenderer.setSize(96, 96);
     }
     return d3dThumbRenderer;
@@ -1619,7 +2392,7 @@
         w = def.w; d = def.d; h = def.h;
         mesh = def.build(def.w, def.d, def.h, d3dFurnColor);
         fp3dApplyShapeVariant(mesh, def.w, def.d, def.h, d3dFurnShapeText, d3dFurnColor);
-        fp3dPolish(mesh);
+        fp3dPolish(mesh, undefined, undefined, fp3dIsFabricItem(itemKey.toLowerCase()));
       }
       scene.add(mesh);
 
@@ -1787,7 +2560,7 @@
         var def = fp3dClassify(item.key.toLowerCase());
         mesh = def.build(def.w, def.d, def.h, d3dFurnColor);
         fp3dApplyShapeVariant(mesh, def.w, def.d, def.h, d3dFurnShapeText, d3dFurnColor);
-        fp3dPolish(mesh);
+        fp3dPolish(mesh, undefined, undefined, fp3dIsFabricItem(item.key.toLowerCase()));
         mesh.add(fp3dBuildContactShadow(def.w, def.d));
         mesh.position.set(item.x, 0, item.z);
         mesh.rotation.y = item.rotY || 0;
@@ -1841,8 +2614,8 @@
     if (!floorHits.length) return;
     var p = floorHits[0].point;
     var def = fp3dClassify(d3dTool.toLowerCase());
-    var x = fp3dClamp(p.x, def.w / 2, d3dRoomLen - def.w / 2);
-    var z = fp3dClamp(p.z, def.d / 2, d3dRoomWid - def.d / 2);
+    var clamped = fp3dClampToRoomShape(p.x, p.z, def.w / 2, def.d / 2);
+    var x = clamped.x, z = clamped.z;
     d3dPlacedItems.push({ key: d3dTool, isWall: false, x: x, z: z, rotY: 0 });
     d3dSelectedIndex = d3dPlacedItems.length - 1;
     d3dRebuildPlacedGroup();
@@ -1922,8 +2695,9 @@
     d3dWalkPos.x += (fx * dForward + rx * dRight) * step;
     d3dWalkPos.z += (fz * dForward + rz * dRight) * step;
     var margin = 0.3;
-    d3dWalkPos.x = fp3dClamp(d3dWalkPos.x, margin, Math.max(margin, d3dRoomLen - margin));
-    d3dWalkPos.z = fp3dClamp(d3dWalkPos.z, margin, Math.max(margin, d3dRoomWid - margin));
+    var walkClamped = fp3dClampToRoomShape(d3dWalkPos.x, d3dWalkPos.z, margin, margin);
+    d3dWalkPos.x = walkClamped.x;
+    d3dWalkPos.z = walkClamped.z;
     d3dWalkApplyCamera();
   }
 
@@ -1988,8 +2762,9 @@
       var item = d3dPlacedItems[d3dDragIndex];
       var def = fp3dClassify(item.key.toLowerCase());
       var p = floorHits[0].point;
-      item.x = fp3dClamp(p.x, def.w / 2, d3dRoomLen - def.w / 2);
-      item.z = fp3dClamp(p.z, def.d / 2, d3dRoomWid - def.d / 2);
+      var dragClamped = fp3dClampToRoomShape(p.x, p.z, def.w / 2, def.d / 2);
+      item.x = dragClamped.x;
+      item.z = dragClamped.z;
       d3dRebuildPlacedGroup();
       event.preventDefault();
       return;
@@ -2077,6 +2852,7 @@
   function d3dBuildRoom() {
     var roomLength = document.getElementById('roomLengthInput').value;
     var roomWidth = document.getElementById('roomWidthInput').value;
+    var roomCuts = fp3dGetRoomCutDims(parseFloat(roomLength) || 4, parseFloat(roomWidth) || 4);
 
     var doorStyleText = d3dSelectedText('d3dDoorStyleChips');
     var windowStyleText = d3dSelectedText('d3dWindowStyleChips');
@@ -2090,6 +2866,9 @@
     d3dBuildRoomShell(document.getElementById('d3dResultWrap'), {
       roomLen: roomLength,
       roomWid: roomWidth,
+      isL: d3dRoomIsL,
+      cutW: roomCuts.cutW,
+      cutD: roomCuts.cutD,
       colorText: colorText,
       floorText: floorText,
       furnitureColorText: furnitureColorText,
