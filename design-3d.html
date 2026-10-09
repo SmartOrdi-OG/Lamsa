@@ -1149,6 +1149,98 @@
     return g;
   }
 
+  function fp3dBuildDiningChair(w, d, h, color) {
+    var g = new THREE.Group();
+    var seatH = h * 0.5;
+    var seat = new THREE.Mesh(new THREE.BoxGeometry(w, h * 0.08, d), new THREE.MeshLambertMaterial({ color: color }));
+    seat.position.y = seatH;
+    g.add(seat);
+    var back = new THREE.Mesh(new THREE.BoxGeometry(w * 0.88, h * 0.5, h * 0.08), new THREE.MeshLambertMaterial({ color: color }));
+    back.position.set(0, seatH + h * 0.25, -d / 2 + h * 0.04);
+    g.add(back);
+    var legMat = new THREE.MeshLambertMaterial({ color: fp3dDarken(color, 0.65) });
+    [[-1, -1], [1, -1], [-1, 1], [1, 1]].forEach(function(pos) {
+      var leg = new THREE.Mesh(new THREE.CylinderGeometry(0.016, 0.024, seatH - 0.02, 8), legMat);
+      leg.position.set(pos[0] * (w / 2 - 0.04), (seatH - 0.02) / 2, pos[1] * (d / 2 - 0.04));
+      g.add(leg);
+    });
+    return g;
+  }
+
+  function fp3dBuildRecliner(w, d, h, color) {
+    var g = new THREE.Group();
+    var seat = new THREE.Mesh(new THREE.BoxGeometry(w, h * 0.4, d * 0.7), new THREE.MeshLambertMaterial({ color: color }));
+    seat.position.set(0, h * 0.2, -d * 0.05);
+    g.add(seat);
+    var back = new THREE.Mesh(new THREE.BoxGeometry(w, h * 0.72, d * 0.25), new THREE.MeshLambertMaterial({ color: color }));
+    back.rotation.x = -0.25;
+    back.position.set(0, h * 0.52, -d / 2 + 0.05);
+    g.add(back);
+    var footrest = new THREE.Mesh(new THREE.BoxGeometry(w * 0.85, h * 0.22, d * 0.4), new THREE.MeshLambertMaterial({ color: fp3dDarken(color, 0.9) }));
+    footrest.position.set(0, h * 0.11, d / 2 + d * 0.12);
+    g.add(footrest);
+    [-1, 1].forEach(function(side) {
+      var arm = new THREE.Mesh(new THREE.BoxGeometry(w * 0.1, h * 0.32, d * 0.62), new THREE.MeshLambertMaterial({ color: fp3dDarken(color, 0.92) }));
+      arm.position.set(side * (w / 2 - w * 0.05), h * 0.34, -d * 0.05);
+      g.add(arm);
+    });
+    return g;
+  }
+
+  function fp3dBuildWingbackChair(w, d, h, color) {
+    var g = new THREE.Group();
+    var seatH = h * 0.42;
+    var seat = new THREE.Mesh(new THREE.BoxGeometry(w, h * 0.12, d * 0.85), new THREE.MeshLambertMaterial({ color: color }));
+    seat.position.y = seatH;
+    g.add(seat);
+    var back = new THREE.Mesh(new THREE.BoxGeometry(w * 0.82, h * 0.62, d * 0.18), new THREE.MeshLambertMaterial({ color: color }));
+    back.position.set(0, seatH + h * 0.33, -d / 2 + d * 0.09);
+    g.add(back);
+    [-1, 1].forEach(function(side) {
+      var wing = new THREE.Mesh(new THREE.BoxGeometry(w * 0.12, h * 0.4, d * 0.4), new THREE.MeshLambertMaterial({ color: color }));
+      wing.position.set(side * (w / 2 - w * 0.06), seatH + h * 0.38, -d / 2 + d * 0.22);
+      wing.rotation.y = side * 0.35;
+      g.add(wing);
+    });
+    var legMat = new THREE.MeshLambertMaterial({ color: fp3dDarken(color, 0.6) });
+    [[-1, -1], [1, -1], [-1, 1], [1, 1]].forEach(function(pos) {
+      var leg = new THREE.Mesh(new THREE.CylinderGeometry(0.02, 0.02, seatH - 0.02, 8), legMat);
+      leg.position.set(pos[0] * (w / 2 - 0.05), (seatH - 0.02) / 2, pos[1] * (d * 0.85 / 2 - 0.05));
+      g.add(leg);
+    });
+    return g;
+  }
+
+  function fp3dBuildRockingChair(w, d, h, color) {
+    var g = new THREE.Group();
+    var seatH = h * 0.42;
+    var seat = new THREE.Mesh(new THREE.BoxGeometry(w, h * 0.08, d), new THREE.MeshLambertMaterial({ color: color }));
+    seat.position.y = seatH;
+    g.add(seat);
+    var back = new THREE.Mesh(new THREE.BoxGeometry(w * 0.85, h * 0.55, 0.03), new THREE.MeshLambertMaterial({ color: color }));
+    back.position.set(0, seatH + h * 0.28, -d / 2 + 0.02);
+    g.add(back);
+    var woodMat = new THREE.MeshLambertMaterial({ color: fp3dDarken(color, 0.8) });
+    var rockerY = h * 0.08;
+    var legH = seatH - rockerY;
+    [[-1, -1], [1, -1], [-1, 1], [1, 1]].forEach(function(pos) {
+      var leg = new THREE.Mesh(new THREE.BoxGeometry(0.03, legH, 0.03), woodMat);
+      leg.position.set(pos[0] * (w / 2 - 0.03), rockerY + legH / 2, pos[1] * (d / 2 - 0.03));
+      g.add(leg);
+    });
+    [-1, 1].forEach(function(side) {
+      var arm = new THREE.Mesh(new THREE.BoxGeometry(0.03, 0.03, d * 0.8), woodMat);
+      arm.position.set(side * (w / 2 - 0.02), seatH + 0.05, 0);
+      g.add(arm);
+      var rocker = new THREE.Mesh(new THREE.TorusGeometry(d * 0.62, 0.02, 6, 20, Math.PI * 0.55), woodMat);
+      rocker.rotation.y = Math.PI / 2;
+      rocker.rotation.z = Math.PI * 0.77;
+      rocker.position.set(side * (w / 2 - 0.03), rockerY, 0);
+      g.add(rocker);
+    });
+    return g;
+  }
+
   function fp3dBuildStove(w, d, h, color) {
     var g = new THREE.Group();
     var body = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), new THREE.MeshStandardMaterial({ color: 0xE8E4DA, metalness: 0.3, roughness: 0.4 }));
@@ -1257,6 +1349,10 @@
     { keys: ['stove', 'oven'], w: 0.6, d: 0.6, h: 0.85, build: fp3dBuildStove },
     { keys: ['bar stool'], w: 0.35, d: 0.35, h: 0.75, build: fp3dBuildBarStool },
     { keys: ['task chair'], w: 0.55, d: 0.55, h: 0.85, build: fp3dBuildTaskChair },
+    { keys: ['dining chair'], w: 0.45, d: 0.45, h: 0.85, build: fp3dBuildDiningChair },
+    { keys: ['recliner'], w: 0.85, d: 0.95, h: 0.85, build: fp3dBuildRecliner },
+    { keys: ['wingback', 'wing chair'], w: 0.75, d: 0.75, h: 1.05, build: fp3dBuildWingbackChair },
+    { keys: ['rocking chair', 'rocker'], w: 0.5, d: 0.6, h: 0.85, build: fp3dBuildRockingChair },
     { keys: ['rug'], w: 1.6, d: 1.0, h: 0.02, build: fp3dBuildMat },
     { keys: ['toy box', 'toybox'], w: 0.6, d: 0.4, h: 0.4, build: fp3dBuildToyBox },
     { keys: ['fridge', 'refrigerator'], w: 0.75, d: 0.7, h: 1.8, build: fp3dBuildFridge },
@@ -1751,11 +1847,13 @@
       { key: 'Wardrobe', icon: 'cabinet' },
       { key: 'Dresser', icon: 'cabinet' },
       { key: 'Ottoman', icon: 'chair' },
-      { key: 'Bench', icon: 'chair' }
+      { key: 'Bench', icon: 'chair' },
+      { key: 'Wingback Chair', icon: 'chair' }
     ] },
     { key: 'living', label: 'Living', icon: 'sofa', items: [
       { key: 'Sofa', icon: 'sofa' },
       { key: 'Armchair', icon: 'chair' },
+      { key: 'Recliner', icon: 'chair' },
       { key: 'Coffee Table', icon: 'table' },
       { key: 'Console Table', icon: 'table' },
       { key: 'Side Table', icon: 'table' },
@@ -1767,6 +1865,7 @@
     { key: 'dining', label: 'Dining', icon: 'table', items: [
       { key: 'Dining Table', icon: 'table' },
       { key: 'Chair', icon: 'chair' },
+      { key: 'Dining Chair', icon: 'chair' },
       { key: 'Bar Stool', icon: 'chair' },
       { key: 'Sideboard', icon: 'cabinet' }
     ] },
@@ -1795,6 +1894,7 @@
     ] },
     { key: 'kids', label: 'Kids', icon: 'teddy', items: [
       { key: 'Bunk Bed', icon: 'bed' },
+      { key: 'Rocking Chair', icon: 'chair' },
       { key: 'Play Area', icon: 'teddy' },
       { key: 'Toy Box', icon: 'cube' },
       { key: 'Rug', icon: 'cube' }
