@@ -1100,6 +1100,110 @@
     return g;
   }
 
+  // An L-footprint sectional: the regular sofa run (seat/back/one arm) plus
+  // a chaise extension attached at the other end, built perpendicular to it
+  // and capped with its own end arm — same two-perpendicular-surfaces idea
+  // as the L-Shaped Desk, just with cushions instead of a tabletop.
+  function fp3dBuildSectionalSofa(w, d, h, color) {
+    var g = new THREE.Group();
+    var armW = Math.min(0.14, d * 0.18);
+    var chaiseLen = w * 0.62;
+    var mainSeat = new THREE.Mesh(new THREE.BoxGeometry(w, h * 0.55, d), new THREE.MeshLambertMaterial({ color: color }));
+    mainSeat.position.set(0, h * 0.275, 0);
+    g.add(mainSeat);
+    var mainBack = new THREE.Mesh(new THREE.BoxGeometry(w, h, d * 0.22), new THREE.MeshLambertMaterial({ color: color }));
+    mainBack.position.set(0, h / 2, -d / 2 + d * 0.11);
+    g.add(mainBack);
+    var rightArm = new THREE.Mesh(new THREE.BoxGeometry(armW, h * 0.78, d), new THREE.MeshLambertMaterial({ color: color }));
+    rightArm.position.set(w / 2 - armW / 2, h * 0.39, 0);
+    g.add(rightArm);
+    var chaiseSeat = new THREE.Mesh(new THREE.BoxGeometry(d, h * 0.55, chaiseLen), new THREE.MeshLambertMaterial({ color: color }));
+    chaiseSeat.position.set(-w / 2 + d / 2, h * 0.275, d / 2 + chaiseLen / 2);
+    g.add(chaiseSeat);
+    var chaiseArm = new THREE.Mesh(new THREE.BoxGeometry(d, h * 0.78, armW), new THREE.MeshLambertMaterial({ color: color }));
+    chaiseArm.position.set(-w / 2 + d / 2, h * 0.39, d / 2 + chaiseLen - armW / 2);
+    g.add(chaiseArm);
+    return g;
+  }
+
+  // A gentle outward bow built from several small seat+back segments, each
+  // rotated a little more than its neighbor and nudged forward — the same
+  // "many flat pieces approximate a curve" trick schematic renderers use
+  // for anything that isn't axis-aligned.
+  function fp3dBuildCurvedSofa(w, d, h, color) {
+    var g = new THREE.Group();
+    var segW = w / 3;
+    var ang = 0.45;
+
+    function buildSeg() {
+      var seg = new THREE.Group();
+      var seat = new THREE.Mesh(new THREE.BoxGeometry(segW, h * 0.55, d), new THREE.MeshLambertMaterial({ color: color }));
+      seat.position.y = h * 0.275;
+      seg.add(seat);
+      var back = new THREE.Mesh(new THREE.BoxGeometry(segW, h, d * 0.22), new THREE.MeshLambertMaterial({ color: color }));
+      back.position.set(0, h / 2, -d / 2 + d * 0.11);
+      seg.add(back);
+      return seg;
+    }
+
+    g.add(buildSeg());
+
+    // Each side segment hangs off a pivot placed exactly at the center
+    // segment's edge, with the segment's own body offset outward from that
+    // pivot — rotating the pivot swings the segment forward while its
+    // inner edge stays locked to the center piece, instead of gapping or
+    // overlapping the way rotating each segment around its own center did.
+    var armW = Math.min(0.14, w * 0.1);
+    [-1, 1].forEach(function(side) {
+      var pivot = new THREE.Group();
+      pivot.position.set(side * segW / 2, 0, 0);
+      pivot.rotation.y = -side * ang;
+      var seg = buildSeg();
+      seg.position.x = side * segW / 2;
+      pivot.add(seg);
+      var arm = new THREE.Mesh(new THREE.BoxGeometry(armW, h * 0.7, d * 0.9), new THREE.MeshLambertMaterial({ color: color }));
+      arm.position.set(side * segW, h * 0.35, 0);
+      pivot.add(arm);
+      g.add(pivot);
+    });
+    return g;
+  }
+
+  // Classic look: a tall back close to arm height, buttoned/tufted
+  // upholstery (a grid of small darker spheres standing in for buttons),
+  // and rolled arms (a half-height cylinder cap on top of each arm box).
+  function fp3dBuildChesterfieldSofa(w, d, h, color) {
+    var g = new THREE.Group();
+    var seat = new THREE.Mesh(new THREE.BoxGeometry(w, h * 0.5, d), new THREE.MeshLambertMaterial({ color: color }));
+    seat.position.y = h * 0.25;
+    g.add(seat);
+    var back = new THREE.Mesh(new THREE.BoxGeometry(w, h * 0.95, d * 0.22), new THREE.MeshLambertMaterial({ color: color }));
+    back.position.set(0, h * 0.475, -d / 2 + d * 0.11);
+    g.add(back);
+    var buttonMat = new THREE.MeshLambertMaterial({ color: fp3dDarken(color, 0.8) });
+    var cols = 5, rows = 2;
+    for (var r = 0; r < rows; r++) {
+      for (var c = 0; c < cols; c++) {
+        var bx = (c - (cols - 1) / 2) * (w / (cols + 1));
+        var by = h * 0.3 + r * (h * 0.4);
+        var btn = new THREE.Mesh(new THREE.SphereGeometry(0.014, 6, 6), buttonMat);
+        btn.position.set(bx, by, -d / 2 + d * 0.11 + 0.11);
+        g.add(btn);
+      }
+    }
+    var armW = Math.min(0.16, w * 0.13);
+    [-1, 1].forEach(function(side) {
+      var arm = new THREE.Mesh(new THREE.BoxGeometry(armW, h * 0.85, d), new THREE.MeshLambertMaterial({ color: color }));
+      arm.position.set(side * (w / 2 - armW / 2), h * 0.425, 0);
+      g.add(arm);
+      var roll = new THREE.Mesh(new THREE.CylinderGeometry(armW * 0.6, armW * 0.6, d, 10), new THREE.MeshLambertMaterial({ color: color }));
+      roll.rotation.z = Math.PI / 2;
+      roll.position.set(side * (w / 2 - armW / 2), h * 0.85, 0);
+      g.add(roll);
+    });
+    return g;
+  }
+
   function fp3dBuildTable(w, d, h, color) {
     var g = new THREE.Group();
     var top = new THREE.Mesh(new THREE.BoxGeometry(w, 0.06, d), new THREE.MeshLambertMaterial({ color: color }));
@@ -1710,6 +1814,9 @@
     { keys: ['platform bed'], w: 1.6, d: 2.0, h: 0.45, build: fp3dBuildPlatformBed },
     { keys: ['sleigh bed'], w: 1.6, d: 2.0, h: 0.58, build: fp3dBuildSleighBed },
     { keys: ['bed'], w: 1.6, d: 2.0, h: 0.55, build: fp3dBuildBed },
+    { keys: ['l-shaped sofa', 'l shaped sofa', 'sectional sofa', 'corner sofa'], w: 2.2, d: 0.9, h: 0.8, build: fp3dBuildSectionalSofa },
+    { keys: ['curved sofa'], w: 2.2, d: 0.9, h: 0.8, build: fp3dBuildCurvedSofa },
+    { keys: ['chesterfield'], w: 2.0, d: 0.9, h: 0.85, build: fp3dBuildChesterfieldSofa },
     { keys: ['sofa', 'couch'], w: 2.0, d: 0.9, h: 0.8, build: fp3dBuildSofa },
     { keys: ['wardrobe', 'closet'], w: 1.2, d: 0.6, h: 2.0, build: fp3dBuildWardrobe },
     { keys: ['toy shelf'], w: 0.8, d: 0.3, h: 0.9, build: fp3dBuildBookshelf },
@@ -2311,6 +2418,9 @@
     ] },
     { key: 'living', label: 'Living', icon: 'sofa', items: [
       { key: 'Sofa', icon: 'sofa' },
+      { key: 'L-Shaped Sofa', icon: 'sofa' },
+      { key: 'Curved Sofa', icon: 'sofa' },
+      { key: 'Chesterfield Sofa', icon: 'sofa' },
       { key: 'Armchair', icon: 'chair' },
       { key: 'Recliner', icon: 'chair' },
       { key: 'Coffee Table', icon: 'table' },
