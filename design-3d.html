@@ -663,6 +663,8 @@
     'Pick a category, then a piece, then click inside the room to place it.': 'اختر فئة، ثم قطعة، ثم اضغط داخل الغرفة لوضعها.',
     'Could not load the 3D viewer': 'تعذر تحميل العارض ثلاثي الأبعاد',
     'My Room Design': 'تصميم غرفتي',
+    '✕ Close': '✕ إغلاق',
+    'Long-press the image and save it': 'اضغط مطوّلاً على الصورة واحفظها',
     'e.g. 20': 'مثلاً 20'
   };
   function d3dTr(enText) { return (currentLang === 'ar' && D3D_AR[enText]) ? D3D_AR[enText] : enText; }
@@ -3289,40 +3291,84 @@
     d3dRebuildPlacedGroup();
   }
 
+  function d3dDataURLtoBlob(dataUrl) {
+    var parts = dataUrl.split(',');
+    var mimeMatch = parts[0].match(/data:(.*?);base64/);
+    var bstr = atob(parts[1]);
+    var u8arr = new Uint8Array(bstr.length);
+    for (var i = 0; i < bstr.length; i++) u8arr[i] = bstr.charCodeAt(i);
+    return new Blob([u8arr], { type: mimeMatch ? mimeMatch[1] : 'image/png' });
+  }
+
+  // Fallback for when the Web Share API isn't available: shows the image
+  // in an overlay on THIS page (never a new tab/window) with its own
+  // visible close button, so the user can long-press-save it and always
+  // has a guaranteed way back — a prior version opened a bare new window
+  // via window.open()+document.write() that, on some iOS setups (notably
+  // when Lamsa is installed as a home-screen app), had no address bar or
+  // back control at all, stranding the user with no way to leave it short
+  // of force-quitting.
+  function d3dShowImageOverlay(dataUrl) {
+    var overlay = document.createElement('div');
+    overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.92);z-index:9999;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:16px;';
+    var closeBtn = document.createElement('button');
+    closeBtn.type = 'button';
+    closeBtn.textContent = d3dTr('✕ Close');
+    closeBtn.style.cssText = 'position:absolute;top:16px;inset-inline-end:16px;background:rgba(255,255,255,0.15);color:#fff;border:1px solid rgba(255,255,255,0.45);border-radius:8px;padding:10px 16px;font-family:Tajawal,sans-serif;font-size:14px;font-weight:700;cursor:pointer;';
+    closeBtn.onclick = function() { overlay.remove(); };
+    var hint = document.createElement('div');
+    hint.textContent = d3dTr('Long-press the image and save it');
+    hint.style.cssText = 'color:#fff;font-family:Tajawal,sans-serif;font-size:14px;margin-bottom:12px;text-align:center;';
+    var img = document.createElement('img');
+    img.src = dataUrl;
+    img.style.cssText = 'max-width:100%;max-height:75vh;border-radius:8px;';
+    overlay.appendChild(closeBtn);
+    overlay.appendChild(hint);
+    overlay.appendChild(img);
+    document.body.appendChild(overlay);
+  }
+
   // Lets the user keep a snapshot of their room off the app — the same
   // canvas pixels they're already looking at (current camera angle,
-  // furniture, walls), just downloaded as a PNG instead of staying
-  // locked inside the live 3D view.
+  // furniture, walls), just saved as a PNG instead of staying locked
+  // inside the live 3D view.
   function d3dSaveImage() {
     if (!d3dRenderer || !d3dScene || !d3dCamera) return;
     d3dRenderer.render(d3dScene, d3dCamera);
     var dataUrl = d3dRenderer.domElement.toDataURL('image/png');
+
+    // The native share sheet (iOS and most Android browsers) offers "Save
+    // Image" directly and never leaves this page — the safest option where
+    // it's available, since there's no page/tab for the OS to maybe not
+    // give a way back out of.
+    if (navigator.share && navigator.canShare) {
+      try {
+        var file = new File([d3dDataURLtoBlob(dataUrl)], 'my-room-design.png', { type: 'image/png' });
+        if (navigator.canShare({ files: [file] })) {
+          navigator.share({ files: [file], title: d3dTr('My Room Design') }).catch(function() {});
+          return;
+        }
+      } catch (e) { /* fall through to the methods below */ }
+    }
+
     // iOS Safari ignores the <a download> attribute for data: URIs — the
     // click just navigates to/renders the image instead of saving anything,
     // which looks like the button doing nothing. There's no real "Downloads"
-    // folder on iOS anyway, so open the image full-page instead: the user
-    // can long-press it and pick Save Image, which is the normal way to
-    // save a web image on iOS.
+    // folder on iOS anyway, so show it in an in-page overlay instead (see
+    // d3dShowImageOverlay) rather than a new window/tab.
     var ua = navigator.userAgent || '';
     var isIOS = /iPad|iPhone|iPod/.test(ua) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
     if (isIOS) {
-      var win = window.open();
-      if (win) {
-        win.document.write('<title>' + d3dTr('My Room Design') + '</title><body style="margin:0;background:#000"><img src="' + dataUrl + '" style="width:100%;display:block;"></body>');
-        win.document.close();
-      } else {
-        // Popup blocked — fall back to the normal download attempt below.
-        isIOS = false;
-      }
+      d3dShowImageOverlay(dataUrl);
+      return;
     }
-    if (!isIOS) {
-      var link = document.createElement('a');
-      link.href = dataUrl;
-      link.download = 'my-room-design.png';
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-    }
+
+    var link = document.createElement('a');
+    link.href = dataUrl;
+    link.download = 'my-room-design.png';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
   }
 
   // ═══════════════════════════════════════════════
