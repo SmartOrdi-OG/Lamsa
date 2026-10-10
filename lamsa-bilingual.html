@@ -2269,6 +2269,7 @@
 
   function setLang(lang) {
     currentLang = lang;
+    try { localStorage.setItem('lamsa_lang', lang); } catch (e) {}
     langMenuOpen = false;
     document.getElementById('langMenu').classList.remove('open');
 
@@ -3949,9 +3950,12 @@
     closeModal();
   });
 
-  // Apply English on page load
+  // Apply the language chosen elsewhere in the app (e.g. the 3D Designer's
+  // own toggle), falling back to English for a first-time visitor.
   window.addEventListener('DOMContentLoaded', function() {
-    setLang('en');
+    var savedLang = 'en';
+    try { savedLang = localStorage.getItem('lamsa_lang') || 'en'; } catch (e) {}
+    setLang(savedLang);
     initFloorPlan();
     initHeroBackground();
     formPanelsSnapshot = document.querySelector('.form-panels').innerHTML;

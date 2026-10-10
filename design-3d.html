@@ -75,6 +75,13 @@
     font-family: 'Tajawal', sans-serif; cursor: pointer; white-space: nowrap; transition: all 0.2s;
   }
   .nav-logout:hover { border-color: var(--gold); color: var(--gold); }
+  .lang-toggle-btn {
+    background: transparent; border: 1px solid var(--border); color: var(--gray);
+    padding: 6px 10px; border-radius: 6px; font-size: 12px; font-weight: 700;
+    font-family: 'Tajawal', sans-serif; cursor: pointer; white-space: nowrap; transition: all 0.2s;
+  }
+  .lang-toggle-btn:hover { border-color: var(--gold); color: var(--gold); }
+  [dir="rtl"] .icon-svg.rtl-flip { transform: scaleX(-1); }
 
   .wrap { max-width: 680px; margin: 0 auto; padding: 100px 20px 60px; }
   .hero { max-width: 560px; margin: 0 auto; }
@@ -211,7 +218,7 @@
   .d3d-walk-dpad {
     position: absolute; bottom: 16px; left: 50%; transform: translateX(-50%); pointer-events: auto;
     display: grid; grid-template-columns: 46px 46px 46px; grid-template-rows: 46px 46px;
-    gap: 4px;
+    gap: 4px; direction: ltr;
   }
   .d3d-walk-dpad-btn {
     background: rgba(20,20,20,0.6); color: #fff; border: 1.5px solid rgba(255,255,255,0.4);
@@ -256,227 +263,228 @@
     <div class="logo-text">LAMSA</div>
   </a>
   <div class="nav-right">
-    <a class="back-link" href="lamsa-bilingual.html"><svg class="icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M11 6l-6 6 6 6"/></svg> Full Designer</a>
-    <button type="button" class="nav-logout" onclick="logout()">Log Out</button>
+    <a class="back-link" href="lamsa-bilingual.html"><svg class="icon-svg rtl-flip" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M11 6l-6 6 6 6"/></svg> <span data-en="Full Designer" data-ar="المصمم الكامل">Full Designer</span></a>
+    <button type="button" class="lang-toggle-btn" id="d3dLangToggleBtn" onclick="d3dToggleLang()">AR</button>
+    <button type="button" class="nav-logout" onclick="logout()" data-en="Log Out" data-ar="تسجيل الخروج">Log Out</button>
   </div>
 </nav>
 
 <div class="wrap">
   <div class="hero">
-    <h1><svg class="icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 7.5 12 3 3 7.5l9 4.5 9-4.5z"/><path d="M3 7.5v9l9 4.5 9-4.5v-9"/><path d="M12 12v9"/></svg> 3D Room Designer</h1>
-    <p class="sub">Build a free, instant 3D schematic of your room — no photo, no credit. Set the room's size, openings and finishes, then place the furniture and switches yourself, piece by piece, directly in the 3D view.</p>
+    <h1><svg class="icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 7.5 12 3 3 7.5l9 4.5 9-4.5z"/><path d="M3 7.5v9l9 4.5 9-4.5v-9"/><path d="M12 12v9"/></svg> <span data-en="3D Room Designer" data-ar="مصمم الغرفة ثلاثي الأبعاد">3D Room Designer</span></h1>
+    <p class="sub" data-en="Build a free, instant 3D schematic of your room — no photo, no credit. Set the room's size, openings and finishes, then place the furniture and switches yourself, piece by piece, directly in the 3D view." data-ar="اصنع مخططاً ثلاثي الأبعاد فورياً لغرفتك مجاناً — بدون صورة وبدون رصيد. حدد حجم الغرفة وفتحاتها وموادها، ثم ضع الأثاث والمفاتيح بنفسك، قطعة بقطعة، مباشرة داخل العرض ثلاثي الأبعاد.">Build a free, instant 3D schematic of your room — no photo, no credit. Set the room's size, openings and finishes, then place the furniture and switches yourself, piece by piece, directly in the 3D view.</p>
   </div>
 
   <div class="steps-wrap">
     <div class="progress-bar">
-      <div class="progress-step active" id="d3dStepTab1"><span class="step-num-badge">1</span>Room Size</div>
-      <div class="progress-step" id="d3dStepTab2"><span class="step-num-badge">2</span>Windows &amp; Doors</div>
-      <div class="progress-step" id="d3dStepTab3"><span class="step-num-badge">3</span>Finishes</div>
+      <div class="progress-step active" id="d3dStepTab1"><span class="step-num-badge">1</span><span data-en="Room Size" data-ar="حجم الغرفة">Room Size</span></div>
+      <div class="progress-step" id="d3dStepTab2"><span class="step-num-badge">2</span><span data-en="Windows &amp; Doors" data-ar="النوافذ والأبواب">Windows &amp; Doors</span></div>
+      <div class="progress-step" id="d3dStepTab3"><span class="step-num-badge">3</span><span data-en="Finishes" data-ar="التشطيبات">Finishes</span></div>
     </div>
 
     <div class="form-panels">
 
       <!-- STEP 1: ROOM SIZE -->
       <div class="panel active" id="d3dPanel1">
-        <div class="panel-title">Room Size</div>
-        <div class="panel-sub">Tell us the room type and its dimensions.</div>
+        <div class="panel-title" data-en="Room Size" data-ar="حجم الغرفة">Room Size</div>
+        <div class="panel-sub" data-en="Tell us the room type and its dimensions." data-ar="أخبرنا نوع الغرفة وأبعادها.">Tell us the room type and its dimensions.</div>
 
         <div class="form-group">
-          <label>Room Type</label>
+          <label data-en="Room Type" data-ar="نوع الغرفة">Room Type</label>
           <select id="d3dRoomType">
-            <option value="bedroom">Bedroom</option>
-            <option value="living">Living Room</option>
-            <option value="kitchen">Kitchen</option>
-            <option value="bathroom">Bathroom</option>
-            <option value="kids">Kids Room</option>
-            <option value="office">Home Office</option>
-            <option value="dining">Dining Room</option>
+            <option value="bedroom" data-en="Bedroom" data-ar="غرفة نوم">Bedroom</option>
+            <option value="living" data-en="Living Room" data-ar="صالة جلوس">Living Room</option>
+            <option value="kitchen" data-en="Kitchen" data-ar="مطبخ">Kitchen</option>
+            <option value="bathroom" data-en="Bathroom" data-ar="حمام">Bathroom</option>
+            <option value="kids" data-en="Kids Room" data-ar="غرفة أطفال">Kids Room</option>
+            <option value="office" data-en="Home Office" data-ar="مكتب منزلي">Home Office</option>
+            <option value="dining" data-en="Dining Room" data-ar="غرفة طعام">Dining Room</option>
           </select>
         </div>
         <div class="form-group">
-          <label>Area (sqm)</label>
-          <input type="number" id="d3dRoomArea" placeholder="e.g. 20" min="5" max="200">
+          <label data-en="Area (sqm)" data-ar="المساحة (م²)">Area (sqm)</label>
+          <input type="number" id="d3dRoomArea" placeholder="e.g. 20" data-ph-en="e.g. 20" data-ph-ar="مثلاً 20" min="5" max="200">
         </div>
         <div class="form-group">
-          <label>Length: <span id="roomLengthVal" class="dim-val">5.0</span> m</label>
+          <label><span data-en="Length:" data-ar="الطول:">Length:</span> <span id="roomLengthVal" class="dim-val">5.0</span> <span data-en="m" data-ar="م">m</span></label>
           <input type="range" id="roomLengthInput" min="2" max="12" step="0.1" value="5" oninput="d3dUpdateDimLabel('roomLengthInput','roomLengthVal'); drawFloorPlan();">
         </div>
         <div class="form-group">
-          <label>Width: <span id="roomWidthVal" class="dim-val">4.0</span> m</label>
+          <label><span data-en="Width:" data-ar="العرض:">Width:</span> <span id="roomWidthVal" class="dim-val">4.0</span> <span data-en="m" data-ar="م">m</span></label>
           <input type="range" id="roomWidthInput" min="2" max="12" step="0.1" value="4" oninput="d3dUpdateDimLabel('roomWidthInput','roomWidthVal'); drawFloorPlan();">
         </div>
         <div class="form-group">
-          <label>Room Shape</label>
+          <label data-en="Room Shape" data-ar="شكل الغرفة">Room Shape</label>
           <div class="chips" id="d3dRoomShapeChips">
-            <button type="button" class="fp-tool-btn active" id="d3dShapeBtn-rect" onclick="d3dSelectRoomShape('rect')">▭ Rectangle</button>
-            <button type="button" class="fp-tool-btn" id="d3dShapeBtn-L" onclick="d3dSelectRoomShape('L')">📐 L-Shaped</button>
-            <button type="button" class="fp-tool-btn" id="d3dShapeBtn-T" onclick="d3dSelectRoomShape('T')">🔳 T-Shaped</button>
-            <button type="button" class="fp-tool-btn" id="d3dShapeBtn-U" onclick="d3dSelectRoomShape('U')">🔲 U-Shaped</button>
-            <button type="button" class="fp-tool-btn" id="d3dShapeBtn-diag" onclick="d3dSelectRoomShape('diag')">◣ Diagonal</button>
+            <button type="button" class="fp-tool-btn active" id="d3dShapeBtn-rect" onclick="d3dSelectRoomShape('rect')" data-en="▭ Rectangle" data-ar="▭ مستطيل">▭ Rectangle</button>
+            <button type="button" class="fp-tool-btn" id="d3dShapeBtn-L" onclick="d3dSelectRoomShape('L')" data-en="📐 L-Shaped" data-ar="📐 حرف L">📐 L-Shaped</button>
+            <button type="button" class="fp-tool-btn" id="d3dShapeBtn-T" onclick="d3dSelectRoomShape('T')" data-en="🔳 T-Shaped" data-ar="🔳 حرف T">🔳 T-Shaped</button>
+            <button type="button" class="fp-tool-btn" id="d3dShapeBtn-U" onclick="d3dSelectRoomShape('U')" data-en="🔲 U-Shaped" data-ar="🔲 حرف U">🔲 U-Shaped</button>
+            <button type="button" class="fp-tool-btn" id="d3dShapeBtn-diag" onclick="d3dSelectRoomShape('diag')" data-en="◣ Diagonal" data-ar="◣ قطري">◣ Diagonal</button>
           </div>
         </div>
         <div class="form-group" id="d3dLShapeCuts" style="display:none;">
-          <label>Cut Width: <span id="roomCutWVal" class="dim-val">1.5</span> m</label>
+          <label><span data-en="Cut Width:" data-ar="عرض القص:">Cut Width:</span> <span id="roomCutWVal" class="dim-val">1.5</span> <span data-en="m" data-ar="م">m</span></label>
           <input type="range" id="roomCutWInput" min="0.5" max="6" step="0.1" value="1.5" oninput="d3dUpdateDimLabel('roomCutWInput','roomCutWVal'); drawFloorPlan();">
-          <label>Cut Depth: <span id="roomCutDVal" class="dim-val">1.5</span> m</label>
+          <label><span data-en="Cut Depth:" data-ar="عمق القص:">Cut Depth:</span> <span id="roomCutDVal" class="dim-val">1.5</span> <span data-en="m" data-ar="م">m</span></label>
           <input type="range" id="roomCutDInput" min="0.5" max="6" step="0.1" value="1.5" oninput="d3dUpdateDimLabel('roomCutDInput','roomCutDVal'); drawFloorPlan();">
         </div>
         <div class="form-group" id="d3dTShapeCuts" style="display:none;">
-          <label>Stem Width: <span id="roomStemWVal" class="dim-val">1.5</span> m</label>
+          <label><span data-en="Stem Width:" data-ar="عرض الذراع:">Stem Width:</span> <span id="roomStemWVal" class="dim-val">1.5</span> <span data-en="m" data-ar="م">m</span></label>
           <input type="range" id="roomStemWInput" min="0.5" max="6" step="0.1" value="1.5" oninput="d3dUpdateDimLabel('roomStemWInput','roomStemWVal'); drawFloorPlan();">
-          <label>Stem Depth: <span id="roomStemDVal" class="dim-val">1.5</span> m</label>
+          <label><span data-en="Stem Depth:" data-ar="عمق الذراع:">Stem Depth:</span> <span id="roomStemDVal" class="dim-val">1.5</span> <span data-en="m" data-ar="م">m</span></label>
           <input type="range" id="roomStemDInput" min="0.5" max="6" step="0.1" value="1.5" oninput="d3dUpdateDimLabel('roomStemDInput','roomStemDVal'); drawFloorPlan();">
         </div>
         <div class="form-group" id="d3dUShapeCuts" style="display:none;">
-          <label>Gap Width: <span id="roomGapWVal" class="dim-val">1.5</span> m</label>
+          <label><span data-en="Gap Width:" data-ar="عرض الفتحة:">Gap Width:</span> <span id="roomGapWVal" class="dim-val">1.5</span> <span data-en="m" data-ar="م">m</span></label>
           <input type="range" id="roomGapWInput" min="0.5" max="6" step="0.1" value="1.5" oninput="d3dUpdateDimLabel('roomGapWInput','roomGapWVal'); drawFloorPlan();">
-          <label>Gap Depth: <span id="roomGapDVal" class="dim-val">1.5</span> m</label>
+          <label><span data-en="Gap Depth:" data-ar="عمق الفتحة:">Gap Depth:</span> <span id="roomGapDVal" class="dim-val">1.5</span> <span data-en="m" data-ar="م">m</span></label>
           <input type="range" id="roomGapDInput" min="0.5" max="6" step="0.1" value="1.5" oninput="d3dUpdateDimLabel('roomGapDInput','roomGapDVal'); drawFloorPlan();">
         </div>
 
         <div class="panel-nav">
           <span></span>
-          <button class="btn-next" onclick="d3dNext()">Next <svg class="icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></button>
+          <button class="btn-next" onclick="d3dNext()"><span data-en="Next" data-ar="التالي">Next</span> <svg class="icon-svg rtl-flip" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></button>
         </div>
       </div>
 
       <!-- STEP 2: WINDOWS & DOORS -->
       <div class="panel" id="d3dPanel2">
-        <div class="panel-title">Windows &amp; Doors</div>
-        <div class="panel-sub">Tap a wall below to mark a window or door, then pick a style for each.</div>
+        <div class="panel-title" data-en="Windows &amp; Doors" data-ar="النوافذ والأبواب">Windows &amp; Doors</div>
+        <div class="panel-sub" data-en="Tap a wall below to mark a window or door, then pick a style for each." data-ar="اضغط على أحد الجدران بالأسفل لتحديد نافذة أو باب، ثم اختر شكلاً لكل منهما.">Tap a wall below to mark a window or door, then pick a style for each.</div>
 
         <div class="floorplan-wrap">
-          <div class="floorplan-title">Room Floor Plan</div>
-          <div class="floorplan-sub">Tap a wall below to mark where a window or door is</div>
+          <div class="floorplan-title" data-en="Room Floor Plan" data-ar="مخطط الغرفة">Room Floor Plan</div>
+          <div class="floorplan-sub" data-en="Tap a wall below to mark where a window or door is" data-ar="اضغط على أحد الجدران بالأسفل لتحديد مكان النافذة أو الباب">Tap a wall below to mark where a window or door is</div>
           <canvas id="floorplanCanvas" width="600" height="400" onclick="floorplanClick(event)"></canvas>
           <div class="floorplan-tools">
-            <button type="button" class="fp-tool-btn active" id="fpToolWindow" onclick="setFpTool('window')">Window</button>
-            <button type="button" class="fp-tool-btn" id="fpToolDoor" onclick="setFpTool('door')">Door</button>
-            <button type="button" class="fp-tool-btn" id="fpToolErase" onclick="setFpTool('erase')">Remove</button>
+            <button type="button" class="fp-tool-btn active" id="fpToolWindow" onclick="setFpTool('window')" data-en="Window" data-ar="نافذة">Window</button>
+            <button type="button" class="fp-tool-btn" id="fpToolDoor" onclick="setFpTool('door')" data-en="Door" data-ar="باب">Door</button>
+            <button type="button" class="fp-tool-btn" id="fpToolErase" onclick="setFpTool('erase')" data-en="Remove" data-ar="حذف">Remove</button>
           </div>
-          <div class="floorplan-hint">Click a wall edge to place, or switch to Remove and click a marker</div>
+          <div class="floorplan-hint" data-en="Click a wall edge to place, or switch to Remove and click a marker" data-ar="اضغط على حافة الجدار للإضافة، أو اختر «حذف» ثم اضغط على العلامة">Click a wall edge to place, or switch to Remove and click a marker</div>
         </div>
 
         <div class="form-group" style="margin-top:20px;">
-          <label>Door Style (optional)</label>
+          <label data-en="Door Style (optional)" data-ar="شكل الباب (اختياري)">Door Style (optional)</label>
           <div class="chips" id="d3dDoorStyleChips">
-            <div class="chip d3d-icon-chip" data-opening="door:Classic Panel" onclick="selectColor(this)">Classic Panel</div>
-            <div class="chip d3d-icon-chip" data-opening="door:Modern Flush" onclick="selectColor(this)">Modern Flush</div>
-            <div class="chip d3d-icon-chip" data-opening="door:Glass Panel" onclick="selectColor(this)">Glass Panel</div>
-            <div class="chip d3d-icon-chip" data-opening="door:Sliding" onclick="selectColor(this)">Sliding</div>
-            <div class="chip d3d-icon-chip" data-opening="door:French Doors" onclick="selectColor(this)">French Doors</div>
-            <div class="chip d3d-icon-chip" data-opening="door:Barn Door" onclick="selectColor(this)">Barn Door</div>
+            <div class="chip d3d-icon-chip" data-opening="door:Classic Panel" onclick="selectColor(this)" data-en="Classic Panel" data-ar="كلاسيكي بألواح">Classic Panel</div>
+            <div class="chip d3d-icon-chip" data-opening="door:Modern Flush" onclick="selectColor(this)" data-en="Modern Flush" data-ar="مودرن مسطح">Modern Flush</div>
+            <div class="chip d3d-icon-chip" data-opening="door:Glass Panel" onclick="selectColor(this)" data-en="Glass Panel" data-ar="زجاجي">Glass Panel</div>
+            <div class="chip d3d-icon-chip" data-opening="door:Sliding" onclick="selectColor(this)" data-en="Sliding" data-ar="سحّاب">Sliding</div>
+            <div class="chip d3d-icon-chip" data-opening="door:French Doors" onclick="selectColor(this)" data-en="French Doors" data-ar="أبواب فرنسية">French Doors</div>
+            <div class="chip d3d-icon-chip" data-opening="door:Barn Door" onclick="selectColor(this)" data-en="Barn Door" data-ar="باب حظيرة">Barn Door</div>
           </div>
         </div>
         <div class="form-group">
-          <label>Window Style (optional)</label>
+          <label data-en="Window Style (optional)" data-ar="شكل النافذة (اختياري)">Window Style (optional)</label>
           <div class="chips" id="d3dWindowStyleChips">
-            <div class="chip d3d-icon-chip" data-opening="window:Classic Grid" onclick="selectColor(this)">Classic Grid</div>
-            <div class="chip d3d-icon-chip" data-opening="window:Modern Large Pane" onclick="selectColor(this)">Modern Large Pane</div>
-            <div class="chip d3d-icon-chip" data-opening="window:Arched" onclick="selectColor(this)">Arched</div>
-            <div class="chip d3d-icon-chip" data-opening="window:Sliding/French" onclick="selectColor(this)">Sliding/French</div>
-            <div class="chip d3d-icon-chip" data-opening="window:Casement" onclick="selectColor(this)">Casement</div>
-            <div class="chip d3d-icon-chip" data-opening="window:Round" onclick="selectColor(this)">Round</div>
+            <div class="chip d3d-icon-chip" data-opening="window:Classic Grid" onclick="selectColor(this)" data-en="Classic Grid" data-ar="كلاسيكي بقضبان">Classic Grid</div>
+            <div class="chip d3d-icon-chip" data-opening="window:Modern Large Pane" onclick="selectColor(this)" data-en="Modern Large Pane" data-ar="مودرن زجاج كبير">Modern Large Pane</div>
+            <div class="chip d3d-icon-chip" data-opening="window:Arched" onclick="selectColor(this)" data-en="Arched" data-ar="مقوّس">Arched</div>
+            <div class="chip d3d-icon-chip" data-opening="window:Sliding/French" onclick="selectColor(this)" data-en="Sliding/French" data-ar="سحّاب/فرنسي">Sliding/French</div>
+            <div class="chip d3d-icon-chip" data-opening="window:Casement" onclick="selectColor(this)" data-en="Casement" data-ar="مفصلي">Casement</div>
+            <div class="chip d3d-icon-chip" data-opening="window:Round" onclick="selectColor(this)" data-en="Round" data-ar="دائري">Round</div>
           </div>
         </div>
 
         <div class="panel-nav">
-          <button class="btn-prev" onclick="d3dPrev()">Back</button>
-          <button class="btn-next" onclick="d3dNext()">Next <svg class="icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></button>
+          <button class="btn-prev" onclick="d3dPrev()" data-en="Back" data-ar="رجوع">Back</button>
+          <button class="btn-next" onclick="d3dNext()"><span data-en="Next" data-ar="التالي">Next</span> <svg class="icon-svg rtl-flip" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></button>
         </div>
       </div>
 
       <!-- STEP 3: FINISHES -->
       <div class="panel" id="d3dPanel3">
-        <div class="panel-title">Finishes</div>
-        <div class="panel-sub">Wall and floor finishes, plus the overall look of whatever furniture and switches you place yourself next.</div>
+        <div class="panel-title" data-en="Finishes" data-ar="التشطيبات">Finishes</div>
+        <div class="panel-sub" data-en="Wall and floor finishes, plus the overall look of whatever furniture and switches you place yourself next." data-ar="تشطيبات الحائط والأرضية، بالإضافة إلى المظهر العام لأي أثاث ومفاتيح ستضيفها بنفسك بعد ذلك.">Wall and floor finishes, plus the overall look of whatever furniture and switches you place yourself next.</div>
 
         <div class="form-group">
-          <label>Wall Color</label>
+          <label data-en="Wall Color" data-ar="لون الحائط">Wall Color</label>
           <div class="chips" id="d3dColorChips">
-            <div class="chip d3d-icon-chip" data-icon-key="swatchNeutral" onclick="selectColor(this)">Neutral/Gray</div>
-            <div class="chip d3d-icon-chip" data-icon-key="swatchWarm" onclick="selectColor(this)">Warm/Wood</div>
-            <div class="chip d3d-icon-chip" data-icon-key="swatchCool" onclick="selectColor(this)">Cool/Blue</div>
-            <div class="chip d3d-icon-chip" data-icon-key="swatchPink" onclick="selectColor(this)">Pink/Soft</div>
-            <div class="chip d3d-icon-chip" data-icon-key="swatchGreen" onclick="selectColor(this)">Green/Natural</div>
-            <div class="chip d3d-icon-chip" data-icon-key="swatchBlackGold" onclick="selectColor(this)">Black/Gold</div>
-            <div class="chip d3d-icon-chip" data-icon-key="swatchWhite" onclick="selectColor(this)">Pure White</div>
-            <div class="chip d3d-icon-chip" data-icon-key="swatchNavy" onclick="selectColor(this)">Navy Blue</div>
-            <div class="chip d3d-icon-chip" data-icon-key="swatchTerracotta" onclick="selectColor(this)">Terracotta</div>
-            <div class="chip d3d-icon-chip" data-icon-key="swatchSage" onclick="selectColor(this)">Sage</div>
-            <div class="chip d3d-icon-chip" data-icon-key="swatchCharcoal" onclick="selectColor(this)">Charcoal</div>
-            <div class="chip d3d-icon-chip" data-icon-key="swatchMustard" onclick="selectColor(this)">Mustard</div>
-            <div class="chip d3d-icon-chip" data-icon-key="swatchPurple" onclick="selectColor(this)">Purple</div>
+            <div class="chip d3d-icon-chip" data-icon-key="swatchNeutral" onclick="selectColor(this)" data-en="Neutral/Gray" data-ar="رمادي/حيادي">Neutral/Gray</div>
+            <div class="chip d3d-icon-chip" data-icon-key="swatchWarm" onclick="selectColor(this)" data-en="Warm/Wood" data-ar="خشبي/دافئ">Warm/Wood</div>
+            <div class="chip d3d-icon-chip" data-icon-key="swatchCool" onclick="selectColor(this)" data-en="Cool/Blue" data-ar="أزرق بارد">Cool/Blue</div>
+            <div class="chip d3d-icon-chip" data-icon-key="swatchPink" onclick="selectColor(this)" data-en="Pink/Soft" data-ar="وردي ناعم">Pink/Soft</div>
+            <div class="chip d3d-icon-chip" data-icon-key="swatchGreen" onclick="selectColor(this)" data-en="Green/Natural" data-ar="أخضر طبيعي">Green/Natural</div>
+            <div class="chip d3d-icon-chip" data-icon-key="swatchBlackGold" onclick="selectColor(this)" data-en="Black/Gold" data-ar="أسود/ذهبي">Black/Gold</div>
+            <div class="chip d3d-icon-chip" data-icon-key="swatchWhite" onclick="selectColor(this)" data-en="Pure White" data-ar="أبيض نقي">Pure White</div>
+            <div class="chip d3d-icon-chip" data-icon-key="swatchNavy" onclick="selectColor(this)" data-en="Navy Blue" data-ar="أزرق كحلي">Navy Blue</div>
+            <div class="chip d3d-icon-chip" data-icon-key="swatchTerracotta" onclick="selectColor(this)" data-en="Terracotta" data-ar="طابوقي">Terracotta</div>
+            <div class="chip d3d-icon-chip" data-icon-key="swatchSage" onclick="selectColor(this)" data-en="Sage" data-ar="أخضر مريمية">Sage</div>
+            <div class="chip d3d-icon-chip" data-icon-key="swatchCharcoal" onclick="selectColor(this)" data-en="Charcoal" data-ar="فحمي">Charcoal</div>
+            <div class="chip d3d-icon-chip" data-icon-key="swatchMustard" onclick="selectColor(this)" data-en="Mustard" data-ar="خردلي">Mustard</div>
+            <div class="chip d3d-icon-chip" data-icon-key="swatchPurple" onclick="selectColor(this)" data-en="Purple" data-ar="بنفسجي">Purple</div>
           </div>
         </div>
         <div class="form-group">
-          <label>Flooring Material</label>
+          <label data-en="Flooring Material" data-ar="مادة الأرضية">Flooring Material</label>
           <div class="chips" id="d3dFloorChips">
-            <div class="chip" onclick="selectColor(this)">Wood/Parquet</div>
-            <div class="chip" onclick="selectColor(this)">Marble</div>
-            <div class="chip" onclick="selectColor(this)">Tile/Ceramic</div>
-            <div class="chip" onclick="selectColor(this)">Concrete</div>
-            <div class="chip" onclick="selectColor(this)">Carpet</div>
+            <div class="chip" onclick="selectColor(this)" data-en="Wood/Parquet" data-ar="خشب/باركيه">Wood/Parquet</div>
+            <div class="chip" onclick="selectColor(this)" data-en="Marble" data-ar="مرمر">Marble</div>
+            <div class="chip" onclick="selectColor(this)" data-en="Tile/Ceramic" data-ar="بلاط/سيراميك">Tile/Ceramic</div>
+            <div class="chip" onclick="selectColor(this)" data-en="Concrete" data-ar="خرسانة">Concrete</div>
+            <div class="chip" onclick="selectColor(this)" data-en="Carpet" data-ar="سجاد">Carpet</div>
           </div>
         </div>
         <div class="form-group">
-          <label>Furniture Color (optional)</label>
+          <label data-en="Furniture Color (optional)" data-ar="لون الأثاث (اختياري)">Furniture Color (optional)</label>
           <div class="chips" id="d3dFurnitureColorChips">
-            <div class="chip d3d-icon-chip" data-icon-key="swatchNeutral" onclick="selectColor(this)">Neutral/Gray</div>
-            <div class="chip d3d-icon-chip" data-icon-key="swatchWarm" onclick="selectColor(this)">Warm/Wood</div>
-            <div class="chip d3d-icon-chip" data-icon-key="swatchCool" onclick="selectColor(this)">Cool/Blue</div>
-            <div class="chip d3d-icon-chip" data-icon-key="swatchPink" onclick="selectColor(this)">Pink/Soft</div>
-            <div class="chip d3d-icon-chip" data-icon-key="swatchGreen" onclick="selectColor(this)">Green/Natural</div>
-            <div class="chip d3d-icon-chip" data-icon-key="swatchBlackGold" onclick="selectColor(this)">Black/Gold</div>
-            <div class="chip d3d-icon-chip" data-icon-key="swatchWhite" onclick="selectColor(this)">Pure White</div>
-            <div class="chip d3d-icon-chip" data-icon-key="swatchNavy" onclick="selectColor(this)">Navy Blue</div>
-            <div class="chip d3d-icon-chip" data-icon-key="swatchTerracotta" onclick="selectColor(this)">Terracotta</div>
-            <div class="chip d3d-icon-chip" data-icon-key="swatchSage" onclick="selectColor(this)">Sage</div>
-            <div class="chip d3d-icon-chip" data-icon-key="swatchCharcoal" onclick="selectColor(this)">Charcoal</div>
-            <div class="chip d3d-icon-chip" data-icon-key="swatchMustard" onclick="selectColor(this)">Mustard</div>
-            <div class="chip d3d-icon-chip" data-icon-key="swatchPurple" onclick="selectColor(this)">Purple</div>
+            <div class="chip d3d-icon-chip" data-icon-key="swatchNeutral" onclick="selectColor(this)" data-en="Neutral/Gray" data-ar="رمادي/حيادي">Neutral/Gray</div>
+            <div class="chip d3d-icon-chip" data-icon-key="swatchWarm" onclick="selectColor(this)" data-en="Warm/Wood" data-ar="خشبي/دافئ">Warm/Wood</div>
+            <div class="chip d3d-icon-chip" data-icon-key="swatchCool" onclick="selectColor(this)" data-en="Cool/Blue" data-ar="أزرق بارد">Cool/Blue</div>
+            <div class="chip d3d-icon-chip" data-icon-key="swatchPink" onclick="selectColor(this)" data-en="Pink/Soft" data-ar="وردي ناعم">Pink/Soft</div>
+            <div class="chip d3d-icon-chip" data-icon-key="swatchGreen" onclick="selectColor(this)" data-en="Green/Natural" data-ar="أخضر طبيعي">Green/Natural</div>
+            <div class="chip d3d-icon-chip" data-icon-key="swatchBlackGold" onclick="selectColor(this)" data-en="Black/Gold" data-ar="أسود/ذهبي">Black/Gold</div>
+            <div class="chip d3d-icon-chip" data-icon-key="swatchWhite" onclick="selectColor(this)" data-en="Pure White" data-ar="أبيض نقي">Pure White</div>
+            <div class="chip d3d-icon-chip" data-icon-key="swatchNavy" onclick="selectColor(this)" data-en="Navy Blue" data-ar="أزرق كحلي">Navy Blue</div>
+            <div class="chip d3d-icon-chip" data-icon-key="swatchTerracotta" onclick="selectColor(this)" data-en="Terracotta" data-ar="طابوقي">Terracotta</div>
+            <div class="chip d3d-icon-chip" data-icon-key="swatchSage" onclick="selectColor(this)" data-en="Sage" data-ar="أخضر مريمية">Sage</div>
+            <div class="chip d3d-icon-chip" data-icon-key="swatchCharcoal" onclick="selectColor(this)" data-en="Charcoal" data-ar="فحمي">Charcoal</div>
+            <div class="chip d3d-icon-chip" data-icon-key="swatchMustard" onclick="selectColor(this)" data-en="Mustard" data-ar="خردلي">Mustard</div>
+            <div class="chip d3d-icon-chip" data-icon-key="swatchPurple" onclick="selectColor(this)" data-en="Purple" data-ar="بنفسجي">Purple</div>
           </div>
         </div>
         <div class="form-group">
-          <label>Furniture Shape (optional)</label>
+          <label data-en="Furniture Shape (optional)" data-ar="شكل الأثاث (اختياري)">Furniture Shape (optional)</label>
           <div class="chips" id="d3dFurnitureShapeChips">
-            <div class="chip" onclick="selectColor(this)">Sharp &amp; Angular</div>
-            <div class="chip" onclick="selectColor(this)">Curved &amp; Rounded</div>
-            <div class="chip" onclick="selectColor(this)">Classic &amp; Ornate</div>
+            <div class="chip" onclick="selectColor(this)" data-en="Sharp &amp; Angular" data-ar="حاد وزاوي">Sharp &amp; Angular</div>
+            <div class="chip" onclick="selectColor(this)" data-en="Curved &amp; Rounded" data-ar="منحني ومدوّر">Curved &amp; Rounded</div>
+            <div class="chip" onclick="selectColor(this)" data-en="Classic &amp; Ornate" data-ar="كلاسيكي ومزخرف">Classic &amp; Ornate</div>
           </div>
         </div>
         <div class="form-group">
-          <label>Switch &amp; Outlet Style (optional)</label>
+          <label data-en="Switch &amp; Outlet Style (optional)" data-ar="شكل المفاتيح والمقابس (اختياري)">Switch &amp; Outlet Style (optional)</label>
           <div class="chips" id="d3dSwitchStyleChips">
-            <div class="chip" onclick="selectColor(this)">White Flush</div>
-            <div class="chip" onclick="selectColor(this)">Black Modern</div>
-            <div class="chip" onclick="selectColor(this)">Brass/Gold</div>
-            <div class="chip" onclick="selectColor(this)">Classic Toggle</div>
+            <div class="chip" onclick="selectColor(this)" data-en="White Flush" data-ar="أبيض مسطح">White Flush</div>
+            <div class="chip" onclick="selectColor(this)" data-en="Black Modern" data-ar="أسود مودرن">Black Modern</div>
+            <div class="chip" onclick="selectColor(this)" data-en="Brass/Gold" data-ar="نحاسي/ذهبي">Brass/Gold</div>
+            <div class="chip" onclick="selectColor(this)" data-en="Classic Toggle" data-ar="كلاسيكي تقليدي">Classic Toggle</div>
           </div>
         </div>
         <div class="form-group">
-          <label>Curtains (optional)</label>
+          <label data-en="Curtains (optional)" data-ar="الستائر (اختياري)">Curtains (optional)</label>
           <div class="chips" id="d3dCurtainChips">
-            <div class="chip" onclick="selectColor(this)">None</div>
-            <div class="chip" onclick="selectColor(this)">Sheer Light</div>
-            <div class="chip" onclick="selectColor(this)">Classic Drapes</div>
-            <div class="chip" onclick="selectColor(this)">Blackout Panels</div>
-            <div class="chip" onclick="selectColor(this)">Roman Shades</div>
+            <div class="chip" onclick="selectColor(this)" data-en="None" data-ar="بدون">None</div>
+            <div class="chip" onclick="selectColor(this)" data-en="Sheer Light" data-ar="شفافة خفيفة">Sheer Light</div>
+            <div class="chip" onclick="selectColor(this)" data-en="Classic Drapes" data-ar="ستائر كلاسيكية">Classic Drapes</div>
+            <div class="chip" onclick="selectColor(this)" data-en="Blackout Panels" data-ar="عاتمة">Blackout Panels</div>
+            <div class="chip" onclick="selectColor(this)" data-en="Roman Shades" data-ar="رومانية">Roman Shades</div>
           </div>
         </div>
         <div class="form-group">
-          <label>Lighting Fixture (optional)</label>
+          <label data-en="Lighting Fixture (optional)" data-ar="تجهيزة الإضاءة (اختياري)">Lighting Fixture (optional)</label>
           <div class="chips" id="d3dLightingChips">
-            <div class="chip" onclick="selectColor(this)">Pendant</div>
-            <div class="chip" onclick="selectColor(this)">Flush Mount</div>
-            <div class="chip" onclick="selectColor(this)">Chandelier</div>
-            <div class="chip" onclick="selectColor(this)">Recessed Spotlights</div>
+            <div class="chip" onclick="selectColor(this)" data-en="Pendant" data-ar="معلقة">Pendant</div>
+            <div class="chip" onclick="selectColor(this)" data-en="Flush Mount" data-ar="ملاصقة للسقف">Flush Mount</div>
+            <div class="chip" onclick="selectColor(this)" data-en="Chandelier" data-ar="ثريا">Chandelier</div>
+            <div class="chip" onclick="selectColor(this)" data-en="Recessed Spotlights" data-ar="سبوت مدمج">Recessed Spotlights</div>
           </div>
         </div>
 
         <div class="panel-nav">
-          <button class="btn-prev" onclick="d3dPrev()">Back</button>
-          <button class="btn-next" onclick="d3dBuildRoom()">Build Room <svg class="icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 7.5 12 3 3 7.5l9 4.5 9-4.5z"/><path d="M3 7.5v9l9 4.5 9-4.5v-9"/></svg></button>
+          <button class="btn-prev" onclick="d3dPrev()" data-en="Back" data-ar="رجوع">Back</button>
+          <button class="btn-next" onclick="d3dBuildRoom()"><span data-en="Build Room" data-ar="بناء الغرفة">Build Room</span> <svg class="icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 7.5 12 3 3 7.5l9 4.5 9-4.5z"/><path d="M3 7.5v9l9 4.5 9-4.5v-9"/></svg></button>
         </div>
       </div>
 
@@ -485,23 +493,23 @@
 
   <div class="result-area" id="d3dResultArea">
     <div class="result-card">
-      <div class="result-title">Your 3D Room</div>
-      <div class="d3d-palette-hint" id="d3dPaletteHint">Pick a category, then a piece, then click inside the room to place it.</div>
+      <div class="result-title" data-en="Your 3D Room" data-ar="غرفتك ثلاثية الأبعاد">Your 3D Room</div>
+      <div class="d3d-palette-hint" id="d3dPaletteHint" data-en="Pick a category, then a piece, then click inside the room to place it." data-ar="اختر فئة، ثم قطعة، ثم اضغط داخل الغرفة لوضعها.">Pick a category, then a piece, then click inside the room to place it.</div>
       <div class="d3d-category-tabs" id="d3dCategoryTabs"></div>
       <div class="d3d-card-grid" id="d3dStampRow"></div>
       <div class="d3d-action-row">
-        <button type="button" class="fp-tool-btn" id="d3dSelectMoveBtn" onclick="d3dSetTool('select')">Select / Move</button>
-        <button type="button" class="fp-tool-btn" onclick="d3dRotateSelected(-15)">⟲ Rotate</button>
-        <button type="button" class="fp-tool-btn" onclick="d3dRotateSelected(15)">Rotate ⟳</button>
-        <button type="button" class="fp-tool-btn" onclick="d3dDeleteSelected()">Delete Selected</button>
-        <button type="button" class="fp-tool-btn" onclick="d3dClearPlaced()">Clear All</button>
-        <button type="button" class="fp-tool-btn" id="d3dWalkToggleBtn" onclick="d3dEnterWalkMode()">🚶 Walk Mode</button>
-        <button type="button" class="fp-tool-btn" onclick="d3dSaveImage()">📷 Save Image</button>
+        <button type="button" class="fp-tool-btn" id="d3dSelectMoveBtn" onclick="d3dSetTool('select')" data-en="Select / Move" data-ar="تحديد / تحريك">Select / Move</button>
+        <button type="button" class="fp-tool-btn" onclick="d3dRotateSelected(-15)" data-en="⟲ Rotate" data-ar="⟲ تدوير">⟲ Rotate</button>
+        <button type="button" class="fp-tool-btn" onclick="d3dRotateSelected(15)" data-en="Rotate ⟳" data-ar="تدوير ⟳">Rotate ⟳</button>
+        <button type="button" class="fp-tool-btn" onclick="d3dDeleteSelected()" data-en="Delete Selected" data-ar="حذف المحدد">Delete Selected</button>
+        <button type="button" class="fp-tool-btn" onclick="d3dClearPlaced()" data-en="Clear All" data-ar="حذف الكل">Clear All</button>
+        <button type="button" class="fp-tool-btn" id="d3dWalkToggleBtn" onclick="d3dEnterWalkMode()" data-en="🚶 Walk Mode" data-ar="🚶 وضع المشي">🚶 Walk Mode</button>
+        <button type="button" class="fp-tool-btn" onclick="d3dSaveImage()" data-en="📷 Save Image" data-ar="📷 حفظ الصورة">📷 Save Image</button>
       </div>
       <div class="d3d-viewport-wrap">
         <div id="d3dResultWrap"></div>
         <div class="d3d-walk-overlay" id="d3dWalkOverlay" style="display:none;">
-          <button type="button" class="d3d-walk-exit-btn" onclick="d3dExitWalkMode()">✕ Exit Walk</button>
+          <button type="button" class="d3d-walk-exit-btn" onclick="d3dExitWalkMode()" data-en="✕ Exit Walk" data-ar="✕ خروج من المشي">✕ Exit Walk</button>
           <div class="d3d-walk-dpad">
             <button type="button" class="d3d-walk-dpad-btn d3d-walk-dpad-up" data-dir="forward">▲</button>
             <button type="button" class="d3d-walk-dpad-btn d3d-walk-dpad-left" data-dir="left">◀</button>
@@ -510,7 +518,7 @@
           </div>
         </div>
       </div>
-      <button type="button" class="btn-edit-again" onclick="d3dEditAgain()">Edit Selections</button>
+      <button type="button" class="btn-edit-again" onclick="d3dEditAgain()" data-en="Edit Selections" data-ar="تعديل الاختيارات">Edit Selections</button>
     </div>
   </div>
 </div>
@@ -608,9 +616,95 @@
     parent.querySelectorAll('.chip').forEach(function(c) { c.classList.remove('selected'); });
     el.classList.add('selected');
   }
+  // data-en is the chip's stable English value — translating a chip's
+  // visible text for Arabic must never change what building the room
+  // actually reads, since every color/style lookup downstream (fp3dColorHex,
+  // door/window style matching, etc.) keys off this exact English string.
   function d3dSelectedText(containerId) {
     var el = document.querySelector('#' + containerId + ' .chip.selected');
-    return el ? el.textContent.trim() : '';
+    return el ? (el.getAttribute('data-en') || el.textContent.trim()) : '';
+  }
+
+  // ═══════════════════════════════════════════════
+  // LANGUAGE (EN/AR) — mirrors the data-en/data-ar + setLang pattern used
+  // on the rest of the site (lamsa-bilingual.html, lamsa-auth.html), scoped
+  // down to just the two languages this page needs. Persisted so the choice
+  // made on the main app page carries over here, and vice versa.
+  // ═══════════════════════════════════════════════
+  var D3D_LANG_KEY = 'lamsa_lang';
+  var currentLang = 'en';
+
+  // Everything rendered from JS rather than static markup (furniture/category
+  // names, dynamic hints, popup titles) — static text uses data-en/data-ar
+  // on the element itself instead, same as the rest of the site.
+  var D3D_AR = {
+    'Bedroom': 'غرفة نوم', 'Living': 'المعيشة', 'Dining': 'طعام', 'Office': 'مكتب',
+    'Kitchen': 'مطبخ', 'Bathroom': 'حمام', 'Kids': 'أطفال', 'Electrical': 'كهرباء',
+    'Bed': 'سرير', 'Small Bed': 'سرير صغير', 'Large Bed': 'سرير كبير', 'Canopy Bed': 'سرير بسقيفة',
+    'Platform Bed': 'سرير منصة', 'Sleigh Bed': 'سرير زلاجة', 'Bunk Bed': 'سرير طابقين',
+    'Nightstand': 'طاولة جانبية', 'Wardrobe': 'خزانة ملابس', 'Dresser': 'خزانة أدراج',
+    'Ottoman': 'كرسي وسادة', 'Bench': 'مقعد طويل', 'Wingback Chair': 'كرسي بأذنين',
+    'Sofa': 'أريكة', 'L-Shaped Sofa': 'أريكة L', 'Curved Sofa': 'أريكة منحنية', 'Chesterfield Sofa': 'أريكة تشيسترفيلد',
+    'Armchair': 'كرسي بذراعين', 'Recliner': 'كرسي استرخاء', 'Coffee Table': 'طاولة قهوة',
+    'Round Coffee Table': 'طاولة قهوة دائرية', 'Console Table': 'طاولة كونسول', 'Side Table': 'طاولة جانبية',
+    'TV Unit': 'وحدة تلفاز', 'Bookshelf': 'مكتبة', 'Floor Lamp': 'لمبة أرضية', 'Rug': 'سجادة',
+    'Dining Table': 'طاولة طعام', 'Round Dining Table': 'طاولة طعام دائرية', 'Oval Table': 'طاولة بيضاوية',
+    'Chair': 'كرسي', 'Dining Chair': 'كرسي طعام', 'Bar Stool': 'كرسي بار', 'Sideboard': 'خزانة تقديم',
+    'Desk': 'مكتب', 'L-Shaped Desk': 'مكتب L', 'Task Chair': 'كرسي مكتب', 'Cabinet': 'خزانة',
+    'Kitchen Island': 'جزيرة مطبخ', 'Sink': 'مغسلة', 'Stove': 'موقد', 'Microwave': 'مايكروويف',
+    'Pantry Cabinet': 'خزانة مؤن', 'Fridge': 'ثلاجة',
+    'Vanity': 'طاولة زينة', 'Mirror': 'مرآة', 'Bathtub': 'حوض استحمام', 'Shower': 'دش',
+    'Toilet': 'مرحاض', 'Shelf': 'رف', 'Towel Rail': 'حامل مناشف', 'Laundry Hamper': 'سلة غسيل',
+    'Rocking Chair': 'كرسي هزاز', 'Toy Shelf': 'رف ألعاب', 'Play Tent': 'خيمة لعب',
+    'Play Area': 'منطقة لعب', 'Toy Box': 'صندوق ألعاب', 'Switch': 'مفتاح كهرباء',
+    'Click a placed piece to select it, then rotate or delete it.': 'اضغط على قطعة موضوعة لتحديدها، ثم دوّرها أو احذفها.',
+    'Click a wall to place a switch there.': 'اضغط على الحائط لوضع مفتاح هناك.',
+    'Click inside the room to place a': 'اضغط داخل الغرفة لوضع',
+    'Pick a category, then a piece, then click inside the room to place it.': 'اختر فئة، ثم قطعة، ثم اضغط داخل الغرفة لوضعها.',
+    'Could not load the 3D viewer': 'تعذر تحميل العارض ثلاثي الأبعاد',
+    'My Room Design': 'تصميم غرفتي',
+    'e.g. 20': 'مثلاً 20'
+  };
+  function d3dTr(enText) { return (currentLang === 'ar' && D3D_AR[enText]) ? D3D_AR[enText] : enText; }
+
+  // Chips get a real rendered icon/thumbnail prepended as a permanent child
+  // span by d3dInjectChipIcons/d3dInjectOpeningThumbs (see below) — a plain
+  // `el.textContent = ...` would wipe that child out, so translation only
+  // ever touches the chip's own trailing text node.
+  function d3dSetChipText(el, text) {
+    for (var i = el.childNodes.length - 1; i >= 0; i--) {
+      if (el.childNodes[i].nodeType === 3) { el.childNodes[i].textContent = text; return; }
+    }
+    el.appendChild(document.createTextNode(text));
+  }
+
+  function d3dToggleLang() { d3dSetLang(currentLang === 'ar' ? 'en' : 'ar'); }
+
+  function d3dSetLang(lang) {
+    currentLang = lang;
+    try { localStorage.setItem(D3D_LANG_KEY, lang); } catch (e) {}
+    document.documentElement.setAttribute('lang', lang);
+    document.documentElement.setAttribute('dir', lang === 'ar' ? 'rtl' : 'ltr');
+    var btn = document.getElementById('d3dLangToggleBtn');
+    if (btn) btn.textContent = lang === 'ar' ? 'EN' : 'AR';
+
+    document.querySelectorAll('[data-en][data-ar]').forEach(function(el) {
+      var text = lang === 'ar' ? el.getAttribute('data-ar') : el.getAttribute('data-en');
+      if (el.querySelector('.d3d-chip-icon')) {
+        d3dSetChipText(el, text);
+      } else {
+        el.textContent = text;
+      }
+    });
+    document.querySelectorAll('[data-ph-en][data-ph-ar]').forEach(function(el) {
+      el.placeholder = lang === 'ar' ? el.getAttribute('data-ph-ar') : el.getAttribute('data-ph-en');
+    });
+
+    // Re-render everything built from JS (furniture catalog, category tabs,
+    // the palette hint) so their labels pick up the new language too.
+    if (typeof d3dBuildPalette === 'function') d3dBuildPalette();
+    var hint = document.getElementById('d3dPaletteHint');
+    if (hint && typeof d3dTool !== 'undefined' && !d3dTool) hint.textContent = d3dTr('Pick a category, then a piece, then click inside the room to place it.');
   }
 
   // ═══════════════════════════════════════════════
@@ -2306,7 +2400,7 @@
   // below can raycast against them.
   function d3dBuildRoomShell(container, opts) {
     if (typeof THREE === 'undefined') {
-      container.textContent = 'Could not load the 3D viewer';
+      container.textContent = d3dTr('Could not load the 3D viewer');
       return;
     }
     container.innerHTML = '';
@@ -2819,7 +2913,7 @@
       if (item.key === d3dTool) card.classList.add('active');
       var thumb = d3dRenderThumb(item.key);
       var iconHtml = thumb ? '<img src="' + thumb + '" alt="">' : (window.icon ? window.icon(item.icon) : '');
-      card.innerHTML = '<div class="d3d-card-icon">' + iconHtml + '</div><div class="d3d-card-label">' + (item.label || item.key) + '</div>';
+      card.innerHTML = '<div class="d3d-card-icon">' + iconHtml + '</div><div class="d3d-card-label">' + d3dTr(item.label || item.key) + '</div>';
       card.onclick = function() { d3dSetTool(item.key); };
       row.appendChild(card);
     });
@@ -2842,7 +2936,7 @@
       tab.type = 'button';
       tab.className = 'd3d-category-tab';
       tab.setAttribute('data-key', cat.key);
-      tab.innerHTML = (window.icon ? window.icon(cat.icon) : '') + '<span>' + cat.label + '</span>';
+      tab.innerHTML = (window.icon ? window.icon(cat.icon) : '') + '<span>' + d3dTr(cat.label) + '</span>';
       tab.onclick = function() { d3dSetCategory(cat.key); };
       tabsRow.appendChild(tab);
     });
@@ -2858,10 +2952,10 @@
     if (selectBtn) selectBtn.classList.toggle('active', tool === 'select');
     var hint = document.getElementById('d3dPaletteHint');
     if (!hint) return;
-    if (tool === 'select') hint.textContent = 'Click a placed piece to select it, then rotate or delete it.';
-    else if (tool === 'switch') hint.textContent = 'Click a wall to place a switch there.';
-    else if (tool) hint.textContent = 'Click inside the room to place a ' + tool + '.';
-    else hint.textContent = 'Pick a category, then a piece, then click inside the room to place it.';
+    if (tool === 'select') hint.textContent = d3dTr('Click a placed piece to select it, then rotate or delete it.');
+    else if (tool === 'switch') hint.textContent = d3dTr('Click a wall to place a switch there.');
+    else if (tool) hint.textContent = d3dTr('Click inside the room to place a') + ' ' + d3dTr(tool) + '.';
+    else hint.textContent = d3dTr('Pick a category, then a piece, then click inside the room to place it.');
   }
 
   // Touch drags (phone/tablet) don't fire mousemove, so every handler below
@@ -3203,12 +3297,32 @@
     if (!d3dRenderer || !d3dScene || !d3dCamera) return;
     d3dRenderer.render(d3dScene, d3dCamera);
     var dataUrl = d3dRenderer.domElement.toDataURL('image/png');
-    var link = document.createElement('a');
-    link.href = dataUrl;
-    link.download = 'my-room-design.png';
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+    // iOS Safari ignores the <a download> attribute for data: URIs — the
+    // click just navigates to/renders the image instead of saving anything,
+    // which looks like the button doing nothing. There's no real "Downloads"
+    // folder on iOS anyway, so open the image full-page instead: the user
+    // can long-press it and pick Save Image, which is the normal way to
+    // save a web image on iOS.
+    var ua = navigator.userAgent || '';
+    var isIOS = /iPad|iPhone|iPod/.test(ua) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+    if (isIOS) {
+      var win = window.open();
+      if (win) {
+        win.document.write('<title>' + d3dTr('My Room Design') + '</title><body style="margin:0;background:#000"><img src="' + dataUrl + '" style="width:100%;display:block;"></body>');
+        win.document.close();
+      } else {
+        // Popup blocked — fall back to the normal download attempt below.
+        isIOS = false;
+      }
+    }
+    if (!isIOS) {
+      var link = document.createElement('a');
+      link.href = dataUrl;
+      link.download = 'my-room-design.png';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    }
   }
 
   // ═══════════════════════════════════════════════
@@ -3348,6 +3462,9 @@
     d3dInjectChipIcons();
     d3dInjectOpeningThumbs();
     d3dSetupWalkDpad();
+    var savedLang = 'en';
+    try { savedLang = localStorage.getItem(D3D_LANG_KEY) || 'en'; } catch (e) {}
+    d3dSetLang(savedLang);
   });
 </script>
 </body>
