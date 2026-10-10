@@ -382,6 +382,12 @@
             <div class="chip d3d-icon-chip" data-icon-key="swatchGreen" onclick="selectColor(this)">Green/Natural</div>
             <div class="chip d3d-icon-chip" data-icon-key="swatchBlackGold" onclick="selectColor(this)">Black/Gold</div>
             <div class="chip d3d-icon-chip" data-icon-key="swatchWhite" onclick="selectColor(this)">Pure White</div>
+            <div class="chip d3d-icon-chip" data-icon-key="swatchNavy" onclick="selectColor(this)">Navy Blue</div>
+            <div class="chip d3d-icon-chip" data-icon-key="swatchTerracotta" onclick="selectColor(this)">Terracotta</div>
+            <div class="chip d3d-icon-chip" data-icon-key="swatchSage" onclick="selectColor(this)">Sage</div>
+            <div class="chip d3d-icon-chip" data-icon-key="swatchCharcoal" onclick="selectColor(this)">Charcoal</div>
+            <div class="chip d3d-icon-chip" data-icon-key="swatchMustard" onclick="selectColor(this)">Mustard</div>
+            <div class="chip d3d-icon-chip" data-icon-key="swatchPurple" onclick="selectColor(this)">Purple</div>
           </div>
         </div>
         <div class="form-group">
@@ -404,6 +410,12 @@
             <div class="chip d3d-icon-chip" data-icon-key="swatchGreen" onclick="selectColor(this)">Green/Natural</div>
             <div class="chip d3d-icon-chip" data-icon-key="swatchBlackGold" onclick="selectColor(this)">Black/Gold</div>
             <div class="chip d3d-icon-chip" data-icon-key="swatchWhite" onclick="selectColor(this)">Pure White</div>
+            <div class="chip d3d-icon-chip" data-icon-key="swatchNavy" onclick="selectColor(this)">Navy Blue</div>
+            <div class="chip d3d-icon-chip" data-icon-key="swatchTerracotta" onclick="selectColor(this)">Terracotta</div>
+            <div class="chip d3d-icon-chip" data-icon-key="swatchSage" onclick="selectColor(this)">Sage</div>
+            <div class="chip d3d-icon-chip" data-icon-key="swatchCharcoal" onclick="selectColor(this)">Charcoal</div>
+            <div class="chip d3d-icon-chip" data-icon-key="swatchMustard" onclick="selectColor(this)">Mustard</div>
+            <div class="chip d3d-icon-chip" data-icon-key="swatchPurple" onclick="selectColor(this)">Purple</div>
           </div>
         </div>
         <div class="form-group">
@@ -1313,6 +1325,42 @@
     return g;
   }
 
+  function fp3dBuildMicrowave(w, d, h, color) {
+    var g = new THREE.Group();
+    var body = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), new THREE.MeshStandardMaterial({ color: 0xE8E4DA, metalness: 0.3, roughness: 0.4 }));
+    body.position.y = h / 2;
+    g.add(body);
+    var doorFace = new THREE.Mesh(new THREE.BoxGeometry(w * 0.6, h * 0.72, 0.01), new THREE.MeshStandardMaterial({ color: 0x2B2B2E, metalness: 0.3, roughness: 0.4 }));
+    doorFace.position.set(-w * 0.14, h / 2, d / 2 + 0.006);
+    g.add(doorFace);
+    var panel = new THREE.Mesh(new THREE.BoxGeometry(w * 0.2, h * 0.72, 0.01), new THREE.MeshStandardMaterial({ color: 0xD8D4CA, metalness: 0.2, roughness: 0.5 }));
+    panel.position.set(w * 0.33, h / 2, d / 2 + 0.006);
+    g.add(panel);
+    var handle = new THREE.Mesh(new THREE.BoxGeometry(0.015, h * 0.6, 0.02), new THREE.MeshStandardMaterial({ color: 0xC9C9C9, metalness: 0.7, roughness: 0.25 }));
+    handle.position.set(w * 0.17, h / 2, d / 2 + 0.02);
+    g.add(handle);
+    return g;
+  }
+
+  function fp3dBuildPlayTent(w, d, h, color) {
+    var g = new THREE.Group();
+    var r = Math.min(w, d) / 2;
+    var cone = new THREE.Mesh(new THREE.ConeGeometry(r, h, 16, 1, true), new THREE.MeshLambertMaterial({ color: color, side: THREE.DoubleSide }));
+    cone.position.y = h / 2;
+    g.add(cone);
+    var poleMat = new THREE.MeshStandardMaterial({ color: 0xC9A877, metalness: 0.1, roughness: 0.7 });
+    for (var i = 0; i < 4; i++) {
+      var ang = (i / 4) * Math.PI * 2 + Math.PI / 8;
+      var pole = new THREE.Mesh(new THREE.CylinderGeometry(0.015, 0.015, h * 1.08, 6), poleMat);
+      pole.position.set(Math.cos(ang) * r * 0.85, h * 0.52, Math.sin(ang) * r * 0.85);
+      g.add(pole);
+    }
+    var doorway = new THREE.Mesh(new THREE.PlaneGeometry(r * 0.6, h * 0.65), new THREE.MeshBasicMaterial({ color: 0x3A3A3C, side: THREE.DoubleSide }));
+    doorway.position.set(0, h * 0.32, r * 0.98);
+    g.add(doorway);
+    return g;
+  }
+
   function fp3dBuildOttoman(w, d, h, color) {
     var g = new THREE.Group();
     var body = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), new THREE.MeshLambertMaterial({ color: color }));
@@ -1664,7 +1712,9 @@
     { keys: ['bed'], w: 1.6, d: 2.0, h: 0.55, build: fp3dBuildBed },
     { keys: ['sofa', 'couch'], w: 2.0, d: 0.9, h: 0.8, build: fp3dBuildSofa },
     { keys: ['wardrobe', 'closet'], w: 1.2, d: 0.6, h: 2.0, build: fp3dBuildWardrobe },
+    { keys: ['toy shelf'], w: 0.8, d: 0.3, h: 0.9, build: fp3dBuildBookshelf },
     { keys: ['bookshelf', 'shelf'], w: 0.9, d: 0.35, h: 1.9, build: fp3dBuildBookshelf },
+    { keys: ['pantry cabinet', 'pantry'], w: 0.8, d: 0.5, h: 2.0, build: fp3dBuildCabinet },
     { keys: ['filing cabinet', 'cabinet', 'storage', 'sideboard'], w: 0.9, d: 0.45, h: 1.0, build: fp3dBuildCabinet },
     { keys: ['tv unit', 'tv stand', 'television'], w: 1.4, d: 0.4, h: 0.5, build: fp3dBuildTVUnit },
     { keys: ['l-shaped desk', 'l shaped desk'], w: 1.4, d: 1.3, h: 0.75, build: fp3dBuildLDesk },
@@ -1691,6 +1741,7 @@
     { keys: ['armchair'], w: 1.0, d: 0.9, h: 0.8, build: fp3dBuildSofa },
     { keys: ['floor lamp'], w: 0.3, d: 0.3, h: 1.5, build: fp3dBuildFloorLamp },
     { keys: ['stove', 'oven'], w: 0.6, d: 0.6, h: 0.85, build: fp3dBuildStove },
+    { keys: ['microwave'], w: 0.5, d: 0.4, h: 0.3, build: fp3dBuildMicrowave },
     { keys: ['bar stool'], w: 0.35, d: 0.35, h: 0.75, build: fp3dBuildBarStool },
     { keys: ['task chair'], w: 0.55, d: 0.55, h: 0.85, build: fp3dBuildTaskChair },
     { keys: ['dining chair'], w: 0.45, d: 0.45, h: 0.85, build: fp3dBuildDiningChair },
@@ -1701,6 +1752,7 @@
     { keys: ['toy box', 'toybox'], w: 0.6, d: 0.4, h: 0.4, build: fp3dBuildToyBox },
     { keys: ['fridge', 'refrigerator'], w: 0.75, d: 0.7, h: 1.8, build: fp3dBuildFridge },
     { keys: ['chair', 'stool'], w: 0.45, d: 0.45, h: 0.45, build: fp3dBuildChair },
+    { keys: ['play tent', 'tent'], w: 0.9, d: 0.9, h: 1.1, build: fp3dBuildPlayTent },
     { keys: ['play area'], w: 1.3, d: 1.3, h: 0.02, build: fp3dBuildMat }
   ];
   var FP3D_DEFAULT_DEF = { keys: [], w: 0.8, d: 0.5, h: 0.6, build: fp3dBuildBox };
@@ -2292,6 +2344,8 @@
       { key: 'Kitchen Island', icon: 'table' },
       { key: 'Sink', icon: 'sink' },
       { key: 'Stove', icon: 'cabinet' },
+      { key: 'Microwave', icon: 'cabinet' },
+      { key: 'Pantry Cabinet', icon: 'cabinet' },
       { key: 'Fridge', icon: 'cabinet' }
     ] },
     { key: 'bathroom', label: 'Bathroom', icon: 'bathtub', items: [
@@ -2301,11 +2355,14 @@
       { key: 'Shower', icon: 'shower' },
       { key: 'Toilet', icon: 'toilet' },
       { key: 'Shelf', icon: 'books' },
+      { key: 'Towel Rail', icon: 'books' },
       { key: 'Laundry Hamper', icon: 'cube' }
     ] },
     { key: 'kids', label: 'Kids', icon: 'teddy', items: [
       { key: 'Bunk Bed', icon: 'bed' },
       { key: 'Rocking Chair', icon: 'chair' },
+      { key: 'Toy Shelf', icon: 'books' },
+      { key: 'Play Tent', icon: 'teddy' },
       { key: 'Play Area', icon: 'teddy' },
       { key: 'Toy Box', icon: 'cube' },
       { key: 'Rug', icon: 'cube' }

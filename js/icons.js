@@ -69,7 +69,13 @@
     swatchPink: '<svg class="icon-svg" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><circle cx="12" cy="12" r="8.5" fill="#e8b4c0" stroke="#dfe2e6" stroke-width="1.2"/></svg>',
     swatchGreen: '<svg class="icon-svg" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><circle cx="12" cy="12" r="8.5" fill="#4a9c73" stroke="#dfe2e6" stroke-width="1.2"/></svg>',
     swatchBlackGold: '<svg class="icon-svg" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><circle cx="12" cy="12" r="8.5" fill="#161513" stroke="#a3abb5" stroke-width="1.4"/></svg>',
-    swatchWhite: '<svg class="icon-svg" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><circle cx="12" cy="12" r="8.5" fill="#ffffff" stroke="#c3c8ce" stroke-width="1.4"/></svg>'
+    swatchWhite: '<svg class="icon-svg" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><circle cx="12" cy="12" r="8.5" fill="#ffffff" stroke="#c3c8ce" stroke-width="1.4"/></svg>',
+    swatchNavy: '<svg class="icon-svg" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><circle cx="12" cy="12" r="8.5" fill="#2e4057" stroke="#dfe2e6" stroke-width="1.2"/></svg>',
+    swatchTerracotta: '<svg class="icon-svg" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><circle cx="12" cy="12" r="8.5" fill="#c57a58" stroke="#dfe2e6" stroke-width="1.2"/></svg>',
+    swatchSage: '<svg class="icon-svg" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><circle cx="12" cy="12" r="8.5" fill="#afc3a6" stroke="#dfe2e6" stroke-width="1.2"/></svg>',
+    swatchCharcoal: '<svg class="icon-svg" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><circle cx="12" cy="12" r="8.5" fill="#4a4d52" stroke="#dfe2e6" stroke-width="1.2"/></svg>',
+    swatchMustard: '<svg class="icon-svg" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><circle cx="12" cy="12" r="8.5" fill="#c9a23c" stroke="#dfe2e6" stroke-width="1.2"/></svg>',
+    swatchPurple: '<svg class="icon-svg" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><circle cx="12" cy="12" r="8.5" fill="#a591b5" stroke="#dfe2e6" stroke-width="1.2"/></svg>'
   };
 
   global.ICONS = ICONS;
