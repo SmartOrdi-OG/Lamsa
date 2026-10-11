@@ -670,7 +670,7 @@
     'Rocking Chair': 'كرسي هزاز', 'Toy Shelf': 'رف ألعاب', 'Play Tent': 'خيمة لعب',
     'Play Area': 'منطقة لعب', 'Toy Box': 'صندوق ألعاب', 'Switch': 'مفتاح كهرباء', 'switch': 'مفتاح كهرباء',
     'Wall Clock': 'ساعة حائط', 'AC Unit': 'مكيف', 'Water Heater': 'سخان مياه',
-    'Washing Machine': 'غسالة', 'Standing Fan': 'مروحة أرضية',
+    'Washing Machine': 'غسالة', 'Standing Fan': 'مروحة أرضية', 'TV': 'تلفاز', 'Dishwasher': 'جلاية صحون',
     'Click a placed piece to select it, then rotate or delete it.': 'اضغط على قطعة موضوعة لتحديدها، ثم دوّرها أو احذفها.',
     'Click a wall to place a': 'اضغط على الحائط لوضع',
     'there.': 'هناك.',
@@ -1712,6 +1712,23 @@
     return g;
   }
 
+  function fp3dBuildDishwasher(w, d, h, color) {
+    var g = new THREE.Group();
+    var body = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), new THREE.MeshStandardMaterial({ color: color, metalness: 0.3, roughness: 0.35 }));
+    body.position.y = h / 2;
+    g.add(body);
+    var panel = new THREE.Mesh(new THREE.BoxGeometry(w * 0.94, h * 0.14, 0.012), new THREE.MeshStandardMaterial({ color: 0x2B2B2E, metalness: 0.4, roughness: 0.3 }));
+    panel.position.set(0, h * 0.92, d / 2 + 0.006);
+    g.add(panel);
+    var seam = new THREE.Mesh(new THREE.BoxGeometry(w * 0.9, 0.006, 0.006), new THREE.MeshLambertMaterial({ color: fp3dDarken(color, 0.6) }));
+    seam.position.set(0, h * 0.82, d / 2 + 0.006);
+    g.add(seam);
+    var handle = new THREE.Mesh(new THREE.BoxGeometry(w * 0.7, 0.02, 0.02), new THREE.MeshStandardMaterial({ color: 0xC9C9C9, metalness: 0.7, roughness: 0.25 }));
+    handle.position.set(0, h * 0.84, d / 2 + 0.02);
+    g.add(handle);
+    return g;
+  }
+
   function fp3dBuildMicrowave(w, d, h, color) {
     var g = new THREE.Group();
     var body = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), new THREE.MeshStandardMaterial({ color: 0xE8E4DA, metalness: 0.3, roughness: 0.4 }));
@@ -1832,6 +1849,24 @@
     valve.rotation.x = Math.PI / 2;
     valve.position.set(-len * 0.3, -r * 0.6, r * 1.6);
     g.add(valve);
+    return g;
+  }
+
+  // Always a dark screen regardless of furniture color, like every other
+  // appliance here — the actual TV, as opposed to the stand (TV Unit),
+  // which already existed but had no screen of its own to mount.
+  function fp3dBuildTVScreen(color) {
+    var g = new THREE.Group();
+    var w = 1.0, h = 0.56, depth = 0.035;
+    var bezel = new THREE.Mesh(new THREE.BoxGeometry(w, h, depth), new THREE.MeshStandardMaterial({ color: 0x1A1A1A, metalness: 0.4, roughness: 0.35 }));
+    bezel.position.z = depth / 2;
+    g.add(bezel);
+    var screen = new THREE.Mesh(new THREE.PlaneGeometry(w * 0.94, h * 0.9), new THREE.MeshBasicMaterial({ color: 0x14181C }));
+    screen.position.z = depth + 0.003;
+    g.add(screen);
+    var mount = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.06, 0.015), new THREE.MeshStandardMaterial({ color: 0x3A3A3C, metalness: 0.5, roughness: 0.4 }));
+    mount.position.z = depth * 0.5;
+    g.add(mount);
     return g;
   }
 
@@ -2236,6 +2271,7 @@
     { keys: ['bench'], w: 0.9, d: 0.35, h: 0.42, build: fp3dBuildBench },
     { keys: ['armchair'], w: 1.0, d: 0.9, h: 0.8, build: fp3dBuildSofa },
     { keys: ['floor lamp'], w: 0.3, d: 0.3, h: 1.5, build: fp3dBuildFloorLamp },
+    { keys: ['dishwasher'], w: 0.6, d: 0.6, h: 0.82, build: fp3dBuildDishwasher },
     { keys: ['washing machine', 'washer'], w: 0.6, d: 0.6, h: 0.85, build: fp3dBuildWashingMachine },
     { keys: ['standing fan', 'floor fan', 'fan'], w: 0.4, d: 0.4, h: 1.3, build: fp3dBuildStandingFan },
     { keys: ['stove', 'oven'], w: 0.6, d: 0.6, h: 0.85, build: fp3dBuildStove },
@@ -2925,6 +2961,7 @@
       { key: 'Console Table', icon: 'table' },
       { key: 'Side Table', icon: 'table' },
       { key: 'TV Unit', icon: 'tv' },
+      { key: 'TV', icon: 'tv' },
       { key: 'Bookshelf', icon: 'books' },
       { key: 'Floor Lamp', icon: 'sparkle' },
       { key: 'Rug', icon: 'cube' }
@@ -2953,7 +2990,8 @@
       { key: 'Stove', icon: 'cabinet' },
       { key: 'Microwave', icon: 'cabinet' },
       { key: 'Pantry Cabinet', icon: 'cabinet' },
-      { key: 'Fridge', icon: 'cabinet' }
+      { key: 'Fridge', icon: 'cabinet' },
+      { key: 'Dishwasher', icon: 'cabinet' }
     ] },
     { key: 'bathroom', label: 'Bathroom', icon: 'bathtub', items: [
       { key: 'Vanity', icon: 'sink' },
@@ -3224,17 +3262,19 @@
   // instead of the floor — generalizes what used to be the 'switch'-only
   // path so Wall Clock/AC Unit/Water Heater reuse the exact same
   // placement, rotation, and thumbnail logic.
-  var D3D_WALL_ITEM_KEYS = ['switch', 'Wall Clock', 'AC Unit', 'Water Heater'];
+  var D3D_WALL_ITEM_KEYS = ['switch', 'Wall Clock', 'AC Unit', 'Water Heater', 'TV'];
   var D3D_WALL_ITEM_DIMS = {
     switch: { w: 0.3, d: 0.2, h: 0.4 },
     'Wall Clock': { w: 0.32, d: 0.1, h: 0.32 },
     'AC Unit': { w: 0.36, d: 0.14, h: 0.2 },
-    'Water Heater': { w: 0.5, d: 0.3, h: 0.3 }
+    'Water Heater': { w: 0.5, d: 0.3, h: 0.3 },
+    'TV': { w: 1.0, d: 0.035, h: 0.56 }
   };
   function d3dBuildWallItemMesh(key) {
     if (key === 'Wall Clock') return fp3dBuildWallClock(d3dFurnColor);
     if (key === 'AC Unit') return fp3dBuildACUnit(d3dFurnColor);
     if (key === 'Water Heater') return fp3dBuildWaterHeater(d3dFurnColor);
+    if (key === 'TV') return fp3dBuildTVScreen(d3dFurnColor);
     return d3dBuildSwitchMesh();
   }
 
