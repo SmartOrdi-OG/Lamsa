@@ -2709,12 +2709,22 @@
 
     var floorTex = fp3dGetFloorPatternTexture(opts.floorText);
     floorTex.repeat.set(Math.max(1, roomLen), Math.max(1, roomWid));
+    // Extruded into a slab (not a flat zero-thickness plane) so the floor
+    // reads as having real depth — visible as a short vertical edge
+    // wherever the floor boundary isn't hidden behind a wall (the open S/E
+    // sides, and any notch/stem/gap cut into a non-rectangle shape).
+    var floorThickness = 0.08;
     var floor = new THREE.Mesh(
-      new THREE.ShapeGeometry(floorShape),
+      new THREE.ExtrudeGeometry(floorShape, { depth: floorThickness, bevelEnabled: false }),
       new THREE.MeshStandardMaterial({ color: floorColor, map: floorTex, roughness: fp3dFloorRoughness(opts.floorText), metalness: 0.05, side: THREE.DoubleSide })
     );
     floor.rotation.x = -Math.PI / 2;
-    floor.position.set(0, 0, 0);
+    // The extrusion runs from local z=0 to z=floorThickness; after the
+    // rotation above, local +z maps to world +y, so shifting down by the
+    // same amount puts the slab's top (walkable) surface back at y=0 —
+    // where every raycast/placement/wall position already assumes the
+    // floor to be — with the slab's body hanging below it, not above.
+    floor.position.set(0, -floorThickness, 0);
     floor.castShadow = false;
     floor.receiveShadow = true;
     scene.add(floor);
