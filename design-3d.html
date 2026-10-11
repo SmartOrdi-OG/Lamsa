@@ -422,7 +422,8 @@
           <div class="chips" id="d3dFloorChips">
             <div class="chip" onclick="selectColor(this)" data-en="Wood/Parquet" data-ar="خشب/باركيه">Wood/Parquet</div>
             <div class="chip" onclick="selectColor(this)" data-en="Marble" data-ar="مرمر">Marble</div>
-            <div class="chip" onclick="selectColor(this)" data-en="Tile/Ceramic" data-ar="بلاط/سيراميك">Tile/Ceramic</div>
+            <div class="chip" onclick="selectColor(this)" data-en="Tile" data-ar="بلاط">Tile</div>
+            <div class="chip" onclick="selectColor(this)" data-en="Ceramic" data-ar="سيراميك">Ceramic</div>
             <div class="chip" onclick="selectColor(this)" data-en="Concrete" data-ar="خرسانة">Concrete</div>
             <div class="chip" onclick="selectColor(this)" data-en="Carpet" data-ar="سجاد">Carpet</div>
           </div>
@@ -928,11 +929,12 @@
     if (!text) return fallback;
     var t = text.toLowerCase();
     if (t.indexOf('marble') !== -1) return 0xE9E6DD;
-    if (t.indexOf('tile') !== -1 || t.indexOf('ceramic') !== -1) return 0xD8D8D4;
-    if (t.indexOf('concrete') !== -1) return 0xAFAFAC;
+    if (t.indexOf('ceramic') !== -1) return 0xE7E2D7;
+    if (t.indexOf('tile') !== -1) return 0xD3C7B2;
+    if (t.indexOf('concrete') !== -1) return 0xA3A099;
     if (t.indexOf('carpet') !== -1) return 0xC3B29A;
     if (t.indexOf('dark') !== -1) return 0x6B4A32;
-    if (t.indexOf('wood') !== -1 || t.indexOf('oak') !== -1 || t.indexOf('parquet') !== -1) return 0xC9A877;
+    if (t.indexOf('wood') !== -1 || t.indexOf('oak') !== -1 || t.indexOf('parquet') !== -1) return 0xAD7F4C;
     return fp3dColorHex(text, fallback);
   }
 
@@ -942,11 +944,12 @@
     // scene has no environment map, so a low roughness here means the
     // direct light's specular highlight blows the whole floor out to
     // near-white instead of reading as a shiny surface.
-    if (t.indexOf('marble') !== -1) return 0.55;
-    if (t.indexOf('tile') !== -1 || t.indexOf('ceramic') !== -1) return 0.58;
-    if (t.indexOf('concrete') !== -1) return 0.75;
+    if (t.indexOf('marble') !== -1) return 0.5;
+    if (t.indexOf('ceramic') !== -1) return 0.4; // glazed, glossier than plain tile
+    if (t.indexOf('tile') !== -1) return 0.6;
+    if (t.indexOf('concrete') !== -1) return 0.82;
     if (t.indexOf('carpet') !== -1) return 0.95;
-    return 0.5; // wood/parquet default
+    return 0.42; // wood/parquet default — a sealed hardwood sheen
   }
 
   function fp3dClamp(v, lo, hi) { return Math.max(lo, Math.min(hi, v)); }
@@ -1041,7 +1044,8 @@
     var t = (floorText || '').toLowerCase();
     var kind = 'wood';
     if (t.indexOf('marble') !== -1) kind = 'marble';
-    else if (t.indexOf('tile') !== -1 || t.indexOf('ceramic') !== -1) kind = 'tile';
+    else if (t.indexOf('ceramic') !== -1) kind = 'ceramic';
+    else if (t.indexOf('tile') !== -1) kind = 'tile';
     else if (t.indexOf('concrete') !== -1) kind = 'concrete';
     else if (t.indexOf('carpet') !== -1) kind = 'carpet';
     if (fp3dFloorTextureCache[kind]) return fp3dFloorTextureCache[kind];
@@ -1054,14 +1058,22 @@
     ctx.fillRect(0, 0, size, size);
 
     if (kind === 'wood') {
+      // Longer, narrower planks running the texture's length, each a
+      // slightly different brightness (multiplied by the chosen wood
+      // color below) with a darker seam between planks and a few
+      // long grain streaks down each one — reads as actual boards
+      // rather than a flat tinted rectangle.
       var plankCount = 6, plankH = size / plankCount;
       for (var p = 0; p < plankCount; p++) {
-        var shade = 205 + Math.floor(Math.random() * 35);
-        ctx.fillStyle = 'rgb(' + shade + ',' + shade + ',' + shade + ')';
+        var shade = 195 + Math.floor(Math.random() * 45);
+        ctx.fillStyle = 'rgb(' + shade + ',' + (shade - 6) + ',' + (shade - 14) + ')';
         ctx.fillRect(0, p * plankH, size, plankH - 2);
-        ctx.strokeStyle = 'rgba(0,0,0,0.05)';
+        ctx.strokeStyle = 'rgba(70,45,20,0.18)';
+        ctx.lineWidth = 1.5;
+        ctx.beginPath(); ctx.moveTo(0, p * plankH + plankH - 1); ctx.lineTo(size, p * plankH + plankH - 1); ctx.stroke();
+        ctx.strokeStyle = 'rgba(60,38,16,0.09)';
         ctx.lineWidth = 1;
-        for (var g = 0; g < 8; g++) {
+        for (var g = 0; g < 5; g++) {
           var gy = p * plankH + 3 + Math.random() * (plankH - 6);
           ctx.beginPath();
           ctx.moveTo(0, gy);
@@ -1088,16 +1100,63 @@
         ctx.stroke();
       }
     } else if (kind === 'tile') {
-      var tileSize = size / 4;
-      ctx.strokeStyle = 'rgba(0,0,0,0.22)';
-      ctx.lineWidth = 3;
-      for (var ti = 0; ti <= 4; ti++) {
+      // Large floor tiles (porcelain/stone-look) — wider grid than ceramic,
+      // thicker grout, and a subtle per-tile shade shift so adjacent tiles
+      // don't all read as one identical surface.
+      var tileSize = size / 3;
+      for (var ty = 0; ty < 3; ty++) {
+        for (var tx = 0; tx < 3; tx++) {
+          var tshade = -10 + Math.random() * 20;
+          ctx.fillStyle = 'rgba(' + (128 + tshade) + ',' + (128 + tshade) + ',' + (128 + tshade) + ',0.12)';
+          ctx.fillRect(tx * tileSize, ty * tileSize, tileSize, tileSize);
+        }
+      }
+      ctx.strokeStyle = 'rgba(0,0,0,0.28)';
+      ctx.lineWidth = 4;
+      for (var ti = 0; ti <= 3; ti++) {
         ctx.beginPath(); ctx.moveTo(ti * tileSize, 0); ctx.lineTo(ti * tileSize, size); ctx.stroke();
         ctx.beginPath(); ctx.moveTo(0, ti * tileSize); ctx.lineTo(size, ti * tileSize); ctx.stroke();
       }
+    } else if (kind === 'ceramic') {
+      // Smaller, glazed-look tiles — thinner light grout and a soft
+      // diagonal highlight streak per tile to suggest a glossy glaze.
+      // The base is drawn a touch off-white (not pure white, like the
+      // canvas already is) specifically so that highlight reads as a
+      // lighter streak instead of disappearing into an identical white.
+      ctx.fillStyle = '#f1efe9';
+      ctx.fillRect(0, 0, size, size);
+      var cerSize = size / 5;
+      ctx.strokeStyle = 'rgba(0,0,0,0.14)';
+      ctx.lineWidth = 2;
+      for (var ci = 0; ci <= 5; ci++) {
+        ctx.beginPath(); ctx.moveTo(ci * cerSize, 0); ctx.lineTo(ci * cerSize, size); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(0, ci * cerSize); ctx.lineTo(size, ci * cerSize); ctx.stroke();
+      }
+      for (var cy = 0; cy < 5; cy++) {
+        for (var cx = 0; cx < 5; cx++) {
+          var hx = cx * cerSize, hy = cy * cerSize;
+          ctx.fillStyle = 'rgba(255,255,255,0.35)';
+          ctx.beginPath();
+          ctx.moveTo(hx + cerSize * 0.15, hy + cerSize * 0.85);
+          ctx.lineTo(hx + cerSize * 0.75, hy + cerSize * 0.15);
+          ctx.lineTo(hx + cerSize * 0.9, hy + cerSize * 0.3);
+          ctx.lineTo(hx + cerSize * 0.3, hy + cerSize * 1.0);
+          ctx.closePath();
+          ctx.fill();
+        }
+      }
     } else if (kind === 'concrete') {
+      // Broad mottled patches first (the slow tonal variation real
+      // polished/poured concrete has), then fine aggregate speckle on top.
+      for (var b = 0; b < 16; b++) {
+        var bv = 150 + Math.random() * 55;
+        ctx.fillStyle = 'rgba(' + bv + ',' + (bv - 4) + ',' + (bv - 8) + ',0.18)';
+        ctx.beginPath();
+        ctx.arc(Math.random() * size, Math.random() * size, 30 + Math.random() * 55, 0, Math.PI * 2);
+        ctx.fill();
+      }
       for (var c = 0; c < 2200; c++) {
-        var cv = 160 + Math.random() * 65;
+        var cv = 150 + Math.random() * 70;
         ctx.fillStyle = 'rgba(' + cv + ',' + cv + ',' + cv + ',0.28)';
         ctx.fillRect(Math.random() * size, Math.random() * size, 2, 2);
       }
