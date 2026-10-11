@@ -471,6 +471,7 @@
             <div class="chip" onclick="selectColor(this)" data-en="Classic Drapes" data-ar="ستائر كلاسيكية">Classic Drapes</div>
             <div class="chip" onclick="selectColor(this)" data-en="Blackout Panels" data-ar="عاتمة">Blackout Panels</div>
             <div class="chip" onclick="selectColor(this)" data-en="Roman Shades" data-ar="رومانية">Roman Shades</div>
+            <div class="chip" onclick="selectColor(this)" data-en="Venetian Blinds" data-ar="ستائر برادي">Venetian Blinds</div>
           </div>
         </div>
         <div class="form-group">
@@ -480,6 +481,8 @@
             <div class="chip" onclick="selectColor(this)" data-en="Flush Mount" data-ar="ملاصقة للسقف">Flush Mount</div>
             <div class="chip" onclick="selectColor(this)" data-en="Chandelier" data-ar="ثريا">Chandelier</div>
             <div class="chip" onclick="selectColor(this)" data-en="Recessed Spotlights" data-ar="سبوت مدمج">Recessed Spotlights</div>
+            <div class="chip" onclick="selectColor(this)" data-en="Track Lighting" data-ar="تراك لايت">Track Lighting</div>
+            <div class="chip" onclick="selectColor(this)" data-en="Skylight" data-ar="كوة إضاءة">Skylight</div>
           </div>
         </div>
 
@@ -657,9 +660,12 @@
     'Vanity': 'طاولة زينة', 'Mirror': 'مرآة', 'Bathtub': 'حوض استحمام', 'Shower': 'دش',
     'Toilet': 'مرحاض', 'Shelf': 'رف', 'Towel Rail': 'حامل مناشف', 'Laundry Hamper': 'سلة غسيل',
     'Rocking Chair': 'كرسي هزاز', 'Toy Shelf': 'رف ألعاب', 'Play Tent': 'خيمة لعب',
-    'Play Area': 'منطقة لعب', 'Toy Box': 'صندوق ألعاب', 'Switch': 'مفتاح كهرباء',
+    'Play Area': 'منطقة لعب', 'Toy Box': 'صندوق ألعاب', 'Switch': 'مفتاح كهرباء', 'switch': 'مفتاح كهرباء',
+    'Wall Clock': 'ساعة حائط', 'AC Unit': 'مكيف', 'Water Heater': 'سخان مياه',
+    'Washing Machine': 'غسالة', 'Standing Fan': 'مروحة أرضية',
     'Click a placed piece to select it, then rotate or delete it.': 'اضغط على قطعة موضوعة لتحديدها، ثم دوّرها أو احذفها.',
-    'Click a wall to place a switch there.': 'اضغط على الحائط لوضع مفتاح هناك.',
+    'Click a wall to place a': 'اضغط على الحائط لوضع',
+    'there.': 'هناك.',
     'Click inside the room to place a': 'اضغط داخل الغرفة لوضع',
     'Pick a category, then a piece, then click inside the room to place it.': 'اختر فئة، ثم قطعة، ثم اضغط داخل الغرفة لوضعها.',
     'Could not load the 3D viewer': 'تعذر تحميل العارض ثلاثي الأبعاد',
@@ -1715,6 +1721,112 @@
     return g;
   }
 
+  function fp3dBuildWashingMachine(w, d, h, color) {
+    var g = new THREE.Group();
+    var body = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), new THREE.MeshStandardMaterial({ color: color, metalness: 0.25, roughness: 0.45 }));
+    body.position.y = h / 2;
+    g.add(body);
+    var r = Math.min(w, d) * 0.28;
+    var doorRing = new THREE.Mesh(new THREE.TorusGeometry(r, 0.02, 8, 24), new THREE.MeshStandardMaterial({ color: 0x8A8A86, metalness: 0.6, roughness: 0.3 }));
+    doorRing.position.set(0, h * 0.46, d / 2 + 0.01);
+    g.add(doorRing);
+    var doorGlass = new THREE.Mesh(new THREE.CircleGeometry(r * 0.92, 20), new THREE.MeshStandardMaterial({ color: 0x2B2B2E, metalness: 0.4, roughness: 0.3 }));
+    doorGlass.position.set(0, h * 0.46, d / 2 + 0.008);
+    g.add(doorGlass);
+    var panel = new THREE.Mesh(new THREE.BoxGeometry(w * 0.9, h * 0.12, 0.012), new THREE.MeshStandardMaterial({ color: 0xE8E4DA, metalness: 0.2, roughness: 0.5 }));
+    panel.position.set(0, h * 0.92, d / 2 + 0.006);
+    g.add(panel);
+    var knob = new THREE.Mesh(new THREE.CylinderGeometry(0.025, 0.025, 0.02, 10), new THREE.MeshStandardMaterial({ color: 0x8A8A86, metalness: 0.6, roughness: 0.3 }));
+    knob.rotation.x = Math.PI / 2;
+    knob.position.set(w * 0.32, h * 0.92, d / 2 + 0.014);
+    g.add(knob);
+    return g;
+  }
+
+  function fp3dBuildStandingFan(w, d, h, color) {
+    var g = new THREE.Group();
+    var base = new THREE.Mesh(new THREE.CylinderGeometry(w * 0.46, w * 0.5, h * 0.03, 16), new THREE.MeshStandardMaterial({ color: 0x3A3A3C, metalness: 0.3, roughness: 0.5 }));
+    base.position.y = h * 0.015;
+    g.add(base);
+    var pole = new THREE.Mesh(new THREE.CylinderGeometry(0.02, 0.02, h * 0.68, 8), new THREE.MeshStandardMaterial({ color: 0xC9C9C9, metalness: 0.6, roughness: 0.3 }));
+    pole.position.y = h * 0.37;
+    g.add(pole);
+    var hub = new THREE.Mesh(new THREE.CylinderGeometry(w * 0.06, w * 0.06, d * 0.18, 10), new THREE.MeshStandardMaterial({ color: 0x8A8A86, metalness: 0.5, roughness: 0.35 }));
+    hub.rotation.x = Math.PI / 2;
+    hub.position.y = h * 0.74;
+    g.add(hub);
+    var cage = new THREE.Mesh(new THREE.TorusGeometry(w * 0.42, 0.012, 6, 20), new THREE.MeshStandardMaterial({ color: color, metalness: 0.4, roughness: 0.35 }));
+    cage.position.y = h * 0.74;
+    g.add(cage);
+    var cage2 = new THREE.Mesh(new THREE.TorusGeometry(w * 0.26, 0.009, 6, 18), new THREE.MeshStandardMaterial({ color: color, metalness: 0.4, roughness: 0.35 }));
+    cage2.position.y = h * 0.74;
+    g.add(cage2);
+    return g;
+  }
+
+  // Wall-mounted items (clock, split AC, water heater) are built facing
+  // local +Z with their back flush against local z=0 — the same convention
+  // d3dBuildSwitchMesh's flat plane relies on, so the caller can position
+  // the whole group at the wall raycast hit point and, on the W wall,
+  // rotate it by the same fixed 90° used for switches without any of
+  // these needing their own special-case rotation.
+  function fp3dBuildWallClock(color) {
+    var g = new THREE.Group();
+    var r = 0.16;
+    var rim = new THREE.Mesh(new THREE.CylinderGeometry(r, r, 0.03, 24), new THREE.MeshStandardMaterial({ color: color, metalness: 0.3, roughness: 0.4 }));
+    rim.rotation.x = Math.PI / 2;
+    rim.position.z = 0.015;
+    g.add(rim);
+    var face = new THREE.Mesh(new THREE.CircleGeometry(r * 0.88, 24), new THREE.MeshBasicMaterial({ color: 0xF5F3EE }));
+    face.position.z = 0.031;
+    g.add(face);
+    var hourHand = new THREE.Mesh(new THREE.BoxGeometry(0.014, r * 0.42, 0.004), new THREE.MeshBasicMaterial({ color: 0x2B2B2E }));
+    hourHand.position.set(0, r * 0.18, 0.034);
+    g.add(hourHand);
+    var minHand = new THREE.Mesh(new THREE.BoxGeometry(r * 0.55, 0.01, 0.004), new THREE.MeshBasicMaterial({ color: 0x2B2B2E }));
+    minHand.position.set(r * 0.22, 0, 0.035);
+    g.add(minHand);
+    var pin = new THREE.Mesh(new THREE.CircleGeometry(0.01, 10), new THREE.MeshBasicMaterial({ color: 0x2B2B2E }));
+    pin.position.z = 0.036;
+    g.add(pin);
+    return g;
+  }
+
+  function fp3dBuildACUnit(color) {
+    var g = new THREE.Group();
+    var w = 0.36, h = 0.14, depth = 0.1;
+    var body = new THREE.Mesh(new THREE.BoxGeometry(w, h, depth), new THREE.MeshStandardMaterial({ color: 0xF2F0EA, metalness: 0.1, roughness: 0.4 }));
+    body.position.z = depth / 2;
+    g.add(body);
+    for (var i = 0; i < 5; i++) {
+      var vent = new THREE.Mesh(new THREE.BoxGeometry(w * 0.88, 0.006, 0.01), new THREE.MeshLambertMaterial({ color: 0xD8D4CA }));
+      vent.position.set(0, -h * 0.3 + i * 0.02, depth + 0.004);
+      g.add(vent);
+    }
+    var light = new THREE.Mesh(new THREE.CircleGeometry(0.008, 8), new THREE.MeshBasicMaterial({ color: 0x4A9C73 }));
+    light.position.set(w * 0.4, h * 0.3, depth + 0.004);
+    g.add(light);
+    return g;
+  }
+
+  function fp3dBuildWaterHeater(color) {
+    var g = new THREE.Group();
+    var r = 0.14, len = 0.5;
+    var tank = new THREE.Mesh(new THREE.CylinderGeometry(r, r, len, 16), new THREE.MeshStandardMaterial({ color: 0xE8E4DA, metalness: 0.35, roughness: 0.35 }));
+    tank.rotation.z = Math.PI / 2;
+    tank.position.z = r;
+    g.add(tank);
+    var band = new THREE.Mesh(new THREE.TorusGeometry(r * 1.02, 0.012, 6, 20), new THREE.MeshStandardMaterial({ color: 0x8A8A86, metalness: 0.6, roughness: 0.3 }));
+    band.rotation.y = Math.PI / 2;
+    band.position.z = r;
+    g.add(band);
+    var valve = new THREE.Mesh(new THREE.CylinderGeometry(0.015, 0.015, 0.06, 8), new THREE.MeshStandardMaterial({ color: 0x8A8A86, metalness: 0.6, roughness: 0.3 }));
+    valve.rotation.x = Math.PI / 2;
+    valve.position.set(-len * 0.3, -r * 0.6, r * 1.6);
+    g.add(valve);
+    return g;
+  }
+
   function fp3dBuildPlayTent(w, d, h, color) {
     var g = new THREE.Group();
     var r = Math.min(w, d) / 2;
@@ -2116,6 +2228,8 @@
     { keys: ['bench'], w: 0.9, d: 0.35, h: 0.42, build: fp3dBuildBench },
     { keys: ['armchair'], w: 1.0, d: 0.9, h: 0.8, build: fp3dBuildSofa },
     { keys: ['floor lamp'], w: 0.3, d: 0.3, h: 1.5, build: fp3dBuildFloorLamp },
+    { keys: ['washing machine', 'washer'], w: 0.6, d: 0.6, h: 0.85, build: fp3dBuildWashingMachine },
+    { keys: ['standing fan', 'floor fan', 'fan'], w: 0.4, d: 0.4, h: 1.3, build: fp3dBuildStandingFan },
     { keys: ['stove', 'oven'], w: 0.6, d: 0.6, h: 0.85, build: fp3dBuildStove },
     { keys: ['microwave'], w: 0.5, d: 0.4, h: 0.3, build: fp3dBuildMicrowave },
     { keys: ['bar stool'], w: 0.35, d: 0.35, h: 0.75, build: fp3dBuildBarStool },
@@ -2383,6 +2497,16 @@
       return g;
     }
 
+    if (s.indexOf('blind') !== -1) {
+      var slatCount = 12, slatH = panelH / slatCount;
+      for (var bi = 0; bi < slatCount; bi++) {
+        var slat = new THREE.Mesh(new THREE.PlaneGeometry(windowW * 0.94, slatH * 0.82), new THREE.MeshBasicMaterial({ color: 0xDCD6C4, side: THREE.DoubleSide }));
+        slat.position.set(0, topY - slatH / 2 - bi * slatH, 0.006);
+        g.add(slat);
+      }
+      return g;
+    }
+
     var color = 0xB08968, opacity = 1, panelFrac = 0.24;
     if (s.indexOf('sheer') !== -1) { color = 0xF2EFE6; opacity = 0.5; panelFrac = 0.18; }
     else if (s.indexOf('blackout') !== -1) { color = 0x2B2B2E; opacity = 1; panelFrac = 0.26; }
@@ -2429,6 +2553,29 @@
         bulb.position.set(Math.cos(ang) * 0.28, -0.46, Math.sin(ang) * 0.28);
         g.add(bulb);
       }
+      return g;
+    }
+    if (s.indexOf('track') !== -1) {
+      var rail = new THREE.Mesh(new THREE.BoxGeometry(0.9, 0.03, 0.05), new THREE.MeshStandardMaterial({ color: 0x3A3A3C, metalness: 0.4, roughness: 0.4 }));
+      g.add(rail);
+      [-0.32, 0, 0.32].forEach(function(tx) {
+        var head = new THREE.Mesh(new THREE.CylinderGeometry(0.04, 0.05, 0.08, 10), new THREE.MeshStandardMaterial({ color: 0x2B2B2E, metalness: 0.5, roughness: 0.35 }));
+        head.position.set(tx, -0.05, 0);
+        g.add(head);
+        var bulb = new THREE.Mesh(new THREE.CircleGeometry(0.035, 10), new THREE.MeshLambertMaterial({ color: 0xF5EEDD }));
+        bulb.rotation.x = Math.PI / 2;
+        bulb.position.set(tx, -0.09, 0);
+        g.add(bulb);
+      });
+      return g;
+    }
+    if (s.indexOf('skylight') !== -1) {
+      var frame = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.04, 0.5), new THREE.MeshLambertMaterial({ color: 0xF2EEDD }));
+      g.add(frame);
+      var glow = new THREE.Mesh(new THREE.PlaneGeometry(0.42, 0.42), new THREE.MeshBasicMaterial({ color: 0xFFFDF2, side: THREE.DoubleSide }));
+      glow.rotation.x = Math.PI / 2;
+      glow.position.y = -0.021;
+      g.add(glow);
       return g;
     }
     var cordP = new THREE.Mesh(new THREE.BoxGeometry(0.02, 0.5, 0.02), new THREE.MeshLambertMaterial({ color: 0x444444 }));
@@ -2810,7 +2957,12 @@
       { key: 'Rug', icon: 'cube' }
     ] },
     { key: 'electrical', label: 'Electrical', icon: 'switchPlate', items: [
-      { key: 'switch', label: 'Switch', icon: 'switchPlate' }
+      { key: 'switch', label: 'Switch', icon: 'switchPlate' },
+      { key: 'Wall Clock', icon: 'switchPlate' },
+      { key: 'AC Unit', icon: 'switchPlate' },
+      { key: 'Water Heater', icon: 'cabinet' },
+      { key: 'Washing Machine', icon: 'cabinet' },
+      { key: 'Standing Fan', icon: 'cube' }
     ] }
   ];
 
@@ -2886,9 +3038,10 @@
       scene.add(light);
 
       var w, d, h, mesh;
-      if (itemKey === 'switch') {
-        w = 0.3; d = 0.2; h = 0.4;
-        mesh = d3dBuildSwitchMesh();
+      if (D3D_WALL_ITEM_KEYS.indexOf(itemKey) !== -1) {
+        var wallDims = D3D_WALL_ITEM_DIMS[itemKey];
+        w = wallDims.w; d = wallDims.d; h = wallDims.h;
+        mesh = d3dBuildWallItemMesh(itemKey);
         mesh.rotation.x = -0.3;
         mesh.rotation.y = 0.5;
       } else {
@@ -3014,7 +3167,7 @@
     var hint = document.getElementById('d3dPaletteHint');
     if (!hint) return;
     if (tool === 'select') hint.textContent = d3dTr('Click a placed piece to select it, then rotate or delete it.');
-    else if (tool === 'switch') hint.textContent = d3dTr('Click a wall to place a switch there.');
+    else if (D3D_WALL_ITEM_KEYS.indexOf(tool) !== -1) hint.textContent = d3dTr('Click a wall to place a') + ' ' + d3dTr(tool) + ' ' + d3dTr('there.');
     else if (tool) hint.textContent = d3dTr('Click inside the room to place a') + ' ' + d3dTr(tool) + '.';
     else hint.textContent = d3dTr('Pick a category, then a piece, then click inside the room to place it.');
   }
@@ -3049,6 +3202,24 @@
     return new THREE.Mesh(new THREE.PlaneGeometry(0.09, 0.14), new THREE.MeshBasicMaterial({ color: color, side: THREE.DoubleSide }));
   }
 
+  // Items placed on a wall (clicked via the N/W wall raycast, below)
+  // instead of the floor — generalizes what used to be the 'switch'-only
+  // path so Wall Clock/AC Unit/Water Heater reuse the exact same
+  // placement, rotation, and thumbnail logic.
+  var D3D_WALL_ITEM_KEYS = ['switch', 'Wall Clock', 'AC Unit', 'Water Heater'];
+  var D3D_WALL_ITEM_DIMS = {
+    switch: { w: 0.3, d: 0.2, h: 0.4 },
+    'Wall Clock': { w: 0.32, d: 0.1, h: 0.32 },
+    'AC Unit': { w: 0.36, d: 0.14, h: 0.2 },
+    'Water Heater': { w: 0.5, d: 0.3, h: 0.3 }
+  };
+  function d3dBuildWallItemMesh(key) {
+    if (key === 'Wall Clock') return fp3dBuildWallClock(d3dFurnColor);
+    if (key === 'AC Unit') return fp3dBuildACUnit(d3dFurnColor);
+    if (key === 'Water Heater') return fp3dBuildWaterHeater(d3dFurnColor);
+    return d3dBuildSwitchMesh();
+  }
+
   function d3dRebuildPlacedGroup() {
     if (!d3dScene) return;
     if (d3dPlacedGroup) d3dScene.remove(d3dPlacedGroup);
@@ -3056,8 +3227,8 @@
 
     d3dPlacedItems.forEach(function(item, i) {
       var mesh;
-      if (item.key === 'switch') {
-        mesh = d3dBuildSwitchMesh();
+      if (item.isWall) {
+        mesh = d3dBuildWallItemMesh(item.key);
         mesh.position.set(item.x, item.y, item.z);
         if (item.wallSide === 'W') mesh.rotation.y = Math.PI / 2;
       } else {
@@ -3098,14 +3269,14 @@
       return;
     }
 
-    if (d3dTool === 'switch') {
+    if (D3D_WALL_ITEM_KEYS.indexOf(d3dTool) !== -1) {
       var wallObjs = [d3dNWallMesh, d3dWWallMesh].filter(Boolean);
       var wallHits = d3dGetIntersects(event, wallObjs);
       if (!wallHits.length) return;
       var hit = wallHits[0];
       var isNWall = hit.object === d3dNWallMesh;
       d3dPlacedItems.push({
-        key: 'switch', isWall: true, wallSide: isNWall ? 'N' : 'W',
+        key: d3dTool, isWall: true, wallSide: isNWall ? 'N' : 'W',
         x: hit.point.x, y: fp3dClamp(hit.point.y, 0.3, d3dWallH - 0.3), z: hit.point.z, rotY: 0
       });
       d3dSelectedIndex = d3dPlacedItems.length - 1;
