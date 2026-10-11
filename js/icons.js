@@ -75,7 +75,11 @@
     swatchSage: '<svg class="icon-svg" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><circle cx="12" cy="12" r="8.5" fill="#afc3a6" stroke="#dfe2e6" stroke-width="1.2"/></svg>',
     swatchCharcoal: '<svg class="icon-svg" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><circle cx="12" cy="12" r="8.5" fill="#4a4d52" stroke="#dfe2e6" stroke-width="1.2"/></svg>',
     swatchMustard: '<svg class="icon-svg" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><circle cx="12" cy="12" r="8.5" fill="#c9a23c" stroke="#dfe2e6" stroke-width="1.2"/></svg>',
-    swatchPurple: '<svg class="icon-svg" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><circle cx="12" cy="12" r="8.5" fill="#a591b5" stroke="#dfe2e6" stroke-width="1.2"/></svg>'
+    swatchPurple: '<svg class="icon-svg" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><circle cx="12" cy="12" r="8.5" fill="#a591b5" stroke="#dfe2e6" stroke-width="1.2"/></svg>',
+    swatchRed: '<svg class="icon-svg" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><circle cx="12" cy="12" r="8.5" fill="#b55a4e" stroke="#dfe2e6" stroke-width="1.2"/></svg>',
+    swatchYellow: '<svg class="icon-svg" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><circle cx="12" cy="12" r="8.5" fill="#e3ce82" stroke="#dfe2e6" stroke-width="1.2"/></svg>',
+    swatchEmerald: '<svg class="icon-svg" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><circle cx="12" cy="12" r="8.5" fill="#3e8e68" stroke="#dfe2e6" stroke-width="1.2"/></svg>',
+    swatchRoyalBlue: '<svg class="icon-svg" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><circle cx="12" cy="12" r="8.5" fill="#34548e" stroke="#dfe2e6" stroke-width="1.2"/></svg>'
   };
 
   global.ICONS = ICONS;
