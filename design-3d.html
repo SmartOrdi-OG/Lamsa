@@ -741,11 +741,14 @@
     document.getElementById('fpToolErase').classList.toggle('active', tool === 'erase');
   }
 
-  // The N and W walls are the only ones furniture doors/windows can attach
-  // to (see fpItemsList.forEach in d3dBuildRoomShell), and for most of the
-  // 5 room shapes they're shorter than the full rectangle side, or start
-  // partway along it — this is the one place that logic is defined, shared
-  // by drawing, hit-testing, and nothing else needs to know about it.
+  // Every wall furniture doors/windows can attach to (all 4, as of the
+  // open-side door/window feature — see fpItemsList.forEach in
+  // d3dBuildRoomShell), and for most of the 5 room shapes they're shorter
+  // than the full rectangle side, or start partway along it — this is the
+  // one place that logic is defined, shared by drawing, hit-testing, and
+  // nothing else needs to know about it. S is never shortened by any of
+  // the 5 shapes (they only ever cut into the N side), so it alone never
+  // needs a shape-specific case.
   function fpWallExtent(rect, side) {
     if (side === 'N') {
       if (rect.shape === 'L' || rect.shape === 'diag') return { offset: 0, len: rect.w - rect.cutWpx };
@@ -753,17 +756,23 @@
       if (rect.shape === 'U') return { offset: 0, len: (rect.w - rect.gapWpx) / 2 };
       return { offset: 0, len: rect.w };
     }
+    if (side === 'S') return { offset: 0, len: rect.w };
+    if (side === 'E') {
+      if (rect.shape === 'L' || rect.shape === 'diag' || rect.shape === 'T') return { offset: rect.cutDpx, len: rect.h - rect.cutDpx };
+      return { offset: 0, len: rect.h };
+    }
     // 'W'
     if (rect.shape === 'T') return { offset: rect.cutDpx, len: rect.h - rect.cutDpx };
     return { offset: 0, len: rect.h };
   }
 
   function fpWallPoint(rect, wall, t) {
+    var ext = fpWallExtent(rect, wall);
     switch (wall) {
-      case 'N': var n = fpWallExtent(rect, 'N'); return { x: rect.x + n.offset + n.len * t, y: rect.y };
-      case 'S': return { x: rect.x + rect.w * t, y: rect.y + rect.h };
-      case 'W': var wv = fpWallExtent(rect, 'W'); return { x: rect.x, y: rect.y + wv.offset + wv.len * t };
-      case 'E': return { x: rect.x + rect.w, y: rect.y + rect.h * t };
+      case 'N': return { x: rect.x + ext.offset + ext.len * t, y: rect.y };
+      case 'S': return { x: rect.x + ext.offset + ext.len * t, y: rect.y + rect.h };
+      case 'W': return { x: rect.x, y: rect.y + ext.offset + ext.len * t };
+      case 'E': return { x: rect.x + rect.w, y: rect.y + ext.offset + ext.len * t };
     }
   }
 
@@ -869,16 +878,17 @@
   }
 
   function fpNearestWall(rect, x, y) {
-    // N and W are shortened (or offset) on most shapes — both the hit zone
-    // and the t-fraction are relative to that shape's actual wall extent,
-    // not the full rectangle side, or a door/window could "snap" onto a
-    // stretch of wall that doesn't exist in the 3D room anymore.
-    var n = fpWallExtent(rect, 'N'), wv = fpWallExtent(rect, 'W');
+    // Every wall can be shortened (or offset) on some shape — both the hit
+    // zone and the t-fraction are relative to that shape's actual wall
+    // extent, not the full rectangle side, or a door/window could "snap"
+    // onto a stretch of wall that doesn't exist in the 3D room anymore.
+    var n = fpWallExtent(rect, 'N'), s = fpWallExtent(rect, 'S');
+    var wv = fpWallExtent(rect, 'W'), e = fpWallExtent(rect, 'E');
     var candidates = [
       { wall: 'N', d: Math.abs(y - rect.y), t: (x - rect.x - n.offset) / n.len, inRange: x >= rect.x + n.offset && x <= rect.x + n.offset + n.len },
-      { wall: 'S', d: Math.abs(y - (rect.y + rect.h)), t: (x - rect.x) / rect.w, inRange: x >= rect.x && x <= rect.x + rect.w },
+      { wall: 'S', d: Math.abs(y - (rect.y + rect.h)), t: (x - rect.x - s.offset) / s.len, inRange: x >= rect.x + s.offset && x <= rect.x + s.offset + s.len },
       { wall: 'W', d: Math.abs(x - rect.x), t: (y - rect.y - wv.offset) / wv.len, inRange: y >= rect.y + wv.offset && y <= rect.y + wv.offset + wv.len },
-      { wall: 'E', d: Math.abs(x - (rect.x + rect.w)), t: (y - rect.y) / rect.h, inRange: y >= rect.y && y <= rect.y + rect.h }
+      { wall: 'E', d: Math.abs(x - (rect.x + rect.w)), t: (y - rect.y - e.offset) / e.len, inRange: y >= rect.y + e.offset && y <= rect.y + e.offset + e.len }
     ].filter(function(c) { return c.inRange; });
 
     var best = null;
@@ -2665,13 +2675,16 @@
     var cutD = (isL || isT || isU || isDiag) ? fp3dClamp(parseFloat(opts.cutD) || 1.5, 0.3, roomWid * 0.75) : 0;
     var stemW = isT ? fp3dClamp(parseFloat(opts.stemW) || 1.5, 0.5, Math.max(0.5, roomLen - 0.6)) : 0;
     var gapW = isU ? fp3dClamp(parseFloat(opts.gapW) || 1.5, 0.5, Math.max(0.5, roomLen - 0.6)) : 0;
-    // The logical "N" and "W" walls are the only ones a door/window can
-    // attach to (see fpItemsList.forEach below) — on most shapes they're
-    // shorter than, or offset along, the full rectangle side.
+    // A door/window can attach to any of the 4 sides now (see
+    // fpItemsList.forEach below) — on most shapes N, W and E are shorter
+    // than, or offset along, the full rectangle side; S never is, since
+    // none of the 5 shapes cut into it.
     var nWallOffset = isT ? (roomLen - stemW) / 2 : 0;
     var nWallLen = (isL || isDiag) ? (roomLen - cutW) : isT ? stemW : isU ? (roomLen - gapW) / 2 : roomLen;
     var wWallOffset = isT ? cutD : 0;
     var wWallLen = isT ? (roomWid - cutD) : roomWid;
+    var eWallOffset = (isL || isDiag || isT) ? cutD : 0;
+    var eWallLen = (isL || isDiag || isT) ? (roomWid - cutD) : roomWid;
     var wallH = 2.6, wallT = 0.1;
     var width = container.clientWidth || 320, height = 420;
     container.style.height = height + 'px';
@@ -2805,20 +2818,31 @@
 
     var fpItemsList = opts.fpItems || [];
     fpItemsList.forEach(function(item) {
-      if (item.wall !== 'N' && item.wall !== 'W') return;
+      if (['N', 'S', 'E', 'W'].indexOf(item.wall) === -1) return;
       var isDoor = item.type === 'door';
       var markH = isDoor ? 2.0 : 1.0, markW = isDoor ? 0.8 : 1.1;
       var markY = isDoor ? markH / 2 : 1.35;
-      // Marks sit just off the wall's INTERIOR face (the side facing the
-      // camera/room) — the wall slab itself spans -wallT/2..+wallT/2, so a
-      // negative offset here would place the mark on the exterior face,
-      // hidden behind the opaque wall and never visible from the camera.
+      // Marks sit just off each wall's INTERIOR face (the side facing the
+      // camera/room) — on N/W that's a real wall slab spanning
+      // -wallT/2..+wallT/2, so a negative offset here would place the mark
+      // on the exterior face, hidden behind the opaque wall. S and E have
+      // no wall slab at all (those sides stay open so the dollhouse camera
+      // can see in) — the mark (with its own built-in frame) is placed
+      // directly at the room boundary on its own, same inset distance, so
+      // a door/window there reads the same way without needing a wall
+      // that would block the view it's meant to preserve.
       var mark = fp3dPolish(fp3dBuildOpeningMark(isDoor, isDoor ? opts.doorStyleText : opts.windowStyleText, markW, markH), 0.5, 0.1);
       if (item.wall === 'N') {
         mark.position.set(nWallOffset + item.t * nWallLen, markY, wallT / 2 + 0.01);
-      } else {
+      } else if (item.wall === 'S') {
+        mark.position.set(item.t * roomLen, markY, roomWid - wallT / 2 - 0.01);
+        mark.rotation.y = Math.PI;
+      } else if (item.wall === 'W') {
         mark.position.set(wallT / 2 + 0.01, markY, wWallOffset + item.t * wWallLen);
         mark.rotation.y = Math.PI / 2;
+      } else { // 'E'
+        mark.position.set(roomLen - wallT / 2 - 0.01, markY, eWallOffset + item.t * eWallLen);
+        mark.rotation.y = -Math.PI / 2;
       }
       scene.add(mark);
 
@@ -2827,9 +2851,15 @@
         if (curtainGroup) {
           if (item.wall === 'N') {
             curtainGroup.position.set(nWallOffset + item.t * nWallLen, 0, wallT / 2 + 0.015);
-          } else {
+          } else if (item.wall === 'S') {
+            curtainGroup.position.set(item.t * roomLen, 0, roomWid - wallT / 2 - 0.015);
+            curtainGroup.rotation.y = Math.PI;
+          } else if (item.wall === 'W') {
             curtainGroup.position.set(wallT / 2 + 0.015, 0, wWallOffset + item.t * wWallLen);
             curtainGroup.rotation.y = Math.PI / 2;
+          } else { // 'E'
+            curtainGroup.position.set(roomLen - wallT / 2 - 0.015, 0, eWallOffset + item.t * eWallLen);
+            curtainGroup.rotation.y = -Math.PI / 2;
           }
           scene.add(curtainGroup);
         }
