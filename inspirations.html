@@ -27,6 +27,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="apple-mobile-web-app-title" content="Lamsa">
 <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;700;900&family=Playfair+Display:wght@400;700&display=swap" rel="stylesheet">
+<script src="js/platform.js"></script>
 <script src="js/icons.js"></script>
 <script>
   if ('serviceWorker' in navigator) {
@@ -786,7 +787,7 @@
     { id: 'x10', credits: 10, price: '€7',  label: '10 Designs' },
     { id: 'x20', credits: 20, price: '€12', label: '20 Designs' }
   ];
-  var isAndroidTWA = document.referrer.indexOf('android-app://') === 0;
+  var isAndroidTWA = window.isAndroidTWA === true; // set by js/platform.js
   var currentUser = null;
 
   function checkAuth() {
