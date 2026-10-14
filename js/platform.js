@@ -20,3 +20,21 @@
   } catch (e) {}
   window.isAndroidTWA = isTwa;
 })();
+
+// Opens a URL in Chrome itself, outside the TWA. A plain link or
+// window.location to lamsa-ten.vercel.app would be caught by Android App
+// Links and land straight back in this app; an intent addressed to Chrome by
+// package name skips that resolution (same approach as Brifo PR #127/#128).
+// Returns false outside the TWA so the caller can navigate normally.
+window.openOutsideAndroidTWA = function (url) {
+  if (!window.isAndroidTWA) return false;
+  try {
+    var u = new URL(url);
+    window.location.href = 'intent://' + u.host + u.pathname + u.search +
+      '#Intent;scheme=https;package=com.android.chrome;S.browser_fallback_url=' +
+      encodeURIComponent(url) + ';end';
+    return true;
+  } catch (e) {
+    return false;
+  }
+};
