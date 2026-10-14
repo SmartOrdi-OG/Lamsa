@@ -102,6 +102,7 @@ Google Play بيمنع بيع منتجات رقمية (الكريدت) جوه ا
 
 #### 1. Stripe: "This link is incomplete" (14 أكتوبر)
 لينك Stripe Checkout فيه جزء بعد `#` لازم يوصل، وصيغة `intent://` (اللي بنفتح بيها Chrome) مبتقدرش تحمل الجزء ده، فكان بيتشال.
+✅ **اتأكد على جهاز أندرويد حقيقي (14 أكتوبر)**: Buy more ← باقة ← صفحة Stripe بتفتح صح في Chrome.
 **الحل**: `openOutsideAndroidTWA` بقى يفتح في Chrome صفحة `checkout-redirect.html?u=<لينك Stripe كامل>` على دومين لمسة، وهي بتحوّل على اللينك الكامل بالـ `#`. الصفحة بتقبل بس `https://checkout.stripe.com` (مش open redirect).
 
 ## مرجع: دروس Brifo اللي اتطبقت هنا
