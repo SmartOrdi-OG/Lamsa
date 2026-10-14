@@ -104,6 +104,26 @@ export async function getUser(email) {
   return redis.get(userKey(email));
 }
 
+// Permanently removes an account and everything keyed on it (Google Play
+// requires an in-app way to delete an account). Ratings and the site-wide
+// generation counter are anonymous aggregates and stay. The caller destroys
+// the current session separately; any other session for this email just
+// stops resolving to a user (getUser returns null -> /api/me 401s).
+export async function deleteUser(email) {
+  const normalized = email.trim().toLowerCase();
+  const user = await redis.get(userKey(normalized));
+  const refCode = await redis.get('lamsa:refcode_owner:' + normalized);
+  const keys = [
+    userKey(normalized),
+    'lamsa:credits:' + normalized,
+    'lamsa:refcode_owner:' + normalized,
+    'lamsa:referrals:' + normalized
+  ];
+  if (user && user.username && !user.telegramId) keys.push(usernameKey(user.username));
+  if (refCode) keys.push('lamsa:refcode:' + refCode);
+  await redis.del(...keys);
+}
+
 export async function createSession(email) {
   const token = crypto.randomBytes(32).toString('hex');
   await redis.set(sessionKey(token), email.trim().toLowerCase(), { ex: SESSION_TTL_SECONDS });
