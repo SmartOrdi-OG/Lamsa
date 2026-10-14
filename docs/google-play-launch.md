@@ -98,6 +98,12 @@ Google Play بيمنع بيع منتجات رقمية (الكريدت) جوه ا
 10. **Promote** من Internal testing لـ Production → اختار الدول → Submit for review.
     - ⚠️ لو حساب المطوّر **شخصي** واتعمل بعد نوفمبر 2023، Google بتطلب **Closed testing بـ 12 tester لمدة 14 يوم** قبل ما تسمح بـ Production. حسابك عدّى من غير ده في Brifo، فغالبًا مش هيتطلب تاني.
 
+## 🐛 مشاكل اتلاقت أثناء الاختبار الحقيقي
+
+#### 1. Stripe: "This link is incomplete" (14 أكتوبر)
+لينك Stripe Checkout فيه جزء بعد `#` لازم يوصل، وصيغة `intent://` (اللي بنفتح بيها Chrome) مبتقدرش تحمل الجزء ده، فكان بيتشال.
+**الحل**: `openOutsideAndroidTWA` بقى يفتح في Chrome صفحة `checkout-redirect.html?u=<لينك Stripe كامل>` على دومين لمسة، وهي بتحوّل على اللينك الكامل بالـ `#`. الصفحة بتقبل بس `https://checkout.stripe.com` (مش open redirect).
+
 ## مرجع: دروس Brifo اللي اتطبقت هنا
 1. `isAndroidTwa` بـ `localStorage` اتسرّب لتابات Chrome → استخدمنا `sessionStorage` من الأول.
 2. شريط Chrome ظاهر = ناقص fingerprint الـ **App signing key** من Play في `assetlinks.json` (خطوة 8).
