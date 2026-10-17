@@ -878,6 +878,11 @@
 
     </div>
 
+    <!-- Always visible regardless of which tab (login/register) is active, unlike the register-only terms-text above -->
+    <p class="terms-text">
+      <a href="privacy-policy.html" id="footerPrivacyLink">سياسة الخصوصية</a>
+    </p>
+
     <!-- TELEGRAM AUTO-LOGIN LOADING (shown briefly while verifying Telegram.WebApp.initData with the server; hidden again if it fails, falling back to the normal form above) -->
     <div id="tgLoginLoading" style="display:none; text-align:center; padding:40px 20px; color:var(--gray); font-size:14px;">
       <span data-en="Signing in with Telegram…" data-ar="جاري تسجيل الدخول عبر تيلغرام…">جاري تسجيل الدخول عبر تيلغرام…</span>
@@ -1449,6 +1454,8 @@
     if (andTextEl) andTextEl.textContent = t.andText;
     const privacyLinkEl = document.getElementById('privacyLink');
     if (privacyLinkEl) privacyLinkEl.textContent = t.privacyLink;
+    const footerPrivacyLinkEl = document.getElementById('footerPrivacyLink');
+    if (footerPrivacyLinkEl) footerPrivacyLinkEl.textContent = t.privacyLink;
 
     // Update success box
     const successTitle = document.querySelector('.success-title');
