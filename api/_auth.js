@@ -104,6 +104,18 @@ export async function getUser(email) {
   return redis.get(userKey(email));
 }
 
+// Removes the account record and its username index entry. Credits and
+// referral data live under separate keys in _db.js and are cleaned up by
+// deleteUserData() there — callers doing a full account deletion call both.
+export async function deleteUser(email) {
+  const normalizedEmail = email.trim().toLowerCase();
+  const user = await redis.get(userKey(normalizedEmail));
+  if (user && user.username) {
+    await redis.del(usernameKey(user.username));
+  }
+  await redis.del(userKey(normalizedEmail));
+}
+
 export async function createSession(email) {
   const token = crypto.randomBytes(32).toString('hex');
   await redis.set(sessionKey(token), email.trim().toLowerCase(), { ex: SESSION_TTL_SECONDS });

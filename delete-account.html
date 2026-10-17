@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="color-scheme" content="light">
+<title>Delete Account | Lamsa</title>
+<link rel="icon" type="image/png" sizes="32x32" href="assets/favicon-32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="assets/favicon-16.png">
+<link rel="apple-touch-icon" sizes="180x180" href="assets/apple-touch-icon.png">
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#f6f7f8">
+<link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;900&display=swap" rel="stylesheet">
+<style>
+  :root {
+    color-scheme: light;
+    --black: #f6f7f8; --card: #ffffff; --border: #dfe2e6;
+    --gold: #6b7480; --gold-deep: #3d434b; --gold-dim: rgba(107,116,128,0.10);
+    --white: #1b1e22; --gray: #767d86; --danger: #c0392b; --danger-dim: rgba(192,57,43,0.08);
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: 'Tajawal', sans-serif; background: var(--black); color: var(--white); min-height: 100vh; }
+  nav {
+    position: sticky; top: 0; z-index: 10; padding: 14px 20px; display: flex; justify-content: space-between; align-items: center;
+    background: rgba(255,255,255,0.9); backdrop-filter: blur(16px); border-bottom: 1px solid var(--border);
+  }
+  .logo { display: flex; align-items: center; gap: 10px; text-decoration: none; color: var(--white); font-weight: 900; font-size: 18px; }
+  .logo-icon { width: 32px; height: 32px; border: 1.5px solid var(--gold); border-radius: 8px; display: flex; align-items: center; justify-content: center; }
+  .nav-right { display: flex; align-items: center; gap: 10px; }
+  .lang-toggle-btn, .back-btn {
+    background: transparent; border: 1px solid var(--border); color: var(--gray); text-decoration: none;
+    padding: 6px 12px; border-radius: 6px; font-size: 13px; font-weight: 700; font-family: 'Tajawal', sans-serif;
+    cursor: pointer; white-space: nowrap;
+  }
+  .lang-toggle-btn:hover, .back-btn:hover { border-color: var(--gold); color: var(--gold-deep); }
+  .wrap { max-width: 480px; margin: 0 auto; padding: 40px 20px 80px; }
+  h1 { font-size: 24px; font-weight: 900; margin-bottom: 10px; }
+  p { font-size: 15px; line-height: 1.7; color: var(--white); margin-bottom: 14px; }
+  .card { background: var(--card); border: 1px solid var(--border); border-radius: 14px; padding: 24px 26px; }
+  .warn { background: var(--danger-dim); border: 1px solid rgba(192,57,43,0.25); border-radius: 10px; padding: 12px 14px; font-size: 14px; color: var(--danger); margin-bottom: 18px; }
+  label { display: block; font-size: 13px; font-weight: 700; color: var(--gray); margin-bottom: 6px; margin-top: 14px; }
+  input[type=email], input[type=password] {
+    width: 100%; padding: 11px 12px; border: 1px solid var(--border); border-radius: 8px;
+    font-family: 'Tajawal', sans-serif; font-size: 15px; background: #fff; color: var(--white);
+  }
+  input:focus { outline: none; border-color: var(--gold); }
+  button {
+    width: 100%; margin-top: 20px; padding: 12px; border: none; border-radius: 8px;
+    background: var(--danger); color: #fff; font-family: 'Tajawal', sans-serif; font-size: 15px; font-weight: 800;
+    cursor: pointer;
+  }
+  button:disabled { opacity: 0.6; cursor: default; }
+  .msg { margin-top: 14px; font-size: 14px; font-weight: 700; display: none; }
+  .msg.error { color: var(--danger); }
+  .msg.success { color: #1e7a3c; }
+  .confirm-row { display: flex; align-items: flex-start; gap: 8px; margin-top: 16px; }
+  .confirm-row input { width: auto; margin-top: 3px; }
+  .confirm-row span { font-size: 13px; color: var(--gray); line-height: 1.5; }
+</style>
+</head>
+<body>
+
+<nav>
+  <a class="logo" href="lamsa-bilingual.html">
+    <div class="logo-icon"><img src="assets/logo-mark.png" alt="" style="max-width:75%;max-height:75%;object-fit:contain;"></div>
+    <span>LAMSA</span>
+  </a>
+  <div class="nav-right">
+    <button type="button" class="lang-toggle-btn" id="langToggleBtn" onclick="toggleLang()">AR</button>
+    <a class="back-btn" href="lamsa-bilingual.html" data-en="Back to Lamsa" data-ar="رجوع للموقع">Back to Lamsa</a>
+  </div>
+</nav>
+
+<div class="wrap">
+  <div class="card">
+    <h1 data-en="Delete Your Account" data-ar="حذف حسابك">Delete Your Account</h1>
+    <p data-en="Enter your Lamsa email/username and password to permanently delete your account and all associated data (profile, saved designs count, credits, and referral history)."
+       data-ar="أدخل بريدك الإلكتروني أو اسم المستخدم وكلمة المرور تبع حساب لمسة لحذف حسابك وكل بياناتك المرتبطة بشكل نهائي (الملف الشخصي، رصيدك، وسجل الإحالات).">
+      Enter your Lamsa email/username and password to permanently delete your account and all associated data (profile, saved designs count, credits, and referral history).
+    </p>
+
+    <div class="warn" data-en="This action is permanent and cannot be undone." data-ar="هذا الإجراء نهائي ولا يمكن التراجع عنه.">
+      This action is permanent and cannot be undone.
+    </div>
+
+    <form id="deleteForm">
+      <label for="email" data-en="Email or username" data-ar="البريد الإلكتروني أو اسم المستخدم">Email or username</label>
+      <input type="text" id="email" autocomplete="username" required>
+
+      <label for="password" data-en="Password" data-ar="كلمة المرور">Password</label>
+      <input type="password" id="password" autocomplete="current-password" required>
+
+      <div class="confirm-row">
+        <input type="checkbox" id="confirmCheck" required>
+        <span data-en="I understand this will permanently delete my account and data."
+              data-ar="أنا متأكد/ة أن هذا سيحذف حسابي وبياناتي بشكل نهائي.">
+          I understand this will permanently delete my account and data.
+        </span>
+      </div>
+
+      <button type="submit" id="submitBtn" data-en="Delete my account" data-ar="احذف حسابي">Delete my account</button>
+      <div class="msg error" id="errorMsg"></div>
+      <div class="msg success" id="successMsg" data-en="Your account and data have been deleted."
+           data-ar="تم حذف حسابك وبياناتك بنجاح.">Your account and data have been deleted.</div>
+    </form>
+  </div>
+</div>
+
+<script>
+  var currentLang = 'en';
+  function toggleLang() { setLang(currentLang === 'ar' ? 'en' : 'ar'); }
+  function setLang(lang) {
+    currentLang = lang;
+    try { localStorage.setItem('lamsa_lang', lang); } catch (e) {}
+    document.documentElement.setAttribute('lang', lang);
+    document.documentElement.setAttribute('dir', lang === 'ar' ? 'rtl' : 'ltr');
+    var btn = document.getElementById('langToggleBtn');
+    if (btn) btn.textContent = lang === 'ar' ? 'EN' : 'AR';
+    document.querySelectorAll('[data-en][data-ar]').forEach(function(el) {
+      el.innerHTML = lang === 'ar' ? el.getAttribute('data-ar') : el.getAttribute('data-en');
+    });
+  }
+  var savedLang = 'en';
+  try { savedLang = localStorage.getItem('lamsa_lang') || 'en'; } catch (e) {}
+  setLang(savedLang);
+
+  var form = document.getElementById('deleteForm');
+  var errorMsg = document.getElementById('errorMsg');
+  var successMsg = document.getElementById('successMsg');
+  var submitBtn = document.getElementById('submitBtn');
+
+  form.addEventListener('submit', function (e) {
+    e.preventDefault();
+    errorMsg.style.display = 'none';
+    successMsg.style.display = 'none';
+
+    var email = document.getElementById('email').value.trim();
+    var password = document.getElementById('password').value;
+    if (!email || !password) return;
+
+    submitBtn.disabled = true;
+    fetch('/api/auth-delete-account', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email: email, password: password })
+    })
+      .then(function (r) { return r.json().then(function (data) { return { ok: r.ok, data: data }; }); })
+      .then(function (res) {
+        submitBtn.disabled = false;
+        if (!res.ok) {
+          errorMsg.textContent = res.data && res.data.error ? res.data.error : 'Something went wrong.';
+          errorMsg.style.display = 'block';
+          return;
+        }
+        form.style.display = 'none';
+        successMsg.style.display = 'block';
+      })
+      .catch(function () {
+        submitBtn.disabled = false;
+        errorMsg.textContent = 'Network error. Please try again.';
+        errorMsg.style.display = 'block';
+      });
+  });
+</script>
+
+</body>
+</html>

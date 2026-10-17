@@ -142,3 +142,20 @@ export async function recordReferral(referrerEmail, newUserEmail) {
   await addCredits(newUserEmail, 1);
   return true;
 }
+
+// Wipes every credits/referral key keyed on this email, as part of a full
+// account deletion. The account record itself (api/_auth.js: deleteUser) is
+// a separate call — callers doing a full deletion run both.
+export async function deleteUserData(email) {
+  const normalizedEmail = email.trim().toLowerCase();
+  await redis.del(creditsKey(normalizedEmail));
+
+  const ownerKey = referralOwnerKey(normalizedEmail);
+  const code = await redis.get(ownerKey);
+  if (code) {
+    await redis.del(referralCodeKey(code));
+    await redis.del(ownerKey);
+  }
+  await redis.del(referralCountKey(normalizedEmail));
+  await redis.del('lamsa:referred_recorded:' + normalizedEmail);
+}
