@@ -1,6 +1,7 @@
 # Lamsa — TODO
 
 ## ✅ Done
+- [x] Google Play (TWA) readiness — see `docs/google-play-launch.md`. (1) Fix Android TWA detection: it only checked `document.referrer`, which is `android-app://…` on the first page only, so after login the Stripe "Buy more" flow reappeared inside the Play app (a Play billing-policy rejection). New `js/platform.js`, loaded on every page, remembers it in `sessionStorage` (not `localStorage`, which leaked into normal Chrome tabs in Brifo). (2) Add in-app account deletion required by Play: `DELETE /api/me` + a "Delete Account" button next to Log Out in the designer + a self-service note in the privacy policy.
 - [x] Add a `README.md` explaining the app, local dev setup, and required env vars.
 - [x] Remove the 3D room planner (`planner.html`, `test3d.html`, `js/three.min.js`, `js/OrbitControls.js`) and all related UI/JS in `lamsa-bilingual.html`.
 - [x] Add a 2D floor plan editor in its place — draws the room from the Length/Width inputs and lets the user tap a wall to place/remove door and window markers, feeding a description into the AI prompt.

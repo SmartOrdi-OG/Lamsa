@@ -28,6 +28,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="apple-mobile-web-app-title" content="Lamsa">
 <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;500;700;900&family=Playfair+Display:wght@400;700&display=swap" rel="stylesheet">
+<script src="js/platform.js"></script>
 <script src="js/icons.js"></script>
 <script>
   if ('serviceWorker' in navigator) {
@@ -1186,6 +1187,7 @@
     </div>
     <button class="nav-cta" onclick="scrollToForm()" data-ar="ابدأ مجاناً" data-en="Start Free" data-de="Kostenlos starten" data-es="Empezar gratis">Start Free</button>
     <button type="button" class="nav-logout" onclick="logout()" data-en="Log Out" data-ar="تسجيل الخروج">Log Out</button>
+    <button type="button" class="nav-logout" onclick="deleteAccount()" data-en="Delete Account" data-ar="حذف الحساب" data-de="Konto löschen" data-es="Eliminar cuenta">Delete Account</button>
   </div>
 </nav>
 
@@ -2360,13 +2362,10 @@
   let designCount = 1;
   let beforeAfterOn = false;
   let designMode = 'redesign'; // 'redesign' = full AI redesign, 'rearrange' = reposition existing furniture only
-  // Standard signal for "running inside an installed Android TWA" — the
-  // OS sets document.referrer to android-app://<package> for pages opened
-  // that way, unset for a normal browser tab. Used to hide the in-app
-  // credit purchase flow (Stripe) on Android, since Google Play requires
-  // Google Play Billing for digital goods bought from inside the app;
-  // buying is still available by visiting the site in a regular browser.
-  var isAndroidTWA = document.referrer.indexOf('android-app://') === 0;
+  // Running inside the installed Android (Google Play) app. Only used to
+  // skip the first-run paywall there; "Buy more" works everywhere, and in
+  // the app startCheckout() opens Stripe in Chrome (openOutsideAndroidTWA).
+  var isAndroidTWA = window.isAndroidTWA === true; // set by js/platform.js
   var formPanelsSnapshot = null; // pristine panel markup, captured once on load — used by startNewDesign()
   var resultAreaSnapshot = null; // pristine result-area markup (doGenerate replaces its contents with the generated image)
   var lastBeforeImageDataUrl = null; // "before" image shown in the before/after result view
@@ -2679,6 +2678,27 @@
       });
   }
 
+  // Permanent, in-app account deletion (required by Google Play for any app
+  // with account sign-up). Server side: DELETE /api/me.
+  function deleteAccount() {
+    var isAr = currentLang === 'ar';
+    var msg = isAr
+      ? 'هل أنت متأكد أنك تريد حذف حسابك نهائياً؟ سيتم حذف حسابك ورصيدك من التصاميم بشكل دائم ولا يمكن التراجع عن ذلك.'
+      : 'Are you sure you want to permanently delete your account? Your account and remaining credits will be deleted forever. This cannot be undone.';
+    if (!window.confirm(msg)) return;
+    fetch('/api/me', { method: 'DELETE', credentials: 'include' })
+      .then(function(r) {
+        if (!r.ok) throw new Error('HTTP ' + r.status);
+        try { localStorage.removeItem('lamsa_user'); } catch (e) {}
+        alert(isAr ? 'تم حذف حسابك.' : 'Your account has been deleted.');
+        window.location.replace('lamsa-auth.html');
+      })
+      .catch(function(err) {
+        console.error('[auth] delete account failed:', err);
+        alert(isAr ? 'تعذّر حذف الحساب، حاول مرة أخرى أو راسلنا على hello@lamsa.app' : 'Could not delete your account. Please try again or email hello@lamsa.app');
+      });
+  }
+
   function logout() {
     fetch('/api/auth-logout', { method: 'POST', credentials: 'include' })
       .catch(function(err) { console.error('[auth] logout request failed:', err); })
@@ -2714,7 +2734,7 @@
     }
     if (buyBtn) {
       buyBtn.textContent = isAr ? 'شراء المزيد' : 'Buy more';
-      buyBtn.style.display = isAndroidTWA ? 'none' : 'inline-block';
+      buyBtn.style.display = 'inline-block';
     }
   }
 
@@ -2827,21 +2847,6 @@
 
     var title = isAr ? 'اشتري تصاميم' : 'Buy Designs';
     var closeLabel = isAr ? 'إغلاق' : 'Close';
-
-    if (isAndroidTWA) {
-      var browserMsg = isAr
-        ? 'شراء الكريدت متوفر حالياً من موقعنا بالمتصفح فقط. افتح lamsa-ten.vercel.app بمتصفح جوالك لإتمام الشراء.'
-        : 'Buying credits is currently only available on our website in a browser. Open lamsa-ten.vercel.app in your phone\'s browser to complete the purchase.';
-      box.innerHTML =
-        '<div style="font-size:42px;margin-bottom:16px;">' + (window.icon ? window.icon('palette') : '') + '</div>' +
-        '<div style="font-size:22px;font-weight:900;color:#3d434b;margin-bottom:8px;">' + title + '</div>' +
-        '<div style="font-size:13px;color:#767d86;margin-bottom:20px;line-height:1.6;">' + browserMsg + '</div>' +
-        '<button type="button" onclick="document.getElementById(\'creditsModalOverlay\').remove()" ' +
-        'style="width:100%;background:transparent;border:1px solid #dfe2e6;color:#767d86;padding:10px;border-radius:10px;font-size:13px;cursor:pointer;margin-top:8px;font-family:Tajawal,sans-serif;">' + closeLabel + '</button>';
-      overlay.appendChild(box);
-      document.body.appendChild(overlay);
-      return;
-    }
 
     var sub = message || (isAr ? 'كل تصميم يخصم كريدت واحد من رصيدك' : 'Each design uses 1 credit from your balance');
 
@@ -3010,6 +3015,9 @@
       // whenever the user comes back, regardless of how they got there.
       if (isTelegramMiniApp && window.Telegram && window.Telegram.WebApp.openLink) {
         window.Telegram.WebApp.openLink(result.data.url);
+      } else if (window.openOutsideAndroidTWA(result.data.url)) {
+        // Google Play app: Stripe opens in Chrome, the app stays where it was.
+        Array.prototype.forEach.call(buttons, function(b) { b.disabled = false; b.style.opacity = '1'; });
       } else {
         window.location.href = result.data.url;
       }
@@ -3966,9 +3974,8 @@
       handleCheckoutRedirect();
 
       // First-run demo + credits paywall — shown once per browser, right
-      // after the very first login. Skipped inside the Android TWA:
-      // purchases there must stay on the website per Google Play Billing
-      // policy (see isAndroidTWA usage elsewhere in this file).
+      // after the very first login. Skipped inside the Android (Google
+      // Play) app, which only offers buying via the "Buy more" button.
       if (!isAndroidTWA) {
         try {
           if (!localStorage.getItem('lamsa_welcome_paywall_shown')) {

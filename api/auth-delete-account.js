@@ -1,4 +1,4 @@
-import { redis, deleteUserData } from './_db.js';
+import { redis } from './_db.js';
 import {
   resolveLoginEmail, getUser, verifyPassword, deleteUser,
   getSessionTokenFromRequest, destroySession, clearSessionCookie
@@ -31,7 +31,6 @@ export default async function handler(req, res) {
     const valid = await verifyPassword(password, user.passwordSalt, user.passwordHash);
     if (!valid) return genericError();
 
-    await deleteUserData(resolvedEmail);
     await deleteUser(resolvedEmail);
 
     const token = getSessionTokenFromRequest(req);

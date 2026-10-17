@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>Lamsa</title>
+</head>
+<body style="font-family:Tajawal,sans-serif;text-align:center;padding-top:40vh;color:#767d86;">
+<p>Redirecting to secure checkout…</p>
+<script>
+  // The Android app hands Stripe checkout links to Chrome via an intent://
+  // URL (see openOutsideAndroidTWA in js/platform.js), and intent URLs can't
+  // carry the target's #fragment — which Stripe Checkout needs ("This link is
+  // incomplete" without it). So the app sends Chrome here instead, with the
+  // full Stripe URL (fragment included) encoded in ?u=, and this page
+  // forwards to it. Only checkout.stripe.com is allowed, so this can't be
+  // used as an open redirect.
+  (function () {
+    var target = new URLSearchParams(window.location.search).get('u') || '';
+    var ok = false;
+    try {
+      var u = new URL(target);
+      ok = u.protocol === 'https:' && u.host === 'checkout.stripe.com';
+    } catch (e) {}
+    if (ok) window.location.replace(target);
+    else window.location.replace('/lamsa-auth.html');
+  })();
+</script>
+</body>
+</html>

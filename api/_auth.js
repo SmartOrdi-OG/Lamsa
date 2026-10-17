@@ -104,16 +104,24 @@ export async function getUser(email) {
   return redis.get(userKey(email));
 }
 
-// Removes the account record and its username index entry. Credits and
-// referral data live under separate keys in _db.js and are cleaned up by
-// deleteUserData() there — callers doing a full account deletion call both.
+// Permanently removes an account and everything keyed on it (Google Play
+// requires an in-app way to delete an account). Ratings and the site-wide
+// generation counter are anonymous aggregates and stay. The caller destroys
+// the current session separately; any other session for this email just
+// stops resolving to a user (getUser returns null -> /api/me 401s).
 export async function deleteUser(email) {
-  const normalizedEmail = email.trim().toLowerCase();
-  const user = await redis.get(userKey(normalizedEmail));
-  if (user && user.username) {
-    await redis.del(usernameKey(user.username));
-  }
-  await redis.del(userKey(normalizedEmail));
+  const normalized = email.trim().toLowerCase();
+  const user = await redis.get(userKey(normalized));
+  const refCode = await redis.get('lamsa:refcode_owner:' + normalized);
+  const keys = [
+    userKey(normalized),
+    'lamsa:credits:' + normalized,
+    'lamsa:refcode_owner:' + normalized,
+    'lamsa:referrals:' + normalized
+  ];
+  if (user && user.username && !user.telegramId) keys.push(usernameKey(user.username));
+  if (refCode) keys.push('lamsa:refcode:' + refCode);
+  await redis.del(...keys);
 }
 
 export async function createSession(email) {

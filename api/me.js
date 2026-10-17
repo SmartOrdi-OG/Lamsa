@@ -1,5 +1,5 @@
 import { redis, addRating, getGenerationCount } from './_db.js';
-import { requireSessionEmail, getUser } from './_auth.js';
+import { requireSessionEmail, getUser, deleteUser, getSessionTokenFromRequest, destroySession, clearSessionCookie } from './_auth.js';
 
 // Shown only to the team account — this is a site-wide number, not
 // something any other logged-in user should see on their own /api/me call.
@@ -8,9 +8,10 @@ const STATS_VISIBLE_EMAILS = new Set(['team@smartordi.eu']);
 // POST here (action: 'rate') is the in-app star-rating widget's submit —
 // piggybacked on this endpoint rather than a new API file, since Vercel's
 // Hobby plan caps serverless functions at 12 and this project is already
-// at that limit (see api/telegram.js for the same reasoning).
+// at that limit (see api/telegram.js for the same reasoning). DELETE here
+// permanently deletes the logged-in account, for the same reason.
 export default async function handler(req, res) {
-  if (req.method !== 'GET' && req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
+  if (req.method !== 'GET' && req.method !== 'POST' && req.method !== 'DELETE') return res.status(405).json({ error: 'Method not allowed' });
 
   if (!redis) {
     console.error('[me] Upstash Redis not configured');
@@ -20,6 +21,13 @@ export default async function handler(req, res) {
   try {
     const email = await requireSessionEmail(req);
     if (!email) return res.status(401).json({ error: 'Not logged in' });
+
+    if (req.method === 'DELETE') {
+      await deleteUser(email);
+      await destroySession(getSessionTokenFromRequest(req));
+      clearSessionCookie(res, req);
+      return res.status(200).json({ ok: true });
+    }
 
     if (req.method === 'POST') {
       const { action, rating, comment } = req.body || {};

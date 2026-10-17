@@ -27,6 +27,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="apple-mobile-web-app-title" content="Lamsa">
 <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;700;900&family=Playfair+Display:wght@400;700&display=swap" rel="stylesheet">
+<script src="js/platform.js"></script>
 <script src="js/icons.js"></script>
 <script>
   if ('serviceWorker' in navigator) {
@@ -786,7 +787,6 @@
     { id: 'x10', credits: 10, price: '€7',  label: '10 Designs' },
     { id: 'x20', credits: 20, price: '€12', label: '20 Designs' }
   ];
-  var isAndroidTWA = document.referrer.indexOf('android-app://') === 0;
   var currentUser = null;
 
   function checkAuth() {
@@ -824,7 +824,7 @@
       .then(function (data) {
         if (typeof data.credits !== 'number') return;
         badge.innerHTML = 'Your balance: <b>' + data.credits + '</b> credit' + (data.credits === 1 ? '' : 's') +
-          (isAndroidTWA ? '' : ' &middot; <a href="javascript:void(0)" onclick="showCreditsModal()" style="color:var(--gold);text-decoration:underline;">Buy more</a>');
+          ' &middot; <a href="javascript:void(0)" onclick="showCreditsModal()" style="color:var(--gold);text-decoration:underline;">Buy more</a>';
         // Only ever present for the team account (see api/me.js) — a
         // site-wide count, not per-user.
         if (currentUser && typeof currentUser.totalGenerations === 'number') {
@@ -844,17 +844,6 @@
 
     var box = document.createElement('div');
     box.style.cssText = 'position:relative;overflow:hidden;background:var(--card);border:1px solid var(--border);border-radius:20px;padding:32px 24px;max-width:420px;width:100%;text-align:center;box-shadow:0 30px 70px -25px rgba(20,20,20,0.35);';
-
-    if (isAndroidTWA) {
-      box.innerHTML =
-        '<div style="font-size:22px;font-weight:900;color:var(--gold);margin-bottom:8px;">Buy Designs</div>' +
-        '<div style="font-size:13px;color:var(--gray);margin-bottom:20px;line-height:1.6;">Buying credits is currently only available on our website in a browser. Open lamsa-ten.vercel.app in your phone\'s browser to complete the purchase.</div>' +
-        '<button type="button" onclick="document.getElementById(\'creditsModalOverlay\').remove()" ' +
-        'style="width:100%;background:transparent;border:1px solid var(--border);color:var(--gray);padding:10px;border-radius:10px;font-size:13px;cursor:pointer;margin-top:8px;font-family:Tajawal,sans-serif;">Close</button>';
-      overlay.appendChild(box);
-      document.body.appendChild(overlay);
-      return;
-    }
 
     var sub = message || 'Each design uses 1 credit from your balance';
 
@@ -917,7 +906,7 @@
         Array.prototype.forEach.call(buttons, function (b) { b.disabled = false; b.style.opacity = '1'; });
         return;
       }
-      window.location.href = result.data.url;
+      if (!window.openOutsideAndroidTWA(result.data.url)) window.location.href = result.data.url;
     })
     .catch(function () {
       if (errorEl) errorEl.textContent = 'Connection error';
