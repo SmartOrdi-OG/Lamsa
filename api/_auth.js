@@ -7,6 +7,37 @@ const COOKIE_NAME = 'lamsa_session';
 
 export const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
+// Sends the "forgot password" email via Resend's HTTP API (no SDK — one
+// fetch call, keeps the dependency list small). Resolves to false without
+// throwing if RESEND_API_KEY isn't set, so callers can report a clear
+// "email service not configured" error instead of a raw 500.
+export async function sendPasswordResetEmail(toEmail, resetUrl) {
+  const apiKey = process.env.RESEND_API_KEY;
+  if (!apiKey) return false;
+
+  const res = await fetch('https://api.resend.com/emails', {
+    method: 'POST',
+    headers: {
+      'Authorization': 'Bearer ' + apiKey,
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({
+      from: process.env.RESEND_FROM_EMAIL || 'Lamsa <onboarding@resend.dev>',
+      to: toEmail,
+      subject: 'Reset your Lamsa password',
+      html:
+        '<p>Someone requested a password reset for your Lamsa account.</p>' +
+        '<p><a href="' + resetUrl + '">Click here to set a new password</a> (link expires in 30 minutes).</p>' +
+        '<p>If you didn\'t request this, you can ignore this email.</p>'
+    })
+  });
+  if (!res.ok) {
+    console.error('[sendPasswordResetEmail] Resend API error:', res.status, await res.text());
+    return false;
+  }
+  return true;
+}
+
 function userKey(email) {
   return 'lamsa:user:' + email.trim().toLowerCase();
 }
@@ -18,6 +49,12 @@ function usernameKey(username) {
 function sessionKey(token) {
   return 'lamsa:session:' + token;
 }
+
+function resetKey(token) {
+  return 'lamsa:pwreset:' + token;
+}
+
+const RESET_TTL_SECONDS = 60 * 30; // 30 minutes
 
 export function hashPassword(password) {
   return new Promise((resolve, reject) => {
@@ -128,6 +165,33 @@ export async function createSession(email) {
   const token = crypto.randomBytes(32).toString('hex');
   await redis.set(sessionKey(token), email.trim().toLowerCase(), { ex: SESSION_TTL_SECONDS });
   return token;
+}
+
+// "Forgot password" token: a one-time code mailed to the user, redeemed by
+// resetPasswordWithToken() below. Deliberately separate from session tokens
+// (shorter TTL, single use, never accepted as a login credential).
+export async function createPasswordResetToken(email) {
+  const token = crypto.randomBytes(32).toString('hex');
+  await redis.set(resetKey(token), email.trim().toLowerCase(), { ex: RESET_TTL_SECONDS });
+  return token;
+}
+
+// Verifies the token, sets the new password, and burns the token so it
+// can't be replayed. Returns false for an unknown/expired/already-used token.
+export async function resetPasswordWithToken(token, newPassword) {
+  const email = await redis.get(resetKey(token));
+  if (!email) return false;
+
+  const key = userKey(email);
+  const user = await redis.get(key);
+  if (!user) return false;
+
+  const { salt, hash } = await hashPassword(newPassword);
+  user.passwordSalt = salt;
+  user.passwordHash = hash;
+  await redis.set(key, user);
+  await redis.del(resetKey(token));
+  return true;
 }
 
 export async function destroySession(token) {
