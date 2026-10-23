@@ -419,6 +419,31 @@
   }
   .toast-close:hover { color: var(--gold); }
 
+  /* FORGOT PASSWORD MODAL */
+  .fp-overlay {
+    position: fixed; inset: 0; z-index: 4000;
+    background: rgba(15,14,12,0.55);
+    display: none; align-items: center; justify-content: center;
+    padding: 20px;
+  }
+  .fp-overlay.show { display: flex; }
+  .fp-modal {
+    background: var(--card); border-radius: 16px; padding: 28px 24px;
+    width: 100%; max-width: 380px;
+    box-shadow: 0 30px 70px -20px rgba(20,20,20,0.45);
+  }
+  .fp-modal h3 { font-size: 18px; font-weight: 900; color: var(--white); margin-bottom: 8px; }
+  .fp-modal p { font-size: 13px; color: var(--gray); line-height: 1.6; margin-bottom: 18px; }
+  .fp-modal .form-input { margin-bottom: 14px; }
+  .fp-modal-actions { display: flex; gap: 10px; margin-top: 4px; }
+  .fp-modal-actions .submit-btn { margin-top: 0; }
+  .fp-modal-cancel {
+    background: transparent; border: 1px solid var(--border); border-radius: 12px;
+    color: var(--gray); font-family: 'Tajawal', sans-serif; font-size: 14px; font-weight: 700;
+    cursor: pointer; padding: 0 18px;
+  }
+  .fp-modal-cancel:hover { border-color: var(--gold); color: var(--gold); }
+
   /* COUNTRY SELECTOR */
   .country-grid {
     display: grid;
@@ -822,7 +847,7 @@
           </div>
         </div>
         <div style="text-align:left; margin-bottom:10px;">
-          <a href="#" style="font-size:12px; color:var(--gold); text-decoration:none;">نسيت كلمة المرور؟</a>
+          <a href="#" onclick="openForgotPassword(); return false;" style="font-size:12px; color:var(--gold); text-decoration:none;">نسيت كلمة المرور؟</a>
         </div>
         <button class="submit-btn" onclick="handleLogin()">تسجيل الدخول <svg class="icon-svg" viewBox="0 0 24 24"><path d="M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8L12 3z" fill="currentColor" stroke="none"/></svg></button>
       </div>
@@ -901,6 +926,35 @@
       </div>
     </div>
 
+  </div>
+
+  <!-- FORGOT PASSWORD — request a reset link, or (when opened via a
+       ?reset=<token> link from the emailed URL) set a new password. -->
+  <div class="fp-overlay" id="fpOverlay">
+    <div class="fp-modal">
+      <div id="fpRequestView">
+        <h3 id="fpRequestTitle">نسيت كلمة المرور؟</h3>
+        <p id="fpRequestSub">أدخل بريدك الإلكتروني أو اسم المستخدم وبنبعتلك رابط لتعيين كلمة مرور جديدة.</p>
+        <div class="input-wrap">
+          <input type="text" class="form-input" id="fpEmail" placeholder="example@email.com" dir="ltr">
+        </div>
+        <div class="fp-modal-actions">
+          <button type="button" class="fp-modal-cancel" onclick="closeForgotPassword()" id="fpCancelBtn">إلغاء</button>
+          <button type="button" class="submit-btn" style="flex:1;" onclick="submitForgotPassword()" id="fpSendBtn">إرسال الرابط</button>
+        </div>
+      </div>
+      <div id="fpResetView" style="display:none;">
+        <h3 id="fpResetTitle">تعيين كلمة مرور جديدة</h3>
+        <p id="fpResetSub">أدخل كلمة المرور الجديدة لحسابك.</p>
+        <div class="input-wrap">
+          <input type="password" class="form-input" id="fpNewPassword" placeholder="8 أحرف على الأقل" autocomplete="new-password">
+        </div>
+        <div class="fp-modal-actions">
+          <button type="button" class="fp-modal-cancel" onclick="closeForgotPassword()" id="fpResetCancelBtn">إلغاء</button>
+          <button type="button" class="submit-btn" style="flex:1;" onclick="submitResetPassword()" id="fpResetBtn">تعيين كلمة المرور</button>
+        </div>
+      </div>
+    </div>
   </div>
 </div>
 
@@ -1078,6 +1132,139 @@
     .catch(function(err) {
       if (btn) btn.disabled = false;
       console.error('[login] request failed:', err);
+      showToast('Connection error, please try again');
+    });
+  }
+
+  // FORGOT PASSWORD — request-a-link view and set-new-password view share
+  // one overlay (#fpOverlay); which view shows is just which inner div is
+  // visible. Strings aren't wired into the big per-language `translations`
+  // object below (that's 9 languages deep) — picked by currentLang instead,
+  // read fresh each time the modal opens so it still follows the toggle.
+  var FP_STRINGS = {
+    ar: {
+      title: 'نسيت كلمة المرور؟',
+      sub: 'أدخل بريدك الإلكتروني أو اسم المستخدم وبنبعتلك رابط لتعيين كلمة مرور جديدة.',
+      cancel: 'إلغاء', send: 'إرسال الرابط', sending: 'جاري الإرسال...',
+      sentMsg: 'إذا كان في حساب بهاد الإيميل، رح توصلك رسالة فيها رابط تعيين كلمة مرور جديدة.',
+      resetTitle: 'تعيين كلمة مرور جديدة', resetSub: 'أدخل كلمة المرور الجديدة لحسابك.',
+      resetBtn: 'تعيين كلمة المرور', resetting: 'جاري الحفظ...',
+      resetDone: 'تم تعيين كلمة المرور بنجاح! فيك تسجل دخول هلأ.',
+      emailRequired: 'الرجاء إدخال البريد الإلكتروني أو اسم المستخدم',
+      passwordRequired: 'الرجاء إدخال كلمة مرور لا تقل عن 8 أحرف',
+      passwordPlaceholder: '8 أحرف على الأقل'
+    },
+    en: {
+      title: 'Forgot password?',
+      sub: "Enter your email or username and we'll send you a link to set a new password.",
+      cancel: 'Cancel', send: 'Send link', sending: 'Sending...',
+      sentMsg: "If an account exists for that email, we've sent a link to reset your password.",
+      resetTitle: 'Set a new password', resetSub: 'Enter a new password for your account.',
+      resetBtn: 'Set password', resetting: 'Saving...',
+      resetDone: 'Password reset! You can sign in now.',
+      emailRequired: 'Please enter your email or username',
+      passwordRequired: 'Password must be at least 8 characters',
+      passwordPlaceholder: 'At least 8 characters'
+    }
+  };
+  function fpStr() { return FP_STRINGS[currentLang] || FP_STRINGS.en; }
+
+  function openForgotPassword() {
+    var s = fpStr();
+    document.getElementById('fpRequestTitle').textContent = s.title;
+    document.getElementById('fpRequestSub').textContent = s.sub;
+    document.getElementById('fpCancelBtn').textContent = s.cancel;
+    document.getElementById('fpSendBtn').textContent = s.send;
+    document.getElementById('fpEmail').value = '';
+    document.getElementById('fpRequestView').style.display = '';
+    document.getElementById('fpResetView').style.display = 'none';
+    document.getElementById('fpOverlay').classList.add('show');
+  }
+  function closeForgotPassword() {
+    document.getElementById('fpOverlay').classList.remove('show');
+  }
+
+  function submitForgotPassword() {
+    var s = fpStr();
+    var email = document.getElementById('fpEmail').value.trim();
+    if (!email) { showToast(s.emailRequired); return; }
+
+    var btn = document.getElementById('fpSendBtn');
+    btn.disabled = true;
+    btn.textContent = s.sending;
+
+    fetch('/api/auth-login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'request_reset', email: email })
+    })
+    .then(function(r) { return r.json().then(function(data) { return { ok: r.ok, data: data }; }); })
+    .then(function(result) {
+      btn.disabled = false;
+      btn.textContent = s.send;
+      if (!result.ok) {
+        showToast(result.data.error || 'Something went wrong');
+        return;
+      }
+      closeForgotPassword();
+      showToast(s.sentMsg, 'info');
+    })
+    .catch(function(err) {
+      btn.disabled = false;
+      btn.textContent = s.send;
+      console.error('[forgot-password] request failed:', err);
+      showToast('Connection error, please try again');
+    });
+  }
+
+  // Opened automatically when the page loads with ?reset=<token> — the link
+  // mailed by submitForgotPassword()'s server-side counterpart.
+  var fpResetToken = null;
+  function openResetPassword(token) {
+    var s = fpStr();
+    fpResetToken = token;
+    document.getElementById('fpResetTitle').textContent = s.resetTitle;
+    document.getElementById('fpResetSub').textContent = s.resetSub;
+    document.getElementById('fpResetCancelBtn').textContent = s.cancel;
+    document.getElementById('fpResetBtn').textContent = s.resetBtn;
+    document.getElementById('fpNewPassword').placeholder = s.passwordPlaceholder;
+    document.getElementById('fpNewPassword').value = '';
+    document.getElementById('fpRequestView').style.display = 'none';
+    document.getElementById('fpResetView').style.display = '';
+    document.getElementById('fpOverlay').classList.add('show');
+  }
+
+  function submitResetPassword() {
+    var s = fpStr();
+    var newPassword = document.getElementById('fpNewPassword').value;
+    if (!newPassword || newPassword.length < 8) { showToast(s.passwordRequired); return; }
+
+    var btn = document.getElementById('fpResetBtn');
+    btn.disabled = true;
+    btn.textContent = s.resetting;
+
+    fetch('/api/auth-login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'reset_password', token: fpResetToken, newPassword: newPassword })
+    })
+    .then(function(r) { return r.json().then(function(data) { return { ok: r.ok, data: data }; }); })
+    .then(function(result) {
+      btn.disabled = false;
+      btn.textContent = s.resetBtn;
+      if (!result.ok) {
+        showToast(result.data.error || 'Something went wrong');
+        return;
+      }
+      closeForgotPassword();
+      showToast(s.resetDone, 'info');
+      // Drop the token from the URL so a refresh doesn't reopen this form.
+      try { window.history.replaceState({}, document.title, window.location.pathname); } catch (e) {}
+    })
+    .catch(function(err) {
+      btn.disabled = false;
+      btn.textContent = s.resetBtn;
+      console.error('[reset-password] request failed:', err);
       showToast('Connection error, please try again');
     });
   }
@@ -1471,6 +1658,10 @@
     setLang('en');
     initAuthBackground();
     telegramAutoLogin();
+    try {
+      var resetToken = new URLSearchParams(window.location.search).get('reset');
+      if (resetToken) openResetPassword(resetToken);
+    } catch (e) {}
   });
 
   var BG_CYCLE_PAIRS = [
