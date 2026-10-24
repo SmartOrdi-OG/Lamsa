@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="robots" content="noindex, nofollow">
+<title>Lamsa | Admin</title>
+<link rel="icon" type="image/png" sizes="32x32" href="assets/favicon-32.png">
+<link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;900&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --black: #f6f7f8;
+    --card: #ffffff;
+    --card-2: #fbfbfc;
+    --border: #dfe2e6;
+    --gold: #6b7480;
+    --gold-light: #a3abb5;
+    --gold-deep: #3d434b;
+    --gold-dim: rgba(107,116,128,0.10);
+    --white: #1b1e22;
+    --gray: #767d86;
+    --error: #e05555;
+    --success: #4a9c73;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: 'Tajawal', sans-serif;
+    background: var(--black);
+    color: var(--white);
+    min-height: 100vh;
+    padding: 24px 16px 60px;
+  }
+  .wrap { max-width: 720px; margin: 0 auto; }
+  h1 { font-size: 22px; font-weight: 900; margin-bottom: 20px; }
+
+  .gate-card {
+    background: var(--card); border: 1px solid var(--border); border-radius: 16px;
+    padding: 20px; display: flex; gap: 10px; max-width: 480px;
+  }
+  .gate-card input {
+    flex: 1; border: 1.5px solid var(--border); border-radius: 10px;
+    padding: 12px 14px; font-size: 15px; font-family: inherit; background: var(--card-2); color: var(--white);
+  }
+  .gate-card input:focus { outline: none; border-color: var(--gold); }
+  .btn {
+    border: none; border-radius: 10px; padding: 12px 18px; font-family: inherit;
+    font-weight: 700; font-size: 14px; cursor: pointer;
+    background: linear-gradient(135deg, var(--gold-deep), var(--gold)); color: #fff;
+  }
+  .btn:disabled { opacity: 0.6; cursor: default; }
+  .btn.secondary { background: var(--card-2); color: var(--white); border: 1px solid var(--border); }
+
+  .gate-error { color: var(--error); font-size: 13px; margin-top: 10px; min-height: 16px; }
+
+  .tabs { display: flex; gap: 10px; margin: 20px 0 18px; flex-wrap: wrap; }
+  .tab {
+    border: 1px solid var(--border); background: var(--card); color: var(--white);
+    border-radius: 999px; padding: 10px 18px; font-family: inherit; font-weight: 700;
+    font-size: 14px; cursor: pointer;
+  }
+  .tab.active { background: linear-gradient(135deg, var(--gold-deep), var(--gold)); color: #fff; border-color: transparent; }
+
+  .panel { display: none; }
+  .panel.active { display: block; }
+
+  .stat-row { display: flex; gap: 12px; margin-bottom: 16px; flex-wrap: wrap; }
+  .stat {
+    background: var(--card); border: 1px solid var(--border); border-radius: 12px;
+    padding: 14px 18px; min-width: 120px;
+  }
+  .stat .num { font-size: 22px; font-weight: 900; }
+  .stat .label { font-size: 12px; color: var(--gray); margin-top: 2px; }
+
+  .list-item {
+    background: var(--card); border: 1px solid var(--border); border-radius: 12px;
+    padding: 12px 14px; margin-bottom: 10px; font-size: 13px;
+  }
+  .list-item .top { display: flex; justify-content: space-between; gap: 10px; font-weight: 700; margin-bottom: 4px; }
+  .list-item .at { color: var(--gray); font-weight: 400; font-size: 12px; white-space: nowrap; }
+  .list-item .msg { color: var(--light, var(--gray)); word-break: break-word; }
+  .list-item.error .top { color: var(--error); }
+  .stars { color: var(--gold); letter-spacing: 1px; }
+
+  .empty { color: var(--gray); font-size: 14px; padding: 20px 0; text-align: center; }
+  .loading { color: var(--gray); font-size: 14px; }
+
+  .cfg-row {
+    display: flex; justify-content: space-between; align-items: center;
+    background: var(--card); border: 1px solid var(--border); border-radius: 10px;
+    padding: 10px 14px; margin-bottom: 8px; font-size: 14px;
+  }
+  .cfg-row .ok { color: var(--success); font-weight: 700; }
+  .cfg-row .missing { color: var(--error); font-weight: 700; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Lamsa — Admin</h1>
+
+  <div id="gate" class="gate-card">
+    <input id="pwInput" type="password" placeholder="Admin password" autocomplete="off">
+    <button class="btn" id="unlockBtn" onclick="unlock()">Unlock</button>
+  </div>
+  <div class="gate-error" id="gateError"></div>
+
+  <div id="dashboard" style="display:none;">
+    <div class="tabs">
+      <button class="tab active" data-view="ratings" onclick="switchTab('ratings')">Ratings</button>
+      <button class="tab" data-view="errors" onclick="switchTab('errors')">Errors</button>
+      <button class="tab" data-view="config" onclick="switchTab('config')">Configuration</button>
+      <button class="btn secondary" style="margin-inline-start:auto" onclick="loadView(currentView, true)">Refresh</button>
+    </div>
+
+    <div class="panel active" id="panel-ratings"><div class="loading">Loading…</div></div>
+    <div class="panel" id="panel-errors"><div class="loading">Loading…</div></div>
+    <div class="panel" id="panel-config"><div class="loading">Loading…</div></div>
+  </div>
+</div>
+
+<script>
+  var adminPassword = null;
+  var currentView = 'ratings';
+  var loaded = { ratings: false, errors: false, config: false };
+
+  function escapeHtml(s) {
+    return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+    });
+  }
+
+  function fmtDate(iso) {
+    try { return new Date(iso).toLocaleString(); } catch (e) { return iso || ''; }
+  }
+
+  async function callAdmin(view) {
+    var res = await fetch('/api/status', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ adminPassword: adminPassword, view: view })
+    });
+    var data = await res.json().catch(function () { return {}; });
+    if (!res.ok) throw new Error(data.error || 'Request failed');
+    return data;
+  }
+
+  async function unlock() {
+    var pw = document.getElementById('pwInput').value;
+    if (!pw) return;
+    var btn = document.getElementById('unlockBtn');
+    var err = document.getElementById('gateError');
+    err.textContent = '';
+    btn.disabled = true;
+    btn.textContent = 'Checking…';
+    try {
+      adminPassword = pw;
+      await callAdmin('ratings'); // also primes the ratings panel
+      loaded.ratings = true;
+      renderRatings(lastRatingsData);
+      document.getElementById('gate').style.display = 'none';
+      document.getElementById('dashboard').style.display = 'block';
+    } catch (e) {
+      adminPassword = null;
+      err.textContent = e.message || 'Wrong password';
+    } finally {
+      btn.disabled = false;
+      btn.textContent = 'Unlock';
+    }
+  }
+
+  document.getElementById('pwInput').addEventListener('keydown', function (e) {
+    if (e.key === 'Enter') unlock();
+  });
+
+  function switchTab(view) {
+    currentView = view;
+    document.querySelectorAll('.tab').forEach(function (t) { t.classList.toggle('active', t.dataset.view === view); });
+    document.querySelectorAll('.panel').forEach(function (p) { p.classList.toggle('active', p.id === 'panel-' + view); });
+    if (!loaded[view]) loadView(view);
+  }
+
+  async function loadView(view, forceRefresh) {
+    var panel = document.getElementById('panel-' + view);
+    if (forceRefresh) panel.innerHTML = '<div class="loading">Loading…</div>';
+    try {
+      var data = await callAdmin(view);
+      loaded[view] = true;
+      if (view === 'ratings') { lastRatingsData = data; renderRatings(data); }
+      if (view === 'errors') renderErrors(data);
+      if (view === 'config') renderConfig(data);
+    } catch (e) {
+      panel.innerHTML = '<div class="empty">' + escapeHtml(e.message) + '</div>';
+    }
+  }
+
+  var lastRatingsData = null;
+
+  function renderRatings(data) {
+    var panel = document.getElementById('panel-ratings');
+    if (!data) return;
+    var html = '<div class="stat-row">' +
+      '<div class="stat"><div class="num">' + data.count + '</div><div class="label">Total ratings</div></div>' +
+      '<div class="stat"><div class="num">' + (data.average || 0) + ' / 5</div><div class="label">Average</div></div>' +
+      '</div>';
+    if (!data.ratings || !data.ratings.length) {
+      html += '<div class="empty">No ratings yet</div>';
+    } else {
+      data.ratings.forEach(function (r) {
+        html += '<div class="list-item"><div class="top"><span class="stars">' + '★'.repeat(r.rating) + '☆'.repeat(5 - r.rating) + '</span><span class="at">' + fmtDate(r.at) + '</span></div>' +
+          (r.comment ? '<div class="msg">' + escapeHtml(r.comment) + '</div>' : '') +
+          '<div class="msg" style="opacity:.6;margin-top:4px;">' + escapeHtml(r.email) + '</div></div>';
+      });
+    }
+    panel.innerHTML = html;
+  }
+
+  function renderErrors(data) {
+    var panel = document.getElementById('panel-errors');
+    var errors = (data && data.errors) || [];
+    if (!errors.length) {
+      panel.innerHTML = '<div class="empty">No errors logged</div>';
+      return;
+    }
+    var html = '';
+    errors.forEach(function (e) {
+      html += '<div class="list-item error"><div class="top"><span>' + escapeHtml(e.source) + '</span><span class="at">' + fmtDate(e.at) + '</span></div>' +
+        '<div class="msg">' + escapeHtml(e.message) + '</div></div>';
+    });
+    panel.innerHTML = html;
+  }
+
+  function renderConfig(data) {
+    var panel = document.getElementById('panel-config');
+    if (!data) return;
+    var html = '<div class="stat-row">' +
+      '<div class="stat"><div class="num">' + (data.totalGenerations || 0) + '</div><div class="label">Total generations</div></div>' +
+      '<div class="stat"><div class="num">' + (data.commit || '—') + '</div><div class="label">Deployed commit</div></div>' +
+      '</div>';
+    var env = data.env || {};
+    Object.keys(env).forEach(function (key) {
+      html += '<div class="cfg-row"><span>' + escapeHtml(key) + '</span><span class="' + (env[key] ? 'ok' : 'missing') + '">' + (env[key] ? 'Configured' : 'Missing') + '</span></div>';
+    });
+    panel.innerHTML = html;
+  }
+</script>
+</body>
+</html>

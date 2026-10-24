@@ -1,4 +1,4 @@
-import { redis, ensureWelcomeCredit, getOrCreateReferralCode, getReferralCount } from './_db.js';
+import { redis, ensureWelcomeCredit, getOrCreateReferralCode, getReferralCount, logError } from './_db.js';
 import { requireSessionEmail } from './_auth.js';
 
 export default async function handler(req, res) {
@@ -22,6 +22,7 @@ export default async function handler(req, res) {
     return res.status(200).json({ email, credits, referralCode, referralCount });
   } catch (err) {
     console.error('[credits] error:', err.message);
+    await logError('credits', err.message);
     return res.status(500).json({ error: err.message });
   }
 }

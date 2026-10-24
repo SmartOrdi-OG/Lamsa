@@ -6,6 +6,8 @@
 // to just opening the image in a new tab instead of downloading it. Fetching
 // server-side sidesteps CORS entirely since it's a normal server-to-server
 // request, not a browser one.
+import { logError } from './_db.js';
+
 const ALLOWED_HOST_SUFFIXES = ['.fal.media', '.fal.run', 'fal.media', 'fal.run'];
 
 export default async function handler(req, res) {
@@ -43,6 +45,7 @@ export default async function handler(req, res) {
     return res.status(200).send(buffer);
   } catch (err) {
     console.error('[api/download-image] error:', err.message);
+    await logError('download-image', err.message);
     return res.status(500).json({ error: err.message });
   }
 }

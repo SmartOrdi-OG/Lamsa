@@ -1,4 +1,4 @@
-import { redis, ensureWelcomeCredit, resolveReferralCode, recordReferral } from './_db.js';
+import { redis, ensureWelcomeCredit, resolveReferralCode, recordReferral, logError } from './_db.js';
 import { getOrCreateTelegramUser, createSession, setSessionCookie } from './_auth.js';
 import { verifyTelegramInitData, telegramConfigured } from './_telegram.js';
 
@@ -45,6 +45,7 @@ export default async function handler(req, res) {
     return res.status(200).json({ username: user.username, email: user.email });
   } catch (err) {
     console.error('[telegram] error:', err.message);
+    await logError('telegram', err.message);
     return res.status(500).json({ error: 'Login failed' });
   }
 }

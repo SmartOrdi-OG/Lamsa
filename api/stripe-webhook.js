@@ -1,5 +1,5 @@
 import { stripe } from './_stripe.js';
-import { addCredits, markEventProcessed } from './_db.js';
+import { addCredits, markEventProcessed, logError } from './_db.js';
 
 // Stripe signature verification needs the exact raw request bytes — Vercel's
 // default JSON body parser would re-serialize the body and break the
@@ -35,6 +35,7 @@ export default async function handler(req, res) {
     event = stripe.webhooks.constructEvent(rawBody, signature, STRIPE_WEBHOOK_SECRET);
   } catch (err) {
     console.error('[stripe-webhook] signature verification failed:', err.message);
+    await logError('stripe-webhook:signature', err.message);
     return res.status(400).send('Webhook signature verification failed: ' + err.message);
   }
 
@@ -71,6 +72,7 @@ export default async function handler(req, res) {
     return res.status(200).json({ received: true });
   } catch (err) {
     console.error('[stripe-webhook] handler error:', err.message);
+    await logError('stripe-webhook:handler', err.message);
     return res.status(500).send('Webhook handler error');
   }
 }
