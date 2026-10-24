@@ -52,7 +52,7 @@ export default async function handler(req, res) {
     return res.status(200).json(response);
   } catch (err) {
     console.error('[me] error:', err.message);
-    await logError('me', err.message);
+    await logError('me', err.message, err.stack);
     return res.status(500).json({ error: err.message });
   }
 }

@@ -63,32 +63,69 @@ export async function getAllRatings() {
 }
 
 const ERRORS_KEY = 'lamsa:errors';
-const MAX_ERRORS = 200;
+const MAX_DISTINCT_ERRORS = 300; // guards against unbounded growth from errors with highly variable messages
 
 // Best-effort error log for the admin page — every API handler's catch
 // block calls this alongside its existing console.error so failures are
-// visible without digging through Vercel's own runtime logs. Capped to the
-// most recent 200 entries (ltrim after each push) so the list can't grow
-// unbounded; a logging failure here is swallowed rather than replacing the
-// real error response the caller was already about to send.
-export async function logError(source, message) {
+// visible without digging through Vercel's own runtime logs. Stored as a
+// hash keyed by a fingerprint of (source + message) rather than a plain
+// list, so the same recurring failure (e.g. fal.ai down) collapses into one
+// row with a "happened Nx" count instead of flooding the admin page with
+// hundreds of near-identical entries. A logging failure here is swallowed
+// rather than replacing the real error response the caller was already
+// about to send.
+function fingerprint(source, message) {
+  return crypto.createHash('sha1').update(source + '|' + String(message).slice(0, 120)).digest('hex').slice(0, 7);
+}
+
+export async function logError(source, message, stack) {
   if (!redis) return;
   try {
-    const entry = JSON.stringify({
-      source,
-      message: String(message).slice(0, 500),
-      at: new Date().toISOString()
-    });
-    await redis.rpush(ERRORS_KEY, entry);
-    await redis.ltrim(ERRORS_KEY, -MAX_ERRORS, -1);
+    const fp = fingerprint(source, message);
+    const key = ERRORS_KEY + ':' + fp;
+    const existing = await redis.get(key);
+    const now = new Date().toISOString();
+    const entry = existing
+      ? { ...existing, count: (existing.count || 1) + 1, lastAt: now }
+      : {
+          id: fp,
+          source,
+          message: String(message).slice(0, 500),
+          stack: stack ? String(stack).slice(0, 2000) : null,
+          count: 1,
+          firstAt: now,
+          lastAt: now
+        };
+    await redis.set(key, entry);
+    await redis.zadd(ERRORS_KEY + ':index', { score: Date.now(), member: fp });
+    // Trim the index (and the distinct-error hashes it no longer references)
+    // once the number of distinct fingerprints grows past the cap, oldest
+    // first — a safety net against unbounded key growth, not a normal path.
+    const total = await redis.zcard(ERRORS_KEY + ':index');
+    if (total > MAX_DISTINCT_ERRORS) {
+      const stale = await redis.zrange(ERRORS_KEY + ':index', 0, total - MAX_DISTINCT_ERRORS - 1);
+      if (stale.length) {
+        await redis.zrem(ERRORS_KEY + ':index', ...stale);
+        await redis.del(...stale.map((id) => ERRORS_KEY + ':' + id));
+      }
+    }
   } catch (e) {
     // logging is never allowed to break the caller's actual error response
   }
 }
 
-export async function getRecentErrors(limit = 100) {
-  const raw = await redis.lrange(ERRORS_KEY, -limit, -1);
-  return raw.map(parseListEntry).filter(Boolean).reverse();
+export async function getRecentErrors(limit = 200) {
+  const ids = await redis.zrange(ERRORS_KEY + ':index', 0, -1, { rev: true });
+  const capped = ids.slice(0, limit);
+  if (!capped.length) return [];
+  const entries = await Promise.all(capped.map((id) => redis.get(ERRORS_KEY + ':' + id)));
+  return entries.filter(Boolean);
+}
+
+export async function clearErrors() {
+  const ids = await redis.zrange(ERRORS_KEY + ':index', 0, -1);
+  if (ids.length) await redis.del(...ids.map((id) => ERRORS_KEY + ':' + id));
+  await redis.del(ERRORS_KEY + ':index');
 }
 
 // Atomically decrements by 1 only if the balance is > 0. Returns the new

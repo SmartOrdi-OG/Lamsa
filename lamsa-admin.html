@@ -84,13 +84,41 @@
   .empty { color: var(--gray); font-size: 14px; padding: 20px 0; text-align: center; }
   .loading { color: var(--gray); font-size: 14px; }
 
+  .cfg-banner {
+    font-size: 15px; font-weight: 700; margin-bottom: 14px;
+  }
+  .cfg-banner.ok { color: var(--success); }
+  .cfg-banner.bad { color: var(--error); }
+
   .cfg-row {
-    display: flex; justify-content: space-between; align-items: center;
+    display: flex; align-items: flex-start; gap: 10px;
     background: var(--card); border: 1px solid var(--border); border-radius: 10px;
     padding: 10px 14px; margin-bottom: 8px; font-size: 14px;
   }
-  .cfg-row .ok { color: var(--success); font-weight: 700; }
-  .cfg-row .missing { color: var(--error); font-weight: 700; }
+  .cfg-row .dot {
+    flex-shrink: 0; width: 20px; height: 20px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 900;
+    color: #fff; margin-top: 1px;
+  }
+  .cfg-row .dot.ok { background: var(--success); }
+  .cfg-row .dot.bad { background: var(--error); }
+  .cfg-row .cfg-body { flex: 1; min-width: 0; }
+  .cfg-row .cfg-label { font-weight: 700; }
+  .cfg-row .cfg-detail { color: var(--gray); font-size: 12px; margin-top: 2px; word-break: break-word; }
+
+  .err-item .count { color: var(--error); font-weight: 700; }
+  .err-item .tags { color: var(--gray); font-size: 12px; margin-top: 4px; }
+  .err-stack-toggle {
+    background: none; border: none; color: var(--gray); font-family: inherit;
+    font-size: 12px; cursor: pointer; padding: 6px 0 0; text-align: start;
+  }
+  .err-stack {
+    display: none; white-space: pre-wrap; word-break: break-word; font-size: 11px;
+    background: var(--card-2); border-radius: 8px; padding: 8px; margin-top: 6px; color: var(--gray);
+  }
+  .err-stack.open { display: block; }
+
+  .pw-wrap { flex: 1; position: relative; display: flex; }
 </style>
 </head>
 <body>
@@ -99,6 +127,7 @@
 
   <div id="gate" class="gate-card">
     <input id="pwInput" type="password" placeholder="Admin password" autocomplete="off">
+    <button class="btn secondary" type="button" onclick="togglePwVisible()">Show</button>
     <button class="btn" id="unlockBtn" onclick="unlock()">Unlock</button>
   </div>
   <div class="gate-error" id="gateError"></div>
@@ -171,6 +200,11 @@
     if (e.key === 'Enter') unlock();
   });
 
+  function togglePwVisible() {
+    var input = document.getElementById('pwInput');
+    input.type = input.type === 'password' ? 'text' : 'password';
+  }
+
   function switchTab(view) {
     currentView = view;
     document.querySelectorAll('.tab').forEach(function (t) { t.classList.toggle('active', t.dataset.view === view); });
@@ -197,10 +231,7 @@
   function renderRatings(data) {
     var panel = document.getElementById('panel-ratings');
     if (!data) return;
-    var html = '<div class="stat-row">' +
-      '<div class="stat"><div class="num">' + data.count + '</div><div class="label">Total ratings</div></div>' +
-      '<div class="stat"><div class="num">' + (data.average || 0) + ' / 5</div><div class="label">Average</div></div>' +
-      '</div>';
+    var html = '<p style="font-weight:700;margin-bottom:14px;">Average: ' + (data.average || 0) + ' out of 5 (' + data.count + ' rating' + (data.count === 1 ? '' : 's') + ')</p>';
     if (!data.ratings || !data.ratings.length) {
       html += '<div class="empty">No ratings yet</div>';
     } else {
@@ -213,17 +244,34 @@
     panel.innerHTML = html;
   }
 
+  async function clearErrorLog() {
+    try {
+      await callAdmin('clear_errors');
+      loadView('errors', true);
+    } catch (e) {
+      alert(e.message || 'Could not clear the log');
+    }
+  }
+
+  function toggleStack(id) {
+    var el = document.getElementById('stack-' + id);
+    if (el) el.classList.toggle('open');
+  }
+
   function renderErrors(data) {
     var panel = document.getElementById('panel-errors');
     var errors = (data && data.errors) || [];
+    var html = '<button class="btn secondary" style="margin-bottom:14px;" onclick="clearErrorLog()">Clear the log</button>';
     if (!errors.length) {
-      panel.innerHTML = '<div class="empty">No errors logged</div>';
+      panel.innerHTML = html + '<div class="empty">No errors logged</div>';
       return;
     }
-    var html = '';
     errors.forEach(function (e) {
-      html += '<div class="list-item error"><div class="top"><span>' + escapeHtml(e.source) + '</span><span class="at">' + fmtDate(e.at) + '</span></div>' +
-        '<div class="msg">' + escapeHtml(e.message) + '</div></div>';
+      html += '<div class="list-item error err-item"><div class="top"><span class="count">Happened ' + (e.count || 1) + '×</span><span class="at">' + fmtDate(e.lastAt || e.at) + '</span></div>' +
+        '<div class="msg">' + escapeHtml(e.source) + ': ' + escapeHtml(e.message) + '</div>' +
+        '<div class="tags">id ' + escapeHtml(e.id || '') + '</div>' +
+        (e.stack ? '<button class="err-stack-toggle" onclick="toggleStack(\'' + e.id + '\')">▶ stack</button><div class="err-stack" id="stack-' + e.id + '">' + escapeHtml(e.stack) + '</div>' : '') +
+        '</div>';
     });
     panel.innerHTML = html;
   }
@@ -231,13 +279,16 @@
   function renderConfig(data) {
     var panel = document.getElementById('panel-config');
     if (!data) return;
-    var html = '<div class="stat-row">' +
+    var checks = data.checks || [];
+    var html = '<div class="cfg-banner ' + (data.allOk ? 'ok' : 'bad') + '">' +
+      (data.allOk ? 'Everything is configured correctly ✓' : 'Some checks need attention ✗') + '</div>';
+    html += '<div class="stat-row">' +
       '<div class="stat"><div class="num">' + (data.totalGenerations || 0) + '</div><div class="label">Total generations</div></div>' +
       '<div class="stat"><div class="num">' + (data.commit || '—') + '</div><div class="label">Deployed commit</div></div>' +
       '</div>';
-    var env = data.env || {};
-    Object.keys(env).forEach(function (key) {
-      html += '<div class="cfg-row"><span>' + escapeHtml(key) + '</span><span class="' + (env[key] ? 'ok' : 'missing') + '">' + (env[key] ? 'Configured' : 'Missing') + '</span></div>';
+    checks.forEach(function (c) {
+      html += '<div class="cfg-row"><div class="dot ' + (c.ok ? 'ok' : 'bad') + '">' + (c.ok ? '✓' : '✗') + '</div>' +
+        '<div class="cfg-body"><div class="cfg-label">' + escapeHtml(c.label) + '</div><div class="cfg-detail">' + escapeHtml(c.detail) + '</div></div></div>';
     });
     panel.innerHTML = html;
   }

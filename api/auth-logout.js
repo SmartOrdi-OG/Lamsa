@@ -11,7 +11,7 @@ export default async function handler(req, res) {
     return res.status(200).json({ ok: true });
   } catch (err) {
     console.error('[auth-logout] error:', err.message);
-    await logError('auth-logout', err.message);
+    await logError('auth-logout', err.message, err.stack);
     return res.status(500).json({ error: 'Logout failed' });
   }
 }

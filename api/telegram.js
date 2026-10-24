@@ -45,7 +45,7 @@ export default async function handler(req, res) {
     return res.status(200).json({ username: user.username, email: user.email });
   } catch (err) {
     console.error('[telegram] error:', err.message);
-    await logError('telegram', err.message);
+    await logError('telegram', err.message, err.stack);
     return res.status(500).json({ error: 'Login failed' });
   }
 }

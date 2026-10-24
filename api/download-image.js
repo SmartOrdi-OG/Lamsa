@@ -45,7 +45,7 @@ export default async function handler(req, res) {
     return res.status(200).send(buffer);
   } catch (err) {
     console.error('[api/download-image] error:', err.message);
-    await logError('download-image', err.message);
+    await logError('download-image', err.message, err.stack);
     return res.status(500).json({ error: err.message });
   }
 }

@@ -1,4 +1,5 @@
-import { redis, getAllRatings, getRecentErrors, getGenerationCount } from './_db.js';
+import { redis, getAllRatings, getRecentErrors, clearErrors, getGenerationCount } from './_db.js';
+import { stripe } from './_stripe.js';
 
 export default async function handler(req, res) {
   // The admin page (lamsa-admin.html) POSTs here rather than to its own API
@@ -100,18 +101,25 @@ async function handleAdmin(req, res) {
       return res.status(200).json({ errors });
     }
 
+    if (view === 'clear_errors') {
+      await clearErrors();
+      return res.status(200).json({ ok: true });
+    }
+
     if (view === 'config') {
+      const checks = await Promise.all([
+        checkDatabase(),
+        checkFal(),
+        checkStripe(),
+        checkStripeWebhook(),
+        checkResend(),
+        checkTelegram()
+      ]);
       return res.status(200).json({
         totalGenerations: await getGenerationCount(),
         commit: (process.env.VERCEL_GIT_COMMIT_SHA || '').slice(0, 7) || null,
-        env: {
-          FAL_API_KEY: !!process.env.FAL_API_KEY,
-          REDIS: !!redis,
-          RESEND_API_KEY: !!process.env.RESEND_API_KEY,
-          STRIPE_SECRET_KEY: !!process.env.STRIPE_SECRET_KEY,
-          STRIPE_WEBHOOK_SECRET: !!process.env.STRIPE_WEBHOOK_SECRET,
-          TELEGRAM_BOT_TOKEN: !!process.env.TELEGRAM_BOT_TOKEN
-        }
+        allOk: checks.every((c) => c.ok),
+        checks
       });
     }
 
@@ -119,5 +127,69 @@ async function handleAdmin(req, res) {
   } catch (err) {
     console.error('[api/status admin] error:', err.message);
     return res.status(500).json({ error: err.message });
+  }
+}
+
+// Each check below is intentionally either a real live call (cheap/free
+// ones: Redis, Telegram's getMe, Stripe's balance read) or a presence-only
+// check (fal.ai and Resend, where even a minimal real call costs money or
+// sends an actual email) — labeled accordingly so the admin page is honest
+// about what was actually verified.
+async function checkDatabase() {
+  if (!redis) return { key: 'database', label: 'Database (Redis)', ok: false, detail: 'not configured' };
+  try {
+    const probeKey = 'lamsa:admin:healthcheck';
+    const value = Date.now().toString();
+    await redis.set(probeKey, value, { ex: 10 });
+    const readBack = await redis.get(probeKey);
+    const ok = String(readBack) === value;
+    return { key: 'database', label: 'Database (Redis)', ok, detail: ok ? 'write and read back succeeded' : 'write/read mismatch' };
+  } catch (err) {
+    return { key: 'database', label: 'Database (Redis)', ok: false, detail: err.message };
+  }
+}
+
+function checkFal() {
+  const ok = !!process.env.FAL_API_KEY;
+  return { key: 'fal', label: 'AI generation (fal.ai)', ok, detail: ok ? 'set (not called — a test call costs credit)' : 'missing' };
+}
+
+async function checkStripe() {
+  if (!stripe) return { key: 'stripe', label: 'Payment (Stripe)', ok: false, detail: 'STRIPE_SECRET_KEY missing' };
+  try {
+    const balance = await stripe.balance.retrieve();
+    const mode = (balance.livemode === false) ? 'test mode' : 'live mode';
+    return { key: 'stripe', label: 'Payment (Stripe)', ok: true, detail: mode + ', key authenticates' };
+  } catch (err) {
+    return { key: 'stripe', label: 'Payment (Stripe)', ok: false, detail: err.message };
+  }
+}
+
+function checkStripeWebhook() {
+  const ok = !!(process.env.STRIPE_WEBHOOK_SECRET || '').trim();
+  return { key: 'stripe-webhook', label: 'Payment webhook secret', ok, detail: ok ? 'set' : 'missing' };
+}
+
+function checkResend() {
+  const ok = !!process.env.RESEND_API_KEY;
+  const from = process.env.RESEND_FROM_EMAIL;
+  return {
+    key: 'resend',
+    label: 'Password reset email (Resend)',
+    ok,
+    detail: ok ? ('set, sends from ' + (from || 'the Resend default address') + ' (not called — a test call sends a real email)') : 'missing'
+  };
+}
+
+async function checkTelegram() {
+  const token = (process.env.TELEGRAM_BOT_TOKEN || '').trim();
+  if (!token) return { key: 'telegram', label: 'Telegram login', ok: false, detail: 'TELEGRAM_BOT_TOKEN missing' };
+  try {
+    const res = await fetch('https://api.telegram.org/bot' + token + '/getMe');
+    const data = await res.json();
+    if (!data.ok) return { key: 'telegram', label: 'Telegram login', ok: false, detail: 'getMe rejected the token' };
+    return { key: 'telegram', label: 'Telegram login', ok: true, detail: 'bot @' + data.result.username + ' reachable' };
+  } catch (err) {
+    return { key: 'telegram', label: 'Telegram login', ok: false, detail: err.message };
   }
 }
