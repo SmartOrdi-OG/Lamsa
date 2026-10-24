@@ -48,7 +48,7 @@ export default async function handler(req, res) {
 
   } catch (err) {
     console.error('Upload error:', err.message);
-    await logError('upload', err.message);
+    await logError('upload', err.message, err.stack);
     return res.status(500).json({ error: err.message });
   }
 }
