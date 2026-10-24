@@ -182,7 +182,7 @@
     btn.textContent = 'Checking…';
     try {
       adminPassword = pw;
-      await callAdmin('ratings'); // also primes the ratings panel
+      lastRatingsData = await callAdmin('ratings'); // also primes the ratings panel
       loaded.ratings = true;
       renderRatings(lastRatingsData);
       document.getElementById('gate').style.display = 'none';
