@@ -1,4 +1,4 @@
-import { redis } from './_db.js';
+import { redis, logError } from './_db.js';
 import {
   resolveLoginEmail, getUser, verifyPassword, createSession, setSessionCookie,
   deleteUser, getSessionTokenFromRequest, destroySession, clearSessionCookie,
@@ -61,6 +61,7 @@ export default async function handler(req, res) {
     return res.status(200).json({ username: user.username, email: user.email });
   } catch (err) {
     console.error('[auth-login] error:', err.message);
+    await logError('auth-login', err.message);
     return res.status(500).json({ error: action === 'delete' ? 'Account deletion failed' : 'Login failed' });
   }
 }
@@ -88,6 +89,7 @@ async function handleRequestReset(req, res, email) {
     return res.status(200).json({ ok: true });
   } catch (err) {
     console.error('[auth-login] request_reset error:', err.message);
+    await logError('auth-login:request_reset', err.message);
     return res.status(500).json({ error: 'Could not process your request' });
   }
 }
@@ -109,6 +111,7 @@ async function handleResetPassword(req, res, token, newPassword) {
     return res.status(200).json({ ok: true });
   } catch (err) {
     console.error('[auth-login] reset_password error:', err.message);
+    await logError('auth-login:reset_password', err.message);
     return res.status(500).json({ error: 'Could not reset your password' });
   }
 }

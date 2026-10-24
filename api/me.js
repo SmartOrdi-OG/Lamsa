@@ -1,4 +1,4 @@
-import { redis, addRating, getGenerationCount } from './_db.js';
+import { redis, addRating, getGenerationCount, logError } from './_db.js';
 import { requireSessionEmail, getUser, deleteUser, getSessionTokenFromRequest, destroySession, clearSessionCookie } from './_auth.js';
 
 // Shown only to the team account — this is a site-wide number, not
@@ -52,6 +52,7 @@ export default async function handler(req, res) {
     return res.status(200).json(response);
   } catch (err) {
     console.error('[me] error:', err.message);
+    await logError('me', err.message);
     return res.status(500).json({ error: err.message });
   }
 }

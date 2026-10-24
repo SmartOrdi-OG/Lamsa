@@ -1,4 +1,4 @@
-import { redis, deductCredit, addCredits, ensureWelcomeCredit, incrementGenerationCount } from './_db.js';
+import { redis, deductCredit, addCredits, ensureWelcomeCredit, incrementGenerationCount, logError } from './_db.js';
 import { requireSessionEmail } from './_auth.js';
 import { randomUUID } from 'crypto';
 
@@ -149,6 +149,7 @@ export default async function handler(req, res) {
       return res.status(200).json({ requests: [{ model: 'nano', request_id }] });
     } catch (err) {
       console.error('[api/generate] style-reference submit failed:', err.message);
+      await logError('generate:style-reference', err.message);
       try {
         await addCredits(normalizedEmail, 1);
       } catch (refundErr) {
@@ -192,6 +193,7 @@ export default async function handler(req, res) {
       return res.status(200).json({ requests: [{ model: 'nano', request_id }] });
     } catch (err) {
       console.error('[api/generate] refine submit failed:', err.message);
+      await logError('generate:refine', err.message);
       return res.status(502).json({ error: err.message });
     }
   }
@@ -232,6 +234,7 @@ export default async function handler(req, res) {
     await incrementGenerationCount(count);
   } catch (err) {
     console.error('[api/generate] flux submit failed:', err.message);
+    await logError('generate:flux', err.message);
     try {
       await addCredits(normalizedEmail, 1);
     } catch (refundErr) {

@@ -1,4 +1,4 @@
-import { redis, ensureWelcomeCredit, resolveReferralCode, recordReferral } from './_db.js';
+import { redis, ensureWelcomeCredit, resolveReferralCode, recordReferral, logError } from './_db.js';
 import { EMAIL_RE, createUser, createSession, setSessionCookie } from './_auth.js';
 
 export default async function handler(req, res) {
@@ -50,6 +50,7 @@ export default async function handler(req, res) {
     return res.status(200).json({ username: user.username, email: user.email });
   } catch (err) {
     console.error('[auth-register] error:', err.message);
+    await logError('auth-register', err.message);
     return res.status(500).json({ error: 'Registration failed' });
   }
 }

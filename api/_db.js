@@ -48,6 +48,49 @@ export async function addRating(email, rating, comment) {
   await redis.rpush('lamsa:ratings', entry);
 }
 
+// The Upstash REST client auto-parses values that look like JSON on read,
+// so a list entry written as a JSON string can come back either as that
+// string or already as an object depending on SDK version — this normalizes
+// either shape instead of assuming one.
+function parseListEntry(entry) {
+  if (entry && typeof entry === 'object') return entry;
+  try { return JSON.parse(entry); } catch (e) { return null; }
+}
+
+export async function getAllRatings() {
+  const raw = await redis.lrange('lamsa:ratings', 0, -1);
+  return raw.map(parseListEntry).filter(Boolean);
+}
+
+const ERRORS_KEY = 'lamsa:errors';
+const MAX_ERRORS = 200;
+
+// Best-effort error log for the admin page — every API handler's catch
+// block calls this alongside its existing console.error so failures are
+// visible without digging through Vercel's own runtime logs. Capped to the
+// most recent 200 entries (ltrim after each push) so the list can't grow
+// unbounded; a logging failure here is swallowed rather than replacing the
+// real error response the caller was already about to send.
+export async function logError(source, message) {
+  if (!redis) return;
+  try {
+    const entry = JSON.stringify({
+      source,
+      message: String(message).slice(0, 500),
+      at: new Date().toISOString()
+    });
+    await redis.rpush(ERRORS_KEY, entry);
+    await redis.ltrim(ERRORS_KEY, -MAX_ERRORS, -1);
+  } catch (e) {
+    // logging is never allowed to break the caller's actual error response
+  }
+}
+
+export async function getRecentErrors(limit = 100) {
+  const raw = await redis.lrange(ERRORS_KEY, -limit, -1);
+  return raw.map(parseListEntry).filter(Boolean).reverse();
+}
+
 // Atomically decrements by 1 only if the balance is > 0. Returns the new
 // balance, or null if there were no credits to spend.
 const DEDUCT_SCRIPT = `

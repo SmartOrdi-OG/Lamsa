@@ -1,4 +1,13 @@
+import { redis, getAllRatings, getRecentErrors, getGenerationCount } from './_db.js';
+
 export default async function handler(req, res) {
+  // The admin page (lamsa-admin.html) POSTs here rather than to its own API
+  // file — unrelated to fal.ai status polling, but Vercel's Hobby plan caps
+  // serverless functions at 12 and this project is already at that limit
+  // (see api/me.js and api/auth-login.js for the same reasoning). GET stays
+  // the existing fal.ai status/result proxy untouched below.
+  if (req.method === 'POST') return handleAdmin(req, res);
+
   console.log('[api/status] handler invoked, method:', req.method, 'query:', req.query);
 
   if (req.method !== 'GET') return res.status(405).json({ error: 'Method not allowed' });
@@ -56,6 +65,59 @@ export default async function handler(req, res) {
 
   } catch (err) {
     console.error('[api/status] Status error:', err.message);
+    return res.status(500).json({ error: err.message });
+  }
+}
+
+// Single shared password (ADMIN_PASSWORD env var) rather than a per-user
+// login — this is an internal ops page, not a customer-facing account
+// system, so there's no session/user to tie it to.
+async function handleAdmin(req, res) {
+  const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD;
+  if (!ADMIN_PASSWORD) {
+    console.error('[api/status admin] ADMIN_PASSWORD not configured');
+    return res.status(500).json({ error: 'Admin not configured' });
+  }
+
+  const { adminPassword, view } = req.body || {};
+  if (adminPassword !== ADMIN_PASSWORD) {
+    return res.status(401).json({ error: 'Wrong password' });
+  }
+
+  if (!redis) return res.status(500).json({ error: 'Database not configured' });
+
+  try {
+    if (view === 'ratings') {
+      const ratings = await getAllRatings();
+      const count = ratings.length;
+      const sum = ratings.reduce((s, r) => s + (Number(r.rating) || 0), 0);
+      const average = count ? Math.round((sum / count) * 100) / 100 : 0;
+      return res.status(200).json({ count, average, ratings: ratings.slice(-200).reverse() });
+    }
+
+    if (view === 'errors') {
+      const errors = await getRecentErrors(200);
+      return res.status(200).json({ errors });
+    }
+
+    if (view === 'config') {
+      return res.status(200).json({
+        totalGenerations: await getGenerationCount(),
+        commit: (process.env.VERCEL_GIT_COMMIT_SHA || '').slice(0, 7) || null,
+        env: {
+          FAL_API_KEY: !!process.env.FAL_API_KEY,
+          REDIS: !!redis,
+          RESEND_API_KEY: !!process.env.RESEND_API_KEY,
+          STRIPE_SECRET_KEY: !!process.env.STRIPE_SECRET_KEY,
+          STRIPE_WEBHOOK_SECRET: !!process.env.STRIPE_WEBHOOK_SECRET,
+          TELEGRAM_BOT_TOKEN: !!process.env.TELEGRAM_BOT_TOKEN
+        }
+      });
+    }
+
+    return res.status(400).json({ error: 'Unknown view' });
+  } catch (err) {
+    console.error('[api/status admin] error:', err.message);
     return res.status(500).json({ error: err.message });
   }
 }

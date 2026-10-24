@@ -1,4 +1,4 @@
-import { redis } from './_db.js';
+import { redis, logError } from './_db.js';
 import { stripe, CREDIT_PACKAGES } from './_stripe.js';
 import { requireSessionEmail, EMAIL_RE } from './_auth.js';
 
@@ -70,6 +70,7 @@ export default async function handler(req, res) {
     return res.status(200).json({ url: session.url });
   } catch (err) {
     console.error('[create-checkout-session] error:', err.message);
+    await logError('create-checkout-session', err.message);
     return res.status(500).json({ error: err.message });
   }
 }
