@@ -181,6 +181,12 @@
     .hero-pair.active .hero-pair-zoom, .hero-pair.active .hero-layer-after, .hero-pair.active .hero-edge,
     .hero-pair.active .hero-tag-before, .hero-pair.active .hero-tag-after { animation: none; }
     .hero-pair.active .hero-layer-after { clip-path: inset(0 0% 0 0); }
+    .auth-box { animation: none !important; }
+  }
+
+  @keyframes authCardSlideUp {
+    from { transform: translateY(36px); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
   }
 
   .brand {
@@ -291,6 +297,10 @@
     position: absolute; top: 0; left: 8%; right: 8%; height: 1px;
     background: linear-gradient(90deg, transparent, rgba(255,255,255,0.9) 50%, transparent);
   }
+
+  /* Mobile-only card header (handle + duplicated headline) — see the
+     mobile media query below for its visible styling. */
+  .card-sheet-header { display: none; }
 
   /* TABS */
   .auth-tabs {
@@ -687,45 +697,53 @@
        iPhone SE's 667px, across languages) — overflow-y stays auto as a
        safety net for any edge case that doesn't. */
     body { height: 100dvh; flex-direction: column; overflow-y: auto; overflow-x: hidden; }
-    /* On mobile the photo is no longer a full-bleed background with text
-       floated on top of it (that forced a tall box and cropped most of the
-       photo to fill it) — it's a framed card sized to the photo's own
-       ~1.85:1 aspect ratio, with the brand row above it and the headline
-       text below it in normal, dark-on-light text. */
-    .left-panel { width: 100%; padding: 8px 0 8px; min-height: 0; background: var(--card); border-right: none; }
-    .brand { position: static; z-index: auto; margin: 0 12px 6px; }
-    .brand-name { color: var(--gold-deep); text-shadow: none; }
-    .brand-icon { border-color: var(--gold); background: var(--gold-dim); box-shadow: none; }
-    /* Full device width (no side inset) so the photo is as large as it can
-       be — it's the frame's own border/rounded corners doing the framing
-       now, not surrounding whitespace. Scoped to .left-panel: the success
-       screen's own .hero-bg-stack (#successBgStack) reuses the same class
-       but must stay full-bleed absolute — this rule used to be unscoped and
-       shrank that hero to a small top card, pushing .success-content below
-       the box's fixed height where overflow:hidden clipped it entirely. */
-    .left-panel .hero-bg-stack {
-      position: relative; inset: auto; width: 100%; aspect-ratio: 1.85;
-      border-radius: 16px; overflow: hidden; border: 1px solid var(--border); margin-bottom: 8px;
+    /* Full-bleed hero photo (edge to edge, no frame) with the brand mark
+       overlaid on it — same treatment the desktop layout already uses,
+       just shorter. The headline/subtitle used to live as flowing text
+       below the photo; they're now duplicated into the card itself
+       (.card-sheet-header below) so the card can overlap the bottom of
+       the photo like a bottom sheet, instead of a flat divider line. */
+    .left-panel {
+      width: 100%; height: 30vh; min-height: 190px; max-height: 270px;
+      padding: 18px 16px 0; background: #221f1a; border-right: none;
     }
-    .left-panel .hero-layer { background-size: contain; background-color: #2a2e33; }
-    .left-panel .hero-scrim { display: none; } /* no text over the photo anymore, so no scrim needed */
-    .left-content { position: static; margin: 0 12px; padding-bottom: 0; }
-    /* Compact this text block (label, headline, subtitle) further — it
-       used to be free (overlaid straight onto the photo, at any size);
-       now it's real page content competing with the form for the same
-       short mobile viewport, and the photo above for visual weight. */
-    .eyebrow { color: var(--gold-deep); background: var(--gold-dim); border-color: var(--border); font-size: 9.5px; padding: 3px 10px 3px 7px; margin-bottom: 5px; }
-    .left-title { color: var(--white); text-shadow: none; font-size: 16px; line-height: 1.15; margin-bottom: 3px; }
-    .left-title .gold { color: var(--gold-deep); }
-    .left-sub { color: var(--gray); text-shadow: none; font-size: 11px; line-height: 1.4; margin-bottom: 0; }
-    .feature-list { display: none; }
-    /* Welcome/success screen: the same "framed, uncropped photo with the
-       text below it" treatment as the login page's own hero — the old
-       full-bleed cover background lost more than half the photo's width
-       cramming it into a tall, narrow phone screen. Still need to hide the
-       login page's own hero panel, or it'd stack above this one. */
+    .left-content { display: none; }
+
+    /* The overlap (and the card's rounded top corners/shadow riding up
+       over the photo) lives on .right-panel itself, not on .auth-box —
+       .right-panel is the one with overflow-y:auto, and a negative
+       margin on a child of an overflow:auto box gets clipped flush at
+       that box's own top edge instead of showing the rounded corner. */
+    .right-panel {
+      flex: 1; min-height: 0; overflow-y: auto; padding: 0; background: var(--card);
+      align-items: stretch; justify-content: flex-start;
+      margin-top: -22px; position: relative; z-index: 2;
+      border-radius: 22px 22px 0 0;
+      box-shadow: 0 -12px 28px rgba(20,20,20,0.10);
+    }
+    .country-grid { grid-template-columns: repeat(3, 1fr); }
+
+    /* Drag-handle bar + a one-time slide-up entrance so the card reads as
+       a bottom sheet being presented on launch rather than a static block. */
+    .auth-box {
+      padding: 0 20px 10px; max-width: 100%;
+      animation: authCardSlideUp 0.55s cubic-bezier(.22,1,.36,1) both;
+    }
+    .auth-box::before { display: none; }
+
+    .card-sheet-header { display: block; text-align: center; }
+    .card-handle { width: 38px; height: 4px; border-radius: 2px; background: var(--border); margin: 10px auto 14px; }
+    .card-title { font-size: 17px; line-height: 1.25; color: var(--white); text-shadow: none; margin-bottom: 4px; }
+    .card-title .gold { color: var(--gold-deep); }
+    .card-sub { font-size: 11.5px; line-height: 1.4; color: var(--gray); text-shadow: none; margin-bottom: 14px; }
+
+    /* Welcome/success screen keeps its own framed, uncropped photo (the
+       login panel above is hidden while it's showing, so it never stacks
+       above this one). */
     body:has(.auth-box.success-mode) .left-panel { display: none; }
-    .auth-box.success-mode { max-width: 100%; box-shadow: none; }
+    body:has(.auth-box.success-mode) .right-panel { margin-top: 0; border-radius: 0; box-shadow: none; }
+    .auth-box.success-mode { max-width: 100%; animation: none; }
+    .auth-box.success-mode .card-sheet-header { display: none; }
     .auth-box.success-mode .success-box { height: auto; border-radius: 0; background: none; }
     .success-box .hero-bg-stack {
       position: relative; inset: auto; width: 100%; aspect-ratio: 1.85;
@@ -737,18 +755,9 @@
     .success-icon { color: var(--gold-deep); background: var(--gold-dim); border-color: var(--border); }
     .success-title { color: var(--white); text-shadow: none; }
     .success-sub { color: var(--gray); text-shadow: none; }
-    /* flex:1 (not flex:none/auto-height) so it fills whatever height is
-       left after the photo — on a taller phone that leftover space is
-       centered around the form (via the base rule's align-items/
-       justify-content:center) instead of sitting as dead white space
-       below the Sign In button. */
-    .right-panel { flex: 1; min-height: 0; overflow-y: auto; padding: 0; background: var(--card); }
-    .country-grid { grid-template-columns: repeat(3, 1fr); }
 
     /* Compact the form itself (not the photo) so the whole card fits
        without scrolling on short mobile screens. */
-    .auth-box { padding: 10px 20px 10px; max-width: 100%; border-radius: 0; box-shadow: none; }
-    .auth-box::before { display: none; }
     .auth-tabs { margin-bottom: 8px; }
     .form-group { margin-bottom: 8px; }
     .form-label { margin-bottom: 4px; }
@@ -819,6 +828,18 @@
 <!-- RIGHT PANEL -->
 <div class="right-panel">
   <div class="auth-box" id="authBox">
+
+    <!-- Mobile only: duplicates .left-title/.left-sub so the card can
+         carry the headline when it overlaps the hero photo instead of the
+         photo itself. Hidden on desktop; kept in sync by setLang(). -->
+    <div class="card-sheet-header">
+      <div class="card-handle"></div>
+      <h1 class="left-title card-title">
+        صمّم بيتك<br>
+        <span class="gold">بلمستك</span> الخاصة
+      </h1>
+      <p class="left-sub card-sub">أول منصة تصميم داخلي بالذكاء الاصطناعي — بثماني لغات، لكل بيت، في كل مكان.</p>
+    </div>
 
     <!-- TABS -->
     <div class="auth-tabs" id="authTabs">
@@ -1583,8 +1604,11 @@
     });
 
     document.title = t.title;
-    document.querySelector('.left-title').innerHTML = t.leftTitle;
-    document.querySelector('.left-sub').textContent = t.leftSub;
+    // querySelectorAll, not querySelector — the mobile layout duplicates
+    // these two into the auth card (.card-title/.card-sub) so the card can
+    // overlap the hero photo; both copies need to switch language together.
+    document.querySelectorAll('.left-title').forEach(function(el) { el.innerHTML = t.leftTitle; });
+    document.querySelectorAll('.left-sub').forEach(function(el) { el.textContent = t.leftSub; });
     document.getElementById('tab-login').textContent = t.tabLogin;
     document.getElementById('tab-register').textContent = t.tabRegister;
 
