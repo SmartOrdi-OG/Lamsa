@@ -3033,8 +3033,8 @@
   // subscription-onboarding screen — and subscribes to the selected plan
   // for real via startCheckout() when "Continue" is pressed.
   var CREDIT_PAYWALL_TIERS = [
-    { id: 'weekly', badge: null, period: { ar: '10 تصاميم', en: '10 Designs' }, sub: { ar: 'أسبوعياً (€0.60/تصميم)', en: 'per week (€0.60/design)' }, price: '€5.99', tag: null },
-    { id: 'monthly', badge: { ar: 'الأكثر شيوعاً', en: 'MOST POPULAR' }, period: { ar: '40 تصميم', en: '40 Designs' }, sub: { ar: 'شهرياً (€0.37/تصميم)', en: 'per month (€0.37/design)' }, price: '€14.99', tag: { ar: 'أفضل قيمة', en: 'BEST VALUE' }, highlighted: true }
+    { id: 'weekly', tag: { ar: 'الأكثر مرونة', en: 'MOST FLEXIBLE' }, period: { ar: '10 تصاميم', en: '10 Designs' }, sub: { ar: 'أسبوعياً (€0.60/تصميم)', en: 'per week (€0.60/design)' }, price: '€5.99' },
+    { id: 'monthly', badge: { ar: 'وفر 37% للتصميم', en: 'SAVE 37% PER DESIGN' }, period: { ar: '40 تصميم', en: '40 Designs' }, sub: { ar: 'شهرياً (€0.37/تصميم)', en: 'per month (€0.37/design)' }, price: '€14.99', highlighted: true }
   ];
 
   // Quick before/after demo shown right before the first-run paywall, using
@@ -3117,18 +3117,31 @@
     }).join('');
 
     var tiersHtml = CREDIT_PAYWALL_TIERS.map(function(t) {
-      var tagHtml = t.tag ? '<div style="font-size:10px;font-weight:900;color:#767d86;text-align:center;margin-bottom:6px;white-space:nowrap;">' + (isAr ? t.tag.ar : t.tag.en) + '</div>' : '<div style="height:16px;margin-bottom:6px;"></div>';
-      var badgeHtml = t.badge ? '<div style="background:var(--gold);color:#1b1e22;font-size:10px;font-weight:900;text-align:center;padding:4px 0;border-radius:8px 8px 0 0;margin:0 -1px;">' + (isAr ? t.badge.ar : t.badge.en) + '</div>' : '';
+      // Plain floating label (no fill) for a regular tier, vs. a filled
+      // banner flush with the card's own top edge for the highlighted one
+      // — same two-label-styles pattern as the reference paywall, just
+      // never both on the same tier.
+      var topHtml = t.tag
+        ? '<div style="font-size:10px;font-weight:900;color:#767d86;letter-spacing:0.3px;text-align:center;margin-bottom:6px;white-space:nowrap;">' + (isAr ? t.tag.ar : t.tag.en) + '</div>'
+        : (t.badge
+          ? '<div style="background:var(--gold);color:#1b1e22;font-size:10px;font-weight:900;letter-spacing:0.3px;text-align:center;padding:5px 4px;margin-bottom:0;">' + (isAr ? t.badge.ar : t.badge.en) + '</div>'
+          : '<div style="height:16px;margin-bottom:6px;"></div>');
       var border = t.highlighted ? '2px solid var(--gold)' : '1px solid #dfe2e6';
-      return '<div class="wp-tier-card" data-tier="' + t.id + '" style="flex:1;cursor:pointer;border:' + border + ';border-radius:14px;overflow:hidden;text-align:center;background:#fff;">' +
-        tagHtml +
-        badgeHtml +
+      var cardHtml =
         '<div style="padding:14px 8px;">' +
           '<div style="font-size:16px;font-weight:900;color:#1b1e22;">' + (isAr ? t.period.ar : t.period.en) + '</div>' +
           '<div style="font-size:10px;color:#767d86;min-height:14px;margin-bottom:8px;">' + (isAr ? t.sub.ar : t.sub.en) + '</div>' +
           '<div style="border-top:1px solid #eef0f2;padding-top:8px;font-size:15px;font-weight:900;color:#1b1e22;">' + t.price + '</div>' +
-        '</div>' +
-      '</div>';
+        '</div>';
+      return t.tag
+        // Floating label sits above the bordered box, with a visible gap.
+        ? '<div style="flex:1;">' + topHtml +
+            '<div class="wp-tier-card" data-tier="' + t.id + '" style="cursor:pointer;border:' + border + ';border-radius:14px;overflow:hidden;text-align:center;background:#fff;">' + cardHtml + '</div>' +
+          '</div>'
+        // Filled banner is flush with the card's own top edge, same rounded corners.
+        : '<div style="flex:1;">' +
+            '<div class="wp-tier-card" data-tier="' + t.id + '" style="cursor:pointer;border:' + border + ';border-radius:14px;overflow:hidden;text-align:center;background:#fff;">' + topHtml + cardHtml + '</div>' +
+          '</div>';
     }).join('<div style="width:8px;"></div>');
 
     overlay.innerHTML =
@@ -3150,6 +3163,7 @@
         '<div id="welcomePaywallTierList" style="display:flex;margin-bottom:18px;">' + tiersHtml + '</div>' +
         '<button type="button" id="welcomePaywallContinueBtn" style="width:100%;background:var(--gold);color:#1b1e22;border:none;padding:16px;border-radius:14px;font-size:17px;font-weight:900;cursor:pointer;font-family:Tajawal,sans-serif;">' + (isAr ? 'متابعة' : 'Continue') + '</button>' +
         '<div id="welcomePaywallError" style="color:#e05555;font-size:12px;text-align:center;margin-top:10px;min-height:16px;"></div>' +
+        '<div style="text-align:center;font-size:11.5px;color:#767d86;margin-top:12px;">' + (isAr ? 'يتجدد تلقائياً. يمكنك الإلغاء في أي وقت.' : 'Automatically renews. Cancel anytime.') + '</div>' +
         '<div style="text-align:center;font-size:11px;margin-top:6px;">' +
           '<a href="#" onclick="openModal(\'terms\')" style="color:#767d86;text-decoration:underline;margin-inline-end:16px;">' + (isAr ? 'شروط الاستخدام' : 'Terms of Use') + '</a>' +
           '<a href="#" onclick="openModal(\'privacy\')" style="color:#767d86;text-decoration:underline;">' + (isAr ? 'سياسة الخصوصية' : 'Privacy Policy') + '</a>' +
