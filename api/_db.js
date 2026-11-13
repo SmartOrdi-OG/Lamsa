@@ -168,6 +168,23 @@ export async function markEventProcessed(eventId) {
   return ok === 'OK' || ok === true;
 }
 
+function subscriptionKey(email) {
+  return 'lamsa:subscription:' + email.trim().toLowerCase();
+}
+
+// One subscription record per email (not per Stripe subscription id) —
+// a given user is only ever meant to have one plan active at a time, so
+// create-checkout-session.js can check this before starting a second
+// recurring charge, and the webhook just overwrites it wholesale on every
+// lifecycle event rather than merging partial updates.
+export async function setUserSubscription(email, data) {
+  await redis.set(subscriptionKey(email), data);
+}
+
+export async function getUserSubscription(email) {
+  return redis.get(subscriptionKey(email));
+}
+
 function referralCodeKey(code) {
   return 'lamsa:refcode:' + code;
 }

@@ -1697,7 +1697,7 @@
             <svg class="icon-svg" viewBox="0 0 24 24"><path d="M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8L12 3z" fill="currentColor" stroke="none"/></svg> 1 free design included — no credit card needed
           </div>
           <div style="margin-top:8px;display:flex;gap:8px;justify-content:center;flex-wrap:wrap;">
-            <a href="javascript:void(0)" id="buyMoreBtn" onclick="showCreditsModal()" style="display:none;background:#fff;color:var(--gold-deep);font-size:11px;font-weight:800;padding:6px 16px;border-radius:20px;text-decoration:none;cursor:pointer;box-shadow:0 4px 10px rgba(0,0,0,0.15);">Buy more</a>
+            <a href="javascript:void(0)" id="buyMoreBtn" onclick="showCreditsModal()" style="display:none;background:#fff;color:var(--gold-deep);font-size:11px;font-weight:800;padding:6px 16px;border-radius:20px;text-decoration:none;cursor:pointer;box-shadow:0 4px 10px rgba(0,0,0,0.15);">Subscribe</a>
             <a href="javascript:void(0)" id="inviteFriendBtn" onclick="showInviteModal()" style="background:rgba(255,255,255,0.18);color:#fff;font-size:11px;font-weight:800;padding:6px 16px;border-radius:20px;text-decoration:none;cursor:pointer;border:1px solid rgba(255,255,255,0.5);">
               <span data-ar="🎁 دعوة صديق" data-en="🎁 Invite a friend">🎁 Invite a friend</span>
             </a>
@@ -2645,12 +2645,10 @@
     document.getElementById('beforeAfterLabel').textContent = beforeAfterOn ? 'On — Before & After' : 'Off — New design only';
   }
 
-  // ===== AUTH (real server session) + CREDITS / PAYMENTS =====
-  var CREDIT_PACKAGES = [
-    { id: 'x1',  credits: 1,  price: '€1',  label: '1 Design' },
-    { id: 'x5',  credits: 5,  price: '€4',  label: '5 Designs' },
-    { id: 'x10', credits: 10, price: '€7',  label: '10 Designs' },
-    { id: 'x20', credits: 20, price: '€12', label: '20 Designs' }
+  // ===== AUTH (real server session) + CREDITS / SUBSCRIPTIONS =====
+  var SUBSCRIPTION_PLANS = [
+    { id: 'weekly',  credits: 10, price: '€5.99',  label: '10 Designs / Week' },
+    { id: 'monthly', credits: 40, price: '€14.99', label: '40 Designs / Month' }
   ];
 
   var currentUser = null; // { username, email } — populated by checkAuth(), source of truth is the server session, not localStorage
@@ -2733,7 +2731,7 @@
       badge.innerHTML += ' &middot; ' + (isAr ? 'إجمالي التوليدات: ' : 'Total generated: ') + '<b>' + currentUser.totalGenerations + '</b>';
     }
     if (buyBtn) {
-      buyBtn.textContent = isAr ? 'شراء المزيد' : 'Buy more';
+      buyBtn.textContent = isAr ? 'اشترك' : 'Subscribe';
       buyBtn.style.display = 'inline-block';
     }
   }
@@ -2845,21 +2843,21 @@
     var box = document.createElement('div');
     box.style.cssText = 'position:relative;overflow:hidden;background:#ffffff;border:1px solid #dfe2e6;border-radius:20px;padding:32px 24px;max-width:420px;width:100%;text-align:center;box-shadow:0 30px 70px -25px rgba(90,98,116,0.35);';
 
-    var title = isAr ? 'اشتري تصاميم' : 'Buy Designs';
+    var title = isAr ? 'اشترك' : 'Subscribe';
     var closeLabel = isAr ? 'إغلاق' : 'Close';
 
-    var sub = message || (isAr ? 'كل تصميم يخصم كريدت واحد من رصيدك' : 'Each design uses 1 credit from your balance');
+    var sub = message || (isAr ? 'كل تصميم يخصم كريدت واحد من رصيدك — الرصيد يتجدد تلقائياً كل فترة اشتراك' : 'Each design uses 1 credit from your balance — credits renew automatically every billing period');
 
     var PKG_META = {
-      x1:  { color: '#5b7fdb', tag: '' },
-      x5:  { color: '#9b5bdb', tag: isAr ? 'الأكثر طلباً' : 'Popular' },
-      x10: { color: '#e0a52e', tag: '' },
-      x20: { color: '#2fae7a', tag: isAr ? 'أفضل قيمة' : 'Best Value' }
+      weekly:  { color: '#9b5bdb', tag: '' },
+      monthly: { color: '#2fae7a', tag: isAr ? 'أفضل قيمة' : 'Best Value' }
     };
 
-    var packagesHtml = CREDIT_PACKAGES.map(function(pkg) {
+    var packagesHtml = SUBSCRIPTION_PLANS.map(function(pkg) {
       var meta = PKG_META[pkg.id] || { color: '#6b7480', tag: '' };
-      var creditsLabel = isAr ? (pkg.credits + (pkg.credits === 1 ? ' تصميم' : ' تصاميم')) : pkg.label;
+      var creditsLabel = isAr
+        ? (pkg.id === 'weekly' ? (pkg.credits + ' تصميم أسبوعياً') : (pkg.credits + ' تصميم شهرياً'))
+        : pkg.label;
       var badgeSide = isAr ? 'left' : 'right';
       var badge = meta.tag
         ? '<span style="position:absolute;top:-9px;' + badgeSide + ':14px;background:' + meta.color + ';color:#fff;font-size:10px;font-weight:900;padding:3px 10px;border-radius:20px;letter-spacing:0.2px;">' + meta.tag + '</span>'
@@ -2987,7 +2985,7 @@
     }
   }
 
-  function startCheckout(packageId, buttonEl, errorElId) {
+  function startCheckout(planId, buttonEl, errorElId) {
     var isAr = currentLang === 'ar';
     var errorEl = document.getElementById(errorElId || 'creditsModalError');
 
@@ -2998,7 +2996,7 @@
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       credentials: 'include',
-      body: JSON.stringify({ package: packageId, return_page: 'lamsa-bilingual.html' })
+      body: JSON.stringify({ plan: planId, return_page: 'lamsa-bilingual.html' })
     })
     .then(function(r) { return r.json().then(function(data) { return { ok: r.ok, status: r.status, data: data }; }); })
     .then(function(result) {
@@ -3031,13 +3029,12 @@
 
   // Full-screen paywall shown once on first launch (see the
   // lamsa_welcome_paywall_shown gate in DOMContentLoaded below). Sells the
-  // same CREDIT_PACKAGES as the "Buy more" flow — just presented like a
-  // subscription-style onboarding screen — and buys the selected package
+  // same SUBSCRIPTION_PLANS as the "Buy more" flow — just presented like a
+  // subscription-onboarding screen — and subscribes to the selected plan
   // for real via startCheckout() when "Continue" is pressed.
   var CREDIT_PAYWALL_TIERS = [
-    { id: 'x1', badge: null, period: { ar: 'تصميم واحد', en: '1 Design' }, sub: { ar: '', en: '' }, price: '€1', tag: null },
-    { id: 'x5', badge: { ar: 'الأكثر شيوعاً', en: 'MOST POPULAR' }, period: { ar: '5 تصاميم', en: '5 Designs' }, sub: { ar: '(€0.80/تصميم)', en: '(€0.80/design)' }, price: '€4', tag: null, highlighted: true },
-    { id: 'x10', badge: null, period: { ar: '10 تصاميم', en: '10 Designs' }, sub: { ar: '(€0.70/تصميم)', en: '(€0.70/design)' }, price: '€7', tag: { ar: 'أفضل قيمة', en: 'BEST VALUE' } }
+    { id: 'weekly', tag: { ar: 'الأكثر مرونة', en: 'MOST FLEXIBLE' }, period: { ar: '10 تصاميم', en: '10 Designs' }, sub: { ar: 'أسبوعياً (€0.60/تصميم)', en: 'per week (€0.60/design)' }, price: '€5.99' },
+    { id: 'monthly', badge: { ar: 'وفر 37% للتصميم', en: 'SAVE 37% PER DESIGN' }, period: { ar: '40 تصميم', en: '40 Designs' }, sub: { ar: 'شهرياً (€0.37/تصميم)', en: 'per month (€0.37/design)' }, price: '€14.99', highlighted: true }
   ];
 
   // Quick before/after demo shown right before the first-run paywall, using
@@ -3120,18 +3117,31 @@
     }).join('');
 
     var tiersHtml = CREDIT_PAYWALL_TIERS.map(function(t) {
-      var tagHtml = t.tag ? '<div style="font-size:10px;font-weight:900;color:#767d86;text-align:center;margin-bottom:6px;white-space:nowrap;">' + (isAr ? t.tag.ar : t.tag.en) + '</div>' : '<div style="height:16px;margin-bottom:6px;"></div>';
-      var badgeHtml = t.badge ? '<div style="background:var(--gold);color:#1b1e22;font-size:10px;font-weight:900;text-align:center;padding:4px 0;border-radius:8px 8px 0 0;margin:0 -1px;">' + (isAr ? t.badge.ar : t.badge.en) + '</div>' : '';
+      // Plain floating label (no fill) for a regular tier, vs. a filled
+      // banner flush with the card's own top edge for the highlighted one
+      // — same two-label-styles pattern as the reference paywall, just
+      // never both on the same tier.
+      var topHtml = t.tag
+        ? '<div style="font-size:10px;font-weight:900;color:#767d86;letter-spacing:0.3px;text-align:center;margin-bottom:6px;white-space:nowrap;">' + (isAr ? t.tag.ar : t.tag.en) + '</div>'
+        : (t.badge
+          ? '<div style="background:var(--gold);color:#1b1e22;font-size:10px;font-weight:900;letter-spacing:0.3px;text-align:center;padding:5px 4px;margin-bottom:0;">' + (isAr ? t.badge.ar : t.badge.en) + '</div>'
+          : '<div style="height:16px;margin-bottom:6px;"></div>');
       var border = t.highlighted ? '2px solid var(--gold)' : '1px solid #dfe2e6';
-      return '<div class="wp-tier-card" data-tier="' + t.id + '" style="flex:1;cursor:pointer;border:' + border + ';border-radius:14px;overflow:hidden;text-align:center;background:#fff;">' +
-        tagHtml +
-        badgeHtml +
+      var cardHtml =
         '<div style="padding:14px 8px;">' +
           '<div style="font-size:16px;font-weight:900;color:#1b1e22;">' + (isAr ? t.period.ar : t.period.en) + '</div>' +
           '<div style="font-size:10px;color:#767d86;min-height:14px;margin-bottom:8px;">' + (isAr ? t.sub.ar : t.sub.en) + '</div>' +
           '<div style="border-top:1px solid #eef0f2;padding-top:8px;font-size:15px;font-weight:900;color:#1b1e22;">' + t.price + '</div>' +
-        '</div>' +
-      '</div>';
+        '</div>';
+      return t.tag
+        // Floating label sits above the bordered box, with a visible gap.
+        ? '<div style="flex:1;">' + topHtml +
+            '<div class="wp-tier-card" data-tier="' + t.id + '" style="cursor:pointer;border:' + border + ';border-radius:14px;overflow:hidden;text-align:center;background:#fff;">' + cardHtml + '</div>' +
+          '</div>'
+        // Filled banner is flush with the card's own top edge, same rounded corners.
+        : '<div style="flex:1;">' +
+            '<div class="wp-tier-card" data-tier="' + t.id + '" style="cursor:pointer;border:' + border + ';border-radius:14px;overflow:hidden;text-align:center;background:#fff;">' + topHtml + cardHtml + '</div>' +
+          '</div>';
     }).join('<div style="width:8px;"></div>');
 
     overlay.innerHTML =
@@ -3153,6 +3163,7 @@
         '<div id="welcomePaywallTierList" style="display:flex;margin-bottom:18px;">' + tiersHtml + '</div>' +
         '<button type="button" id="welcomePaywallContinueBtn" style="width:100%;background:var(--gold);color:#1b1e22;border:none;padding:16px;border-radius:14px;font-size:17px;font-weight:900;cursor:pointer;font-family:Tajawal,sans-serif;">' + (isAr ? 'متابعة' : 'Continue') + '</button>' +
         '<div id="welcomePaywallError" style="color:#e05555;font-size:12px;text-align:center;margin-top:10px;min-height:16px;"></div>' +
+        '<div style="text-align:center;font-size:11.5px;color:#767d86;margin-top:12px;">' + (isAr ? 'يتجدد تلقائياً. يمكنك الإلغاء في أي وقت.' : 'Automatically renews. Cancel anytime.') + '</div>' +
         '<div style="text-align:center;font-size:11px;margin-top:6px;">' +
           '<a href="#" onclick="openModal(\'terms\')" style="color:#767d86;text-decoration:underline;margin-inline-end:16px;">' + (isAr ? 'شروط الاستخدام' : 'Terms of Use') + '</a>' +
           '<a href="#" onclick="openModal(\'privacy\')" style="color:#767d86;text-decoration:underline;">' + (isAr ? 'سياسة الخصوصية' : 'Privacy Policy') + '</a>' +
@@ -3161,7 +3172,7 @@
 
     document.body.appendChild(overlay);
 
-    var selectedTier = 'x5';
+    var selectedTier = 'monthly';
     function paintSelection() {
       Array.prototype.forEach.call(overlay.querySelectorAll('.wp-tier-card'), function(card) {
         var isSel = card.getAttribute('data-tier') === selectedTier;
