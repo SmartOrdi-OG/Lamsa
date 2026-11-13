@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="color-scheme" content="light">
+<script>
+  (function() {
+    try {
+      var user = JSON.parse(localStorage.getItem('lamsa_user') || 'null');
+      if (!user || !user.loggedIn) window.location.replace('lamsa-auth.html');
+    } catch (e) {
+      window.location.replace('lamsa-auth.html');
+    }
+  })();
+</script>
+<title>Settings | Lamsa</title>
+<link rel="icon" type="image/png" sizes="32x32" href="assets/favicon-32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="assets/favicon-16.png">
+<link rel="apple-touch-icon" sizes="180x180" href="assets/apple-touch-icon.png">
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#f6f7f8">
+<link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;700;900&display=swap" rel="stylesheet">
+<script src="js/platform.js"></script>
+<script src="js/icons.js"></script>
+<script src="js/app-shell.js"></script>
+<style>
+  .icon-svg { width: 1.15em; height: 1.15em; vertical-align: -0.18em; display: inline-block; flex-shrink: 0; }
+  :root {
+    color-scheme: light;
+    --black: #f6f7f8; --dark: #edeff1; --card: #ffffff; --card-2: #fbfbfc;
+    --border: #dfe2e6; --gold: #6b7480; --gold-light: #a3abb5; --gold-deep: #3d434b;
+    --gold-dim: rgba(107,116,128,0.10); --white: #1b1e22; --gray: #767d86;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: 'Tajawal', sans-serif; background: var(--black); color: var(--white); min-height: 100vh; }
+  nav {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+    padding: 12px 16px; display: flex; justify-content: space-between; align-items: center;
+    background: rgba(255,255,255,0.85); backdrop-filter: blur(20px); border-bottom: 1px solid var(--border);
+  }
+  .logo { display: flex; align-items: center; gap: 10px; text-decoration: none; color: var(--white); }
+  .logo-icon { width: 36px; height: 36px; border: 1.5px solid var(--gold); border-radius: 8px; display: flex; align-items: center; justify-content: center; }
+  .logo-text { font-size: 19px; font-weight: 900; letter-spacing: 1px; }
+  .wrap { max-width: 640px; margin: 0 auto; padding: 96px 16px 40px; }
+
+  .group { background: var(--card); border: 1px solid var(--border); border-radius: 16px; margin-bottom: 18px; overflow: hidden; }
+  .row { display: flex; align-items: center; gap: 12px; padding: 14px 16px; cursor: pointer; border-bottom: 1px solid var(--border); background: none; border-left: none; border-right: none; border-top: none; width: 100%; text-align: inherit; font-family: inherit; color: inherit; font-size: 14px; }
+  .row:last-child { border-bottom: none; }
+  .row-icon { width: 22px; height: 22px; color: var(--gold-deep); flex-shrink: 0; }
+  .row-label { flex: 1; font-weight: 700; }
+  .row-chevron { color: var(--gray); flex-shrink: 0; }
+  .row[disabled] { opacity: 0.45; cursor: default; }
+</style>
+</head>
+<body>
+
+<nav>
+  <a class="logo" href="lamsa-bilingual.html">
+    <div class="logo-icon"><img src="assets/logo-mark.png" alt="" style="max-width:75%;max-height:75%;object-fit:contain;"></div>
+    <div class="logo-text">LAMSA</div>
+  </a>
+</nav>
+
+<div class="wrap">
+  <div class="group">
+    <button type="button" class="row" onclick="logout()">
+      <span class="row-icon" id="rowLogoutIcon"></span>
+      <span class="row-label" id="rowLogout">Log Out</span>
+      <span class="row-chevron" id="rowLogoutChevron"></span>
+    </button>
+    <a class="row" href="delete-account.html">
+      <span class="row-icon" id="rowDeleteIcon"></span>
+      <span class="row-label" id="rowDelete">Delete Account</span>
+      <span class="row-chevron" id="rowDeleteChevron"></span>
+    </a>
+    <a class="row" href="privacy-policy.html">
+      <span class="row-icon" id="rowPrivacyIcon"></span>
+      <span class="row-label" id="rowPrivacy">Privacy Policy</span>
+      <span class="row-chevron" id="rowPrivacyChevron"></span>
+    </a>
+  </div>
+  <p style="color:var(--gray);font-size:12.5px;text-align:center;" id="moreSoon">More settings (notifications, language, referrals, subscription status) are coming soon.</p>
+</div>
+
+<script>
+  function logout() {
+    fetch('/api/auth-logout', { method: 'POST', credentials: 'include' })
+      .catch(function(err) { console.error('[auth] logout request failed:', err); })
+      .then(function() {
+        try { localStorage.removeItem('lamsa_user'); } catch (e) {}
+        window.location.replace('lamsa-auth.html');
+      });
+  }
+
+  (function() {
+    var chev = window.icon ? window.icon('arrowLeft') : '';
+    ['rowLogoutIcon', 'rowDeleteIcon', 'rowPrivacyIcon'].forEach(function (id, i) {
+      document.getElementById(id).innerHTML = window.icon ? window.icon(['user', 'trash', 'lock'][i]) : '';
+    });
+    var isAr = false;
+    try { isAr = (localStorage.getItem('lamsa_lang') || 'en') === 'ar'; } catch (e) {}
+    ['rowLogoutChevron', 'rowDeleteChevron', 'rowPrivacyChevron'].forEach(function (id) {
+      document.getElementById(id).innerHTML = window.icon ? window.icon(isAr ? 'arrowLeft' : 'arrowRight') : '';
+    });
+    if (isAr) {
+      document.documentElement.setAttribute('lang', 'ar');
+      document.documentElement.setAttribute('dir', 'rtl');
+      document.getElementById('rowLogout').textContent = 'تسجيل الخروج';
+      document.getElementById('rowDelete').textContent = 'حذف الحساب';
+      document.getElementById('rowPrivacy').textContent = 'سياسة الخصوصية';
+      document.getElementById('moreSoon').textContent = 'باقي إعدادات (الإشعارات، اللغة، الدعوات، حالة الاشتراك) قريباً.';
+    }
+  })();
+  AppShell.renderTabBar('settings');
+</script>
+</body>
+</html>
