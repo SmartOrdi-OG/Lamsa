@@ -703,8 +703,15 @@
        below the photo; they're now duplicated into the card itself
        (.card-sheet-header below) so the card can overlap the bottom of
        the photo like a bottom sheet, instead of a flat divider line. */
+    /* flex:1 (not a fixed height) so the photo stretches to fill whatever
+       space the card below doesn't need — otherwise the card sizes to its
+       own content while the photo stays a fixed height, leaving a slab of
+       dead white space under the card on anything taller than the
+       shortest supported phone. min-height is the floor once the card's
+       content (e.g. the register form + country grid) needs most of the
+       screen and .right-panel shrinks to make room. */
     .left-panel {
-      width: 100%; height: 30vh; min-height: 190px; max-height: 270px;
+      width: 100%; flex: 1; min-height: 130px;
       padding: 18px 16px 0; background: #221f1a; border-right: none;
     }
     .left-content { display: none; }
@@ -713,9 +720,12 @@
        over the photo) lives on .right-panel itself, not on .auth-box —
        .right-panel is the one with overflow-y:auto, and a negative
        margin on a child of an overflow:auto box gets clipped flush at
-       that box's own top edge instead of showing the rounded corner. */
+       that box's own top edge instead of showing the rounded corner.
+       flex:0 1 auto (not flex:1) sizes it to its own content instead of
+       stretching to fill the remaining height — .left-panel's flex:1
+       above claims whatever space the card doesn't need. */
     .right-panel {
-      flex: 1; min-height: 0; overflow-y: auto; padding: 0; background: var(--card);
+      flex: 0 1 auto; overflow-y: auto; padding: 0; background: var(--card);
       align-items: stretch; justify-content: flex-start;
       margin-top: -22px; position: relative; z-index: 2;
       border-radius: 22px 22px 0 0;
