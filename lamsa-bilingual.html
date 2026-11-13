@@ -1697,7 +1697,7 @@
             <svg class="icon-svg" viewBox="0 0 24 24"><path d="M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8L12 3z" fill="currentColor" stroke="none"/></svg> 1 free design included — no credit card needed
           </div>
           <div style="margin-top:8px;display:flex;gap:8px;justify-content:center;flex-wrap:wrap;">
-            <a href="javascript:void(0)" id="buyMoreBtn" onclick="showCreditsModal()" style="display:none;background:#fff;color:var(--gold-deep);font-size:11px;font-weight:800;padding:6px 16px;border-radius:20px;text-decoration:none;cursor:pointer;box-shadow:0 4px 10px rgba(0,0,0,0.15);">Buy more</a>
+            <a href="javascript:void(0)" id="buyMoreBtn" onclick="showCreditsModal()" style="display:none;background:#fff;color:var(--gold-deep);font-size:11px;font-weight:800;padding:6px 16px;border-radius:20px;text-decoration:none;cursor:pointer;box-shadow:0 4px 10px rgba(0,0,0,0.15);">Subscribe</a>
             <a href="javascript:void(0)" id="inviteFriendBtn" onclick="showInviteModal()" style="background:rgba(255,255,255,0.18);color:#fff;font-size:11px;font-weight:800;padding:6px 16px;border-radius:20px;text-decoration:none;cursor:pointer;border:1px solid rgba(255,255,255,0.5);">
               <span data-ar="🎁 دعوة صديق" data-en="🎁 Invite a friend">🎁 Invite a friend</span>
             </a>
@@ -2645,12 +2645,10 @@
     document.getElementById('beforeAfterLabel').textContent = beforeAfterOn ? 'On — Before & After' : 'Off — New design only';
   }
 
-  // ===== AUTH (real server session) + CREDITS / PAYMENTS =====
-  var CREDIT_PACKAGES = [
-    { id: 'x1',  credits: 1,  price: '€1',  label: '1 Design' },
-    { id: 'x5',  credits: 5,  price: '€4',  label: '5 Designs' },
-    { id: 'x10', credits: 10, price: '€7',  label: '10 Designs' },
-    { id: 'x20', credits: 20, price: '€12', label: '20 Designs' }
+  // ===== AUTH (real server session) + CREDITS / SUBSCRIPTIONS =====
+  var SUBSCRIPTION_PLANS = [
+    { id: 'weekly',  credits: 10, price: '€5.99',  label: '10 Designs / Week' },
+    { id: 'monthly', credits: 40, price: '€14.99', label: '40 Designs / Month' }
   ];
 
   var currentUser = null; // { username, email } — populated by checkAuth(), source of truth is the server session, not localStorage
@@ -2733,7 +2731,7 @@
       badge.innerHTML += ' &middot; ' + (isAr ? 'إجمالي التوليدات: ' : 'Total generated: ') + '<b>' + currentUser.totalGenerations + '</b>';
     }
     if (buyBtn) {
-      buyBtn.textContent = isAr ? 'شراء المزيد' : 'Buy more';
+      buyBtn.textContent = isAr ? 'اشترك' : 'Subscribe';
       buyBtn.style.display = 'inline-block';
     }
   }
@@ -2845,21 +2843,21 @@
     var box = document.createElement('div');
     box.style.cssText = 'position:relative;overflow:hidden;background:#ffffff;border:1px solid #dfe2e6;border-radius:20px;padding:32px 24px;max-width:420px;width:100%;text-align:center;box-shadow:0 30px 70px -25px rgba(90,98,116,0.35);';
 
-    var title = isAr ? 'اشتري تصاميم' : 'Buy Designs';
+    var title = isAr ? 'اشترك' : 'Subscribe';
     var closeLabel = isAr ? 'إغلاق' : 'Close';
 
-    var sub = message || (isAr ? 'كل تصميم يخصم كريدت واحد من رصيدك' : 'Each design uses 1 credit from your balance');
+    var sub = message || (isAr ? 'كل تصميم يخصم كريدت واحد من رصيدك — الرصيد يتجدد تلقائياً كل فترة اشتراك' : 'Each design uses 1 credit from your balance — credits renew automatically every billing period');
 
     var PKG_META = {
-      x1:  { color: '#5b7fdb', tag: '' },
-      x5:  { color: '#9b5bdb', tag: isAr ? 'الأكثر طلباً' : 'Popular' },
-      x10: { color: '#e0a52e', tag: '' },
-      x20: { color: '#2fae7a', tag: isAr ? 'أفضل قيمة' : 'Best Value' }
+      weekly:  { color: '#9b5bdb', tag: '' },
+      monthly: { color: '#2fae7a', tag: isAr ? 'أفضل قيمة' : 'Best Value' }
     };
 
-    var packagesHtml = CREDIT_PACKAGES.map(function(pkg) {
+    var packagesHtml = SUBSCRIPTION_PLANS.map(function(pkg) {
       var meta = PKG_META[pkg.id] || { color: '#6b7480', tag: '' };
-      var creditsLabel = isAr ? (pkg.credits + (pkg.credits === 1 ? ' تصميم' : ' تصاميم')) : pkg.label;
+      var creditsLabel = isAr
+        ? (pkg.id === 'weekly' ? (pkg.credits + ' تصميم أسبوعياً') : (pkg.credits + ' تصميم شهرياً'))
+        : pkg.label;
       var badgeSide = isAr ? 'left' : 'right';
       var badge = meta.tag
         ? '<span style="position:absolute;top:-9px;' + badgeSide + ':14px;background:' + meta.color + ';color:#fff;font-size:10px;font-weight:900;padding:3px 10px;border-radius:20px;letter-spacing:0.2px;">' + meta.tag + '</span>'
@@ -2987,7 +2985,7 @@
     }
   }
 
-  function startCheckout(packageId, buttonEl, errorElId) {
+  function startCheckout(planId, buttonEl, errorElId) {
     var isAr = currentLang === 'ar';
     var errorEl = document.getElementById(errorElId || 'creditsModalError');
 
@@ -2998,7 +2996,7 @@
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       credentials: 'include',
-      body: JSON.stringify({ package: packageId, return_page: 'lamsa-bilingual.html' })
+      body: JSON.stringify({ plan: planId, return_page: 'lamsa-bilingual.html' })
     })
     .then(function(r) { return r.json().then(function(data) { return { ok: r.ok, status: r.status, data: data }; }); })
     .then(function(result) {
@@ -3031,13 +3029,12 @@
 
   // Full-screen paywall shown once on first launch (see the
   // lamsa_welcome_paywall_shown gate in DOMContentLoaded below). Sells the
-  // same CREDIT_PACKAGES as the "Buy more" flow — just presented like a
-  // subscription-style onboarding screen — and buys the selected package
+  // same SUBSCRIPTION_PLANS as the "Buy more" flow — just presented like a
+  // subscription-onboarding screen — and subscribes to the selected plan
   // for real via startCheckout() when "Continue" is pressed.
   var CREDIT_PAYWALL_TIERS = [
-    { id: 'x1', badge: null, period: { ar: 'تصميم واحد', en: '1 Design' }, sub: { ar: '', en: '' }, price: '€1', tag: null },
-    { id: 'x5', badge: { ar: 'الأكثر شيوعاً', en: 'MOST POPULAR' }, period: { ar: '5 تصاميم', en: '5 Designs' }, sub: { ar: '(€0.80/تصميم)', en: '(€0.80/design)' }, price: '€4', tag: null, highlighted: true },
-    { id: 'x10', badge: null, period: { ar: '10 تصاميم', en: '10 Designs' }, sub: { ar: '(€0.70/تصميم)', en: '(€0.70/design)' }, price: '€7', tag: { ar: 'أفضل قيمة', en: 'BEST VALUE' } }
+    { id: 'weekly', badge: null, period: { ar: '10 تصاميم', en: '10 Designs' }, sub: { ar: 'أسبوعياً (€0.60/تصميم)', en: 'per week (€0.60/design)' }, price: '€5.99', tag: null },
+    { id: 'monthly', badge: { ar: 'الأكثر شيوعاً', en: 'MOST POPULAR' }, period: { ar: '40 تصميم', en: '40 Designs' }, sub: { ar: 'شهرياً (€0.37/تصميم)', en: 'per month (€0.37/design)' }, price: '€14.99', tag: { ar: 'أفضل قيمة', en: 'BEST VALUE' }, highlighted: true }
   ];
 
   // Quick before/after demo shown right before the first-run paywall, using
@@ -3161,7 +3158,7 @@
 
     document.body.appendChild(overlay);
 
-    var selectedTier = 'x5';
+    var selectedTier = 'monthly';
     function paintSelection() {
       Array.prototype.forEach.call(overlay.querySelectorAll('.wp-tier-card'), function(card) {
         var isSel = card.getAttribute('data-tier') === selectedTier;

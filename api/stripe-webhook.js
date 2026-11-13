@@ -1,5 +1,5 @@
 import { stripe } from './_stripe.js';
-import { addCredits, markEventProcessed, logError } from './_db.js';
+import { addCredits, markEventProcessed, logError, setUserSubscription } from './_db.js';
 
 // Stripe signature verification needs the exact raw request bytes — Vercel's
 // default JSON body parser would re-serialize the body and break the
@@ -42,20 +42,27 @@ export default async function handler(req, res) {
   console.log('[stripe-webhook] received event:', event.type, event.id);
 
   try {
-    if (event.type === 'checkout.session.completed') {
-      const session = event.data.object;
-      // metadata.email is the identity create-checkout-session.js set
-      // server-side (the actual session's own email/tg: key) — always
-      // prefer it over customer_email, which is either the same value or,
-      // for a Telegram login, whatever unrelated address the buyer typed
-      // into Stripe's own checkout form (customer_email isn't set for
-      // those sessions at all, precisely so it can't be mistaken for the
-      // identity to credit).
-      const email = ((session.metadata && session.metadata.email) || session.customer_email || '').trim().toLowerCase();
-      const credits = parseInt((session.metadata && session.metadata.credits) || '0', 10);
+    // Fires once per billing period — the subscription's first invoice
+    // (created the moment checkout completes) and every renewal after it —
+    // so granting credits here alone covers both without double-granting
+    // against a separate checkout.session.completed handler.
+    if (event.type === 'invoice.payment_succeeded') {
+      const invoice = event.data.object;
+      const subscriptionId = invoice.subscription ||
+        (invoice.parent && invoice.parent.subscription_details && invoice.parent.subscription_details.subscription);
+
+      if (!subscriptionId) {
+        // Not a subscription invoice (e.g. a one-off invoice) — nothing to grant.
+        return res.status(200).json({ received: true, skipped: 'no subscription on invoice' });
+      }
+
+      const subscription = await stripe.subscriptions.retrieve(subscriptionId);
+      const email = ((subscription.metadata && subscription.metadata.email) || '').trim().toLowerCase();
+      const plan = (subscription.metadata && subscription.metadata.plan) || null;
+      const credits = parseInt((subscription.metadata && subscription.metadata.credits) || '0', 10);
 
       if (!email || !credits) {
-        console.error('[stripe-webhook] session missing email/credits in metadata:', session.id);
+        console.error('[stripe-webhook] subscription missing email/credits in metadata:', subscriptionId);
         return res.status(200).json({ received: true, skipped: 'missing email/credits' });
       }
 
@@ -66,7 +73,31 @@ export default async function handler(req, res) {
       }
 
       const newBalance = await addCredits(email, credits);
+      await setUserSubscription(email, {
+        email, plan, status: subscription.status,
+        subscriptionId, customerId: subscription.customer,
+        currentPeriodEnd: subscription.current_period_end || null
+      });
       console.log('[stripe-webhook] granted', credits, 'credits to', email, '- new balance:', newBalance);
+    }
+
+    // Keeps the per-email subscription record (used by
+    // create-checkout-session.js to block a second overlapping
+    // subscription) in sync with cancellations and other status changes
+    // that don't themselves produce a new invoice.
+    if (event.type === 'customer.subscription.updated' || event.type === 'customer.subscription.deleted') {
+      const subscription = event.data.object;
+      const email = ((subscription.metadata && subscription.metadata.email) || '').trim().toLowerCase();
+      const plan = (subscription.metadata && subscription.metadata.plan) || null;
+
+      if (email) {
+        await setUserSubscription(email, {
+          email, plan, status: subscription.status,
+          subscriptionId: subscription.id, customerId: subscription.customer,
+          currentPeriodEnd: subscription.current_period_end || null
+        });
+        console.log('[stripe-webhook] subscription', subscription.id, 'for', email, '-> status', subscription.status);
+      }
     }
 
     return res.status(200).json({ received: true });
