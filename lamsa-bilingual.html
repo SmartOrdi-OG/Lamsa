@@ -30,6 +30,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;500;700;900&family=Playfair+Display:wght@400;700&display=swap" rel="stylesheet">
 <script src="js/platform.js"></script>
 <script src="js/icons.js"></script>
+<script src="js/app-shell.js"></script>
 <script>
   if ('serviceWorker' in navigator) {
     window.addEventListener('load', function () { navigator.serviceWorker.register('sw.js').catch(function () {}); });
@@ -437,7 +438,12 @@
      moved down to sit right above the wizard (see #form-section), so this
      no longer needs to fill the viewport. */
   .hero {
-    display: flex; flex-direction: column;
+    /* Replaced by #homeScreen (the new tool-grid landing). Kept in the DOM
+       rather than deleted — setLang() still writes into its child elements
+       (hero-badge/title/sub text) on every language switch, and removing
+       the nodes would turn that into a null-reference error. */
+    display: none !important;
+    flex-direction: column;
     align-items: center; justify-content: center;
     text-align: center;
     padding: 140px 24px 80px;
@@ -446,6 +452,70 @@
     overflow: hidden;
     isolation: isolate;
     background: var(--gold-deep);
+  }
+
+  /* ===== HOME SCREEN (tool grid + feed) ===== */
+  #homeScreen { padding: 88px 16px 24px; max-width: 900px; margin: 0 auto; }
+  .home-credits {
+    display: flex; align-items: center; justify-content: center; gap: 6px;
+    background: var(--gold-dim); color: var(--gold-deep); border-radius: 20px;
+    padding: 7px 16px; font-size: 12.5px; font-weight: 800; width: fit-content;
+    margin: 0 auto 20px;
+  }
+  .home-section-head { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 12px; }
+  .home-section-head h2 { font-size: 16px; font-weight: 900; margin: 0; }
+
+  .home-tool-row { display: flex; gap: 14px; overflow-x: auto; padding-bottom: 6px; margin-bottom: 26px; scroll-snap-type: x proximity; -webkit-overflow-scrolling: touch; }
+  .home-tool-row::-webkit-scrollbar { display: none; }
+  .home-tool-tile {
+    flex: 0 0 76px; display: flex; flex-direction: column; align-items: center; gap: 8px;
+    text-decoration: none; color: var(--white); cursor: pointer; scroll-snap-align: start;
+  }
+  .home-tool-icon {
+    width: 60px; height: 60px; border-radius: 18px; background: var(--card);
+    border: 1px solid var(--border); display: flex; align-items: center; justify-content: center;
+    box-shadow: 0 8px 20px -10px rgba(61,67,75,0.25);
+  }
+  .home-tool-icon .icon-svg { width: 26px; height: 26px; color: var(--gold-deep); }
+  .home-tool-tile span { font-size: 11px; font-weight: 700; text-align: center; line-height: 1.25; }
+
+  .home-pills { display: flex; gap: 8px; overflow-x: auto; margin-bottom: 20px; }
+  .home-pill {
+    flex: 0 0 auto; padding: 8px 16px; border-radius: 20px; font-size: 12.5px; font-weight: 800;
+    border: 1px solid var(--border); background: var(--card); color: var(--gray); white-space: nowrap; cursor: pointer;
+  }
+  .home-pill.active { background: var(--gold-deep); color: #fff; border-color: var(--gold-deep); }
+
+  .home-feed-card {
+    display: block; text-decoration: none; color: inherit; position: relative;
+    border-radius: 16px; overflow: hidden; border: 1px solid var(--border);
+    margin-bottom: 16px; cursor: pointer; background: var(--card);
+  }
+  .home-feed-card .home-feed-title { padding: 14px 16px 2px; font-size: 15px; font-weight: 900; }
+  .home-feed-card .home-feed-sub { padding: 0 16px 12px; font-size: 12px; color: var(--gray); }
+  .home-feed-card .home-feed-img-wrap { position: relative; aspect-ratio: 1.85; }
+  .home-feed-card img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .home-feed-badge {
+    position: absolute; top: 10px; inset-inline-end: 10px; background: var(--gold-deep); color: #fff;
+    font-size: 10.5px; font-weight: 800; padding: 5px 11px; border-radius: 20px;
+  }
+
+  /* ===== END HOME SCREEN ===== */
+
+  /* The wizard is now a sub-screen opened from a Home tool tile, not the
+     page's default content — hidden until openInteriorDesignTool() clears
+     this (JS sets el.style.display = '', falling back to the .section
+     class's own block default). */
+  #form-section { display: none; }
+  /* Normal document flow (not fixed) — sits above the stats/steps-wrap at
+     the top of #form-section's own existing padding, so it never needs
+     separate responsive positioning against the fixed nav above it. */
+  .home-back-row { position: relative; z-index: 2; margin-bottom: 12px; }
+  .home-back-btn {
+    width: 38px; height: 38px; border-radius: 50%;
+    background: var(--card); border: 1px solid var(--border); color: var(--white);
+    display: flex; align-items: center; justify-content: center; cursor: pointer;
+    box-shadow: 0 6px 16px -6px rgba(0,0,0,0.25);
   }
 
   /* Animated before/after background — cycles through real completed
@@ -611,7 +681,8 @@
 
   /* STATS */
   .stats {
-    display: flex; gap: 48px; justify-content: center;
+    display: none; /* superseded by #homeScreen; kept in DOM, same reasoning as .hero above */
+    gap: 48px; justify-content: center;
     margin-top: 64px;
     animation: fadeIn 1s 0.5s ease both;
     flex-wrap: wrap;
@@ -1131,6 +1202,9 @@
        framed ambient photo band below (sized to the photos' own ~1.85:1
        aspect ratio, so its height tracks the viewport width). */
     #form-section { padding-top: calc(153px + (100vw - 32px) / 1.85); position: relative; overflow: hidden; }
+    /* #homeScreen sits directly under the same wrapped fixed nav (no
+       ambient band of its own), so it only needs the flat 153px clearance. */
+    #homeScreen { padding-top: 153px; }
     /* Before/After result: side-by-side halves each image on a phone —
        stack them full-width instead so the result is actually visible. */
     .before-after-grid { grid-template-columns: 1fr !important; }
@@ -1191,6 +1265,76 @@
   </div>
 </nav>
 
+<!-- HOME SCREEN -->
+<section id="homeScreen">
+  <div class="home-credits" id="homeCreditsBadge"></div>
+
+  <div class="home-section-head">
+    <h2 data-ar="كل الأدوات" data-en="All Tools">All Tools</h2>
+  </div>
+  <div class="home-tool-row">
+    <div class="home-tool-tile" onclick="openInteriorDesignTool()">
+      <div class="home-tool-icon"></div>
+      <span data-ar="تصميم داخلي" data-en="Interior Design">Interior Design</span>
+    </div>
+    <a class="home-tool-tile" href="rearrange.html">
+      <div class="home-tool-icon"></div>
+      <span data-ar="إعادة ترتيب" data-en="Quick Rearrange">Quick Rearrange</span>
+    </a>
+    <a class="home-tool-tile" href="design-3d.html">
+      <div class="home-tool-icon"></div>
+      <span data-ar="تصميم 3D" data-en="3D Designer">3D Designer</span>
+    </a>
+    <a class="home-tool-tile" href="inspirations.html">
+      <div class="home-tool-icon"></div>
+      <span data-ar="معرض الإلهام" data-en="Style Gallery">Style Gallery</span>
+    </a>
+  </div>
+
+  <div class="home-pills">
+    <div class="home-pill active" data-ar="الكل" data-en="All">All</div>
+    <div class="home-pill" data-ar="داخلي" data-en="Interior">Interior</div>
+  </div>
+
+  <div class="home-section-head">
+    <h2 data-ar="جربي أداة" data-en="Try a tool">Try a tool</h2>
+  </div>
+  <div id="homeFeed">
+    <div class="home-feed-card" onclick="openInteriorDesignTool()">
+      <div class="home-feed-img-wrap">
+        <img src="assets/hero-bg/pair2-after.jpg" alt="">
+        <span class="home-feed-badge" data-ar="جربي" data-en="Try it">Try it</span>
+      </div>
+      <div class="home-feed-title" data-ar="تصميم داخلي بالذكاء الاصطناعي" data-en="AI Interior Design">AI Interior Design</div>
+      <div class="home-feed-sub" data-ar="ارفعي صورة غرفتك واحصلي على تصميم كامل" data-en="Upload a room photo and get a full redesign">Upload a room photo and get a full redesign</div>
+    </div>
+    <a class="home-feed-card" href="rearrange.html">
+      <div class="home-feed-img-wrap">
+        <img src="assets/hero-bg/pair4-after.jpg" alt="">
+        <span class="home-feed-badge" data-ar="جربي" data-en="Try it">Try it</span>
+      </div>
+      <div class="home-feed-title" data-ar="إعادة ترتيب سريعة" data-en="Quick Rearrange">Quick Rearrange</div>
+      <div class="home-feed-sub" data-ar="أعيدي ترتيب أثاث غرفتك بنفس المكان" data-en="Rearrange your existing furniture in place">Rearrange your existing furniture in place</div>
+    </a>
+    <a class="home-feed-card" href="design-3d.html">
+      <div class="home-feed-img-wrap">
+        <img src="assets/hero-bg/pair6-after.jpg" alt="">
+        <span class="home-feed-badge" data-ar="جربي" data-en="Try it">Try it</span>
+      </div>
+      <div class="home-feed-title" data-ar="تصميم ثلاثي الأبعاد" data-en="3D Designer">3D Designer</div>
+      <div class="home-feed-sub" data-ar="صممي غرفتك من الصفر بمعاينة 3D حية" data-en="Build your room from scratch with a live 3D preview">Build your room from scratch with a live 3D preview</div>
+    </a>
+    <a class="home-feed-card" href="inspirations.html">
+      <div class="home-feed-img-wrap">
+        <img src="assets/hero-bg/pair7-after.jpg" alt="">
+        <span class="home-feed-badge" data-ar="جربي" data-en="Try it">Try it</span>
+      </div>
+      <div class="home-feed-title" data-ar="معرض الإلهام" data-en="Style Gallery">Style Gallery</div>
+      <div class="home-feed-sub" data-ar="تصفحي ستايلات جاهزة وطبقيها على صورتك" data-en="Browse ready-made styles and apply one to your photo">Browse ready-made styles and apply one to your photo</div>
+    </a>
+  </div>
+</section>
+
 <!-- HERO -->
 <section class="hero">
   <div class="hero-bg-stack" id="heroBgStack"></div>
@@ -1210,6 +1354,11 @@
 
 <!-- FORM SECTION -->
 <section class="section" id="form-section">
+  <div class="home-back-row">
+    <button type="button" class="home-back-btn" onclick="goHomeFromTool()" aria-label="Back">
+      <svg class="icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M11 6l-6 6 6 6"/></svg>
+    </button>
+  </div>
   <div class="form-bg-stack" id="formBgStack"></div>
   <div class="form-bg-scrim"></div>
 
@@ -2355,6 +2504,9 @@
     });
 
     renderCreditBalance();
+    if (window.AppShell && document.getElementById('appTabBar')) {
+      AppShell.renderTabBar(document.getElementById('homeScreen').style.display === 'none' ? null : 'home');
+    }
   }
 
   let currentPanel = 1;
@@ -2383,6 +2535,44 @@
     });
   }
   enforcePanelVisibility();
+
+  // Home <-> wizard sub-screen toggle. The tab bar is part of the Home
+  // chrome, not the tool's — hidden while a tool is open, same as the
+  // reference app's full-screen tool takeovers.
+  function openInteriorDesignTool() {
+    document.getElementById('homeScreen').style.display = 'none';
+    var formSection = document.getElementById('form-section');
+    formSection.style.display = 'block';
+    // Same fix as whyLamsaSection elsewhere in this file: the scroll-reveal
+    // IntersectionObserver already ran once at page load while this
+    // section was display:none, so it never observed .steps-wrap
+    // intersecting — mark it visible directly instead of leaving it at
+    // opacity:0 forever.
+    formSection.querySelectorAll('.reveal').forEach(function(el) { el.classList.add('visible'); });
+    var bar = document.getElementById('appTabBar');
+    if (bar) bar.style.display = 'none';
+    document.body.classList.remove('has-app-tabbar');
+    window.scrollTo(0, 0);
+  }
+  function goHomeFromTool() {
+    document.getElementById('form-section').style.display = 'none';
+    document.getElementById('homeScreen').style.display = '';
+    var bar = document.getElementById('appTabBar');
+    if (bar) bar.style.display = '';
+    document.body.classList.add('has-app-tabbar');
+    window.scrollTo(0, 0);
+  }
+
+  // Fills the Home screen's tool icons (plain markup with no data-en/
+  // data-ar, so setLang()'s generic pass never touches them) and mounts
+  // the shared bottom tab bar.
+  function initHomeScreen() {
+    var icons = ['sparkles', 'refresh', 'cube', 'palette'];
+    document.querySelectorAll('.home-tool-icon').forEach(function (el, i) {
+      el.innerHTML = window.icon ? window.icon(icons[i] || 'sparkle') : '';
+    });
+    if (window.AppShell) AppShell.renderTabBar('home');
+  }
 
   function goTo(n) {
     document.getElementById('panel-' + currentPanel).classList.remove('active');
@@ -2717,8 +2907,16 @@
   function renderCreditBalance() {
     var badge = document.getElementById('freeTrialBadge');
     var buyBtn = document.getElementById('buyMoreBtn');
-    if (!badge || lastCreditBalance === null) return;
     var isAr = currentLang === 'ar';
+
+    var homeBadge = document.getElementById('homeCreditsBadge');
+    if (homeBadge && lastCreditBalance !== null) {
+      homeBadge.innerHTML = (window.icon ? window.icon('sparkle') : '') + ' ' +
+        '<b>' + lastCreditBalance + '</b> ' +
+        (isAr ? (lastCreditBalance === 1 ? 'تصميم' : 'تصاميم') : ('credit' + (lastCreditBalance === 1 ? '' : 's')));
+    }
+
+    if (!badge || lastCreditBalance === null) return;
 
     badge.innerHTML = (window.icon ? window.icon('sparkle') : '') + ' ' +
       (isAr ? 'رصيدك: ' : 'Your balance: ') + '<b>' + lastCreditBalance + '</b> ' +
@@ -3906,8 +4104,13 @@
     }
   }
 
+  // #form-section is now a hidden-by-default sub-screen (see
+  // openInteriorDesignTool()), not scroll content on the Home screen —
+  // opening it is the right behavior for both of this function's
+  // callers: the nav's "Start Free" button and the hero's own CTA
+  // (the hero itself is hidden, but setLang() still writes into it).
   function scrollToForm() {
-    document.getElementById('form-section').scrollIntoView({ behavior: 'smooth' });
+    openInteriorDesignTool();
   }
 
   function buildHowItWorksBody(isAr) {
@@ -3979,6 +4182,7 @@
     initHeroBackground();
     formPanelsSnapshot = document.querySelector('.form-panels').innerHTML;
     resultAreaSnapshot = document.getElementById('resultArea').innerHTML;
+    initHomeScreen();
     checkAuth().then(function(user) {
       if (!user) return; // checkAuth() already redirected to login
       refreshCreditBalance();

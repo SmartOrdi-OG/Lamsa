@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="color-scheme" content="light">
+<script>
+  (function() {
+    try {
+      var user = JSON.parse(localStorage.getItem('lamsa_user') || 'null');
+      if (!user || !user.loggedIn) window.location.replace('lamsa-auth.html');
+    } catch (e) {
+      window.location.replace('lamsa-auth.html');
+    }
+  })();
+</script>
+<title>History | Lamsa</title>
+<link rel="icon" type="image/png" sizes="32x32" href="assets/favicon-32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="assets/favicon-16.png">
+<link rel="apple-touch-icon" sizes="180x180" href="assets/apple-touch-icon.png">
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#f6f7f8">
+<link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;700;900&display=swap" rel="stylesheet">
+<script src="js/platform.js"></script>
+<script src="js/icons.js"></script>
+<script src="js/app-shell.js"></script>
+<style>
+  .icon-svg { width: 1.15em; height: 1.15em; vertical-align: -0.18em; display: inline-block; flex-shrink: 0; }
+  :root {
+    color-scheme: light;
+    --black: #f6f7f8; --dark: #edeff1; --card: #ffffff; --card-2: #fbfbfc;
+    --border: #dfe2e6; --gold: #6b7480; --gold-light: #a3abb5; --gold-deep: #3d434b;
+    --gold-dim: rgba(107,116,128,0.10); --white: #1b1e22; --gray: #767d86;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: 'Tajawal', sans-serif; background: var(--black); color: var(--white); min-height: 100vh; }
+  nav {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+    padding: 12px 16px; display: flex; justify-content: space-between; align-items: center;
+    background: rgba(255,255,255,0.85); backdrop-filter: blur(20px); border-bottom: 1px solid var(--border);
+  }
+  .logo { display: flex; align-items: center; gap: 10px; text-decoration: none; color: var(--white); }
+  .logo-icon { width: 36px; height: 36px; border: 1.5px solid var(--gold); border-radius: 8px; display: flex; align-items: center; justify-content: center; }
+  .logo-text { font-size: 19px; font-weight: 900; letter-spacing: 1px; }
+  .wrap { max-width: 640px; margin: 0 auto; padding: 96px 16px 40px; text-align: center; }
+  .empty-icon {
+    width: 72px; height: 72px; margin: 40px auto 18px; border-radius: 50%;
+    background: var(--gold-dim); color: var(--gold-deep); display: flex; align-items: center; justify-content: center;
+  }
+  .empty-icon .icon-svg { width: 32px; height: 32px; }
+  h1 { font-size: 19px; font-weight: 900; margin-bottom: 8px; }
+  p { color: var(--gray); font-size: 13.5px; line-height: 1.6; }
+</style>
+</head>
+<body>
+
+<nav>
+  <a class="logo" href="lamsa-bilingual.html">
+    <div class="logo-icon"><img src="assets/logo-mark.png" alt="" style="max-width:75%;max-height:75%;object-fit:contain;"></div>
+    <div class="logo-text">LAMSA</div>
+  </a>
+</nav>
+
+<div class="wrap">
+  <div class="empty-icon"><span id="historyIcon"></span></div>
+  <h1 id="historyTitle">Your design history is coming soon</h1>
+  <p id="historySub">Past designs you generate across Lamsa's tools will show up here.</p>
+</div>
+
+<script>
+  document.getElementById('historyIcon').innerHTML = window.icon ? window.icon('clock') : '';
+  try {
+    if ((localStorage.getItem('lamsa_lang') || 'en') === 'ar') {
+      document.documentElement.setAttribute('lang', 'ar');
+      document.documentElement.setAttribute('dir', 'rtl');
+      document.getElementById('historyTitle').textContent = 'سجل تصاميمك قريباً';
+      document.getElementById('historySub').textContent = 'التصاميم يلي بتولدها عبر أدوات لمسة رح تظهر هون.';
+    }
+  } catch (e) {}
+  AppShell.renderTabBar('history');
+</script>
+</body>
+</html>
