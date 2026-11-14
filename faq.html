@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="color-scheme" content="light">
+<title>FAQ | Lamsa</title>
+<link rel="icon" type="image/png" sizes="32x32" href="assets/favicon-32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="assets/favicon-16.png">
+<link rel="apple-touch-icon" sizes="180x180" href="assets/apple-touch-icon.png">
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#f6f7f8">
+<link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;900&display=swap" rel="stylesheet">
+<style>
+  :root {
+    color-scheme: light;
+    --black: #f6f7f8; --card: #ffffff; --border: #dfe2e6;
+    --gold: #6b7480; --gold-deep: #3d434b; --gold-dim: rgba(107,116,128,0.10);
+    --white: #1b1e22; --gray: #767d86;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: 'Tajawal', sans-serif; background: var(--black); color: var(--white); min-height: 100vh; }
+  nav {
+    position: sticky; top: 0; z-index: 10; padding: 14px 20px; display: flex; justify-content: space-between; align-items: center;
+    background: rgba(255,255,255,0.9); backdrop-filter: blur(16px); border-bottom: 1px solid var(--border);
+  }
+  .logo { display: flex; align-items: center; gap: 10px; text-decoration: none; color: var(--white); font-weight: 900; font-size: 18px; }
+  .logo-icon { width: 32px; height: 32px; border: 1.5px solid var(--gold); border-radius: 8px; display: flex; align-items: center; justify-content: center; }
+  .nav-right { display: flex; align-items: center; gap: 10px; }
+  .lang-toggle-btn, .back-btn {
+    background: transparent; border: 1px solid var(--border); color: var(--gray); text-decoration: none;
+    padding: 6px 12px; border-radius: 6px; font-size: 13px; font-weight: 700; font-family: 'Tajawal', sans-serif;
+    cursor: pointer; white-space: nowrap;
+  }
+  .lang-toggle-btn:hover, .back-btn:hover { border-color: var(--gold); color: var(--gold-deep); }
+  .wrap { max-width: 680px; margin: 0 auto; padding: 40px 20px 80px; }
+  h1 { font-size: 26px; font-weight: 900; margin-bottom: 6px; }
+  .updated { color: var(--gray); font-size: 13px; margin-bottom: 32px; }
+  p, li { font-size: 15px; line-height: 1.7; color: var(--white); margin-bottom: 10px; }
+  a { color: var(--gold-deep); font-weight: 700; }
+  .card { background: var(--card); border: 1px solid var(--border); border-radius: 14px; padding: 8px 26px; }
+  details { border-bottom: 1px solid var(--border); padding: 16px 0; }
+  details:last-child { border-bottom: none; }
+  summary { font-size: 15.5px; font-weight: 800; cursor: pointer; list-style: none; display: flex; justify-content: space-between; align-items: center; gap: 12px; }
+  summary::-webkit-details-marker { display: none; }
+  summary::after { content: '+'; font-size: 20px; color: var(--gray); flex-shrink: 0; transition: transform 0.2s; }
+  details[open] summary::after { content: '−'; }
+  details p { margin-top: 10px; color: var(--gray); }
+</style>
+</head>
+<body>
+
+<nav>
+  <a class="logo" href="lamsa-bilingual.html">
+    <div class="logo-icon"><img src="assets/logo-mark.png" alt="" style="max-width:75%;max-height:75%;object-fit:contain;"></div>
+    <span>LAMSA</span>
+  </a>
+  <div class="nav-right">
+    <button type="button" class="lang-toggle-btn" id="langToggleBtn" onclick="toggleLang()">AR</button>
+    <a class="back-btn" href="settings.html" data-en="Back to Settings" data-ar="رجوع للإعدادات">Back to Settings</a>
+  </div>
+</nav>
+
+<div class="wrap">
+  <h1 data-en="Frequently Asked Questions" data-ar="الأسئلة الشائعة">Frequently Asked Questions</h1>
+  <p class="updated" data-en="Can't find your answer? Email hello@lamsa.app" data-ar="ما لقيت جوابك؟ راسلنا على hello@lamsa.app">Can't find your answer? Email hello@lamsa.app</p>
+
+  <div class="card">
+    <details open>
+      <summary data-en="How does Lamsa work?" data-ar="كيف يشتغل لمسة؟">How does Lamsa work?</summary>
+      <p data-en="Upload one or more photos of your room, choose a room type, style and budget, and Lamsa's AI generates a full redesign — keeping your room's actual layout (walls, doors, windows) and only changing furniture, colors and decor."
+         data-ar="ارفع صورة أو أكتر لغرفتك، اختر نوع الغرفة والستايل والميزانية، وبيولّد الذكاء الاصطناعي تصميم كامل — مع الحفاظ على مخطط غرفتك الفعلي (الجدران، الأبواب، النوافذ) وبس يغيّر الأثاث والألوان والديكور.">
+        Upload one or more photos of your room, choose a room type, style and budget, and Lamsa's AI generates a full redesign — keeping your room's actual layout (walls, doors, windows) and only changing furniture, colors and decor.
+      </p>
+    </details>
+    <details>
+      <summary data-en="How many free credits do I get?" data-ar="كم رصيد مجاني بحصل؟">How many free credits do I get?</summary>
+      <p data-en="Every new account gets 1 free design to try. After that, a Weekly or Monthly plan gives you a refilling credit balance — each generation (AI Interior Design, Quick Rearrange, or a Style Gallery look) costs 1 credit."
+         data-ar="كل حساب جديد بياخد تصميم مجاني واحد للتجربة. بعدين، اشتراك أسبوعي أو شهري بيعطيك رصيد بيتجدد — كل توليد (تصميم داخلي، إعادة ترتيب، أو ستايل من معرض الإلهام) بيكلّف رصيد واحد.">
+        Every new account gets 1 free design to try. After that, a Weekly or Monthly plan gives you a refilling credit balance — each generation (AI Interior Design, Quick Rearrange, or a Style Gallery look) costs 1 credit.
+      </p>
+    </details>
+    <details>
+      <summary data-en="What's the difference between the Weekly and Monthly plans?" data-ar="شو الفرق بين الاشتراك الأسبوعي والشهري؟">What's the difference between the Weekly and Monthly plans?</summary>
+      <p data-en="Weekly gives 10 credits for €5.99, billed every week. Monthly gives 40 credits for €14.99, billed every month — better value if you design often. Both renew automatically until canceled."
+         data-ar="الأسبوعي بيعطيك 10 رصيد مقابل 5.99€، وبيتجدد كل أسبوع. الشهري بيعطيك 40 رصيد مقابل 14.99€، وبيتجدد كل شهر — قيمة أفضل إذا عم تصمم بشكل متكرر. الاثنين بيتجددو تلقائياً لحد ما تلغيهم.">
+        Weekly gives 10 credits for €5.99, billed every week. Monthly gives 40 credits for €14.99, billed every month — better value if you design often. Both renew automatically until canceled.
+      </p>
+    </details>
+    <details>
+      <summary data-en="Can I cancel or change my subscription?" data-ar="فيني ألغي أو غيّر اشتراكي؟">Can I cancel or change my subscription?</summary>
+      <p data-en="Yes — email hello@lamsa.app with your account email and we'll take care of it." data-ar="أكيد — راسل hello@lamsa.app ببريدك المسجّل وبنهتم فيها.">Yes — email hello@lamsa.app with your account email and we'll take care of it.</p>
+    </details>
+    <details>
+      <summary data-en="Is my room photo stored or shared?" data-ar="صورة غرفتي بتتخزن أو تنشارك؟">Is my room photo stored or shared?</summary>
+      <p data-en="Your photo is sent to our AI provider only to generate your design, and the result is saved to your account so you can revisit it. We never sell your data. See our Privacy Policy for the full details."
+         data-ar="صورتك بتترسل لمزوّد الذكاء الاصطناعي فقط عشان يولّد تصميمك، والنتيجة بتتخزن بحسابك لترجع تشوفها. إحنا ما بنبيع بياناتك أبداً. شوف سياسة الخصوصية للتفاصيل الكاملة.">
+        Your photo is sent to our AI provider only to generate your design, and the result is saved to your account so you can revisit it. We never sell your data. See our <a href="privacy-policy.html">Privacy Policy</a> for the full details.
+      </p>
+    </details>
+    <details>
+      <summary data-en="What languages does Lamsa support?" data-ar="شو اللغات يلي يدعمها لمسة؟">What languages does Lamsa support?</summary>
+      <p data-en="Lamsa's interface is available in 8 languages, including Arabic and English." data-ar="واجهة لمسة متوفرة بـ 8 لغات، منها العربي والإنكليزي.">Lamsa's interface is available in 8 languages, including Arabic and English.</p>
+    </details>
+    <details>
+      <summary data-en="How do I delete my account?" data-ar="كيف أحذف حسابي؟">How do I delete my account?</summary>
+      <p data-en="Go to Settings → Delete Account. This permanently removes your account, login details and remaining credits — it can't be undone."
+         data-ar="روح على الإعدادات ← حذف الحساب. هاد بيحذف حسابك وبيانات الدخول والرصيد المتبقي نهائياً — ما فيك ترجع فيها.">
+        Go to Settings → Delete Account. This permanently removes your account, login details and remaining credits — it can't be undone.
+      </p>
+    </details>
+  </div>
+</div>
+
+<script>
+  var currentLang = 'en';
+  function toggleLang() { setLang(currentLang === 'ar' ? 'en' : 'ar'); }
+  function setLang(lang) {
+    currentLang = lang;
+    try { localStorage.setItem('lamsa_lang', lang); } catch (e) {}
+    document.documentElement.setAttribute('lang', lang);
+    document.documentElement.setAttribute('dir', lang === 'ar' ? 'rtl' : 'ltr');
+    var btn = document.getElementById('langToggleBtn');
+    if (btn) btn.textContent = lang === 'ar' ? 'EN' : 'AR';
+    document.querySelectorAll('[data-en][data-ar]').forEach(function(el) {
+      el.innerHTML = lang === 'ar' ? el.getAttribute('data-ar') : el.getAttribute('data-en');
+    });
+  }
+  var savedLang = 'en';
+  try { savedLang = localStorage.getItem('lamsa_lang') || 'en'; } catch (e) {}
+  setLang(savedLang);
+</script>
+</body>
+</html>

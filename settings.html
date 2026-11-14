@@ -5,6 +5,9 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <meta name="color-scheme" content="light">
 <script>
+  // Settings shows personal account data (subscription, referral code,
+  // delete account), so — unlike the guest-browsable tool pages — it still
+  // requires a logged-in session up front rather than gating a single action.
   (function() {
     try {
       var user = JSON.parse(localStorage.getItem('lamsa_user') || 'null');
@@ -42,15 +45,41 @@
   .logo { display: flex; align-items: center; gap: 10px; text-decoration: none; color: var(--white); }
   .logo-icon { width: 36px; height: 36px; border: 1.5px solid var(--gold); border-radius: 8px; display: flex; align-items: center; justify-content: center; }
   .logo-text { font-size: 19px; font-weight: 900; letter-spacing: 1px; }
-  .wrap { max-width: 640px; margin: 0 auto; padding: 96px 16px 40px; }
+  .wrap { max-width: 640px; margin: 0 auto; padding: 96px 16px 110px; }
 
-  .group { background: var(--card); border: 1px solid var(--border); border-radius: 16px; margin-bottom: 18px; overflow: hidden; }
-  .row { display: flex; align-items: center; gap: 12px; padding: 14px 16px; cursor: pointer; border-bottom: 1px solid var(--border); background: none; border-left: none; border-right: none; border-top: none; width: 100%; text-align: inherit; font-family: inherit; color: inherit; font-size: 14px; }
+  .group-title { font-size: 12.5px; font-weight: 800; color: var(--gray); text-transform: uppercase; letter-spacing: 0.4px; margin: 22px 2px 8px; }
+  .group-title:first-child { margin-top: 0; }
+  .group { background: var(--card); border: 1px solid var(--border); border-radius: 16px; overflow: hidden; }
+  .row {
+    display: flex; align-items: center; gap: 12px; padding: 14px 16px; cursor: pointer;
+    border-bottom: 1px solid var(--border); background: none; border-left: none; border-right: none; border-top: none;
+    width: 100%; text-align: inherit; font-family: inherit; color: inherit; font-size: 14px; text-decoration: none;
+  }
   .row:last-child { border-bottom: none; }
   .row-icon { width: 22px; height: 22px; color: var(--gold-deep); flex-shrink: 0; }
-  .row-label { flex: 1; font-weight: 700; }
+  .row-main { flex: 1; min-width: 0; }
+  .row-label { font-weight: 700; }
+  .row-sub { font-size: 12px; color: var(--gray); margin-top: 2px; }
+  .row-trail { font-size: 12.5px; color: var(--gray); font-weight: 700; flex-shrink: 0; white-space: nowrap; }
   .row-chevron { color: var(--gray); flex-shrink: 0; }
   .row[disabled] { opacity: 0.45; cursor: default; }
+  .row-badge { font-size: 10.5px; font-weight: 800; padding: 3px 8px; border-radius: 20px; background: var(--gold-dim); color: var(--gold-deep); flex-shrink: 0; }
+  .row-badge.active { background: rgba(60,160,100,0.12); color: #2e8a56; }
+
+  /* Invite-a-friend modal — same visual language as lamsa-bilingual.html's
+     own version (copy-link box, gold CTA), built standalone here rather
+     than pulled in from that page's large script. */
+  .invite-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.6); z-index: 9999; display: none; align-items: center; justify-content: center; padding: 20px; }
+  .invite-overlay.open { display: flex; }
+  .invite-box { position: relative; background: var(--card); border: 1px solid var(--border); border-radius: 20px; padding: 32px 24px; max-width: 420px; width: 100%; text-align: center; box-shadow: 0 30px 70px -25px rgba(90,98,116,0.35); }
+  .invite-emoji { font-size: 42px; margin-bottom: 16px; }
+  .invite-title { font-size: 22px; font-weight: 900; color: var(--gold-deep); margin-bottom: 8px; }
+  .invite-sub { font-size: 13px; color: var(--gray); margin-bottom: 16px; line-height: 1.6; }
+  .invite-link-row { display: flex; background: var(--dark); border: 1px solid var(--border); border-radius: 10px; padding: 10px 12px; margin-bottom: 8px; }
+  .invite-link-row input { flex: 1; border: none; background: transparent; font-size: 12px; color: var(--white); font-family: monospace; min-width: 0; }
+  .invite-count { font-size: 11.5px; color: var(--gold-light); margin-bottom: 16px; }
+  .invite-btn-primary { width: 100%; background: var(--gold); color: #fff; border: none; padding: 12px; border-radius: 10px; font-size: 14px; font-weight: 800; cursor: pointer; font-family: inherit; margin-bottom: 8px; }
+  .invite-btn-close { width: 100%; background: transparent; border: 1px solid var(--border); color: var(--gray); padding: 10px; border-radius: 10px; font-size: 13px; cursor: pointer; font-family: inherit; }
 </style>
 </head>
 <body>
@@ -63,27 +92,116 @@
 </nav>
 
 <div class="wrap">
+  <div class="group-title" data-ar="الحساب والاشتراك" data-en="Account &amp; Billing">Account &amp; Billing</div>
   <div class="group">
-    <button type="button" class="row" onclick="logout()">
-      <span class="row-icon" id="rowLogoutIcon"></span>
-      <span class="row-label" id="rowLogout">Log Out</span>
-      <span class="row-chevron" id="rowLogoutChevron"></span>
+    <div class="row" id="rowSubscription" style="cursor:default;">
+      <span class="row-icon" data-icon="money"></span>
+      <div class="row-main">
+        <div class="row-label" data-ar="الاشتراك" data-en="Subscription">Subscription</div>
+        <div class="row-sub" id="subStatusSub" data-ar="جارٍ التحقق..." data-en="Checking...">Checking...</div>
+      </div>
+      <span class="row-badge" id="subStatusBadge" style="display:none;"></span>
+    </div>
+    <button type="button" class="row" id="rowUserId" onclick="copyUserId()">
+      <span class="row-icon" data-icon="person2"></span>
+      <div class="row-main">
+        <div class="row-label" data-ar="معرّف المستخدم" data-en="User ID">User ID</div>
+        <div class="row-sub" id="userIdValue">—</div>
+      </div>
+      <span class="row-trail" id="userIdCopyLabel" data-ar="نسخ" data-en="Copy">Copy</span>
     </button>
-    <a class="row" href="delete-account.html">
-      <span class="row-icon" id="rowDeleteIcon"></span>
-      <span class="row-label" id="rowDelete">Delete Account</span>
-      <span class="row-chevron" id="rowDeleteChevron"></span>
+    <button type="button" class="row" onclick="openInviteModal()">
+      <span class="row-icon" data-icon="share"></span>
+      <div class="row-main">
+        <div class="row-label" data-ar="دعوة صديق" data-en="Refer a Friend">Refer a Friend</div>
+        <div class="row-sub" data-ar="أنتِ وصديقك بتحصلو على تصميم مجاني إضافي" data-en="You and your friend both get an extra free design">You and your friend both get an extra free design</div>
+      </div>
+      <span class="row-chevron chevron-icon"></span>
+    </button>
+  </div>
+
+  <div class="group-title" data-ar="التفضيلات" data-en="Preferences">Preferences</div>
+  <div class="group">
+    <button type="button" class="row" onclick="toggleSettingsLang()">
+      <span class="row-icon" data-icon="globe"></span>
+      <div class="row-main">
+        <div class="row-label" data-ar="اللغة" data-en="Language">Language</div>
+      </div>
+      <span class="row-trail" id="langTrail">English</span>
+    </button>
+    <div class="row" disabled>
+      <span class="row-icon" data-icon="bulb"></span>
+      <div class="row-main">
+        <div class="row-label" data-ar="الإشعارات" data-en="Notifications">Notifications</div>
+      </div>
+      <span class="row-badge" data-ar="قريباً" data-en="Coming soon">Coming soon</span>
+    </div>
+  </div>
+
+  <div class="group-title" data-ar="المساعدة والقانونية" data-en="Help &amp; Legal">Help &amp; Legal</div>
+  <div class="group">
+    <a class="row" href="about.html">
+      <span class="row-icon" data-icon="books"></span>
+      <div class="row-main"><div class="row-label" data-ar="عن لمسة" data-en="About Lamsa">About Lamsa</div></div>
+      <span class="row-chevron chevron-icon"></span>
+    </a>
+    <a class="row" href="faq.html">
+      <span class="row-icon" data-icon="compass"></span>
+      <div class="row-main"><div class="row-label" data-ar="الأسئلة الشائعة" data-en="FAQ">FAQ</div></div>
+      <span class="row-chevron chevron-icon"></span>
+    </a>
+    <a class="row" href="terms-of-use.html">
+      <span class="row-icon" data-icon="ruler"></span>
+      <div class="row-main"><div class="row-label" data-ar="شروط الاستخدام" data-en="Terms of Use">Terms of Use</div></div>
+      <span class="row-chevron chevron-icon"></span>
     </a>
     <a class="row" href="privacy-policy.html">
-      <span class="row-icon" id="rowPrivacyIcon"></span>
-      <span class="row-label" id="rowPrivacy">Privacy Policy</span>
-      <span class="row-chevron" id="rowPrivacyChevron"></span>
+      <span class="row-icon" data-icon="lock"></span>
+      <div class="row-main"><div class="row-label" data-ar="سياسة الخصوصية" data-en="Privacy Policy">Privacy Policy</div></div>
+      <span class="row-chevron chevron-icon"></span>
+    </a>
+    <a class="row" href="mailto:hello@lamsa.app">
+      <span class="row-icon" data-icon="envelope"></span>
+      <div class="row-main"><div class="row-label" data-ar="تواصل معنا / ملاحظات" data-en="Contact &amp; Feedback">Contact &amp; Feedback</div></div>
+      <span class="row-chevron chevron-icon"></span>
     </a>
   </div>
-  <p style="color:var(--gray);font-size:12.5px;text-align:center;" id="moreSoon">More settings (notifications, language, referrals, subscription status) are coming soon.</p>
+
+  <div class="group-title" data-ar="الحساب" data-en="Account">Account</div>
+  <div class="group">
+    <button type="button" class="row" onclick="logout()">
+      <span class="row-icon" data-icon="user"></span>
+      <div class="row-main"><div class="row-label" data-ar="تسجيل الخروج" data-en="Log Out">Log Out</div></div>
+      <span class="row-chevron chevron-icon"></span>
+    </button>
+    <a class="row" href="delete-account.html">
+      <span class="row-icon" data-icon="trash"></span>
+      <div class="row-main"><div class="row-label" data-ar="حذف الحساب" data-en="Delete Account">Delete Account</div></div>
+      <span class="row-chevron chevron-icon"></span>
+    </a>
+  </div>
+</div>
+
+<div class="invite-overlay" id="inviteOverlay">
+  <div class="invite-box">
+    <div class="invite-emoji">🎁</div>
+    <div class="invite-title" data-ar="دعوة صديق" data-en="Invite a friend">Invite a friend</div>
+    <div class="invite-sub" data-ar="شارك رابطك، وكل صديق ينضم عن طريقك بيحصل الاتنين على تصميم مجاني إضافي." data-en="Share your link — every friend who joins through it gets you both an extra free design.">Share your link — every friend who joins through it gets you both an extra free design.</div>
+    <div class="invite-link-row"><input type="text" id="inviteLinkInput" readonly value=""></div>
+    <div class="invite-count" id="inviteCount" style="display:none;"></div>
+    <button type="button" class="invite-btn-primary" id="inviteCopyBtn" data-ar="نسخ الرابط" data-en="Copy link">Copy link</button>
+    <button type="button" class="invite-btn-close" onclick="closeInviteModal()" data-ar="إغلاق" data-en="Close">Close</button>
+  </div>
 </div>
 
 <script>
+  // Fills each icon placeholder's own innerHTML individually, rather than
+  // rewriting the whole body — doing it that way would silently drop every
+  // addEventListener attached below (innerHTML reparses into fresh nodes).
+  document.querySelectorAll('[data-icon]').forEach(function(el) {
+    el.innerHTML = window.icon ? window.icon(el.getAttribute('data-icon')) : '';
+  });
+
   function logout() {
     fetch('/api/auth-logout', { method: 'POST', credentials: 'include' })
       .catch(function(err) { console.error('[auth] logout request failed:', err); })
@@ -93,26 +211,129 @@
       });
   }
 
-  (function() {
-    var chev = window.icon ? window.icon('arrowLeft') : '';
-    ['rowLogoutIcon', 'rowDeleteIcon', 'rowPrivacyIcon'].forEach(function (id, i) {
-      document.getElementById(id).innerHTML = window.icon ? window.icon(['user', 'trash', 'lock'][i]) : '';
+  // ===== Language (same localStorage key/convention as every other page) =====
+  function isArabic() {
+    try { return (localStorage.getItem('lamsa_lang') || 'en') === 'ar'; } catch (e) { return false; }
+  }
+  function applySettingsLang() {
+    var ar = isArabic();
+    document.documentElement.setAttribute('lang', ar ? 'ar' : 'en');
+    document.documentElement.setAttribute('dir', ar ? 'rtl' : 'ltr');
+    document.querySelectorAll('[data-en][data-ar]').forEach(function(el) {
+      el.innerHTML = ar ? el.getAttribute('data-ar') : el.getAttribute('data-en');
     });
-    var isAr = false;
-    try { isAr = (localStorage.getItem('lamsa_lang') || 'en') === 'ar'; } catch (e) {}
-    ['rowLogoutChevron', 'rowDeleteChevron', 'rowPrivacyChevron'].forEach(function (id) {
-      document.getElementById(id).innerHTML = window.icon ? window.icon(isAr ? 'arrowLeft' : 'arrowRight') : '';
-    });
-    if (isAr) {
-      document.documentElement.setAttribute('lang', 'ar');
-      document.documentElement.setAttribute('dir', 'rtl');
-      document.getElementById('rowLogout').textContent = 'تسجيل الخروج';
-      document.getElementById('rowDelete').textContent = 'حذف الحساب';
-      document.getElementById('rowPrivacy').textContent = 'سياسة الخصوصية';
-      document.getElementById('moreSoon').textContent = 'باقي إعدادات (الإشعارات، اللغة، الدعوات، حالة الاشتراك) قريباً.';
+    document.getElementById('langTrail').textContent = ar ? 'العربية' : 'English';
+    document.getElementById('userIdCopyLabel').textContent = ar ? 'نسخ' : 'Copy';
+    var chevronSvg = window.icon ? window.icon(ar ? 'arrowLeft' : 'arrowRight') : '';
+    document.querySelectorAll('.chevron-icon').forEach(function(el) { el.innerHTML = chevronSvg; });
+    refreshSubscriptionRow();
+  }
+  function toggleSettingsLang() {
+    try { localStorage.setItem('lamsa_lang', isArabic() ? 'en' : 'ar'); } catch (e) {}
+    applySettingsLang();
+  }
+
+  // ===== Subscription status (read-only — api/me.js now includes it) =====
+  var lastSubscription = null;
+  function refreshSubscriptionRow() {
+    var sub = document.getElementById('subStatusSub');
+    var badge = document.getElementById('subStatusBadge');
+    var ar = isArabic();
+    if (lastSubscription === null) { sub.textContent = ar ? 'جارٍ التحقق...' : 'Checking...'; badge.style.display = 'none'; return; }
+    var PLAN_LABELS = { weekly: ar ? 'أسبوعي' : 'Weekly', monthly: ar ? 'شهري' : 'Monthly' };
+    if (lastSubscription && (lastSubscription.status === 'active' || lastSubscription.status === 'trialing')) {
+      var planLabel = PLAN_LABELS[lastSubscription.plan] || lastSubscription.plan || '';
+      var renewDate = lastSubscription.currentPeriodEnd
+        ? new Date(lastSubscription.currentPeriodEnd * 1000).toLocaleDateString(ar ? 'ar' : 'en-US', { year: 'numeric', month: 'short', day: 'numeric' })
+        : '';
+      sub.textContent = renewDate
+        ? (ar ? ('خطة ' + planLabel + ' — يتجدد ' + renewDate) : (planLabel + ' plan — renews ' + renewDate))
+        : (ar ? ('خطة ' + planLabel) : (planLabel + ' plan'));
+      badge.textContent = ar ? 'نشط' : 'Active';
+      badge.className = 'row-badge active';
+      badge.style.display = '';
+    } else {
+      sub.textContent = ar ? 'ما في اشتراك نشط حالياً' : 'No active subscription';
+      badge.style.display = 'none';
     }
-  })();
+  }
+
+  // ===== User ID (the existing referral code, repurposed as this row's value) =====
+  var lastReferralCode = '';
+  var lastReferralCount = 0;
+  function copyUserId() {
+    if (!lastReferralCode) return;
+    var done = function() {
+      var label = document.getElementById('userIdCopyLabel');
+      var ar = isArabic();
+      label.textContent = ar ? 'تم!' : 'Copied!';
+      setTimeout(function() { label.textContent = ar ? 'نسخ' : 'Copy'; }, 1600);
+    };
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(lastReferralCode).then(done).catch(done);
+    } else {
+      done();
+    }
+  }
+
+  // ===== Invite-a-friend modal =====
+  function openInviteModal() {
+    var ar = isArabic();
+    var overlay = document.getElementById('inviteOverlay');
+    var link = lastReferralCode ? (window.location.origin + '/lamsa-auth.html?ref=' + lastReferralCode) : '';
+    document.getElementById('inviteLinkInput').value = link;
+    var countEl = document.getElementById('inviteCount');
+    if (lastReferralCount > 0) {
+      countEl.style.display = '';
+      countEl.textContent = ar
+        ? ('دعيتي ' + lastReferralCount + (lastReferralCount === 1 ? ' صديق لحد الآن' : ' أصدقاء لحد الآن'))
+        : ('You’ve invited ' + lastReferralCount + ' friend' + (lastReferralCount === 1 ? '' : 's') + ' so far');
+    } else {
+      countEl.style.display = 'none';
+    }
+    overlay.classList.add('open');
+  }
+  function closeInviteModal() { document.getElementById('inviteOverlay').classList.remove('open'); }
+  document.getElementById('inviteCopyBtn').addEventListener('click', function() {
+    var input = document.getElementById('inviteLinkInput');
+    var ar = isArabic();
+    var done = function() {
+      var btn = document.getElementById('inviteCopyBtn');
+      var original = ar ? 'نسخ الرابط' : 'Copy link';
+      btn.textContent = ar ? 'تم النسخ!' : 'Copied!';
+      setTimeout(function() { btn.textContent = original; }, 1600);
+    };
+    if (navigator.clipboard && navigator.clipboard.writeText && input.value) {
+      navigator.clipboard.writeText(input.value).then(done).catch(done);
+    } else {
+      input.select();
+      try { document.execCommand('copy'); } catch (e) {}
+      done();
+    }
+  });
+  document.getElementById('inviteOverlay').addEventListener('click', function(e) {
+    if (e.target === this) closeInviteModal();
+  });
+
+  applySettingsLang();
   AppShell.renderTabBar('settings');
+
+  fetch('/api/me', { credentials: 'include' })
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+      lastSubscription = data.subscription || false;
+      refreshSubscriptionRow();
+    })
+    .catch(function() { lastSubscription = false; refreshSubscriptionRow(); });
+
+  fetch('/api/credits', { credentials: 'include' })
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+      lastReferralCode = data.referralCode || '';
+      lastReferralCount = data.referralCount || 0;
+      document.getElementById('userIdValue').textContent = lastReferralCode || '—';
+    })
+    .catch(function(err) { console.error('[settings] failed to load referral code:', err); });
 </script>
 </body>
 </html>
