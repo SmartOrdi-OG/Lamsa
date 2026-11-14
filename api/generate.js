@@ -2,12 +2,6 @@ import { redis, deductCredit, addCredits, ensureWelcomeCredit, incrementGenerati
 import { requireSessionEmail } from './_auth.js';
 import { randomUUID } from 'crypto';
 
-// Temporary QA bypass while the team tests the redesign-strength fix and
-// other in-flight UI work without burning through the single free credit.
-// Scoped to one account (rather than a global bypass) so it can't be
-// abused by other users while active. Remove once testing is done.
-const CREDIT_BYPASS_EMAILS = new Set(['team@smartordi.eu']);
-
 // Two-stage pipeline instead of two independent models racing on the same
 // source photo: Flux Kontext Pro (fast, cheap, consistent) does the first
 // full redesign pass, then Nano Banana Pro (Gemini 3 Pro Image; better at
@@ -128,10 +122,6 @@ export default async function handler(req, res) {
 
     await ensureWelcomeCredit(normalizedEmail);
 
-    if (CREDIT_BYPASS_EMAILS.has(normalizedEmail)) {
-      await addCredits(normalizedEmail, 1);
-    }
-
     const newBalance = await deductCredit(normalizedEmail);
     if (newBalance === null) {
       console.log('[api/generate] blocked - no credits remaining for', normalizedEmail);
@@ -203,12 +193,6 @@ export default async function handler(req, res) {
   // registration, but this covers any account that predates that or was
   // created some other way. A no-op if the balance already exists.
   await ensureWelcomeCredit(normalizedEmail);
-
-  if (CREDIT_BYPASS_EMAILS.has(normalizedEmail)) {
-    // Top up by 1 right before the deduction below spends it — net zero
-    // effect on the stored balance, just guarantees it's never 0.
-    await addCredits(normalizedEmail, 1);
-  }
 
   const newBalance = await deductCredit(normalizedEmail);
   if (newBalance === null) {
