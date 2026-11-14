@@ -1,4 +1,4 @@
-import { redis, addRating, getGenerationCount, logError } from './_db.js';
+import { redis, addRating, getGenerationCount, getUserSubscription, logError } from './_db.js';
 import { requireSessionEmail, getUser, deleteUser, getSessionTokenFromRequest, destroySession, clearSessionCookie } from './_auth.js';
 
 // Shown only to the team account — this is a site-wide number, not
@@ -49,6 +49,9 @@ export default async function handler(req, res) {
     if (STATS_VISIBLE_EMAILS.has(email)) {
       response.totalGenerations = await getGenerationCount();
     }
+    // Settings screen's subscription-status row — read-only here, so no
+    // separate endpoint is needed just to check it.
+    response.subscription = await getUserSubscription(email);
     return res.status(200).json(response);
   } catch (err) {
     console.error('[me] error:', err.message);

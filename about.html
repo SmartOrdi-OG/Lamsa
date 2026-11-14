@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="color-scheme" content="light">
+<title>About | Lamsa</title>
+<link rel="icon" type="image/png" sizes="32x32" href="assets/favicon-32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="assets/favicon-16.png">
+<link rel="apple-touch-icon" sizes="180x180" href="assets/apple-touch-icon.png">
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#f6f7f8">
+<link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;900&display=swap" rel="stylesheet">
+<style>
+  :root {
+    color-scheme: light;
+    --black: #f6f7f8; --card: #ffffff; --border: #dfe2e6;
+    --gold: #6b7480; --gold-deep: #3d434b; --gold-dim: rgba(107,116,128,0.10);
+    --white: #1b1e22; --gray: #767d86;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: 'Tajawal', sans-serif; background: var(--black); color: var(--white); min-height: 100vh; }
+  nav {
+    position: sticky; top: 0; z-index: 10; padding: 14px 20px; display: flex; justify-content: space-between; align-items: center;
+    background: rgba(255,255,255,0.9); backdrop-filter: blur(16px); border-bottom: 1px solid var(--border);
+  }
+  .logo { display: flex; align-items: center; gap: 10px; text-decoration: none; color: var(--white); font-weight: 900; font-size: 18px; }
+  .logo-icon { width: 32px; height: 32px; border: 1.5px solid var(--gold); border-radius: 8px; display: flex; align-items: center; justify-content: center; }
+  .nav-right { display: flex; align-items: center; gap: 10px; }
+  .lang-toggle-btn, .back-btn {
+    background: transparent; border: 1px solid var(--border); color: var(--gray); text-decoration: none;
+    padding: 6px 12px; border-radius: 6px; font-size: 13px; font-weight: 700; font-family: 'Tajawal', sans-serif;
+    cursor: pointer; white-space: nowrap;
+  }
+  .lang-toggle-btn:hover, .back-btn:hover { border-color: var(--gold); color: var(--gold-deep); }
+  .wrap { max-width: 680px; margin: 0 auto; padding: 40px 20px 80px; }
+  h1 { font-size: 26px; font-weight: 900; margin-bottom: 6px; }
+  .updated { color: var(--gray); font-size: 13px; margin-bottom: 32px; }
+  h2 { font-size: 18px; font-weight: 800; margin: 28px 0 10px; color: var(--gold-deep); }
+  p, li { font-size: 15px; line-height: 1.7; color: var(--white); margin-bottom: 10px; }
+  ul { padding-inline-start: 22px; margin-bottom: 12px; }
+  a { color: var(--gold-deep); font-weight: 700; }
+  .card { background: var(--card); border: 1px solid var(--border); border-radius: 14px; padding: 24px 26px; }
+  .tool-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 16px 0 20px; }
+  .tool-card { background: var(--gold-dim); border: 1px solid var(--border); border-radius: 10px; padding: 14px; }
+  .tool-card b { display: block; font-size: 14px; margin-bottom: 4px; }
+  .tool-card span { font-size: 12.5px; color: var(--gray); line-height: 1.5; }
+</style>
+</head>
+<body>
+
+<nav>
+  <a class="logo" href="lamsa-bilingual.html">
+    <div class="logo-icon"><img src="assets/logo-mark.png" alt="" style="max-width:75%;max-height:75%;object-fit:contain;"></div>
+    <span>LAMSA</span>
+  </a>
+  <div class="nav-right">
+    <button type="button" class="lang-toggle-btn" id="langToggleBtn" onclick="toggleLang()">AR</button>
+    <a class="back-btn" href="settings.html" data-en="Back to Settings" data-ar="رجوع للإعدادات">Back to Settings</a>
+  </div>
+</nav>
+
+<div class="wrap">
+  <div class="card">
+    <h1 data-en="About Lamsa" data-ar="عن لمسة">About Lamsa</h1>
+    <p class="updated" data-en="Made by SmartOrdi" data-ar="من إنتاج SmartOrdi">Made by SmartOrdi</p>
+
+    <p data-en="Lamsa is an AI-powered interior design app. Upload a photo of any room and Lamsa redesigns it — same walls, doors and windows, new furniture, colors and decor — in seconds."
+       data-ar="لمسة تطبيق تصميم داخلي يعمل بالذكاء الاصطناعي. ارفع صورة لأي غرفة، وبتعيد لمسة تصميمها — نفس الجدران والأبواب والنوافذ، بس بأثاث وألوان وديكور جديد — خلال ثوانٍ.">
+      Lamsa is an AI-powered interior design app. Upload a photo of any room and Lamsa redesigns it — same walls, doors and windows, new furniture, colors and decor — in seconds.
+    </p>
+    <p data-en="It's built for anyone who wants to see what their space could look like before spending a single riyal — whether you're furnishing a new home, refreshing an old one, or just curious."
+       data-ar="مصمم لكل اللي بدهم يشوفو شكل غرفتهم قبل ما يصرفو ولا ريال — سواء عم تفرشو بيت جديد، عم تجددو واحد قديم، أو بس فضوليين.">
+      It's built for anyone who wants to see what their space could look like before spending a single riyal — whether you're furnishing a new home, refreshing an old one, or just curious.
+    </p>
+
+    <h2 data-en="What You Can Do" data-ar="شو فيك تعمل">What You Can Do</h2>
+    <div class="tool-grid">
+      <div class="tool-card">
+        <b data-en="AI Interior Design" data-ar="تصميم داخلي بالذكاء الاصطناعي">AI Interior Design</b>
+        <span data-en="Upload a room photo, pick a style and budget, get a full redesign." data-ar="ارفع صورة غرفتك، اختر الستايل والميزانية، واحصل على تصميم كامل.">Upload a room photo, pick a style and budget, get a full redesign.</span>
+      </div>
+      <div class="tool-card">
+        <b data-en="Quick Rearrange" data-ar="إعادة ترتيب سريعة">Quick Rearrange</b>
+        <span data-en="Rearrange your existing furniture in the same room, no new pieces." data-ar="أعد ترتيب أثاثك الحالي بنفس الغرفة، بدون قطع جديدة.">Rearrange your existing furniture in the same room, no new pieces.</span>
+      </div>
+      <div class="tool-card">
+        <b data-en="3D Designer" data-ar="تصميم 3D">3D Designer</b>
+        <span data-en="Build a room from scratch — walls, finishes and furniture — in a live 3D preview." data-ar="ابنِ غرفة من الصفر — جدران وتشطيبات وأثاث — بمعاينة 3D حية.">Build a room from scratch — walls, finishes and furniture — in a live 3D preview.</span>
+      </div>
+      <div class="tool-card">
+        <b data-en="Style Gallery" data-ar="معرض الإلهام">Style Gallery</b>
+        <span data-en="Browse ready-made styles and apply one directly to a photo of your own room." data-ar="تصفح ستايلات جاهزة وطبقها مباشرة على صورة غرفتك.">Browse ready-made styles and apply one directly to a photo of your own room.</span>
+      </div>
+    </div>
+
+    <h2 data-en="Get in Touch" data-ar="تواصل معنا">Get in Touch</h2>
+    <p data-en="Questions, feedback or partnership ideas — we'd love to hear from you." data-ar="أسئلة، ملاحظات، أو أفكار تعاون — يسعدنا نسمعها منك.">Questions, feedback or partnership ideas — we'd love to hear from you.</p>
+    <p><a href="mailto:hello@lamsa.app">hello@lamsa.app</a></p>
+  </div>
+</div>
+
+<script>
+  var currentLang = 'en';
+  function toggleLang() { setLang(currentLang === 'ar' ? 'en' : 'ar'); }
+  function setLang(lang) {
+    currentLang = lang;
+    try { localStorage.setItem('lamsa_lang', lang); } catch (e) {}
+    document.documentElement.setAttribute('lang', lang);
+    document.documentElement.setAttribute('dir', lang === 'ar' ? 'rtl' : 'ltr');
+    var btn = document.getElementById('langToggleBtn');
+    if (btn) btn.textContent = lang === 'ar' ? 'EN' : 'AR';
+    document.querySelectorAll('[data-en][data-ar]').forEach(function(el) {
+      el.innerHTML = lang === 'ar' ? el.getAttribute('data-ar') : el.getAttribute('data-en');
+    });
+  }
+  var savedLang = 'en';
+  try { savedLang = localStorage.getItem('lamsa_lang') || 'en'; } catch (e) {}
+  setLang(savedLang);
+</script>
+</body>
+</html>
