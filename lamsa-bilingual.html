@@ -1217,6 +1217,20 @@
        here), so there's no legibility reason to blur or darken the photo —
        show it clearly, only darkening slightly at the very bottom. */
     .form-bg-scrim { background: linear-gradient(180deg, rgba(20,22,26,0) 0%, rgba(20,22,26,0) 80%, rgba(20,22,26,0.25) 100%); }
+
+    /* Without this, .home-back-row sits in normal document flow — which
+       on mobile lands it right at the BOTTOM edge of the absolutely
+       positioned photo band above (since #form-section's padding-top is
+       sized to clear that band), making it look stuck to a busy photo
+       edge instead of a clear "back" control. Floating it over the TOP
+       of the band instead (classic over-photo back button) keeps it
+       unambiguous regardless of what the current before/after pair looks
+       like. */
+    .home-back-row {
+      position: absolute; top: 153px; left: 16px; right: 16px; margin-bottom: 0;
+      height: calc((100vw - 32px) / 1.85); pointer-events: none; z-index: 2;
+    }
+    .home-back-btn { position: absolute; top: 12px; right: 12px; pointer-events: auto; }
   }
 </style>
 </head>
