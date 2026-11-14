@@ -1162,7 +1162,7 @@
   function handleSocialComingSoon(provider) {
     var isAr = currentLang === 'ar';
     var label = provider === 'Google' ? (isAr ? 'جوجل' : 'Google') : (isAr ? 'آبل' : 'Apple');
-    showToast(isAr ? ('تسجيل الدخول عبر ' + label + ' قريباً — فيك تستخدمي الإيميل الآن') : ('Sign in with ' + label + ' is coming soon — use email for now'), 'info');
+    showToast(isAr ? ('تسجيل الدخول عبر ' + label + ' قريباً — يمكنك استخدام البريد الإلكتروني الآن') : ('Sign in with ' + label + ' is coming soon — use email for now'), 'info');
   }
 
   // TOGGLE PASSWORD
@@ -1271,12 +1271,12 @@
   var FP_STRINGS = {
     ar: {
       title: 'نسيت كلمة المرور؟',
-      sub: 'أدخل بريدك الإلكتروني أو اسم المستخدم وبنبعتلك رابط لتعيين كلمة مرور جديدة.',
+      sub: 'أدخل بريدك الإلكتروني أو اسم المستخدم وسنرسل لك رابطاً لتعيين كلمة مرور جديدة.',
       cancel: 'إلغاء', send: 'إرسال الرابط', sending: 'جاري الإرسال...',
-      sentMsg: 'إذا كان في حساب بهاد الإيميل، رح توصلك رسالة فيها رابط تعيين كلمة مرور جديدة.',
+      sentMsg: 'إذا كان هناك حساب مرتبط بهذا البريد الإلكتروني، ستصلك رسالة تحتوي على رابط لتعيين كلمة مرور جديدة.',
       resetTitle: 'تعيين كلمة مرور جديدة', resetSub: 'أدخل كلمة المرور الجديدة لحسابك.',
       resetBtn: 'تعيين كلمة المرور', resetting: 'جاري الحفظ...',
-      resetDone: 'تم تعيين كلمة المرور بنجاح! فيك تسجل دخول هلأ.',
+      resetDone: 'تم تعيين كلمة المرور بنجاح! يمكنك تسجيل الدخول الآن.',
       emailRequired: 'الرجاء إدخال البريد الإلكتروني أو اسم المستخدم',
       passwordRequired: 'الرجاء إدخال كلمة مرور لا تقل عن 8 أحرف',
       passwordPlaceholder: '8 أحرف على الأقل'

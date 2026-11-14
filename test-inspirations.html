@@ -157,7 +157,7 @@
 </head>
 <body>
 
-  <div class="banner">صفحة تجربة داخلية — المعرض والتصنيفات للتجربة فقط، بس زر "استخدام هذا الستايل" بيستدعي التوليد الفعلي بالـAI على صورة غرفتك (لازم تكوني مسجلة دخول بهذا المتصفح). بدون خصم رصيد.</div>
+  <div class="banner">صفحة تجربة داخلية — المعرض والتصنيفات للتجربة فقط، لكن زر "استخدام هذا الستايل" يستدعي التوليد الفعلي بالذكاء الاصطناعي على صورة غرفتك (يجب أن تكون مسجلاً دخولك في هذا المتصفح). بدون خصم رصيد.</div>
 
   <header>
     <span style="font-size:20px;">‹</span>
@@ -272,7 +272,7 @@
       <img id="lightboxImg" src="" alt="">
       <div class="lightbox-body">
         <h3 id="lightboxName"></h3>
-        <p id="lightboxHint">اختاري صورة غرفتك الحقيقية ليتم تطبيق هذا النمط عليها فعليًا بالـAI — تجربة حقيقية وليست محاكاة بصرية فقط</p>
+        <p id="lightboxHint">اختر صورة غرفتك الحقيقية ليتم تطبيق هذا النمط عليها فعلياً بالذكاء الاصطناعي — تجربة حقيقية وليست محاكاة بصرية فقط</p>
         <input type="file" id="roomFileInput" accept="image/*" style="display:none;">
         <div class="gen-result-wrap" id="genResultWrap" style="display:none;">
           <img id="genResultImg" src="" alt="">
@@ -281,7 +281,7 @@
         </div>
         <div class="gen-status" id="genStatus"></div>
         <button class="use-style-btn" id="useStyleBtn">استخدام هذا الستايل</button>
-        <button class="reset-btn" id="resetBtn" style="display:none;">جرّب صورة تانية</button>
+        <button class="reset-btn" id="resetBtn" style="display:none;">جرّب صورة أخرى</button>
         <button class="close-lightbox" id="closeLightboxBtn">إغلاق</button>
       </div>
     </div>
@@ -382,7 +382,7 @@
       runRealGeneration(reader.result, file.type || 'image/jpeg');
     };
     reader.onerror = function () {
-      setStatus('تعذّرت قراءة الصورة، جربي صورة تانية', true);
+      setStatus('تعذّرت قراءة الصورة، جرّب صورة أخرى', true);
     };
     reader.readAsDataURL(file);
   });
@@ -446,7 +446,7 @@
       genOriginalImg.src = roomImageUrl;
       genResultImg.src = resultUrl;
       genResultWrap.style.display = 'block';
-      setStatus('جاهز — قارني النتيجة مع صورتك الأصلية');
+      setStatus('جاهز — قارن النتيجة مع صورتك الأصلية');
       useStyleBtn.style.display = 'none';
       resetBtn.style.display = 'block';
       busy = false;
@@ -473,7 +473,7 @@
         throw new Error('فشل التوليد من طرف fal.ai');
       }
     }
-    throw new Error('استغرق التوليد وقتًا أطول من المتوقع، جربي مرة تانية');
+    throw new Error('استغرق التوليد وقتًا أطول من المتوقع، جرّب مرة أخرى');
   }
 
   function extractResultImage(data) {
