@@ -12,7 +12,7 @@
 <meta name="theme-color" content="#221f1a">
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&display=swap" rel="stylesheet">
 <script src="js/platform.js"></script>
-<noscript><meta http-equiv="refresh" content="0; url=lamsa-auth.html"></noscript>
+<noscript><meta http-equiv="refresh" content="0; url=lamsa-bilingual.html"></noscript>
 <style>
   * { margin: 0; padding: 0; box-sizing: border-box; }
   html, body {
@@ -56,7 +56,10 @@
   <div class="splash-spinner"></div>
 </div>
 <script>
-  setTimeout(function () { window.location.replace('lamsa-auth.html'); }, 1400);
+  // Home is browsable as a guest — go straight there instead of forcing
+  // sign-in first. Home (and every tool) redirects to lamsa-auth.html on
+  // its own only when an actual logged-in-only action is attempted.
+  setTimeout(function () { window.location.replace('lamsa-bilingual.html'); }, 1400);
 </script>
 </body>
 </html>
