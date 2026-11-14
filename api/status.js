@@ -1,5 +1,20 @@
-import { redis, getAllRatings, getRecentErrors, clearErrors, getGenerationCount } from './_db.js';
+import { redis, getAllRatings, getRecentErrors, clearErrors, getGenerationCount, saveDesignToHistory } from './_db.js';
+import { requireSessionEmail } from './_auth.js';
 import { stripe } from './_stripe.js';
+
+// Same shape-sniffing the client already does in extractResultImages() —
+// duplicated here (not imported, this is a serverless function with no
+// shared bundle with the frontend) so the server can see the same final
+// image the client is about to render, to save it to history.
+function extractResultImages(data) {
+  if (!data) return null;
+  if (Array.isArray(data.images) && data.images.length) return data.images;
+  if (data.image && data.image.url) return [data.image];
+  if (data.output && Array.isArray(data.output.images) && data.output.images.length) return data.output.images;
+  if (data.response && Array.isArray(data.response.images) && data.response.images.length) return data.response.images;
+  if (data.data && Array.isArray(data.data.images) && data.data.images.length) return data.data.images;
+  return null;
+}
 
 export default async function handler(req, res) {
   // The admin page (lamsa-admin.html) POSTs here rather than to its own API
@@ -19,7 +34,7 @@ export default async function handler(req, res) {
     return res.status(500).json({ error: 'FAL_API_KEY not configured' });
   }
 
-  const { request_id, mode, model } = req.query;
+  const { request_id, mode, model, tool } = req.query;
   if (!request_id) return res.status(400).json({ error: 'request_id is required' });
 
   // NOTE: the queue's status/result endpoints live under each model's base
@@ -61,6 +76,32 @@ export default async function handler(req, res) {
     }
 
     console.log('[api/status] fal.ai response:', mode === 'result' ? '(result payload, images: ' + (data.images ? data.images.length : 0) + ')' : JSON.stringify(data));
+
+    // Nano is always the LAST stage of every generation pipeline (the main
+    // wizard and Quick Rearrange both poll Flux's own result first, purely
+    // to feed it into Nano's refine step; the Inspirations style-reference
+    // path calls Nano directly) — so this is the one point that sees every
+    // tool's actual final image, without saving the intermediate pre-refine
+    // Flux result as a separate (never-shown-as-final) history entry. Saving
+    // is best-effort: a guest (no session) or a save failure never affects
+    // the response the client is waiting on for the result itself.
+    if (mode === 'result' && model === 'nano') {
+      const images = extractResultImages(data);
+      if (images && images.length && redis) {
+        try {
+          const email = await requireSessionEmail(req);
+          if (email) {
+            await saveDesignToHistory(email, {
+              imageUrl: images[0].url,
+              tool: tool || 'design',
+              createdAt: Date.now()
+            });
+          }
+        } catch (err) {
+          console.error('[api/status] failed to save design history:', err.message);
+        }
+      }
+    }
 
     return res.status(200).json(data);
 

@@ -24,6 +24,7 @@
 <script src="js/platform.js"></script>
 <script src="js/icons.js"></script>
 <script src="js/app-shell.js"></script>
+<script src="js/lang8.js"></script>
 <style>
   .icon-svg { width: 1.15em; height: 1.15em; vertical-align: -0.18em; display: inline-block; flex-shrink: 0; }
   :root {
@@ -42,14 +43,55 @@
   .logo { display: flex; align-items: center; gap: 10px; text-decoration: none; color: var(--white); }
   .logo-icon { width: 36px; height: 36px; border: 1.5px solid var(--gold); border-radius: 8px; display: flex; align-items: center; justify-content: center; }
   .logo-text { font-size: 19px; font-weight: 900; letter-spacing: 1px; }
-  .wrap { max-width: 640px; margin: 0 auto; padding: 96px 16px 40px; text-align: center; }
+  .lang-select {
+    background: transparent; border: 1px solid var(--border); color: var(--gray);
+    padding: 6px 8px; border-radius: 6px; font-size: 12.5px; font-weight: 700; font-family: 'Tajawal', sans-serif;
+    cursor: pointer; max-width: 110px;
+  }
+  .wrap { max-width: 680px; margin: 0 auto; padding: 96px 16px 110px; }
+  .page-head { margin-bottom: 18px; }
+  .page-head h1 { font-size: 20px; font-weight: 900; margin-bottom: 4px; }
+  .page-head p { color: var(--gray); font-size: 13px; }
+
+  .empty-wrap { text-align: center; padding: 40px 16px; }
   .empty-icon {
-    width: 72px; height: 72px; margin: 40px auto 18px; border-radius: 50%;
+    width: 72px; height: 72px; margin: 0 auto 18px; border-radius: 50%;
     background: var(--gold-dim); color: var(--gold-deep); display: flex; align-items: center; justify-content: center;
   }
   .empty-icon .icon-svg { width: 32px; height: 32px; }
-  h1 { font-size: 19px; font-weight: 900; margin-bottom: 8px; }
-  p { color: var(--gray); font-size: 13.5px; line-height: 1.6; }
+  .empty-wrap h2 { font-size: 17px; font-weight: 900; margin-bottom: 8px; }
+  .empty-wrap p { color: var(--gray); font-size: 13.5px; line-height: 1.6; margin-bottom: 20px; }
+  .empty-cta {
+    display: inline-block; background: var(--gold); color: #fff; border: none; text-decoration: none;
+    padding: 12px 28px; border-radius: 10px; font-size: 14px; font-weight: 800; font-family: inherit;
+  }
+
+  .history-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .history-card { background: var(--card); border: 1px solid var(--border); border-radius: 14px; overflow: hidden; cursor: pointer; }
+  .history-card-img-wrap { position: relative; aspect-ratio: 1; }
+  .history-card img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .history-card-tool {
+    position: absolute; top: 8px; inset-inline-start: 8px; width: 26px; height: 26px; border-radius: 50%;
+    background: rgba(27,30,34,0.65); backdrop-filter: blur(6px); color: #fff; display: flex; align-items: center; justify-content: center;
+  }
+  .history-card-tool .icon-svg { width: 14px; height: 14px; }
+  .history-card-date { padding: 8px 10px; font-size: 11px; color: var(--gray); font-weight: 700; }
+
+  .loading-wrap { text-align: center; padding: 60px 16px; color: var(--gray); font-size: 13.5px; }
+
+  /* Lightbox */
+  .lightbox { position: fixed; inset: 0; background: rgba(0,0,0,0.85); display: none; align-items: center; justify-content: center; z-index: 9998; padding: 20px; }
+  .lightbox.open { display: flex; }
+  .lightbox-inner { background: var(--card); border-radius: 18px; overflow: hidden; max-width: 420px; width: 100%; max-height: 92vh; overflow-y: auto; }
+  .lightbox-inner img { width: 100%; max-height: 50vh; object-fit: contain; background: #000; display: block; }
+  .lightbox-body { padding: 20px; }
+  .lightbox-body .lb-tool { display: flex; align-items: center; gap: 8px; font-size: 15px; font-weight: 900; margin-bottom: 2px; }
+  .lightbox-body .lb-tool .icon-svg { width: 18px; height: 18px; color: var(--gold-deep); }
+  .lightbox-body .lb-date { font-size: 12px; color: var(--gray); margin-bottom: 16px; }
+  .lb-btn-row { display: flex; gap: 8px; margin-bottom: 8px; }
+  .lb-btn-primary { flex: 1; background: var(--gold); color: #fff; border: none; padding: 11px; border-radius: 10px; font-size: 13.5px; font-weight: 800; cursor: pointer; font-family: inherit; }
+  .lb-btn-secondary { flex: 1; background: transparent; color: var(--gold-deep); border: 1.5px solid var(--gold); padding: 11px; border-radius: 10px; font-size: 13.5px; font-weight: 800; cursor: pointer; font-family: inherit; }
+  .lb-btn-close { width: 100%; background: transparent; border: 1px solid var(--border); color: var(--gray); padding: 10px; border-radius: 10px; font-size: 13px; cursor: pointer; font-family: inherit; }
 </style>
 </head>
 <body>
@@ -59,25 +101,204 @@
     <div class="logo-icon"><img src="assets/logo-mark.png" alt="" style="max-width:75%;max-height:75%;object-fit:contain;"></div>
     <div class="logo-text">LAMSA</div>
   </a>
+  <select class="lang-select" id="langSelect" data-lang-select aria-label="Language"></select>
 </nav>
 
 <div class="wrap">
-  <div class="empty-icon"><span id="historyIcon"></span></div>
-  <h1 id="historyTitle">Your design history is coming soon</h1>
-  <p id="historySub">Past designs you generate across Lamsa's tools will show up here.</p>
+  <div class="page-head">
+    <h1 data-ar="تصاميمي" data-en="My Designs">My Designs</h1>
+    <p data-ar="التصاميم يلي ولّدتيها عبر أدوات لمسة" data-en="Designs you've generated across Lamsa's tools">Designs you've generated across Lamsa's tools</p>
+  </div>
+
+  <div class="loading-wrap" id="loadingWrap" data-ar="جارٍ التحميل..." data-en="Loading...">Loading...</div>
+
+  <div class="empty-wrap" id="emptyWrap" style="display:none;">
+    <div class="empty-icon"><span id="emptyIcon"></span></div>
+    <h2 data-ar="سجل تصاميمك فاضي حالياً" data-en="Your design history is empty">Your design history is empty</h2>
+    <p data-ar="التصاميم يلي بتولدها عبر أدوات لمسة رح تظهر هون." data-en="Designs you generate across Lamsa's tools will show up here.">Designs you generate across Lamsa's tools will show up here.</p>
+    <a class="empty-cta" href="lamsa-bilingual.html" data-ar="ابدأ التصميم" data-en="Start Designing">Start Designing</a>
+  </div>
+
+  <div class="history-grid" id="historyGrid" style="display:none;"></div>
+</div>
+
+<div class="lightbox" id="lightbox">
+  <div class="lightbox-inner">
+    <img id="lbImg" src="" alt="">
+    <div class="lightbox-body">
+      <div class="lb-tool"><span id="lbToolIcon"></span><span id="lbToolLabel"></span></div>
+      <div class="lb-date" id="lbDate"></div>
+      <div class="lb-btn-row">
+        <button type="button" class="lb-btn-primary" id="lbSaveBtn" data-ar="حفظ الصورة" data-en="Save Image">Save Image</button>
+        <button type="button" class="lb-btn-secondary" id="lbShareBtn" data-ar="مشاركة" data-en="Share">Share</button>
+      </div>
+      <button type="button" class="lb-btn-close" id="lbCloseBtn" data-ar="إغلاق" data-en="Close">Close</button>
+    </div>
+  </div>
 </div>
 
 <script>
-  document.getElementById('historyIcon').innerHTML = window.icon ? window.icon('clock') : '';
-  try {
-    if ((localStorage.getItem('lamsa_lang') || 'en') === 'ar') {
-      document.documentElement.setAttribute('lang', 'ar');
-      document.documentElement.setAttribute('dir', 'rtl');
-      document.getElementById('historyTitle').textContent = 'سجل تصاميمك قريباً';
-      document.getElementById('historySub').textContent = 'التصاميم يلي بتولدها عبر أدوات لمسة رح تظهر هون.';
+  var T = {
+    de: {
+      'My Designs': 'Meine Designs', "Designs you've generated across Lamsa's tools": 'Designs, die du mit Lamsas Tools erstellt hast',
+      'Loading...': 'Wird geladen...', 'Your design history is empty': 'Dein Design-Verlauf ist leer',
+      "Designs you generate across Lamsa's tools will show up here.": 'Designs, die du mit Lamsas Tools erstellst, erscheinen hier.',
+      'Start Designing': 'Jetzt gestalten', 'Save Image': 'Bild speichern', 'Share': 'Teilen', 'Close': 'Schließen'
+    },
+    es: {
+      'My Designs': 'Mis diseños', "Designs you've generated across Lamsa's tools": 'Diseños que has generado con las herramientas de Lamsa',
+      'Loading...': 'Cargando...', 'Your design history is empty': 'Tu historial de diseños está vacío',
+      "Designs you generate across Lamsa's tools will show up here.": 'Los diseños que generes con las herramientas de Lamsa aparecerán aquí.',
+      'Start Designing': 'Empezar a diseñar', 'Save Image': 'Guardar imagen', 'Share': 'Compartir', 'Close': 'Cerrar'
+    },
+    tr: {
+      'My Designs': 'Tasarımlarım', "Designs you've generated across Lamsa's tools": "Lamsa'nın araçlarıyla oluşturduğun tasarımlar",
+      'Loading...': 'Yükleniyor...', 'Your design history is empty': 'Tasarım geçmişin boş',
+      "Designs you generate across Lamsa's tools will show up here.": "Lamsa'nın araçlarıyla oluşturduğun tasarımlar burada görünecek.",
+      'Start Designing': 'Tasarlamaya Başla', 'Save Image': 'Resmi kaydet', 'Share': 'Paylaş', 'Close': 'Kapat'
+    },
+    fr: {
+      'My Designs': 'Mes designs', "Designs you've generated across Lamsa's tools": 'Designs générés avec les outils de Lamsa',
+      'Loading...': 'Chargement...', 'Your design history is empty': 'Votre historique de designs est vide',
+      "Designs you generate across Lamsa's tools will show up here.": 'Les designs que vous générez avec les outils de Lamsa apparaîtront ici.',
+      'Start Designing': 'Commencer à concevoir', 'Save Image': "Enregistrer l'image", 'Share': 'Partager', 'Close': 'Fermer'
+    },
+    it: {
+      'My Designs': 'I miei design', "Designs you've generated across Lamsa's tools": 'Design generati con gli strumenti di Lamsa',
+      'Loading...': 'Caricamento...', 'Your design history is empty': 'La cronologia dei tuoi design è vuota',
+      "Designs you generate across Lamsa's tools will show up here.": 'I design che generi con gli strumenti di Lamsa appariranno qui.',
+      'Start Designing': 'Inizia a progettare', 'Save Image': 'Salva immagine', 'Share': 'Condividi', 'Close': 'Chiudi'
+    },
+    ru: {
+      'My Designs': 'Мои дизайны', "Designs you've generated across Lamsa's tools": 'Дизайны, созданные с помощью инструментов Lamsa',
+      'Loading...': 'Загрузка...', 'Your design history is empty': 'Ваша история дизайнов пуста',
+      "Designs you generate across Lamsa's tools will show up here.": 'Дизайны, которые вы создадите с помощью инструментов Lamsa, появятся здесь.',
+      'Start Designing': 'Начать создавать', 'Save Image': 'Сохранить изображение', 'Share': 'Поделиться', 'Close': 'Закрыть'
     }
-  } catch (e) {}
+  };
+
+  // Per-tool label + icon, plus the locale code for date formatting — all
+  // 8 languages, matching the names already used for these exact tools
+  // elsewhere (about.html, the Home tool grid).
+  var TOOL_META = {
+    interior: { icon: 'sparkles', label: { ar: 'تصميم داخلي بالذكاء الاصطناعي', en: 'AI Interior Design', de: 'KI-Innenarchitektur', es: 'Diseño de interiores con IA', tr: 'Yapay Zeka ile İç Mekan Tasarımı', fr: "Design d'intérieur par IA", it: 'Interior design con IA', ru: 'Дизайн интерьера с ИИ' } },
+    rearrange: { icon: 'refresh', label: { ar: 'إعادة ترتيب سريعة', en: 'Quick Rearrange', de: 'Schnelles Umstellen', es: 'Reorganización rápida', tr: 'Hızlı Yeniden Düzenleme', fr: 'Réarrangement rapide', it: 'Riorganizzazione rapida', ru: 'Быстрая перестановка' } },
+    inspirations: { icon: 'palette', label: { ar: 'معرض الإلهام', en: 'Style Gallery', de: 'Stilgalerie', es: 'Galería de estilos', tr: 'Stil Galerisi', fr: 'Galerie de styles', it: 'Galleria di stili', ru: 'Галерея стилей' } },
+    design: { icon: 'sparkle', label: { ar: 'تصميم', en: 'Design', de: 'Design', es: 'Diseño', tr: 'Tasarım', fr: 'Design', it: 'Design', ru: 'Дизайн' } }
+  };
+  var DATE_LOCALES = { ar: 'ar', en: 'en-US', de: 'de-DE', es: 'es-ES', tr: 'tr-TR', fr: 'fr-FR', it: 'it-IT', ru: 'ru-RU' };
+
+  var currentLang = 'en';
+  var lastDesigns = [];
+
+  function setLang(lang) {
+    var cfg = Lang8.apply(lang, T);
+    currentLang = cfg.code;
+    renderDesigns();
+  }
+
+  function toolMeta(tool) { return TOOL_META[tool] || TOOL_META.design; }
+  function toolLabel(tool) { var m = toolMeta(tool); return m.label[currentLang] || m.label.en; }
+  function formatDate(ts) {
+    return new Date(ts).toLocaleDateString(DATE_LOCALES[currentLang] || 'en-US', { year: 'numeric', month: 'short', day: 'numeric' });
+  }
+
+  function renderDesigns() {
+    var grid = document.getElementById('historyGrid');
+    var empty = document.getElementById('emptyWrap');
+    var loading = document.getElementById('loadingWrap');
+    loading.style.display = 'none';
+
+    if (!lastDesigns.length) {
+      grid.style.display = 'none';
+      empty.style.display = 'block';
+      return;
+    }
+    empty.style.display = 'none';
+    grid.style.display = 'grid';
+    grid.innerHTML = '';
+    lastDesigns.forEach(function (d, i) {
+      var card = document.createElement('div');
+      card.className = 'history-card';
+      card.innerHTML =
+        '<div class="history-card-img-wrap"><img src="' + d.imageUrl + '" alt="" loading="lazy">' +
+        '<div class="history-card-tool">' + (window.icon ? window.icon(toolMeta(d.tool).icon) : '') + '</div></div>' +
+        '<div class="history-card-date">' + formatDate(d.createdAt) + '</div>';
+      card.onclick = function () { openLightbox(i); };
+      grid.appendChild(card);
+    });
+  }
+
+  function openLightbox(i) {
+    var d = lastDesigns[i];
+    if (!d) return;
+    document.getElementById('lbImg').src = d.imageUrl;
+    document.getElementById('lbToolIcon').innerHTML = window.icon ? window.icon(toolMeta(d.tool).icon) : '';
+    document.getElementById('lbToolLabel').textContent = toolLabel(d.tool);
+    document.getElementById('lbDate').textContent = formatDate(d.createdAt);
+    document.getElementById('lbSaveBtn').onclick = function () { saveOrShareImage(d.imageUrl, false); };
+    document.getElementById('lbShareBtn').onclick = function () { saveOrShareImage(d.imageUrl, true); };
+    document.getElementById('lightbox').classList.add('open');
+  }
+  function closeLightbox() { document.getElementById('lightbox').classList.remove('open'); }
+
+  // Same CORS-safe save/share approach as lamsa-bilingual.html's result
+  // screen (routed through the existing /api/download-image proxy — fal.ai's
+  // CDN doesn't reliably send permissive CORS headers for a direct fetch).
+  function saveOrShareImage(url, share) {
+    var filename = 'lamsa-design-' + Date.now() + '.jpg';
+    fetch('/api/download-image?url=' + encodeURIComponent(url) + '&filename=' + encodeURIComponent(filename))
+      .then(function (resp) { return resp.blob(); })
+      .then(function (blob) {
+        var file = new File([blob], filename, { type: blob.type || 'image/jpeg' });
+        if (share && navigator.canShare && navigator.canShare({ files: [file] })) {
+          return navigator.share({ files: [file], title: 'Lamsa Design' });
+        }
+        if (share && navigator.share) {
+          return navigator.share({ title: 'Lamsa Design', url: url });
+        }
+        if (!share && navigator.canShare && navigator.canShare({ files: [file] })) {
+          return navigator.share({ files: [file] });
+        }
+        var blobUrl = URL.createObjectURL(blob);
+        var link = document.createElement('a');
+        link.href = blobUrl;
+        link.download = filename;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(blobUrl);
+      })
+      .catch(function (err) {
+        console.error('[history] save/share failed, opening image directly:', err);
+        window.open(url, '_blank');
+      });
+  }
+
+  document.getElementById('lbCloseBtn').addEventListener('click', closeLightbox);
+  document.getElementById('lightbox').addEventListener('click', function (e) {
+    if (e.target === this) closeLightbox();
+  });
+
+  document.getElementById('emptyIcon').innerHTML = window.icon ? window.icon('clock') : '';
+
+  Lang8.buildSelect(document.getElementById('langSelect'), setLang);
+  var savedLang = 'en';
+  try { savedLang = localStorage.getItem('lamsa_lang') || 'en'; } catch (e) {}
+  setLang(savedLang);
   AppShell.renderTabBar('history');
+
+  fetch('/api/me?view=history', { credentials: 'include' })
+    .then(function (r) { return r.json(); })
+    .then(function (data) {
+      lastDesigns = (data && Array.isArray(data.designs)) ? data.designs : [];
+      renderDesigns();
+    })
+    .catch(function (err) {
+      console.error('[history] failed to load designs:', err);
+      lastDesigns = [];
+      renderDesigns();
+    });
 </script>
 </body>
 </html>

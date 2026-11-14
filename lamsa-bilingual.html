@@ -3860,7 +3860,7 @@
               var status = (result.data.status || '').toString().toUpperCase();
 
               if (status === 'COMPLETED') {
-                fetchJson('/api/status?request_id=' + encodeURIComponent(requestId) + '&model=' + encodeURIComponent(model) + '&mode=result')
+                fetchJson('/api/status?request_id=' + encodeURIComponent(requestId) + '&model=' + encodeURIComponent(model) + '&mode=result&tool=interior')
                   .then(function(resultResp) {
                     console.log('[generate] result (' + model + ', http ' + resultResp.status + '):', resultResp.data);
                     if (!resultResp.ok) {

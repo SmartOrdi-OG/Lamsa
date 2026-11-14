@@ -1,4 +1,4 @@
-import { redis, addRating, getGenerationCount, getUserSubscription, logError } from './_db.js';
+import { redis, addRating, getGenerationCount, getUserSubscription, getDesignHistory, logError } from './_db.js';
 import { requireSessionEmail, getUser, deleteUser, getSessionTokenFromRequest, destroySession, clearSessionCookie } from './_auth.js';
 
 // Shown only to the team account — this is a site-wide number, not
@@ -40,6 +40,14 @@ export default async function handler(req, res) {
 
       await addRating(email, ratingNum, comment);
       return res.status(200).json({ ok: true });
+    }
+
+    // History screen's design grid — folded into this GET handler (rather
+    // than a new /api/*.js file) for the same Hobby-plan 12-function-cap
+    // reason as everything else here.
+    if (req.query.view === 'history') {
+      const designs = await getDesignHistory(email, 60);
+      return res.status(200).json({ designs });
     }
 
     const user = await getUser(email);
