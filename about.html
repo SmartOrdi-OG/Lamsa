@@ -11,6 +11,7 @@
 <link rel="manifest" href="manifest.json">
 <meta name="theme-color" content="#f6f7f8">
 <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;900&display=swap" rel="stylesheet">
+<script src="js/lang8.js"></script>
 <style>
   :root {
     color-scheme: light;
@@ -27,12 +28,12 @@
   .logo { display: flex; align-items: center; gap: 10px; text-decoration: none; color: var(--white); font-weight: 900; font-size: 18px; }
   .logo-icon { width: 32px; height: 32px; border: 1.5px solid var(--gold); border-radius: 8px; display: flex; align-items: center; justify-content: center; }
   .nav-right { display: flex; align-items: center; gap: 10px; }
-  .lang-toggle-btn, .back-btn {
+  .lang-select, .back-btn {
     background: transparent; border: 1px solid var(--border); color: var(--gray); text-decoration: none;
-    padding: 6px 12px; border-radius: 6px; font-size: 13px; font-weight: 700; font-family: 'Tajawal', sans-serif;
+    padding: 6px 10px; border-radius: 6px; font-size: 13px; font-weight: 700; font-family: 'Tajawal', sans-serif;
     cursor: pointer; white-space: nowrap;
   }
-  .lang-toggle-btn:hover, .back-btn:hover { border-color: var(--gold); color: var(--gold-deep); }
+  .back-btn:hover { border-color: var(--gold); color: var(--gold-deep); }
   .wrap { max-width: 680px; margin: 0 auto; padding: 40px 20px 80px; }
   h1 { font-size: 26px; font-weight: 900; margin-bottom: 6px; }
   .updated { color: var(--gray); font-size: 13px; margin-bottom: 32px; }
@@ -55,7 +56,7 @@
     <span>LAMSA</span>
   </a>
   <div class="nav-right">
-    <button type="button" class="lang-toggle-btn" id="langToggleBtn" onclick="toggleLang()">AR</button>
+    <select class="lang-select" id="langSelect" data-lang-select aria-label="Language"></select>
     <a class="back-btn" href="settings.html" data-en="Back to Settings" data-ar="رجوع للإعدادات">Back to Settings</a>
   </div>
 </nav>
@@ -101,19 +102,130 @@
 </div>
 
 <script>
-  var currentLang = 'en';
-  function toggleLang() { setLang(currentLang === 'ar' ? 'en' : 'ar'); }
-  function setLang(lang) {
-    currentLang = lang;
-    try { localStorage.setItem('lamsa_lang', lang); } catch (e) {}
-    document.documentElement.setAttribute('lang', lang);
-    document.documentElement.setAttribute('dir', lang === 'ar' ? 'rtl' : 'ltr');
-    var btn = document.getElementById('langToggleBtn');
-    if (btn) btn.textContent = lang === 'ar' ? 'EN' : 'AR';
-    document.querySelectorAll('[data-en][data-ar]').forEach(function(el) {
-      el.innerHTML = lang === 'ar' ? el.getAttribute('data-ar') : el.getAttribute('data-en');
-    });
-  }
+  var T = {
+    de: {
+      'Back to Settings': 'Zurück zu Einstellungen',
+      'About Lamsa': 'Über Lamsa',
+      'Made by SmartOrdi': 'Entwickelt von SmartOrdi',
+      'Lamsa is an AI-powered interior design app. Upload a photo of any room and Lamsa redesigns it — same walls, doors and windows, new furniture, colors and decor — in seconds.':
+        'Lamsa ist eine KI-gestützte Inneneinrichtungs-App. Lade ein Foto von einem beliebigen Raum hoch, und Lamsa gestaltet ihn neu — gleiche Wände, Türen und Fenster, aber neue Möbel, Farben und Deko — in Sekunden.',
+      "It's built for anyone who wants to see what their space could look like before spending a single riyal — whether you're furnishing a new home, refreshing an old one, or just curious.":
+        'Sie ist für alle gemacht, die sehen möchten, wie ihr Raum aussehen könnte, bevor sie auch nur einen Cent ausgeben — egal ob du eine neue Wohnung einrichtest, eine alte auffrischst oder einfach nur neugierig bist.',
+      'What You Can Do': 'Was du tun kannst',
+      'AI Interior Design': 'KI-Innenarchitektur',
+      'Upload a room photo, pick a style and budget, get a full redesign.': 'Lade ein Raumfoto hoch, wähle einen Stil und ein Budget, und erhalte eine komplette Neugestaltung.',
+      'Quick Rearrange': 'Schnelles Umstellen',
+      'Rearrange your existing furniture in the same room, no new pieces.': 'Stelle dein vorhandenes Mobiliar im selben Raum um, ganz ohne neue Möbel.',
+      '3D Designer': '3D-Designer',
+      'Build a room from scratch — walls, finishes and furniture — in a live 3D preview.': 'Baue einen Raum von Grund auf — Wände, Oberflächen und Möbel — in einer Live-3D-Vorschau.',
+      'Style Gallery': 'Stilgalerie',
+      'Browse ready-made styles and apply one directly to a photo of your own room.': 'Durchstöbere fertige Stile und wende einen direkt auf ein Foto deines eigenen Raums an.',
+      'Get in Touch': 'Kontakt aufnehmen',
+      "Questions, feedback or partnership ideas — we'd love to hear from you.": 'Fragen, Feedback oder Ideen für eine Zusammenarbeit — wir freuen uns, von dir zu hören.'
+    },
+    es: {
+      'Back to Settings': 'Volver a Ajustes',
+      'About Lamsa': 'Acerca de Lamsa',
+      'Made by SmartOrdi': 'Creado por SmartOrdi',
+      'Lamsa is an AI-powered interior design app. Upload a photo of any room and Lamsa redesigns it — same walls, doors and windows, new furniture, colors and decor — in seconds.':
+        'Lamsa es una app de diseño de interiores con IA. Sube una foto de cualquier habitación y Lamsa la rediseña — mismas paredes, puertas y ventanas, con muebles, colores y decoración nuevos — en segundos.',
+      "It's built for anyone who wants to see what their space could look like before spending a single riyal — whether you're furnishing a new home, refreshing an old one, or just curious.":
+        'Está pensada para cualquiera que quiera ver cómo podría quedar su espacio antes de gastar un solo riyal — ya sea que estés amueblando una casa nueva, renovando una antigua, o simplemente tengas curiosidad.',
+      'What You Can Do': 'Qué puedes hacer',
+      'AI Interior Design': 'Diseño de interiores con IA',
+      'Upload a room photo, pick a style and budget, get a full redesign.': 'Sube una foto de tu habitación, elige un estilo y presupuesto, y obtén un rediseño completo.',
+      'Quick Rearrange': 'Reorganización rápida',
+      'Rearrange your existing furniture in the same room, no new pieces.': 'Reorganiza tus muebles actuales en la misma habitación, sin piezas nuevas.',
+      '3D Designer': 'Diseñador 3D',
+      'Build a room from scratch — walls, finishes and furniture — in a live 3D preview.': 'Construye una habitación desde cero — paredes, acabados y muebles — con una vista previa 3D en vivo.',
+      'Style Gallery': 'Galería de estilos',
+      'Browse ready-made styles and apply one directly to a photo of your own room.': 'Explora estilos ya hechos y aplica uno directamente a una foto de tu propia habitación.',
+      'Get in Touch': 'Contáctanos',
+      "Questions, feedback or partnership ideas — we'd love to hear from you.": 'Preguntas, comentarios o ideas de colaboración — nos encantaría saber de ti.'
+    },
+    tr: {
+      'Back to Settings': 'Ayarlara Dön',
+      'About Lamsa': 'Lamsa Hakkında',
+      'Made by SmartOrdi': 'SmartOrdi tarafından geliştirildi',
+      'Lamsa is an AI-powered interior design app. Upload a photo of any room and Lamsa redesigns it — same walls, doors and windows, new furniture, colors and decor — in seconds.':
+        'Lamsa, yapay zeka destekli bir iç mekan tasarım uygulamasıdır. Herhangi bir odanın fotoğrafını yükle, Lamsa onu yeniden tasarlasın — aynı duvarlar, kapılar ve pencereler, yeni mobilya, renkler ve dekorla — saniyeler içinde.',
+      "It's built for anyone who wants to see what their space could look like before spending a single riyal — whether you're furnishing a new home, refreshing an old one, or just curious.":
+        'Tek kuruş harcamadan mekanının nasıl görünebileceğini görmek isteyen herkes için tasarlandı — ister yeni bir ev döşüyor ol, ister eskisini yeniliyor ol, ister sadece meraklı ol.',
+      'What You Can Do': 'Neler Yapabilirsin',
+      'AI Interior Design': 'Yapay Zeka ile İç Mekan Tasarımı',
+      'Upload a room photo, pick a style and budget, get a full redesign.': 'Oda fotoğrafını yükle, bir stil ve bütçe seç, komple bir yeniden tasarım al.',
+      'Quick Rearrange': 'Hızlı Yeniden Düzenleme',
+      'Rearrange your existing furniture in the same room, no new pieces.': 'Mevcut mobilyalarını aynı odada, yeni parça eklemeden yeniden düzenle.',
+      '3D Designer': '3D Tasarımcı',
+      'Build a room from scratch — walls, finishes and furniture — in a live 3D preview.': 'Bir odayı sıfırdan inşa et — duvarlar, kaplamalar ve mobilyalar — canlı 3D önizlemeyle.',
+      'Style Gallery': 'Stil Galerisi',
+      'Browse ready-made styles and apply one directly to a photo of your own room.': 'Hazır stillere göz at ve birini doğrudan kendi odanın fotoğrafına uygula.',
+      'Get in Touch': 'Bize Ulaş',
+      "Questions, feedback or partnership ideas — we'd love to hear from you.": 'Sorular, geri bildirimler veya iş birliği fikirleri — senden haber almak isteriz.'
+    },
+    fr: {
+      'Back to Settings': 'Retour aux paramètres',
+      'About Lamsa': 'À propos de Lamsa',
+      'Made by SmartOrdi': 'Créé par SmartOrdi',
+      'Lamsa is an AI-powered interior design app. Upload a photo of any room and Lamsa redesigns it — same walls, doors and windows, new furniture, colors and decor — in seconds.':
+        "Lamsa est une application de design d'intérieur alimentée par l'IA. Téléchargez une photo de n'importe quelle pièce et Lamsa la redessine — mêmes murs, portes et fenêtres, avec de nouveaux meubles, couleurs et décorations — en quelques secondes.",
+      "It's built for anyone who wants to see what their space could look like before spending a single riyal — whether you're furnishing a new home, refreshing an old one, or just curious.":
+        'Conçue pour tous ceux qui veulent voir à quoi leur espace pourrait ressembler avant de dépenser le moindre centime — que vous meubliez un nouveau logement, rafraîchissiez un ancien, ou soyez simplement curieux.',
+      'What You Can Do': 'Ce que vous pouvez faire',
+      'AI Interior Design': "Design d'intérieur par IA",
+      'Upload a room photo, pick a style and budget, get a full redesign.': 'Téléchargez une photo de votre pièce, choisissez un style et un budget, et obtenez un nouveau design complet.',
+      'Quick Rearrange': 'Réarrangement rapide',
+      'Rearrange your existing furniture in the same room, no new pieces.': 'Réorganisez vos meubles existants dans la même pièce, sans nouvelles pièces.',
+      '3D Designer': 'Concepteur 3D',
+      'Build a room from scratch — walls, finishes and furniture — in a live 3D preview.': "Construisez une pièce de A à Z — murs, finitions et meubles — avec un aperçu 3D en direct.",
+      'Style Gallery': 'Galerie de styles',
+      'Browse ready-made styles and apply one directly to a photo of your own room.': "Parcourez des styles prêts à l'emploi et appliquez-en un directement sur une photo de votre propre pièce.",
+      'Get in Touch': 'Nous contacter',
+      "Questions, feedback or partnership ideas — we'd love to hear from you.": 'Questions, retours ou idées de partenariat — nous serions ravis de vous lire.'
+    },
+    it: {
+      'Back to Settings': 'Torna alle Impostazioni',
+      'About Lamsa': 'Informazioni su Lamsa',
+      'Made by SmartOrdi': 'Realizzato da SmartOrdi',
+      'Lamsa is an AI-powered interior design app. Upload a photo of any room and Lamsa redesigns it — same walls, doors and windows, new furniture, colors and decor — in seconds.':
+        "Lamsa è un'app di interior design basata sull'IA. Carica la foto di una stanza qualsiasi e Lamsa la ridisegna — stesse pareti, porte e finestre, con nuovi mobili, colori e decorazioni — in pochi secondi.",
+      "It's built for anyone who wants to see what their space could look like before spending a single riyal — whether you're furnishing a new home, refreshing an old one, or just curious.":
+        'È pensata per chiunque voglia vedere come potrebbe apparire il proprio spazio prima di spendere anche solo un centesimo — che tu stia arredando una casa nuova, rinnovandone una vecchia, o sia semplicemente curioso.',
+      'What You Can Do': 'Cosa puoi fare',
+      'AI Interior Design': 'Interior design con IA',
+      'Upload a room photo, pick a style and budget, get a full redesign.': 'Carica la foto della tua stanza, scegli uno stile e un budget, e ottieni un restyling completo.',
+      'Quick Rearrange': 'Riorganizzazione rapida',
+      'Rearrange your existing furniture in the same room, no new pieces.': 'Riorganizza i mobili che già hai nella stessa stanza, senza pezzi nuovi.',
+      '3D Designer': 'Designer 3D',
+      'Build a room from scratch — walls, finishes and furniture — in a live 3D preview.': "Costruisci una stanza da zero — pareti, finiture e mobili — con un'anteprima 3D dal vivo.",
+      'Style Gallery': 'Galleria di stili',
+      'Browse ready-made styles and apply one directly to a photo of your own room.': 'Sfoglia stili già pronti e applicane uno direttamente a una foto della tua stanza.',
+      'Get in Touch': 'Contattaci',
+      "Questions, feedback or partnership ideas — we'd love to hear from you.": 'Domande, feedback o idee di collaborazione — ci farebbe piacere sentirti.'
+    },
+    ru: {
+      'Back to Settings': 'Назад в настройки',
+      'About Lamsa': 'О Lamsa',
+      'Made by SmartOrdi': 'Разработано SmartOrdi',
+      'Lamsa is an AI-powered interior design app. Upload a photo of any room and Lamsa redesigns it — same walls, doors and windows, new furniture, colors and decor — in seconds.':
+        'Lamsa — приложение для дизайна интерьера на основе ИИ. Загрузите фото любой комнаты, и Lamsa переделает её — те же стены, двери и окна, но с новой мебелью, цветами и декором — за несколько секунд.',
+      "It's built for anyone who wants to see what their space could look like before spending a single riyal — whether you're furnishing a new home, refreshing an old one, or just curious.":
+        'Создано для всех, кто хочет увидеть, как может выглядеть их пространство, прежде чем потратить хоть одну копейку — обставляете ли вы новый дом, обновляете старый, или вам просто любопытно.',
+      'What You Can Do': 'Что вы можете сделать',
+      'AI Interior Design': 'Дизайн интерьера с ИИ',
+      'Upload a room photo, pick a style and budget, get a full redesign.': 'Загрузите фото комнаты, выберите стиль и бюджет, получите полный редизайн.',
+      'Quick Rearrange': 'Быстрая перестановка',
+      'Rearrange your existing furniture in the same room, no new pieces.': 'Переставьте вашу текущую мебель в той же комнате, без новых предметов.',
+      '3D Designer': '3D-дизайнер',
+      'Build a room from scratch — walls, finishes and furniture — in a live 3D preview.': 'Постройте комнату с нуля — стены, отделку и мебель — с живым 3D-просмотром.',
+      'Style Gallery': 'Галерея стилей',
+      'Browse ready-made styles and apply one directly to a photo of your own room.': 'Просматривайте готовые стили и применяйте любой прямо к фото своей комнаты.',
+      'Get in Touch': 'Связаться с нами',
+      "Questions, feedback or partnership ideas — we'd love to hear from you.": 'Вопросы, отзывы или идеи для сотрудничества — будем рады услышать вас.'
+    }
+  };
+  function setLang(lang) { Lang8.apply(lang, T); }
+  Lang8.buildSelect(document.getElementById('langSelect'), setLang);
   var savedLang = 'en';
   try { savedLang = localStorage.getItem('lamsa_lang') || 'en'; } catch (e) {}
   setLang(savedLang);

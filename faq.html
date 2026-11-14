@@ -11,6 +11,7 @@
 <link rel="manifest" href="manifest.json">
 <meta name="theme-color" content="#f6f7f8">
 <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;900&display=swap" rel="stylesheet">
+<script src="js/lang8.js"></script>
 <style>
   :root {
     color-scheme: light;
@@ -27,12 +28,12 @@
   .logo { display: flex; align-items: center; gap: 10px; text-decoration: none; color: var(--white); font-weight: 900; font-size: 18px; }
   .logo-icon { width: 32px; height: 32px; border: 1.5px solid var(--gold); border-radius: 8px; display: flex; align-items: center; justify-content: center; }
   .nav-right { display: flex; align-items: center; gap: 10px; }
-  .lang-toggle-btn, .back-btn {
+  .lang-select, .back-btn {
     background: transparent; border: 1px solid var(--border); color: var(--gray); text-decoration: none;
-    padding: 6px 12px; border-radius: 6px; font-size: 13px; font-weight: 700; font-family: 'Tajawal', sans-serif;
+    padding: 6px 10px; border-radius: 6px; font-size: 13px; font-weight: 700; font-family: 'Tajawal', sans-serif;
     cursor: pointer; white-space: nowrap;
   }
-  .lang-toggle-btn:hover, .back-btn:hover { border-color: var(--gold); color: var(--gold-deep); }
+  .back-btn:hover { border-color: var(--gold); color: var(--gold-deep); }
   .wrap { max-width: 680px; margin: 0 auto; padding: 40px 20px 80px; }
   h1 { font-size: 26px; font-weight: 900; margin-bottom: 6px; }
   .updated { color: var(--gray); font-size: 13px; margin-bottom: 32px; }
@@ -56,7 +57,7 @@
     <span>LAMSA</span>
   </a>
   <div class="nav-right">
-    <button type="button" class="lang-toggle-btn" id="langToggleBtn" onclick="toggleLang()">AR</button>
+    <select class="lang-select" id="langSelect" data-lang-select aria-label="Language"></select>
     <a class="back-btn" href="settings.html" data-en="Back to Settings" data-ar="رجوع للإعدادات">Back to Settings</a>
   </div>
 </nav>
@@ -93,8 +94,8 @@
     </details>
     <details>
       <summary data-en="Is my room photo stored or shared?" data-ar="صورة غرفتي بتتخزن أو تنشارك؟">Is my room photo stored or shared?</summary>
-      <p data-en="Your photo is sent to our AI provider only to generate your design, and the result is saved to your account so you can revisit it. We never sell your data. See our Privacy Policy for the full details."
-         data-ar="صورتك بتترسل لمزوّد الذكاء الاصطناعي فقط عشان يولّد تصميمك، والنتيجة بتتخزن بحسابك لترجع تشوفها. إحنا ما بنبيع بياناتك أبداً. شوف سياسة الخصوصية للتفاصيل الكاملة.">
+      <p data-en="Your photo is sent to our AI provider only to generate your design, and the result is saved to your account so you can revisit it. We never sell your data. See our <a href='privacy-policy.html'>Privacy Policy</a> for the full details."
+         data-ar="صورتك بتترسل لمزوّد الذكاء الاصطناعي فقط عشان يولّد تصميمك، والنتيجة بتتخزن بحسابك لترجع تشوفها. إحنا ما بنبيع بياناتك أبداً. شوف <a href='privacy-policy.html'>سياسة الخصوصية</a> للتفاصيل الكاملة.">
         Your photo is sent to our AI provider only to generate your design, and the result is saved to your account so you can revisit it. We never sell your data. See our <a href="privacy-policy.html">Privacy Policy</a> for the full details.
       </p>
     </details>
@@ -113,19 +114,154 @@
 </div>
 
 <script>
-  var currentLang = 'en';
-  function toggleLang() { setLang(currentLang === 'ar' ? 'en' : 'ar'); }
-  function setLang(lang) {
-    currentLang = lang;
-    try { localStorage.setItem('lamsa_lang', lang); } catch (e) {}
-    document.documentElement.setAttribute('lang', lang);
-    document.documentElement.setAttribute('dir', lang === 'ar' ? 'rtl' : 'ltr');
-    var btn = document.getElementById('langToggleBtn');
-    if (btn) btn.textContent = lang === 'ar' ? 'EN' : 'AR';
-    document.querySelectorAll('[data-en][data-ar]').forEach(function(el) {
-      el.innerHTML = lang === 'ar' ? el.getAttribute('data-ar') : el.getAttribute('data-en');
-    });
-  }
+  var T = {
+    de: {
+      'Back to Settings': 'Zurück zu Einstellungen',
+      'Can I cancel or change my subscription?': 'Kann ich mein Abo kündigen oder ändern?',
+      "Can't find your answer? Email hello@lamsa.app": 'Keine Antwort gefunden? Schreib uns an hello@lamsa.app',
+      'Every new account gets 1 free design to try. After that, a Weekly or Monthly plan gives you a refilling credit balance — each generation (AI Interior Design, Quick Rearrange, or a Style Gallery look) costs 1 credit.':
+        'Jedes neue Konto erhält 1 kostenloses Design zum Ausprobieren. Danach gibt dir ein wöchentliches oder monatliches Abo ein sich auffüllendes Guthaben — jede Generierung (KI-Innenarchitektur, Schnelles Umstellen oder ein Look aus der Stilgalerie) kostet 1 Guthabenpunkt.',
+      'Frequently Asked Questions': 'Häufig gestellte Fragen',
+      "Go to Settings → Delete Account. This permanently removes your account, login details and remaining credits — it can't be undone.":
+        'Gehe zu Einstellungen → Konto löschen. Dies entfernt dein Konto, deine Anmeldedaten und dein verbleibendes Guthaben dauerhaft — das kann nicht rückgängig gemacht werden.',
+      'How do I delete my account?': 'Wie lösche ich mein Konto?',
+      'How does Lamsa work?': 'Wie funktioniert Lamsa?',
+      'How many free credits do I get?': 'Wie viel kostenloses Guthaben bekomme ich?',
+      'Is my room photo stored or shared?': 'Wird mein Raumfoto gespeichert oder geteilt?',
+      'Lamsa’s interface is available in 8 languages, including Arabic and English.': 'Die Oberfläche von Lamsa ist in 8 Sprachen verfügbar, darunter Arabisch und Englisch.',
+      "Upload one or more photos of your room, choose a room type, style and budget, and Lamsa's AI generates a full redesign — keeping your room's actual layout (walls, doors, windows) and only changing furniture, colors and decor.":
+        'Lade ein oder mehrere Fotos deines Raums hoch, wähle einen Raumtyp, Stil und ein Budget, und Lamsas KI erstellt eine komplette Neugestaltung — wobei die tatsächliche Raumaufteilung (Wände, Türen, Fenster) erhalten bleibt und nur Möbel, Farben und Deko geändert werden.',
+      'Weekly gives 10 credits for €5.99, billed every week. Monthly gives 40 credits for €14.99, billed every month — better value if you design often. Both renew automatically until canceled.':
+        'Wöchentlich gibt dir 10 Guthabenpunkte für 5,99 €, wöchentlich abgerechnet. Monatlich gibt dir 40 Guthabenpunkte für 14,99 €, monatlich abgerechnet — besserer Wert, wenn du oft gestaltest. Beide verlängern sich automatisch, bis du kündigst.',
+      'What languages does Lamsa support?': 'Welche Sprachen unterstützt Lamsa?',
+      "What's the difference between the Weekly and Monthly plans?": 'Was ist der Unterschied zwischen dem wöchentlichen und dem monatlichen Plan?',
+      "Yes — email hello@lamsa.app with your account email and we'll take care of it.": 'Ja — schreib uns an hello@lamsa.app mit deiner Konto-E-Mail, und wir kümmern uns darum.',
+      "Your photo is sent to our AI provider only to generate your design, and the result is saved to your account so you can revisit it. We never sell your data. See our <a href='privacy-policy.html'>Privacy Policy</a> for the full details.":
+        "Dein Foto wird nur an unseren KI-Anbieter gesendet, um dein Design zu erstellen, und das Ergebnis wird in deinem Konto gespeichert, damit du es dir erneut ansehen kannst. Wir verkaufen deine Daten nie. Alle Details findest du in unserer <a href='privacy-policy.html'>Datenschutzerklärung</a>."
+    },
+    es: {
+      'Back to Settings': 'Volver a Ajustes',
+      'Can I cancel or change my subscription?': '¿Puedo cancelar o cambiar mi suscripción?',
+      "Can't find your answer? Email hello@lamsa.app": '¿No encuentras tu respuesta? Escríbenos a hello@lamsa.app',
+      'Every new account gets 1 free design to try. After that, a Weekly or Monthly plan gives you a refilling credit balance — each generation (AI Interior Design, Quick Rearrange, or a Style Gallery look) costs 1 credit.':
+        'Cada cuenta nueva recibe 1 diseño gratis para probar. Después, un plan Semanal o Mensual te da un saldo de créditos que se renueva — cada generación (Diseño de interiores con IA, Reorganización rápida, o un estilo de la Galería de estilos) cuesta 1 crédito.',
+      'Frequently Asked Questions': 'Preguntas frecuentes',
+      "Go to Settings → Delete Account. This permanently removes your account, login details and remaining credits — it can't be undone.":
+        'Ve a Ajustes → Eliminar cuenta. Esto elimina permanentemente tu cuenta, tus datos de acceso y el crédito restante — no se puede deshacer.',
+      'How do I delete my account?': '¿Cómo elimino mi cuenta?',
+      'How does Lamsa work?': '¿Cómo funciona Lamsa?',
+      'How many free credits do I get?': '¿Cuántos créditos gratis recibo?',
+      'Is my room photo stored or shared?': '¿Se guarda o se comparte la foto de mi habitación?',
+      'Lamsa’s interface is available in 8 languages, including Arabic and English.': 'La interfaz de Lamsa está disponible en 8 idiomas, incluidos árabe e inglés.',
+      "Upload one or more photos of your room, choose a room type, style and budget, and Lamsa's AI generates a full redesign — keeping your room's actual layout (walls, doors, windows) and only changing furniture, colors and decor.":
+        'Sube una o más fotos de tu habitación, elige un tipo de habitación, estilo y presupuesto, y la IA de Lamsa genera un rediseño completo — manteniendo la distribución real de tu habitación (paredes, puertas, ventanas) y cambiando solo los muebles, colores y decoración.',
+      'Weekly gives 10 credits for €5.99, billed every week. Monthly gives 40 credits for €14.99, billed every month — better value if you design often. Both renew automatically until canceled.':
+        'El plan Semanal te da 10 créditos por 5,99 €, facturado cada semana. El Mensual te da 40 créditos por 14,99 €, facturado cada mes — mejor valor si diseñas con frecuencia. Ambos se renuevan automáticamente hasta que los canceles.',
+      'What languages does Lamsa support?': '¿Qué idiomas admite Lamsa?',
+      "What's the difference between the Weekly and Monthly plans?": '¿Cuál es la diferencia entre el plan Semanal y el Mensual?',
+      "Yes — email hello@lamsa.app with your account email and we'll take care of it.": 'Sí — escríbenos a hello@lamsa.app con el correo de tu cuenta y nos encargaremos de ello.',
+      "Your photo is sent to our AI provider only to generate your design, and the result is saved to your account so you can revisit it. We never sell your data. See our <a href='privacy-policy.html'>Privacy Policy</a> for the full details.":
+        "Tu foto se envía a nuestro proveedor de IA solo para generar tu diseño, y el resultado se guarda en tu cuenta para que puedas volver a verlo. Nunca vendemos tus datos. Consulta nuestra <a href='privacy-policy.html'>Política de privacidad</a> para más detalles."
+    },
+    tr: {
+      'Back to Settings': 'Ayarlara Dön',
+      'Can I cancel or change my subscription?': 'Aboneliğimi iptal edebilir veya değiştirebilir miyim?',
+      "Can't find your answer? Email hello@lamsa.app": 'Cevabını bulamadın mı? hello@lamsa.app adresine yaz.',
+      'Every new account gets 1 free design to try. After that, a Weekly or Monthly plan gives you a refilling credit balance — each generation (AI Interior Design, Quick Rearrange, or a Style Gallery look) costs 1 credit.':
+        "Her yeni hesap denemek için 1 ücretsiz tasarım alır. Sonrasında, Haftalık veya Aylık plan sana yenilenen bir kredi bakiyesi verir — her üretim (Yapay Zeka ile İç Mekan Tasarımı, Hızlı Yeniden Düzenleme veya Stil Galerisi'nden bir görünüm) 1 kredi tutar.",
+      'Frequently Asked Questions': 'Sıkça Sorulan Sorular',
+      "Go to Settings → Delete Account. This permanently removes your account, login details and remaining credits — it can't be undone.":
+        "Ayarlar → Hesabı Sil'e git. Bu, hesabını, giriş bilgilerini ve kalan kredini kalıcı olarak kaldırır — geri alınamaz.",
+      'How do I delete my account?': 'Hesabımı nasıl silerim?',
+      'How does Lamsa work?': 'Lamsa nasıl çalışır?',
+      'How many free credits do I get?': 'Ne kadar ücretsiz kredi alırım?',
+      'Is my room photo stored or shared?': 'Oda fotoğrafım saklanıyor mu yoksa paylaşılıyor mu?',
+      'Lamsa’s interface is available in 8 languages, including Arabic and English.': "Lamsa'nın arayüzü Arapça ve İngilizce dahil 8 dilde mevcuttur.",
+      "Upload one or more photos of your room, choose a room type, style and budget, and Lamsa's AI generates a full redesign — keeping your room's actual layout (walls, doors, windows) and only changing furniture, colors and decor.":
+        "Odanın bir veya daha fazla fotoğrafını yükle, bir oda türü, stil ve bütçe seç; Lamsa'nın yapay zekası — odanın gerçek düzenini (duvarlar, kapılar, pencereler) koruyarak, yalnızca mobilya, renk ve dekoru değiştirerek — komple bir yeniden tasarım üretir.",
+      'Weekly gives 10 credits for €5.99, billed every week. Monthly gives 40 credits for €14.99, billed every month — better value if you design often. Both renew automatically until canceled.':
+        "Haftalık plan, haftada bir faturalandırılan 5,99 €'ya 10 kredi verir. Aylık plan, ayda bir faturalandırılan 14,99 €'ya 40 kredi verir — sık tasarım yapıyorsan daha avantajlıdır. İkisi de iptal edilene kadar otomatik olarak yenilenir.",
+      'What languages does Lamsa support?': 'Lamsa hangi dilleri destekliyor?',
+      "What's the difference between the Weekly and Monthly plans?": 'Haftalık ve Aylık planlar arasındaki fark nedir?',
+      "Yes — email hello@lamsa.app with your account email and we'll take care of it.": 'Evet — hesap e-postanla hello@lamsa.app adresine yaz, biz hallederiz.',
+      "Your photo is sent to our AI provider only to generate your design, and the result is saved to your account so you can revisit it. We never sell your data. See our <a href='privacy-policy.html'>Privacy Policy</a> for the full details.":
+        "Fotoğrafın yalnızca tasarımını oluşturmak için yapay zeka sağlayıcımıza gönderilir ve sonuç, tekrar görebilmen için hesabına kaydedilir. Verilerini asla satmayız. Tüm ayrıntılar için <a href='privacy-policy.html'>Gizlilik Politikamıza</a> bak."
+    },
+    fr: {
+      'Back to Settings': 'Retour aux paramètres',
+      'Can I cancel or change my subscription?': 'Puis-je annuler ou modifier mon abonnement ?',
+      "Can't find your answer? Email hello@lamsa.app": 'Vous ne trouvez pas votre réponse ? Écrivez-nous à hello@lamsa.app',
+      'Every new account gets 1 free design to try. After that, a Weekly or Monthly plan gives you a refilling credit balance — each generation (AI Interior Design, Quick Rearrange, or a Style Gallery look) costs 1 credit.':
+        "Chaque nouveau compte reçoit 1 design gratuit à essayer. Ensuite, un forfait Hebdomadaire ou Mensuel vous donne un solde de crédits renouvelable — chaque génération (Design d'intérieur par IA, Réarrangement rapide, ou un look de la Galerie de styles) coûte 1 crédit.",
+      'Frequently Asked Questions': 'Questions fréquentes',
+      "Go to Settings → Delete Account. This permanently removes your account, login details and remaining credits — it can't be undone.":
+        "Allez dans Paramètres → Supprimer le compte. Cela supprime définitivement votre compte, vos identifiants et vos crédits restants — c'est irréversible.",
+      'How do I delete my account?': 'Comment supprimer mon compte ?',
+      'How does Lamsa work?': 'Comment fonctionne Lamsa ?',
+      'How many free credits do I get?': 'Combien de crédits gratuits est-ce que je reçois ?',
+      'Is my room photo stored or shared?': 'Ma photo de pièce est-elle stockée ou partagée ?',
+      'Lamsa’s interface is available in 8 languages, including Arabic and English.': "L'interface de Lamsa est disponible en 8 langues, dont l'arabe et l'anglais.",
+      "Upload one or more photos of your room, choose a room type, style and budget, and Lamsa's AI generates a full redesign — keeping your room's actual layout (walls, doors, windows) and only changing furniture, colors and decor.":
+        "Téléchargez une ou plusieurs photos de votre pièce, choisissez un type de pièce, un style et un budget, et l'IA de Lamsa génère un nouveau design complet — en conservant l'agencement réel de votre pièce (murs, portes, fenêtres) et en ne changeant que les meubles, les couleurs et la décoration.",
+      'Weekly gives 10 credits for €5.99, billed every week. Monthly gives 40 credits for €14.99, billed every month — better value if you design often. Both renew automatically until canceled.':
+        'Le forfait Hebdomadaire donne 10 crédits pour 5,99 €, facturé chaque semaine. Le forfait Mensuel donne 40 crédits pour 14,99 €, facturé chaque mois — plus avantageux si vous concevez souvent. Les deux se renouvellent automatiquement jusqu’à annulation.',
+      'What languages does Lamsa support?': 'Quelles langues Lamsa prend-elle en charge ?',
+      "What's the difference between the Weekly and Monthly plans?": 'Quelle est la différence entre les forfaits Hebdomadaire et Mensuel ?',
+      "Yes — email hello@lamsa.app with your account email and we'll take care of it.": 'Oui — écrivez à hello@lamsa.app avec l’e-mail de votre compte, et nous nous en occuperons.',
+      "Your photo is sent to our AI provider only to generate your design, and the result is saved to your account so you can revisit it. We never sell your data. See our <a href='privacy-policy.html'>Privacy Policy</a> for the full details.":
+        "Votre photo est envoyée à notre fournisseur d'IA uniquement pour générer votre design, et le résultat est enregistré dans votre compte pour que vous puissiez le revoir. Nous ne vendons jamais vos données. Consultez notre <a href='privacy-policy.html'>Politique de confidentialité</a> pour tous les détails."
+    },
+    it: {
+      'Back to Settings': 'Torna alle Impostazioni',
+      'Can I cancel or change my subscription?': 'Posso annullare o modificare il mio abbonamento?',
+      "Can't find your answer? Email hello@lamsa.app": 'Non trovi la tua risposta? Scrivici a hello@lamsa.app',
+      'Every new account gets 1 free design to try. After that, a Weekly or Monthly plan gives you a refilling credit balance — each generation (AI Interior Design, Quick Rearrange, or a Style Gallery look) costs 1 credit.':
+        'Ogni nuovo account riceve 1 design gratuito da provare. Dopo, un piano Settimanale o Mensile ti dà un saldo di crediti che si rinnova — ogni generazione (Interior design con IA, Riorganizzazione rapida, o uno stile dalla Galleria di stili) costa 1 credito.',
+      'Frequently Asked Questions': 'Domande frequenti',
+      "Go to Settings → Delete Account. This permanently removes your account, login details and remaining credits — it can't be undone.":
+        'Vai su Impostazioni → Elimina account. Questo rimuove definitivamente il tuo account, i dati di accesso e i crediti residui — non può essere annullato.',
+      'How do I delete my account?': 'Come elimino il mio account?',
+      'How does Lamsa work?': 'Come funziona Lamsa?',
+      'How many free credits do I get?': 'Quanti crediti gratuiti ricevo?',
+      'Is my room photo stored or shared?': 'La foto della mia stanza viene conservata o condivisa?',
+      'Lamsa’s interface is available in 8 languages, including Arabic and English.': "L'interfaccia di Lamsa è disponibile in 8 lingue, incluse arabo e inglese.",
+      "Upload one or more photos of your room, choose a room type, style and budget, and Lamsa's AI generates a full redesign — keeping your room's actual layout (walls, doors, windows) and only changing furniture, colors and decor.":
+        "Carica una o più foto della tua stanza, scegli un tipo di stanza, uno stile e un budget, e l'IA di Lamsa genera un restyling completo — mantenendo la disposizione reale della stanza (pareti, porte, finestre) e cambiando solo mobili, colori e decorazioni.",
+      'Weekly gives 10 credits for €5.99, billed every week. Monthly gives 40 credits for €14.99, billed every month — better value if you design often. Both renew automatically until canceled.':
+        'Il piano Settimanale dà 10 crediti a 5,99 €, fatturato ogni settimana. Il Mensile dà 40 crediti a 14,99 €, fatturato ogni mese — più conveniente se progetti spesso. Entrambi si rinnovano automaticamente finché non li annulli.',
+      'What languages does Lamsa support?': 'Quali lingue supporta Lamsa?',
+      "What's the difference between the Weekly and Monthly plans?": 'Qual è la differenza tra il piano Settimanale e quello Mensile?',
+      "Yes — email hello@lamsa.app with your account email and we'll take care of it.": "Sì — scrivi a hello@lamsa.app con l'email del tuo account e ce ne occuperemo noi.",
+      "Your photo is sent to our AI provider only to generate your design, and the result is saved to your account so you can revisit it. We never sell your data. See our <a href='privacy-policy.html'>Privacy Policy</a> for the full details.":
+        "La tua foto viene inviata al nostro fornitore di IA solo per generare il tuo design, e il risultato viene salvato nel tuo account così puoi rivederlo. Non vendiamo mai i tuoi dati. Consulta la nostra <a href='privacy-policy.html'>Informativa sulla privacy</a> per tutti i dettagli."
+    },
+    ru: {
+      'Back to Settings': 'Назад в настройки',
+      'Can I cancel or change my subscription?': 'Могу ли я отменить или изменить подписку?',
+      "Can't find your answer? Email hello@lamsa.app": 'Не нашли ответ? Напишите нам на hello@lamsa.app',
+      'Every new account gets 1 free design to try. After that, a Weekly or Monthly plan gives you a refilling credit balance — each generation (AI Interior Design, Quick Rearrange, or a Style Gallery look) costs 1 credit.':
+        'Каждый новый аккаунт получает 1 бесплатный дизайн для пробы. После этого недельный или месячный план даёт пополняемый баланс кредитов — каждая генерация (Дизайн интерьера с ИИ, Быстрая перестановка или образ из Галереи стилей) стоит 1 кредит.',
+      'Frequently Asked Questions': 'Часто задаваемые вопросы',
+      "Go to Settings → Delete Account. This permanently removes your account, login details and remaining credits — it can't be undone.":
+        'Перейдите в Настройки → Удалить аккаунт. Это навсегда удалит ваш аккаунт, данные для входа и оставшиеся кредиты — отменить это нельзя.',
+      'How do I delete my account?': 'Как удалить мой аккаунт?',
+      'How does Lamsa work?': 'Как работает Lamsa?',
+      'How many free credits do I get?': 'Сколько бесплатных кредитов я получаю?',
+      'Is my room photo stored or shared?': 'Сохраняется ли или передаётся ли фото моей комнаты?',
+      'Lamsa’s interface is available in 8 languages, including Arabic and English.': 'Интерфейс Lamsa доступен на 8 языках, включая арабский и английский.',
+      "Upload one or more photos of your room, choose a room type, style and budget, and Lamsa's AI generates a full redesign — keeping your room's actual layout (walls, doors, windows) and only changing furniture, colors and decor.":
+        'Загрузите одно или несколько фото своей комнаты, выберите тип комнаты, стиль и бюджет, и ИИ Lamsa создаст полный редизайн — сохраняя реальную планировку комнаты (стены, двери, окна) и меняя только мебель, цвета и декор.',
+      'Weekly gives 10 credits for €5.99, billed every week. Monthly gives 40 credits for €14.99, billed every month — better value if you design often. Both renew automatically until canceled.':
+        'Недельный план даёт 10 кредитов за 5,99 €, оплата еженедельно. Месячный даёт 40 кредитов за 14,99 €, оплата ежемесячно — выгоднее, если вы часто создаёте дизайны. Оба плана продлеваются автоматически до отмены.',
+      'What languages does Lamsa support?': 'Какие языки поддерживает Lamsa?',
+      "What's the difference between the Weekly and Monthly plans?": 'В чём разница между недельным и месячным планами?',
+      "Yes — email hello@lamsa.app with your account email and we'll take care of it.": 'Да — напишите на hello@lamsa.app, указав email своего аккаунта, и мы всё уладим.',
+      "Your photo is sent to our AI provider only to generate your design, and the result is saved to your account so you can revisit it. We never sell your data. See our <a href='privacy-policy.html'>Privacy Policy</a> for the full details.":
+        "Ваше фото отправляется нашему поставщику ИИ только для создания дизайна, а результат сохраняется в вашем аккаунте, чтобы вы могли вернуться к нему. Мы никогда не продаём ваши данные. Подробности смотрите в нашей <a href='privacy-policy.html'>Политике конфиденциальности</a>."
+    }
+  };
+  function setLang(lang) { Lang8.apply(lang, T); }
+  Lang8.buildSelect(document.getElementById('langSelect'), setLang);
   var savedLang = 'en';
   try { savedLang = localStorage.getItem('lamsa_lang') || 'en'; } catch (e) {}
   setLang(savedLang);

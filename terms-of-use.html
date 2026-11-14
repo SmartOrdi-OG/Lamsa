@@ -11,6 +11,7 @@
 <link rel="manifest" href="manifest.json">
 <meta name="theme-color" content="#f6f7f8">
 <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;900&display=swap" rel="stylesheet">
+<script src="js/lang8.js"></script>
 <style>
   :root {
     color-scheme: light;
@@ -27,12 +28,12 @@
   .logo { display: flex; align-items: center; gap: 10px; text-decoration: none; color: var(--white); font-weight: 900; font-size: 18px; }
   .logo-icon { width: 32px; height: 32px; border: 1.5px solid var(--gold); border-radius: 8px; display: flex; align-items: center; justify-content: center; }
   .nav-right { display: flex; align-items: center; gap: 10px; }
-  .lang-toggle-btn, .back-btn {
+  .lang-select, .back-btn {
     background: transparent; border: 1px solid var(--border); color: var(--gray); text-decoration: none;
-    padding: 6px 12px; border-radius: 6px; font-size: 13px; font-weight: 700; font-family: 'Tajawal', sans-serif;
+    padding: 6px 10px; border-radius: 6px; font-size: 13px; font-weight: 700; font-family: 'Tajawal', sans-serif;
     cursor: pointer; white-space: nowrap;
   }
-  .lang-toggle-btn:hover, .back-btn:hover { border-color: var(--gold); color: var(--gold-deep); }
+  .back-btn:hover { border-color: var(--gold); color: var(--gold-deep); }
   .wrap { max-width: 680px; margin: 0 auto; padding: 40px 20px 80px; }
   h1 { font-size: 26px; font-weight: 900; margin-bottom: 6px; }
   .updated { color: var(--gray); font-size: 13px; margin-bottom: 32px; }
@@ -51,7 +52,7 @@
     <span>LAMSA</span>
   </a>
   <div class="nav-right">
-    <button type="button" class="lang-toggle-btn" id="langToggleBtn" onclick="toggleLang()">AR</button>
+    <select class="lang-select" id="langSelect" data-lang-select aria-label="Language"></select>
     <a class="back-btn" href="settings.html" data-en="Back to Settings" data-ar="رجوع للإعدادات">Back to Settings</a>
   </div>
 </nav>
@@ -120,19 +121,220 @@
 </div>
 
 <script>
-  var currentLang = 'en';
-  function toggleLang() { setLang(currentLang === 'ar' ? 'en' : 'ar'); }
-  function setLang(lang) {
-    currentLang = lang;
-    try { localStorage.setItem('lamsa_lang', lang); } catch (e) {}
-    document.documentElement.setAttribute('lang', lang);
-    document.documentElement.setAttribute('dir', lang === 'ar' ? 'rtl' : 'ltr');
-    var btn = document.getElementById('langToggleBtn');
-    if (btn) btn.textContent = lang === 'ar' ? 'EN' : 'AR';
-    document.querySelectorAll('[data-en][data-ar]').forEach(function(el) {
-      el.innerHTML = lang === 'ar' ? el.getAttribute('data-ar') : el.getAttribute('data-en');
-    });
-  }
+  var T = {
+    de: {
+      'Back to Settings': 'Zurück zu Einstellungen',
+      'Terms of Use': 'Nutzungsbedingungen',
+      'Last updated: November 2026': 'Zuletzt aktualisiert: November 2026',
+      '1. Acceptance of These Terms': '1. Annahme dieser Bedingungen',
+      "By creating an account or using Lamsa (on the web or as an installed app), you agree to these terms. If you don't agree, please don't use Lamsa.":
+        'Mit der Erstellung eines Kontos oder der Nutzung von Lamsa (im Web oder als installierte App) stimmst du diesen Bedingungen zu. Wenn du nicht einverstanden bist, nutze Lamsa bitte nicht.',
+      '2. What Lamsa Is': '2. Was Lamsa ist',
+      'Lamsa is an AI-powered interior design tool made by SmartOrdi. It generates design suggestions (images) from photos and preferences you provide. It is a design aid, not an architectural, structural or safety service.':
+        'Lamsa ist ein KI-gestütztes Inneneinrichtungs-Tool von SmartOrdi. Es erstellt Gestaltungsvorschläge (Bilder) aus Fotos und Angaben, die du bereitstellst. Es ist ein Gestaltungshilfsmittel, kein architektonischer, statischer oder sicherheitsbezogener Dienst.',
+      '3. Your Account': '3. Dein Konto',
+      'You must provide a valid email and keep your password secure.': 'Du musst eine gültige E-Mail-Adresse angeben und dein Passwort sicher aufbewahren.',
+      "You're responsible for activity that happens under your account.": 'Du bist für Aktivitäten verantwortlich, die unter deinem Konto stattfinden.',
+      "You must be old enough, under your country's laws, to agree to these terms on your own.": 'Du musst nach den Gesetzen deines Landes alt genug sein, um diesen Bedingungen selbst zuzustimmen.',
+      '4. Photos You Upload': '4. Von dir hochgeladene Fotos',
+      'You confirm any photo you upload is of your own space, or one you have permission to use.': 'Du bestätigst, dass jedes von dir hochgeladene Foto deinen eigenen Raum zeigt oder einen, für den du die Erlaubnis zur Nutzung hast.',
+      "Don't upload photos that include other people, or content that's illegal, offensive or infringes someone else's rights.": 'Lade keine Fotos hoch, auf denen andere Personen zu sehen sind, oder die illegale, anstößige Inhalte enthalten oder die Rechte anderer verletzen.',
+      'Your photo is used only to generate your design and is not shared with other users.': 'Dein Foto wird nur zur Erstellung deines Designs verwendet und nicht mit anderen Nutzern geteilt.',
+      '5. Credits, Subscriptions & Billing': '5. Guthaben, Abonnements & Abrechnung',
+      'New accounts get 1 free credit. Weekly and Monthly subscription plans grant a recurring credit balance, billed through Stripe.': 'Neue Konten erhalten 1 kostenloses Guthaben. Wöchentliche und monatliche Abo-Pläne gewähren ein wiederkehrendes Guthaben, abgerechnet über Stripe.',
+      'Subscriptions renew automatically at the end of each billing period until canceled.': 'Abonnements verlängern sich am Ende jedes Abrechnungszeitraums automatisch, bis sie gekündigt werden.',
+      'To cancel or change your plan, email hello@lamsa.app with your account email.': 'Um deinen Plan zu kündigen oder zu ändern, schreibe an hello@lamsa.app mit deiner Konto-E-Mail.',
+      'Credits are tied to your account, have no cash value, and are not refundable except where required by law.': 'Guthaben ist an dein Konto gebunden, hat keinen Bargeldwert und ist nicht erstattungsfähig, außer wenn gesetzlich vorgeschrieben.',
+      '6. No Guarantee of Results': '6. Keine Garantie für Ergebnisse',
+      'Designs are AI-generated suggestions. Lamsa doesn’t guarantee that a generated design is achievable, structurally sound, or will match any real-world purchase. Decisions you make based on a design (buying furniture, hiring a contractor, etc.) are your own responsibility.':
+        'Designs sind KI-generierte Vorschläge. Lamsa garantiert nicht, dass ein erstelltes Design umsetzbar oder statisch einwandfrei ist oder einem realen Kauf entspricht. Entscheidungen, die du aufgrund eines Designs triffst (Möbelkauf, Beauftragung eines Handwerkers usw.), liegen in deiner eigenen Verantwortung.',
+      '7. Acceptable Use': '7. Zulässige Nutzung',
+      "Don't try to break, overload, scrape or reverse-engineer Lamsa, resell access to it, or use it for anything illegal.": 'Versuche nicht, Lamsa zu beschädigen, zu überlasten, Daten auszulesen oder zurückzuentwickeln, den Zugang weiterzuverkaufen oder es für etwas Illegales zu nutzen.',
+      '8. Ending Your Account': '8. Beendigung deines Kontos',
+      'You can delete your account anytime from Settings → Delete Account. We may suspend or end an account that violates these terms.': 'Du kannst dein Konto jederzeit über Einstellungen → Konto löschen entfernen. Wir können ein Konto sperren oder beenden, das gegen diese Bedingungen verstößt.',
+      '9. Changes to These Terms': '9. Änderungen dieser Bedingungen',
+      "If we make meaningful changes, we'll update the date at the top of this page.": 'Wenn wir bedeutende Änderungen vornehmen, aktualisieren wir das Datum oben auf dieser Seite.',
+      '10. Contact Us': '10. Kontakt',
+      'Questions about these terms? Email us at': 'Fragen zu diesen Bedingungen? Schreib uns an'
+    },
+    es: {
+      'Back to Settings': 'Volver a Ajustes',
+      'Terms of Use': 'Términos de uso',
+      'Last updated: November 2026': 'Última actualización: noviembre de 2026',
+      '1. Acceptance of These Terms': '1. Aceptación de estos términos',
+      "By creating an account or using Lamsa (on the web or as an installed app), you agree to these terms. If you don't agree, please don't use Lamsa.":
+        'Al crear una cuenta o usar Lamsa (en la web o como app instalada), aceptas estos términos. Si no estás de acuerdo, no uses Lamsa.',
+      '2. What Lamsa Is': '2. Qué es Lamsa',
+      'Lamsa is an AI-powered interior design tool made by SmartOrdi. It generates design suggestions (images) from photos and preferences you provide. It is a design aid, not an architectural, structural or safety service.':
+        'Lamsa es una herramienta de diseño de interiores con IA creada por SmartOrdi. Genera sugerencias de diseño (imágenes) a partir de las fotos y preferencias que proporcionas. Es una ayuda de diseño, no un servicio arquitectónico, estructural o de seguridad.',
+      '3. Your Account': '3. Tu cuenta',
+      'You must provide a valid email and keep your password secure.': 'Debes proporcionar un correo válido y mantener tu contraseña segura.',
+      "You're responsible for activity that happens under your account.": 'Eres responsable de la actividad que ocurra en tu cuenta.',
+      "You must be old enough, under your country's laws, to agree to these terms on your own.": 'Debes tener la edad suficiente, según las leyes de tu país, para aceptar estos términos por tu cuenta.',
+      '4. Photos You Upload': '4. Fotos que subes',
+      'You confirm any photo you upload is of your own space, or one you have permission to use.': 'Confirmas que cualquier foto que subas es de tu propio espacio, o de uno para el que tienes permiso de uso.',
+      "Don't upload photos that include other people, or content that's illegal, offensive or infringes someone else's rights.": 'No subas fotos que incluyan a otras personas, o contenido ilegal, ofensivo o que infrinja los derechos de otra persona.',
+      'Your photo is used only to generate your design and is not shared with other users.': 'Tu foto se usa solo para generar tu diseño y no se comparte con otros usuarios.',
+      '5. Credits, Subscriptions & Billing': '5. Créditos, suscripciones y facturación',
+      'New accounts get 1 free credit. Weekly and Monthly subscription plans grant a recurring credit balance, billed through Stripe.': 'Las cuentas nuevas reciben 1 crédito gratis. Los planes de suscripción Semanal y Mensual otorgan un saldo de créditos recurrente, facturado a través de Stripe.',
+      'Subscriptions renew automatically at the end of each billing period until canceled.': 'Las suscripciones se renuevan automáticamente al final de cada período de facturación hasta que se cancelen.',
+      'To cancel or change your plan, email hello@lamsa.app with your account email.': 'Para cancelar o cambiar tu plan, escribe a hello@lamsa.app con el correo de tu cuenta.',
+      'Credits are tied to your account, have no cash value, and are not refundable except where required by law.': 'Los créditos están vinculados a tu cuenta, no tienen valor en efectivo y no son reembolsables salvo que la ley lo exija.',
+      '6. No Guarantee of Results': '6. Sin garantía de resultados',
+      'Designs are AI-generated suggestions. Lamsa doesn’t guarantee that a generated design is achievable, structurally sound, or will match any real-world purchase. Decisions you make based on a design (buying furniture, hiring a contractor, etc.) are your own responsibility.':
+        'Los diseños son sugerencias generadas por IA. Lamsa no garantiza que un diseño generado sea viable, estructuralmente sólido o que coincida con alguna compra real. Las decisiones que tomes basándote en un diseño (comprar muebles, contratar a un contratista, etc.) son tu propia responsabilidad.',
+      '7. Acceptable Use': '7. Uso aceptable',
+      "Don't try to break, overload, scrape or reverse-engineer Lamsa, resell access to it, or use it for anything illegal.": 'No intentes dañar, sobrecargar, extraer datos de, ni realizar ingeniería inversa de Lamsa, revender el acceso a él, ni usarlo para algo ilegal.',
+      '8. Ending Your Account': '8. Finalización de tu cuenta',
+      'You can delete your account anytime from Settings → Delete Account. We may suspend or end an account that violates these terms.': 'Puedes eliminar tu cuenta en cualquier momento desde Ajustes → Eliminar cuenta. Podemos suspender o finalizar una cuenta que infrinja estos términos.',
+      '9. Changes to These Terms': '9. Cambios a estos términos',
+      "If we make meaningful changes, we'll update the date at the top of this page.": 'Si hacemos cambios significativos, actualizaremos la fecha en la parte superior de esta página.',
+      '10. Contact Us': '10. Contáctanos',
+      'Questions about these terms? Email us at': '¿Preguntas sobre estos términos? Escríbenos a'
+    },
+    tr: {
+      'Back to Settings': 'Ayarlara Dön',
+      'Terms of Use': 'Kullanım Şartları',
+      'Last updated: November 2026': 'Son güncelleme: Kasım 2026',
+      '1. Acceptance of These Terms': '1. Bu Şartların Kabulü',
+      "By creating an account or using Lamsa (on the web or as an installed app), you agree to these terms. If you don't agree, please don't use Lamsa.":
+        "Bir hesap oluşturarak veya Lamsa'yı (web üzerinden veya kurulu bir uygulama olarak) kullanarak bu şartları kabul etmiş olursun. Kabul etmiyorsan lütfen Lamsa'yı kullanma.",
+      '2. What Lamsa Is': '2. Lamsa Nedir',
+      'Lamsa is an AI-powered interior design tool made by SmartOrdi. It generates design suggestions (images) from photos and preferences you provide. It is a design aid, not an architectural, structural or safety service.':
+        'Lamsa, SmartOrdi tarafından geliştirilen yapay zeka destekli bir iç mekan tasarım aracıdır. Sağladığın fotoğraf ve tercihlerden tasarım önerileri (görseller) üretir. Bu bir tasarım yardımcısıdır, mimari, yapısal veya güvenlik hizmeti değildir.',
+      '3. Your Account': '3. Hesabın',
+      'You must provide a valid email and keep your password secure.': 'Geçerli bir e-posta sağlamalı ve şifreni güvende tutmalısın.',
+      "You're responsible for activity that happens under your account.": 'Hesabın altında gerçekleşen etkinliklerden sen sorumlusun.',
+      "You must be old enough, under your country's laws, to agree to these terms on your own.": 'Ülkenin yasalarına göre bu şartları kendi başına kabul edecek yaşta olmalısın.',
+      '4. Photos You Upload': '4. Yüklediğin Fotoğraflar',
+      'You confirm any photo you upload is of your own space, or one you have permission to use.': 'Yüklediğin herhangi bir fotoğrafın kendi mekanına ait olduğunu veya kullanma izninin olduğu bir mekana ait olduğunu onaylarsın.',
+      "Don't upload photos that include other people, or content that's illegal, offensive or infringes someone else's rights.": 'Başka kişileri içeren, yasa dışı, saldırgan veya başkasının haklarını ihlal eden içerik barındıran fotoğraflar yükleme.',
+      'Your photo is used only to generate your design and is not shared with other users.': 'Fotoğrafın yalnızca tasarımını oluşturmak için kullanılır ve diğer kullanıcılarla paylaşılmaz.',
+      '5. Credits, Subscriptions & Billing': '5. Kredi, Abonelik ve Faturalandırma',
+      'New accounts get 1 free credit. Weekly and Monthly subscription plans grant a recurring credit balance, billed through Stripe.': 'Yeni hesaplar 1 ücretsiz kredi alır. Haftalık ve Aylık abonelik planları, Stripe üzerinden faturalandırılan yenilenen bir kredi bakiyesi sağlar.',
+      'Subscriptions renew automatically at the end of each billing period until canceled.': 'Abonelikler, iptal edilene kadar her faturalandırma döneminin sonunda otomatik olarak yenilenir.',
+      'To cancel or change your plan, email hello@lamsa.app with your account email.': 'Planını iptal etmek veya değiştirmek için hesap e-postanla hello@lamsa.app adresine yaz.',
+      'Credits are tied to your account, have no cash value, and are not refundable except where required by law.': 'Krediler hesabına bağlıdır, nakit değeri yoktur ve yasaların gerektirdiği durumlar dışında iade edilmez.',
+      '6. No Guarantee of Results': '6. Sonuç Garantisi Yoktur',
+      'Designs are AI-generated suggestions. Lamsa doesn’t guarantee that a generated design is achievable, structurally sound, or will match any real-world purchase. Decisions you make based on a design (buying furniture, hiring a contractor, etc.) are your own responsibility.':
+        "Tasarımlar yapay zeka tarafından üretilen önerilerdir. Lamsa, üretilen bir tasarımın uygulanabilir veya yapısal olarak sağlam olduğunu ya da gerçek dünyadaki herhangi bir satın alımla eşleşeceğini garanti etmez. Bir tasarıma dayanarak verdiğin kararlar (mobilya satın almak, müteahhit tutmak vb.) kendi sorumluluğundadır.",
+      '7. Acceptable Use': '7. Kabul Edilebilir Kullanım',
+      "Don't try to break, overload, scrape or reverse-engineer Lamsa, resell access to it, or use it for anything illegal.": "Lamsa'yı bozmaya, aşırı yüklemeye, veri kazımaya veya tersine mühendisliğe çalışma, erişimini yeniden satma veya yasa dışı herhangi bir şey için kullanma.",
+      '8. Ending Your Account': '8. Hesabını Sonlandırma',
+      'You can delete your account anytime from Settings → Delete Account. We may suspend or end an account that violates these terms.': "Hesabını istediğin zaman Ayarlar → Hesabı Sil'den silebilirsin. Bu şartları ihlal eden bir hesabı askıya alabilir veya sonlandırabiliriz.",
+      '9. Changes to These Terms': '9. Bu Şartlardaki Değişiklikler',
+      "If we make meaningful changes, we'll update the date at the top of this page.": 'Önemli değişiklikler yaparsak, bu sayfanın üstündeki tarihi güncelleriz.',
+      '10. Contact Us': '10. Bize Ulaşın',
+      'Questions about these terms? Email us at': 'Bu şartlar hakkında sorun mu var? Bize şu adresten yaz:'
+    },
+    fr: {
+      'Back to Settings': 'Retour aux paramètres',
+      'Terms of Use': "Conditions d'utilisation",
+      'Last updated: November 2026': 'Dernière mise à jour : novembre 2026',
+      '1. Acceptance of These Terms': '1. Acceptation de ces conditions',
+      "By creating an account or using Lamsa (on the web or as an installed app), you agree to these terms. If you don't agree, please don't use Lamsa.":
+        "En créant un compte ou en utilisant Lamsa (sur le web ou en tant qu'application installée), vous acceptez ces conditions. Si vous n'êtes pas d'accord, veuillez ne pas utiliser Lamsa.",
+      '2. What Lamsa Is': "2. Ce qu'est Lamsa",
+      'Lamsa is an AI-powered interior design tool made by SmartOrdi. It generates design suggestions (images) from photos and preferences you provide. It is a design aid, not an architectural, structural or safety service.':
+        "Lamsa est un outil de design d'intérieur alimenté par l'IA, créé par SmartOrdi. Il génère des suggestions de design (images) à partir des photos et préférences que vous fournissez. C'est une aide à la conception, pas un service architectural, structurel ou de sécurité.",
+      '3. Your Account': '3. Votre compte',
+      'You must provide a valid email and keep your password secure.': 'Vous devez fournir une adresse e-mail valide et garder votre mot de passe en sécurité.',
+      "You're responsible for activity that happens under your account.": "Vous êtes responsable de l'activité qui se produit sous votre compte.",
+      "You must be old enough, under your country's laws, to agree to these terms on your own.": "Vous devez avoir l'âge requis, selon les lois de votre pays, pour accepter ces conditions par vous-même.",
+      '4. Photos You Upload': '4. Photos que vous téléchargez',
+      'You confirm any photo you upload is of your own space, or one you have permission to use.': "Vous confirmez que toute photo que vous téléchargez représente votre propre espace, ou un espace que vous avez l'autorisation d'utiliser.",
+      "Don't upload photos that include other people, or content that's illegal, offensive or infringes someone else's rights.": "Ne téléchargez pas de photos incluant d'autres personnes, ou un contenu illégal, offensant ou portant atteinte aux droits d'autrui.",
+      'Your photo is used only to generate your design and is not shared with other users.': "Votre photo n'est utilisée que pour générer votre design et n'est pas partagée avec d'autres utilisateurs.",
+      '5. Credits, Subscriptions & Billing': '5. Crédits, abonnements et facturation',
+      'New accounts get 1 free credit. Weekly and Monthly subscription plans grant a recurring credit balance, billed through Stripe.': "Les nouveaux comptes reçoivent 1 crédit gratuit. Les forfaits d'abonnement Hebdomadaire et Mensuel offrent un solde de crédits récurrent, facturé via Stripe.",
+      'Subscriptions renew automatically at the end of each billing period until canceled.': "Les abonnements se renouvellent automatiquement à la fin de chaque période de facturation jusqu'à leur annulation.",
+      'To cancel or change your plan, email hello@lamsa.app with your account email.': "Pour annuler ou modifier votre forfait, écrivez à hello@lamsa.app avec l'e-mail de votre compte.",
+      'Credits are tied to your account, have no cash value, and are not refundable except where required by law.': "Les crédits sont liés à votre compte, n'ont aucune valeur monétaire et ne sont pas remboursables sauf si la loi l'exige.",
+      '6. No Guarantee of Results': '6. Aucune garantie de résultats',
+      'Designs are AI-generated suggestions. Lamsa doesn’t guarantee that a generated design is achievable, structurally sound, or will match any real-world purchase. Decisions you make based on a design (buying furniture, hiring a contractor, etc.) are your own responsibility.':
+        "Les designs sont des suggestions générées par IA. Lamsa ne garantit pas qu'un design généré soit réalisable, structurellement solide, ou corresponde à un achat réel. Les décisions que vous prenez sur la base d'un design (achat de meubles, embauche d'un entrepreneur, etc.) relèvent de votre propre responsabilité.",
+      '7. Acceptable Use': '7. Utilisation acceptable',
+      "Don't try to break, overload, scrape or reverse-engineer Lamsa, resell access to it, or use it for anything illegal.": "N'essayez pas de casser, surcharger, extraire des données de, ou désassembler Lamsa, de revendre l'accès à celui-ci, ou de l'utiliser à des fins illégales.",
+      '8. Ending Your Account': '8. Fin de votre compte',
+      'You can delete your account anytime from Settings → Delete Account. We may suspend or end an account that violates these terms.': 'Vous pouvez supprimer votre compte à tout moment depuis Paramètres → Supprimer le compte. Nous pouvons suspendre ou résilier un compte qui enfreint ces conditions.',
+      '9. Changes to These Terms': '9. Modifications de ces conditions',
+      "If we make meaningful changes, we'll update the date at the top of this page.": 'Si nous apportons des changements significatifs, nous mettrons à jour la date en haut de cette page.',
+      '10. Contact Us': '10. Nous contacter',
+      'Questions about these terms? Email us at': 'Des questions sur ces conditions ? Écrivez-nous à'
+    },
+    it: {
+      'Back to Settings': 'Torna alle Impostazioni',
+      'Terms of Use': 'Termini di utilizzo',
+      'Last updated: November 2026': 'Ultimo aggiornamento: novembre 2026',
+      '1. Acceptance of These Terms': '1. Accettazione di questi termini',
+      "By creating an account or using Lamsa (on the web or as an installed app), you agree to these terms. If you don't agree, please don't use Lamsa.":
+        "Creando un account o utilizzando Lamsa (sul web o come app installata), accetti questi termini. Se non sei d'accordo, ti preghiamo di non utilizzare Lamsa.",
+      '2. What Lamsa Is': "2. Cos'è Lamsa",
+      'Lamsa is an AI-powered interior design tool made by SmartOrdi. It generates design suggestions (images) from photos and preferences you provide. It is a design aid, not an architectural, structural or safety service.':
+        "Lamsa è uno strumento di interior design basato sull'IA, realizzato da SmartOrdi. Genera suggerimenti di design (immagini) a partire dalle foto e preferenze che fornisci. È un supporto progettuale, non un servizio architettonico, strutturale o di sicurezza.",
+      '3. Your Account': '3. Il tuo account',
+      'You must provide a valid email and keep your password secure.': "Devi fornire un'email valida e mantenere la tua password al sicuro.",
+      "You're responsible for activity that happens under your account.": 'Sei responsabile dell’attività che avviene sotto il tuo account.',
+      "You must be old enough, under your country's laws, to agree to these terms on your own.": "Devi avere l'età sufficiente, secondo le leggi del tuo paese, per accettare questi termini da solo.",
+      '4. Photos You Upload': '4. Foto che carichi',
+      'You confirm any photo you upload is of your own space, or one you have permission to use.': "Confermi che qualsiasi foto che carichi ritragga il tuo spazio, o uno spazio per cui hai l'autorizzazione all'uso.",
+      "Don't upload photos that include other people, or content that's illegal, offensive or infringes someone else's rights.": "Non caricare foto che includano altre persone, o contenuti illegali, offensivi o che violino i diritti di qualcun altro.",
+      'Your photo is used only to generate your design and is not shared with other users.': 'La tua foto viene usata solo per generare il tuo design e non viene condivisa con altri utenti.',
+      '5. Credits, Subscriptions & Billing': '5. Crediti, abbonamenti e fatturazione',
+      'New accounts get 1 free credit. Weekly and Monthly subscription plans grant a recurring credit balance, billed through Stripe.': 'I nuovi account ricevono 1 credito gratuito. I piani di abbonamento Settimanale e Mensile offrono un saldo di crediti ricorrente, fatturato tramite Stripe.',
+      'Subscriptions renew automatically at the end of each billing period until canceled.': 'Gli abbonamenti si rinnovano automaticamente alla fine di ogni periodo di fatturazione finché non vengono annullati.',
+      'To cancel or change your plan, email hello@lamsa.app with your account email.': "Per annullare o modificare il tuo piano, scrivi a hello@lamsa.app con l'email del tuo account.",
+      'Credits are tied to your account, have no cash value, and are not refundable except where required by law.': 'I crediti sono legati al tuo account, non hanno valore monetario e non sono rimborsabili salvo quando richiesto dalla legge.',
+      '6. No Guarantee of Results': '6. Nessuna garanzia sui risultati',
+      'Designs are AI-generated suggestions. Lamsa doesn’t guarantee that a generated design is achievable, structurally sound, or will match any real-world purchase. Decisions you make based on a design (buying furniture, hiring a contractor, etc.) are your own responsibility.':
+        "I design sono suggerimenti generati dall'IA. Lamsa non garantisce che un design generato sia realizzabile, strutturalmente valido o corrisponda a un acquisto reale. Le decisioni che prendi sulla base di un design (acquistare mobili, assumere un impresario, ecc.) sono di tua esclusiva responsabilità.",
+      '7. Acceptable Use': '7. Uso consentito',
+      "Don't try to break, overload, scrape or reverse-engineer Lamsa, resell access to it, or use it for anything illegal.": "Non cercare di danneggiare, sovraccaricare, estrarre dati o decompilare Lamsa, rivendere l'accesso ad esso, o usarlo per qualcosa di illegale.",
+      '8. Ending Your Account': '8. Chiusura del tuo account',
+      'You can delete your account anytime from Settings → Delete Account. We may suspend or end an account that violates these terms.': 'Puoi eliminare il tuo account in qualsiasi momento da Impostazioni → Elimina account. Potremmo sospendere o chiudere un account che viola questi termini.',
+      '9. Changes to These Terms': '9. Modifiche a questi termini',
+      "If we make meaningful changes, we'll update the date at the top of this page.": 'Se apportiamo modifiche significative, aggiorneremo la data in cima a questa pagina.',
+      '10. Contact Us': '10. Contattaci',
+      'Questions about these terms? Email us at': 'Domande su questi termini? Scrivici a'
+    },
+    ru: {
+      'Back to Settings': 'Назад в настройки',
+      'Terms of Use': 'Условия использования',
+      'Last updated: November 2026': 'Последнее обновление: ноябрь 2026 г.',
+      '1. Acceptance of These Terms': '1. Принятие настоящих условий',
+      "By creating an account or using Lamsa (on the web or as an installed app), you agree to these terms. If you don't agree, please don't use Lamsa.":
+        'Создавая аккаунт или используя Lamsa (через веб или как установленное приложение), вы соглашаетесь с настоящими условиями. Если вы не согласны, пожалуйста, не используйте Lamsa.',
+      '2. What Lamsa Is': '2. Что такое Lamsa',
+      'Lamsa is an AI-powered interior design tool made by SmartOrdi. It generates design suggestions (images) from photos and preferences you provide. It is a design aid, not an architectural, structural or safety service.':
+        'Lamsa — это инструмент дизайна интерьера на основе ИИ, созданный компанией SmartOrdi. Он создаёт варианты дизайна (изображения) на основе предоставленных вами фото и предпочтений. Это вспомогательный инструмент для дизайна, а не архитектурная, конструктивная услуга или услуга по безопасности.',
+      '3. Your Account': '3. Ваш аккаунт',
+      'You must provide a valid email and keep your password secure.': 'Вы должны указать действующий email и обеспечить безопасность своего пароля.',
+      "You're responsible for activity that happens under your account.": 'Вы несёте ответственность за действия, совершаемые в рамках вашего аккаунта.',
+      "You must be old enough, under your country's laws, to agree to these terms on your own.": 'Вы должны достичь возраста, установленного законами вашей страны, чтобы самостоятельно принять эти условия.',
+      '4. Photos You Upload': '4. Загружаемые вами фото',
+      'You confirm any photo you upload is of your own space, or one you have permission to use.': 'Вы подтверждаете, что любое загружаемое вами фото — это ваше собственное пространство или пространство, на использование которого у вас есть разрешение.',
+      "Don't upload photos that include other people, or content that's illegal, offensive or infringes someone else's rights.": 'Не загружайте фото, на которых есть другие люди, или контент, который является незаконным, оскорбительным или нарушает чьи-либо права.',
+      'Your photo is used only to generate your design and is not shared with other users.': 'Ваше фото используется только для создания дизайна и не передаётся другим пользователям.',
+      '5. Credits, Subscriptions & Billing': '5. Кредиты, подписки и оплата',
+      'New accounts get 1 free credit. Weekly and Monthly subscription plans grant a recurring credit balance, billed through Stripe.': 'Новые аккаунты получают 1 бесплатный кредит. Недельный и месячный планы подписки предоставляют пополняемый баланс кредитов, оплата через Stripe.',
+      'Subscriptions renew automatically at the end of each billing period until canceled.': 'Подписки автоматически продлеваются в конце каждого расчётного периода до отмены.',
+      'To cancel or change your plan, email hello@lamsa.app with your account email.': 'Чтобы отменить или изменить план, напишите на hello@lamsa.app, указав email своего аккаунта.',
+      'Credits are tied to your account, have no cash value, and are not refundable except where required by law.': 'Кредиты привязаны к вашему аккаунту, не имеют денежной стоимости и не подлежат возврату, кроме случаев, предусмотренных законом.',
+      '6. No Guarantee of Results': '6. Отсутствие гарантии результатов',
+      'Designs are AI-generated suggestions. Lamsa doesn’t guarantee that a generated design is achievable, structurally sound, or will match any real-world purchase. Decisions you make based on a design (buying furniture, hiring a contractor, etc.) are your own responsibility.':
+        'Дизайны являются предложениями, созданными ИИ. Lamsa не гарантирует, что созданный дизайн осуществим, конструктивно надёжен или будет соответствовать какой-либо реальной покупке. Решения, которые вы принимаете на основе дизайна (покупка мебели, найм подрядчика и т. д.), являются вашей собственной ответственностью.',
+      '7. Acceptable Use': '7. Допустимое использование',
+      "Don't try to break, overload, scrape or reverse-engineer Lamsa, resell access to it, or use it for anything illegal.": 'Не пытайтесь ломать, перегружать, парсить или реверс-инжинирить Lamsa, перепродавать доступ к нему или использовать его для чего-либо незаконного.',
+      '8. Ending Your Account': '8. Завершение действия вашего аккаунта',
+      'You can delete your account anytime from Settings → Delete Account. We may suspend or end an account that violates these terms.': 'Вы можете удалить свой аккаунт в любое время через Настройки → Удалить аккаунт. Мы можем приостановить или завершить действие аккаунта, нарушающего настоящие условия.',
+      '9. Changes to These Terms': '9. Изменения в настоящих условиях',
+      "If we make meaningful changes, we'll update the date at the top of this page.": 'Если мы внесём значимые изменения, мы обновим дату в верхней части этой страницы.',
+      '10. Contact Us': '10. Свяжитесь с нами',
+      'Questions about these terms? Email us at': 'Вопросы об этих условиях? Напишите нам на'
+    }
+  };
+  function setLang(lang) { Lang8.apply(lang, T); }
+  Lang8.buildSelect(document.getElementById('langSelect'), setLang);
   var savedLang = 'en';
   try { savedLang = localStorage.getItem('lamsa_lang') || 'en'; } catch (e) {}
   setLang(savedLang);

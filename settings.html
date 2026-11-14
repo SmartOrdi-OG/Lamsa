@@ -27,6 +27,7 @@
 <script src="js/platform.js"></script>
 <script src="js/icons.js"></script>
 <script src="js/app-shell.js"></script>
+<script src="js/lang8.js"></script>
 <style>
   .icon-svg { width: 1.15em; height: 1.15em; vertical-align: -0.18em; display: inline-block; flex-shrink: 0; }
   :root {
@@ -45,6 +46,11 @@
   .logo { display: flex; align-items: center; gap: 10px; text-decoration: none; color: var(--white); }
   .logo-icon { width: 36px; height: 36px; border: 1.5px solid var(--gold); border-radius: 8px; display: flex; align-items: center; justify-content: center; }
   .logo-text { font-size: 19px; font-weight: 900; letter-spacing: 1px; }
+  .lang-select {
+    background: transparent; border: 1px solid var(--border); color: var(--gray);
+    padding: 6px 8px; border-radius: 6px; font-size: 12.5px; font-weight: 700; font-family: 'Tajawal', sans-serif;
+    cursor: pointer; max-width: 110px;
+  }
   .wrap { max-width: 640px; margin: 0 auto; padding: 96px 16px 110px; }
 
   .group-title { font-size: 12.5px; font-weight: 800; color: var(--gray); text-transform: uppercase; letter-spacing: 0.4px; margin: 22px 2px 8px; }
@@ -89,6 +95,7 @@
     <div class="logo-icon"><img src="assets/logo-mark.png" alt="" style="max-width:75%;max-height:75%;object-fit:contain;"></div>
     <div class="logo-text">LAMSA</div>
   </a>
+  <select class="lang-select" id="langSelect" data-lang-select aria-label="Language"></select>
 </nav>
 
 <div class="wrap">
@@ -122,13 +129,13 @@
 
   <div class="group-title" data-ar="التفضيلات" data-en="Preferences">Preferences</div>
   <div class="group">
-    <button type="button" class="row" onclick="toggleSettingsLang()">
+    <div class="row" style="cursor:default;">
       <span class="row-icon" data-icon="globe"></span>
       <div class="row-main">
         <div class="row-label" data-ar="اللغة" data-en="Language">Language</div>
       </div>
       <span class="row-trail" id="langTrail">English</span>
-    </button>
+    </div>
     <div class="row" disabled>
       <span class="row-icon" data-icon="bulb"></span>
       <div class="row-main">
@@ -211,49 +218,125 @@
       });
   }
 
-  // ===== Language (same localStorage key/convention as every other page) =====
-  function isArabic() {
-    try { return (localStorage.getItem('lamsa_lang') || 'en') === 'ar'; } catch (e) { return false; }
-  }
-  function applySettingsLang() {
-    var ar = isArabic();
-    document.documentElement.setAttribute('lang', ar ? 'ar' : 'en');
-    document.documentElement.setAttribute('dir', ar ? 'rtl' : 'ltr');
-    document.querySelectorAll('[data-en][data-ar]').forEach(function(el) {
-      el.innerHTML = ar ? el.getAttribute('data-ar') : el.getAttribute('data-en');
-    });
-    document.getElementById('langTrail').textContent = ar ? 'العربية' : 'English';
-    document.getElementById('userIdCopyLabel').textContent = ar ? 'نسخ' : 'Copy';
-    var chevronSvg = window.icon ? window.icon(ar ? 'arrowLeft' : 'arrowRight') : '';
+  // ===== Language — all 8 languages the rest of the site supports, not just
+  // AR/EN. Static row labels go through Lang8 (data-en/data-ar + this page's
+  // own T table); the handful of strings built dynamically in JS below
+  // (subscription status, copy-button feedback, invite count) have their
+  // own small DYN table since they never sit in the DOM as data attributes. =====
+  var T = {
+    de: {
+      'Account & Billing': 'Konto & Abrechnung', 'Subscription': 'Abonnement', 'Checking...': 'Wird geprüft...',
+      'User ID': 'Benutzer-ID', 'Copy': 'Kopieren', 'Refer a Friend': 'Freund einladen',
+      'You and your friend both get an extra free design': 'Du und dein Freund bekommt beide ein zusätzliches kostenloses Design',
+      'Preferences': 'Präferenzen', 'Language': 'Sprache', 'Notifications': 'Benachrichtigungen', 'Coming soon': 'Demnächst',
+      'Help & Legal': 'Hilfe & Rechtliches', 'About Lamsa': 'Über Lamsa', 'FAQ': 'FAQ', 'Terms of Use': 'Nutzungsbedingungen',
+      'Privacy Policy': 'Datenschutzerklärung', 'Contact & Feedback': 'Kontakt & Feedback', 'Account': 'Konto',
+      'Log Out': 'Abmelden', 'Delete Account': 'Konto löschen', 'Invite a friend': 'Freund einladen',
+      'Share your link — every friend who joins through it gets you both an extra free design.': 'Teile deinen Link — jeder Freund, der sich darüber anmeldet, schenkt euch beiden ein zusätzliches kostenloses Design.',
+      'Copy link': 'Link kopieren', 'Close': 'Schließen'
+    },
+    es: {
+      'Account & Billing': 'Cuenta y facturación', 'Subscription': 'Suscripción', 'Checking...': 'Comprobando...',
+      'User ID': 'ID de usuario', 'Copy': 'Copiar', 'Refer a Friend': 'Invitar a un amigo',
+      'You and your friend both get an extra free design': 'Tú y tu amigo recibiréis un diseño gratis adicional',
+      'Preferences': 'Preferencias', 'Language': 'Idioma', 'Notifications': 'Notificaciones', 'Coming soon': 'Próximamente',
+      'Help & Legal': 'Ayuda y legal', 'About Lamsa': 'Acerca de Lamsa', 'FAQ': 'Preguntas frecuentes', 'Terms of Use': 'Términos de uso',
+      'Privacy Policy': 'Política de privacidad', 'Contact & Feedback': 'Contacto y comentarios', 'Account': 'Cuenta',
+      'Log Out': 'Cerrar sesión', 'Delete Account': 'Eliminar cuenta', 'Invite a friend': 'Invitar a un amigo',
+      'Share your link — every friend who joins through it gets you both an extra free design.': 'Comparte tu enlace — cada amigo que se una a través de él os dará a ambos un diseño gratis adicional.',
+      'Copy link': 'Copiar enlace', 'Close': 'Cerrar'
+    },
+    tr: {
+      'Account & Billing': 'Hesap ve Faturalandırma', 'Subscription': 'Abonelik', 'Checking...': 'Kontrol ediliyor...',
+      'User ID': 'Kullanıcı Kimliği', 'Copy': 'Kopyala', 'Refer a Friend': 'Arkadaşını Davet Et',
+      'You and your friend both get an extra free design': 'Sen ve arkadaşın ikiniz de ekstra bir ücretsiz tasarım kazanırsınız',
+      'Preferences': 'Tercihler', 'Language': 'Dil', 'Notifications': 'Bildirimler', 'Coming soon': 'Yakında',
+      'Help & Legal': 'Yardım ve Yasal', 'About Lamsa': 'Lamsa Hakkında', 'FAQ': 'SSS', 'Terms of Use': 'Kullanım Şartları',
+      'Privacy Policy': 'Gizlilik Politikası', 'Contact & Feedback': 'İletişim ve Geri Bildirim', 'Account': 'Hesap',
+      'Log Out': 'Çıkış Yap', 'Delete Account': 'Hesabı Sil', 'Invite a friend': 'Arkadaşını davet et',
+      'Share your link — every friend who joins through it gets you both an extra free design.': 'Linkini paylaş — onun üzerinden katılan her arkadaşın ikinize de ekstra bir ücretsiz tasarım kazandırır.',
+      'Copy link': 'Linki kopyala', 'Close': 'Kapat'
+    },
+    fr: {
+      'Account & Billing': 'Compte et facturation', 'Subscription': 'Abonnement', 'Checking...': 'Vérification...',
+      'User ID': 'ID utilisateur', 'Copy': 'Copier', 'Refer a Friend': 'Parrainer un ami',
+      'You and your friend both get an extra free design': 'Vous et votre ami recevez chacun un design gratuit supplémentaire',
+      'Preferences': 'Préférences', 'Language': 'Langue', 'Notifications': 'Notifications', 'Coming soon': 'Bientôt disponible',
+      'Help & Legal': 'Aide et mentions légales', 'About Lamsa': 'À propos de Lamsa', 'FAQ': 'FAQ', 'Terms of Use': "Conditions d'utilisation",
+      'Privacy Policy': 'Politique de confidentialité', 'Contact & Feedback': 'Contact et retours', 'Account': 'Compte',
+      'Log Out': 'Se déconnecter', 'Delete Account': 'Supprimer le compte', 'Invite a friend': 'Parrainer un ami',
+      'Share your link — every friend who joins through it gets you both an extra free design.': 'Partagez votre lien — chaque ami qui vous rejoint grâce à lui vous offre à tous les deux un design gratuit supplémentaire.',
+      'Copy link': 'Copier le lien', 'Close': 'Fermer'
+    },
+    it: {
+      'Account & Billing': 'Account e fatturazione', 'Subscription': 'Abbonamento', 'Checking...': 'Verifica in corso...',
+      'User ID': 'ID utente', 'Copy': 'Copia', 'Refer a Friend': 'Invita un amico',
+      'You and your friend both get an extra free design': 'Tu e il tuo amico ricevete entrambi un design gratuito extra',
+      'Preferences': 'Preferenze', 'Language': 'Lingua', 'Notifications': 'Notifiche', 'Coming soon': 'Prossimamente',
+      'Help & Legal': 'Aiuto e legale', 'About Lamsa': 'Informazioni su Lamsa', 'FAQ': 'Domande frequenti', 'Terms of Use': 'Termini di utilizzo',
+      'Privacy Policy': 'Informativa sulla privacy', 'Contact & Feedback': 'Contatti e feedback', 'Account': 'Account',
+      'Log Out': 'Esci', 'Delete Account': 'Elimina account', 'Invite a friend': 'Invita un amico',
+      'Share your link — every friend who joins through it gets you both an extra free design.': 'Condividi il tuo link — ogni amico che si unisce tramite esso vi darà entrambi un design gratuito extra.',
+      'Copy link': 'Copia link', 'Close': 'Chiudi'
+    },
+    ru: {
+      'Account & Billing': 'Аккаунт и оплата', 'Subscription': 'Подписка', 'Checking...': 'Проверка...',
+      'User ID': 'ID пользователя', 'Copy': 'Копировать', 'Refer a Friend': 'Пригласить друга',
+      'You and your friend both get an extra free design': 'Вы и ваш друг получите по дополнительному бесплатному дизайну',
+      'Preferences': 'Предпочтения', 'Language': 'Язык', 'Notifications': 'Уведомления', 'Coming soon': 'Скоро',
+      'Help & Legal': 'Помощь и правовая информация', 'About Lamsa': 'О Lamsa', 'FAQ': 'Частые вопросы', 'Terms of Use': 'Условия использования',
+      'Privacy Policy': 'Политика конфиденциальности', 'Contact & Feedback': 'Связь и отзывы', 'Account': 'Аккаунт',
+      'Log Out': 'Выйти', 'Delete Account': 'Удалить аккаунт', 'Invite a friend': 'Пригласить друга',
+      'Share your link — every friend who joins through it gets you both an extra free design.': 'Поделитесь своей ссылкой — каждый друг, который присоединится по ней, подарит вам обоим дополнительный бесплатный дизайн.',
+      'Copy link': 'Копировать ссылку', 'Close': 'Закрыть'
+    }
+  };
+
+  var DYN = {
+    ar: { checking: 'جارٍ التحقق...', noSub: 'ما في اشتراك نشط حالياً', active: 'نشط', weekly: 'أسبوعي', monthly: 'شهري', planLabel: function(p) { return 'خطة ' + p; }, renews: function(p, d) { return 'خطة ' + p + ' — يتجدد ' + d; }, copied: 'تم!', copiedLink: 'تم النسخ!', invited: function(n) { return 'دعوت ' + n + ' صديق لحد الآن'; }, locale: 'ar' },
+    en: { checking: 'Checking...', noSub: 'No active subscription', active: 'Active', weekly: 'Weekly', monthly: 'Monthly', planLabel: function(p) { return p + ' plan'; }, renews: function(p, d) { return p + ' plan — renews ' + d; }, copied: 'Copied!', copiedLink: 'Copied!', invited: function(n) { return 'You’ve invited ' + n + ' so far'; }, locale: 'en-US' },
+    de: { checking: 'Wird geprüft...', noSub: 'Kein aktives Abonnement', active: 'Aktiv', weekly: 'Wöchentlich', monthly: 'Monatlich', planLabel: function(p) { return p + '-Plan'; }, renews: function(p, d) { return p + '-Plan — verlängert sich am ' + d; }, copied: 'Kopiert!', copiedLink: 'Kopiert!', invited: function(n) { return 'Du hast bisher ' + n + ' eingeladen'; }, locale: 'de-DE' },
+    es: { checking: 'Comprobando...', noSub: 'Sin suscripción activa', active: 'Activa', weekly: 'Semanal', monthly: 'Mensual', planLabel: function(p) { return 'Plan ' + p; }, renews: function(p, d) { return 'Plan ' + p + ' — se renueva el ' + d; }, copied: '¡Copiado!', copiedLink: '¡Copiado!', invited: function(n) { return 'Has invitado a ' + n + ' hasta ahora'; }, locale: 'es-ES' },
+    tr: { checking: 'Kontrol ediliyor...', noSub: 'Aktif abonelik yok', active: 'Aktif', weekly: 'Haftalık', monthly: 'Aylık', planLabel: function(p) { return p + ' plan'; }, renews: function(p, d) { return p + ' plan — ' + d + ' tarihinde yenilenir'; }, copied: 'Kopyalandı!', copiedLink: 'Kopyalandı!', invited: function(n) { return 'Şimdiye kadar ' + n + ' kişi davet ettin'; }, locale: 'tr-TR' },
+    fr: { checking: 'Vérification...', noSub: 'Aucun abonnement actif', active: 'Actif', weekly: 'Hebdomadaire', monthly: 'Mensuel', planLabel: function(p) { return 'Forfait ' + p; }, renews: function(p, d) { return 'Forfait ' + p + ' — renouvellement le ' + d; }, copied: 'Copié !', copiedLink: 'Copié !', invited: function(n) { return 'Vous avez invité ' + n + ' personne(s) jusqu’à présent'; }, locale: 'fr-FR' },
+    it: { checking: 'Verifica in corso...', noSub: 'Nessun abbonamento attivo', active: 'Attivo', weekly: 'Settimanale', monthly: 'Mensile', planLabel: function(p) { return 'Piano ' + p; }, renews: function(p, d) { return 'Piano ' + p + ' — si rinnova il ' + d; }, copied: 'Copiato!', copiedLink: 'Copiato!', invited: function(n) { return 'Finora hai invitato ' + n + ' persone'; }, locale: 'it-IT' },
+    ru: { checking: 'Проверка...', noSub: 'Нет активной подписки', active: 'Активна', weekly: 'Недельный', monthly: 'Месячный', planLabel: function(p) { return 'План «' + p + '»'; }, renews: function(p, d) { return 'План «' + p + '» — продление ' + d; }, copied: 'Скопировано!', copiedLink: 'Скопировано!', invited: function(n) { return 'Вы пригласили ' + n + ' человек(а) на данный момент'; }, locale: 'ru-RU' }
+  };
+
+  var currentLang = 'en';
+  function setLang(lang) {
+    // Lang8.apply already resets userIdCopyLabel to "Copy" (via its own
+    // data-en/data-ar attributes + this page's T table) on every call,
+    // which also cancels any mid-animation "Copied!" state from before the
+    // switch — nothing extra needed here for that.
+    var cfg = Lang8.apply(lang, T);
+    currentLang = cfg.code;
+    document.getElementById('langTrail').textContent = cfg.name;
+    var chevronSvg = window.icon ? window.icon(cfg.dir === 'rtl' ? 'arrowLeft' : 'arrowRight') : '';
     document.querySelectorAll('.chevron-icon').forEach(function(el) { el.innerHTML = chevronSvg; });
     refreshSubscriptionRow();
   }
-  function toggleSettingsLang() {
-    try { localStorage.setItem('lamsa_lang', isArabic() ? 'en' : 'ar'); } catch (e) {}
-    applySettingsLang();
-  }
+
+  function dyn() { return DYN[currentLang] || DYN.en; }
 
   // ===== Subscription status (read-only — api/me.js now includes it) =====
   var lastSubscription = null;
   function refreshSubscriptionRow() {
     var sub = document.getElementById('subStatusSub');
     var badge = document.getElementById('subStatusBadge');
-    var ar = isArabic();
-    if (lastSubscription === null) { sub.textContent = ar ? 'جارٍ التحقق...' : 'Checking...'; badge.style.display = 'none'; return; }
-    var PLAN_LABELS = { weekly: ar ? 'أسبوعي' : 'Weekly', monthly: ar ? 'شهري' : 'Monthly' };
+    var d = dyn();
+    if (lastSubscription === null) { sub.textContent = d.checking; badge.style.display = 'none'; return; }
     if (lastSubscription && (lastSubscription.status === 'active' || lastSubscription.status === 'trialing')) {
-      var planLabel = PLAN_LABELS[lastSubscription.plan] || lastSubscription.plan || '';
+      var planLabel = d[lastSubscription.plan] || lastSubscription.plan || '';
       var renewDate = lastSubscription.currentPeriodEnd
-        ? new Date(lastSubscription.currentPeriodEnd * 1000).toLocaleDateString(ar ? 'ar' : 'en-US', { year: 'numeric', month: 'short', day: 'numeric' })
+        ? new Date(lastSubscription.currentPeriodEnd * 1000).toLocaleDateString(d.locale, { year: 'numeric', month: 'short', day: 'numeric' })
         : '';
-      sub.textContent = renewDate
-        ? (ar ? ('خطة ' + planLabel + ' — يتجدد ' + renewDate) : (planLabel + ' plan — renews ' + renewDate))
-        : (ar ? ('خطة ' + planLabel) : (planLabel + ' plan'));
-      badge.textContent = ar ? 'نشط' : 'Active';
+      sub.textContent = renewDate ? d.renews(planLabel, renewDate) : d.planLabel(planLabel);
+      badge.textContent = d.active;
       badge.className = 'row-badge active';
       badge.style.display = '';
     } else {
-      sub.textContent = ar ? 'ما في اشتراك نشط حالياً' : 'No active subscription';
+      sub.textContent = d.noSub;
       badge.style.display = 'none';
     }
   }
@@ -265,9 +348,9 @@
     if (!lastReferralCode) return;
     var done = function() {
       var label = document.getElementById('userIdCopyLabel');
-      var ar = isArabic();
-      label.textContent = ar ? 'تم!' : 'Copied!';
-      setTimeout(function() { label.textContent = ar ? 'نسخ' : 'Copy'; }, 1600);
+      var original = (T[currentLang] && T[currentLang]['Copy']) || 'Copy';
+      label.textContent = dyn().copied;
+      setTimeout(function() { label.textContent = original; }, 1600);
     };
     if (navigator.clipboard && navigator.clipboard.writeText) {
       navigator.clipboard.writeText(lastReferralCode).then(done).catch(done);
@@ -278,16 +361,13 @@
 
   // ===== Invite-a-friend modal =====
   function openInviteModal() {
-    var ar = isArabic();
     var overlay = document.getElementById('inviteOverlay');
     var link = lastReferralCode ? (window.location.origin + '/lamsa-auth.html?ref=' + lastReferralCode) : '';
     document.getElementById('inviteLinkInput').value = link;
     var countEl = document.getElementById('inviteCount');
     if (lastReferralCount > 0) {
       countEl.style.display = '';
-      countEl.textContent = ar
-        ? ('دعيتي ' + lastReferralCount + (lastReferralCount === 1 ? ' صديق لحد الآن' : ' أصدقاء لحد الآن'))
-        : ('You’ve invited ' + lastReferralCount + ' friend' + (lastReferralCount === 1 ? '' : 's') + ' so far');
+      countEl.textContent = dyn().invited(lastReferralCount);
     } else {
       countEl.style.display = 'none';
     }
@@ -296,11 +376,10 @@
   function closeInviteModal() { document.getElementById('inviteOverlay').classList.remove('open'); }
   document.getElementById('inviteCopyBtn').addEventListener('click', function() {
     var input = document.getElementById('inviteLinkInput');
-    var ar = isArabic();
     var done = function() {
       var btn = document.getElementById('inviteCopyBtn');
-      var original = ar ? 'نسخ الرابط' : 'Copy link';
-      btn.textContent = ar ? 'تم النسخ!' : 'Copied!';
+      var original = (T[currentLang] && T[currentLang]['Copy link']) || 'Copy link';
+      btn.textContent = dyn().copiedLink;
       setTimeout(function() { btn.textContent = original; }, 1600);
     };
     if (navigator.clipboard && navigator.clipboard.writeText && input.value) {
@@ -315,7 +394,10 @@
     if (e.target === this) closeInviteModal();
   });
 
-  applySettingsLang();
+  Lang8.buildSelect(document.getElementById('langSelect'), setLang);
+  var savedLang = 'en';
+  try { savedLang = localStorage.getItem('lamsa_lang') || 'en'; } catch (e) {}
+  setLang(savedLang);
   AppShell.renderTabBar('settings');
 
   fetch('/api/me', { credentials: 'include' })
