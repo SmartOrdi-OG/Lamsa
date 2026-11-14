@@ -292,6 +292,19 @@
     padding: 34px 30px 28px;
     box-shadow: 0 30px 70px -25px rgba(90,98,116,0.28), 0 8px 20px -12px rgba(90,98,116,0.14), 0 0 0 1px rgba(107,116,128,0.04) inset;
   }
+  /* Escape hatch back to Home for anyone who ended up here without
+     meaning to sign in right now — browsing doesn't require an account. */
+  .auth-close-btn {
+    position: absolute; top: 14px; inset-inline-end: 14px; z-index: 3;
+    width: 32px; height: 32px; border-radius: 50%;
+    background: var(--dark); border: 1px solid var(--border); color: var(--gray);
+    display: flex; align-items: center; justify-content: center; cursor: pointer;
+  }
+  .auth-close-btn:hover { color: var(--gold); border-color: var(--gold); }
+  .auth-close-btn svg { width: 15px; height: 15px; }
+  /* The success screen already has its own close button (.success-close)
+     — avoid showing two. */
+  .auth-box.success-mode .auth-close-btn { display: none; }
   .auth-box::before {
     content: '';
     position: absolute; top: 0; left: 8%; right: 8%; height: 1px;
@@ -869,6 +882,10 @@
 <!-- RIGHT PANEL -->
 <div class="right-panel">
   <div class="auth-box" id="authBox">
+
+    <button type="button" class="auth-close-btn" onclick="window.location.href='lamsa-bilingual.html'" aria-label="Close">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M5 5l14 14M19 5L5 19"/></svg>
+    </button>
 
     <!-- Mobile only: duplicates .left-title/.left-sub so the card can
          carry the headline when it overlaps the hero photo instead of the
