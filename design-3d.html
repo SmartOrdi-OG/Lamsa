@@ -1874,6 +1874,20 @@
     return g;
   }
 
+  // Floor-placed TV: a low stand (sized from the passed w/d/h like any
+  // other furniture piece, so shape/size variants still apply to it) with
+  // the same screen used on the wall resting on top — lets the TV go on
+  // its own table instead of only mounting on a wall.
+  function fp3dBuildTVOnStand(w, d, h, color) {
+    var g = new THREE.Group();
+    var standH = Math.min(h, 0.45);
+    g.add(fp3dBuildBox(w, d, standH, color));
+    var screen = fp3dBuildTVScreen(color);
+    screen.position.y = standH + 0.28;
+    g.add(screen);
+    return g;
+  }
+
   function fp3dBuildPlayTent(w, d, h, color) {
     var g = new THREE.Group();
     var r = Math.min(w, d) / 2;
@@ -2252,6 +2266,7 @@
     { keys: ['pantry cabinet', 'pantry'], w: 0.8, d: 0.5, h: 2.0, build: fp3dBuildCabinet },
     { keys: ['filing cabinet', 'cabinet', 'storage', 'sideboard'], w: 0.9, d: 0.45, h: 1.0, build: fp3dBuildCabinet },
     { keys: ['tv unit', 'tv stand', 'television'], w: 1.4, d: 0.4, h: 0.5, build: fp3dBuildTVUnit },
+    { keys: ['tv'], w: 1.1, d: 0.35, h: 0.45, build: fp3dBuildTVOnStand },
     { keys: ['l-shaped desk', 'l shaped desk'], w: 1.4, d: 1.3, h: 0.75, build: fp3dBuildLDesk },
     { keys: ['desk'], w: 1.2, d: 0.6, h: 0.75, build: fp3dBuildTable },
     { keys: ['round coffee table'], w: 0.9, d: 0.9, h: 0.42, build: fp3dBuildSideTable },
@@ -3286,7 +3301,7 @@
   // instead of the floor — generalizes what used to be the 'switch'-only
   // path so Wall Clock/AC Unit/Water Heater reuse the exact same
   // placement, rotation, and thumbnail logic.
-  var D3D_WALL_ITEM_KEYS = ['switch', 'Wall Clock', 'AC Unit', 'Water Heater', 'TV'];
+  var D3D_WALL_ITEM_KEYS = ['switch', 'Wall Clock', 'AC Unit', 'Water Heater'];
   var D3D_WALL_ITEM_DIMS = {
     switch: { w: 0.3, d: 0.2, h: 0.4 },
     'Wall Clock': { w: 0.32, d: 0.1, h: 0.32 },
@@ -3365,6 +3380,27 @@
       d3dRebuildPlacedGroup();
       d3dSetTool('select'); // one tap places it, already selected — ready to move/rotate, not stamp another
       return;
+    }
+
+    // TV: mount it on a wall if the tap lands on one (like the other wall
+    // items above), but — unlike them — a miss doesn't give up: it falls
+    // through to the normal floor placement below, which puts the TV on
+    // its own stand. That's the common case (TV on a TV unit/table).
+    if (d3dTool === 'TV') {
+      var tvWallObjs = [d3dNWallMesh, d3dWWallMesh].filter(Boolean);
+      var tvWallHits = d3dGetIntersects(event, tvWallObjs);
+      if (tvWallHits.length) {
+        var tvHit = tvWallHits[0];
+        var tvIsNWall = tvHit.object === d3dNWallMesh;
+        d3dPlacedItems.push({
+          key: 'TV', isWall: true, wallSide: tvIsNWall ? 'N' : 'W',
+          x: tvHit.point.x, y: fp3dClamp(tvHit.point.y, 0.3, d3dWallH - 0.3), z: tvHit.point.z, rotY: 0
+        });
+        d3dSelectedIndex = d3dPlacedItems.length - 1;
+        d3dRebuildPlacedGroup();
+        d3dSetTool('select');
+        return;
+      }
     }
 
     var floorHits = d3dGetIntersects(event, d3dFloorMesh ? [d3dFloorMesh] : []);
