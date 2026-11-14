@@ -161,6 +161,28 @@ export async function getGenerationCount() {
   return typeof val === 'number' ? val : parseInt(val, 10) || 0;
 }
 
+function historyKey(email) {
+  return 'lamsa:history:' + email.trim().toLowerCase();
+}
+
+const MAX_HISTORY_ITEMS = 60;
+
+// Called from api/status.js the moment a generation's final (Nano-refined)
+// result comes back — the one place the server actually sees the finished
+// image URL. Newest first (lpush), capped so one very active user's list
+// can't grow unbounded.
+export async function saveDesignToHistory(email, entry) {
+  const key = historyKey(email);
+  await redis.lpush(key, JSON.stringify(entry));
+  await redis.ltrim(key, 0, MAX_HISTORY_ITEMS - 1);
+}
+
+export async function getDesignHistory(email, limit = MAX_HISTORY_ITEMS) {
+  const key = historyKey(email);
+  const raw = await redis.lrange(key, 0, limit - 1);
+  return raw.map(parseListEntry).filter(Boolean);
+}
+
 // Idempotency guard for Stripe webhook retries — the first call for a given
 // event id succeeds (returns true), duplicate deliveries return false.
 export async function markEventProcessed(eventId) {

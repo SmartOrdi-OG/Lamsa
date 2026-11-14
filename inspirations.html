@@ -785,7 +785,7 @@
             }
             var status = (result.data.status || '').toString().toUpperCase();
             if (status === 'COMPLETED') {
-              fetchJson('/api/status?request_id=' + encodeURIComponent(requestId) + '&model=' + encodeURIComponent(model) + '&mode=result')
+              fetchJson('/api/status?request_id=' + encodeURIComponent(requestId) + '&model=' + encodeURIComponent(model) + '&mode=result&tool=inspirations')
                 .then(function (resultResp) {
                   if (!resultResp.ok) {
                     setStatus('Error generating image. Please try again.', true);

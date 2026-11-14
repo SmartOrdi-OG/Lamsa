@@ -642,7 +642,7 @@
 
             if (status === 'COMPLETED') {
               console.log('[generate] status COMPLETED — fetching final result for', model, requestId);
-              fetchJson('/api/status?request_id=' + encodeURIComponent(requestId) + '&model=' + encodeURIComponent(model) + '&mode=result')
+              fetchJson('/api/status?request_id=' + encodeURIComponent(requestId) + '&model=' + encodeURIComponent(model) + '&mode=result&tool=rearrange')
                 .then(function(resultResp) {
                   console.log('[generate] result response (http ' + resultResp.status + '):', resultResp.data);
                   if (!resultResp.ok) {
