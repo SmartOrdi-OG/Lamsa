@@ -201,6 +201,31 @@
   .d3d-action-row .fp-tool-btn.active { border-color: var(--gold); background: var(--gold-dim); color: var(--gold-deep); }
 
   .d3d-viewport-wrap { position: relative; display: inline-block; max-width: 100%; }
+  /* Tilt-shift "miniature model" look: a shallow fake depth-of-field (blurred
+     top/bottom bands, sharp middle) plus a little extra punch is the actual
+     visual trick real tilt-shift photographers use to make a full-size room
+     read as a dollhouse/diorama — cheaper and more convincing here than any
+     WebGL lighting change, since the room is schematic geometry, not a photo. */
+  .d3d-tiltshift { position: absolute; inset: 0; pointer-events: none; border-radius: 14px; overflow: hidden; z-index: 1; }
+  .d3d-tiltshift-top, .d3d-tiltshift-bottom {
+    position: absolute; left: 0; right: 0;
+    backdrop-filter: blur(3.5px); -webkit-backdrop-filter: blur(3.5px);
+  }
+  .d3d-tiltshift-top {
+    top: 0; height: 36%;
+    mask-image: linear-gradient(to bottom, rgba(0,0,0,0.85), rgba(0,0,0,0));
+    -webkit-mask-image: linear-gradient(to bottom, rgba(0,0,0,0.85), rgba(0,0,0,0));
+  }
+  .d3d-tiltshift-bottom {
+    bottom: 0; height: 36%;
+    mask-image: linear-gradient(to top, rgba(0,0,0,0.85), rgba(0,0,0,0));
+    -webkit-mask-image: linear-gradient(to top, rgba(0,0,0,0.85), rgba(0,0,0,0));
+  }
+  .d3d-tiltshift-vignette {
+    position: absolute; inset: 0;
+    background: radial-gradient(ellipse at 50% 45%, rgba(0,0,0,0) 55%, rgba(30,24,16,0.16) 100%);
+  }
+  #d3dResultWrap canvas { filter: saturate(1.12) contrast(1.04); }
   .d3d-walk-overlay { position: absolute; inset: 0; pointer-events: none; }
   .d3d-walk-exit-btn {
     position: absolute; top: 10px; right: 10px; pointer-events: auto;
@@ -514,6 +539,11 @@
       </div>
       <div class="d3d-viewport-wrap">
         <div id="d3dResultWrap"></div>
+        <div class="d3d-tiltshift" id="d3dTiltShift" aria-hidden="true">
+          <div class="d3d-tiltshift-top"></div>
+          <div class="d3d-tiltshift-bottom"></div>
+          <div class="d3d-tiltshift-vignette"></div>
+        </div>
         <div class="d3d-walk-overlay" id="d3dWalkOverlay" style="display:none;">
           <button type="button" class="d3d-walk-exit-btn" onclick="d3dExitWalkMode()" data-en="✕ Exit Walk" data-ar="✕ خروج من المشي">✕ Exit Walk</button>
           <div class="d3d-walk-dpad">
@@ -3665,6 +3695,10 @@
     if (overlay) overlay.style.display = 'block';
     var toggleBtn = document.getElementById('d3dWalkToggleBtn');
     if (toggleBtn) toggleBtn.classList.add('active');
+    // Walk Mode is a first-person look, not a dollhouse view from outside —
+    // the miniature tilt-shift effect would look wrong (and get in the way).
+    var tiltShift = document.getElementById('d3dTiltShift');
+    if (tiltShift) tiltShift.style.display = 'none';
   }
 
   function d3dExitWalkMode() {
@@ -3679,6 +3713,8 @@
     if (overlay) overlay.style.display = 'none';
     var toggleBtn = document.getElementById('d3dWalkToggleBtn');
     if (toggleBtn) toggleBtn.classList.remove('active');
+    var tiltShift = document.getElementById('d3dTiltShift');
+    if (tiltShift) tiltShift.style.display = '';
   }
 
   function d3dHandlePointerMove(event) {
