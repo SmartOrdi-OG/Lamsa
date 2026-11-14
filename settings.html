@@ -121,7 +121,7 @@
       <span class="row-icon" data-icon="share"></span>
       <div class="row-main">
         <div class="row-label" data-ar="دعوة صديق" data-en="Refer a Friend">Refer a Friend</div>
-        <div class="row-sub" data-ar="أنتِ وصديقك بتحصلو على تصميم مجاني إضافي" data-en="You and your friend both get an extra free design">You and your friend both get an extra free design</div>
+        <div class="row-sub" data-ar="أنت وصديقك تحصلان على تصميم مجاني إضافي" data-en="You and your friend both get an extra free design">You and your friend both get an extra free design</div>
       </div>
       <span class="row-chevron chevron-icon"></span>
     </button>
@@ -193,7 +193,7 @@
   <div class="invite-box">
     <div class="invite-emoji">🎁</div>
     <div class="invite-title" data-ar="دعوة صديق" data-en="Invite a friend">Invite a friend</div>
-    <div class="invite-sub" data-ar="شارك رابطك، وكل صديق ينضم عن طريقك بيحصل الاتنين على تصميم مجاني إضافي." data-en="Share your link — every friend who joins through it gets you both an extra free design.">Share your link — every friend who joins through it gets you both an extra free design.</div>
+    <div class="invite-sub" data-ar="شارك رابطك، وكل صديق ينضم عبره يمنحكما معاً تصميماً مجانياً إضافياً." data-en="Share your link — every friend who joins through it gets you both an extra free design.">Share your link — every friend who joins through it gets you both an extra free design.</div>
     <div class="invite-link-row"><input type="text" id="inviteLinkInput" readonly value=""></div>
     <div class="invite-count" id="inviteCount" style="display:none;"></div>
     <button type="button" class="invite-btn-primary" id="inviteCopyBtn" data-ar="نسخ الرابط" data-en="Copy link">Copy link</button>
@@ -293,7 +293,7 @@
   };
 
   var DYN = {
-    ar: { checking: 'جارٍ التحقق...', noSub: 'ما في اشتراك نشط حالياً', active: 'نشط', weekly: 'أسبوعي', monthly: 'شهري', planLabel: function(p) { return 'خطة ' + p; }, renews: function(p, d) { return 'خطة ' + p + ' — يتجدد ' + d; }, copied: 'تم!', copiedLink: 'تم النسخ!', invited: function(n) { return 'دعوت ' + n + ' صديق لحد الآن'; }, locale: 'ar' },
+    ar: { checking: 'جارٍ التحقق...', noSub: 'لا يوجد اشتراك نشط حالياً', active: 'نشط', weekly: 'أسبوعي', monthly: 'شهري', planLabel: function(p) { return 'خطة ' + p; }, renews: function(p, d) { return 'خطة ' + p + ' — يتجدد ' + d; }, copied: 'تم!', copiedLink: 'تم النسخ!', invited: function(n) { return 'دعوت ' + n + ' صديق حتى الآن'; }, locale: 'ar' },
     en: { checking: 'Checking...', noSub: 'No active subscription', active: 'Active', weekly: 'Weekly', monthly: 'Monthly', planLabel: function(p) { return p + ' plan'; }, renews: function(p, d) { return p + ' plan — renews ' + d; }, copied: 'Copied!', copiedLink: 'Copied!', invited: function(n) { return 'You’ve invited ' + n + ' so far'; }, locale: 'en-US' },
     de: { checking: 'Wird geprüft...', noSub: 'Kein aktives Abonnement', active: 'Aktiv', weekly: 'Wöchentlich', monthly: 'Monatlich', planLabel: function(p) { return p + '-Plan'; }, renews: function(p, d) { return p + '-Plan — verlängert sich am ' + d; }, copied: 'Kopiert!', copiedLink: 'Kopiert!', invited: function(n) { return 'Du hast bisher ' + n + ' eingeladen'; }, locale: 'de-DE' },
     es: { checking: 'Comprobando...', noSub: 'Sin suscripción activa', active: 'Activa', weekly: 'Semanal', monthly: 'Mensual', planLabel: function(p) { return 'Plan ' + p; }, renews: function(p, d) { return 'Plan ' + p + ' — se renueva el ' + d; }, copied: '¡Copiado!', copiedLink: '¡Copiado!', invited: function(n) { return 'Has invitado a ' + n + ' hasta ahora'; }, locale: 'es-ES' },
