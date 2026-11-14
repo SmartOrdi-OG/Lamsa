@@ -5,17 +5,9 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <meta name="color-scheme" content="light">
 <script>
-  // Fast, optimistic auth check to avoid a flash of the app before
-  // redirecting — mirrors rearrange.html/lamsa-bilingual.html. Not a
-  // security boundary; the real check is checkAuth() below.
-  (function() {
-    try {
-      var user = JSON.parse(localStorage.getItem('lamsa_user') || 'null');
-      if (!user || !user.loggedIn) window.location.replace('lamsa-auth.html');
-    } catch (e) {
-      window.location.replace('lamsa-auth.html');
-    }
-  })();
+  // This tool is fully free (no photo, no credit — see the page's own
+  // subtitle) and has nothing worth gating behind an account, so it's
+  // open to guests with no redirect at all.
 </script>
 <title>3D Room Designer | Lamsa</title>
 <link rel="icon" type="image/png" sizes="32x32" href="assets/favicon-32.png">
@@ -266,7 +258,8 @@
   <div class="nav-right">
     <a class="back-link" href="lamsa-bilingual.html"><svg class="icon-svg rtl-flip" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M11 6l-6 6 6 6"/></svg> <span data-en="Full Designer" data-ar="المصمم الكامل">Full Designer</span></a>
     <button type="button" class="lang-toggle-btn" id="d3dLangToggleBtn" onclick="d3dToggleLang()">AR</button>
-    <button type="button" class="nav-logout" onclick="logout()" data-en="Log Out" data-ar="تسجيل الخروج">Log Out</button>
+    <a class="nav-logout" href="lamsa-auth.html" id="navSignInBtn" style="display:none;text-decoration:none;" data-en="Sign In" data-ar="تسجيل الدخول">Sign In</a>
+    <button type="button" class="nav-logout" onclick="logout()" id="navLogoutBtn" data-en="Log Out" data-ar="تسجيل الخروج">Log Out</button>
   </div>
 </nav>
 
@@ -3735,12 +3728,15 @@
   // ═══════════════════════════════════════════════
   // AUTH (real server session)
   // ═══════════════════════════════════════════════
+  // Resolves to the logged-in user, or null for a guest — never redirects.
+  // Nothing on this page needs an account, so this is only used to show
+  // "Sign In" vs "Log Out" in the nav.
   function checkAuth() {
     return fetch('/api/me', { credentials: 'include' })
       .then(function(r) { return r.json().then(function(data) { return { ok: r.ok, data: data }; }); })
       .then(function(result) {
         if (!result.ok) {
-          window.location.replace('lamsa-auth.html');
+          try { localStorage.removeItem('lamsa_user'); } catch (e) {}
           return null;
         }
         try { localStorage.setItem('lamsa_user', JSON.stringify({ username: result.data.username, email: result.data.email, loggedIn: true })); } catch (e) {}
@@ -3748,7 +3744,6 @@
       })
       .catch(function(err) {
         console.error('[auth] session check failed:', err);
-        window.location.replace('lamsa-auth.html');
         return null;
       });
   }
@@ -3821,7 +3816,10 @@
   }
 
   window.addEventListener('DOMContentLoaded', function() {
-    checkAuth();
+    checkAuth().then(function(user) {
+      document.getElementById('navSignInBtn').style.display = user ? 'none' : '';
+      document.getElementById('navLogoutBtn').style.display = user ? '' : 'none';
+    });
     drawFloorPlan();
     d3dBuildPalette();
     d3dInjectChipIcons();
