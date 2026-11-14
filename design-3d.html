@@ -665,6 +665,14 @@
     'Play Area': 'منطقة لعب', 'Toy Box': 'صندوق ألعاب', 'Switch': 'مفتاح كهرباء', 'switch': 'مفتاح كهرباء',
     'Wall Clock': 'ساعة حائط', 'AC Unit': 'مكيف', 'Water Heater': 'سخان مياه',
     'Washing Machine': 'غسالة', 'Standing Fan': 'مروحة أرضية', 'TV': 'تلفاز', 'Dishwasher': 'جلاية صحون',
+    'Loveseat': 'أريكة بمقعدين', 'U-Shaped Sofa': 'أريكة بشكل U', 'Sofa Bed': 'أريكة سرير',
+    'Swivel Chair': 'كرسي دوار', 'Display Cabinet': 'خزانة عرض', 'Table Lamp': 'مصباح طاولة',
+    'Wall Light': 'إضاءة حائط', 'Wall Art': 'لوحة جدارية', 'Indoor Plant': 'نبات داخلي',
+    'Round Bed': 'سرير دائري', 'Dressing Table': 'طاولة تسريحة', 'Storage Trunk': 'صندوق تخزين',
+    'Shoe Cabinet': 'خزانة أحذية', 'Kids Bed': 'سرير أطفال', 'Study Desk': 'مكتب دراسة',
+    'Kids Chair': 'كرسي أطفال', 'Kids Wardrobe': 'خزانة ملابس أطفال', 'Night Light': 'مصباح ليلي',
+    'Freezer': 'فريزر', 'Trash Bin': 'سلة مهملات', 'Double Vanity': 'مغسلة مزدوجة',
+    'Bidet': 'بيديه', 'Bath Mat': 'سجادة حمام', 'Medicine Cabinet': 'خزانة أدوية',
     'Click a placed piece to select it, then rotate or delete it.': 'اضغط على قطعة موضوعة لتحديدها، ثم دوّرها أو احذفها.',
     'Click a wall to place a': 'اضغط على الحائط لوضع',
     'there.': 'هناك.',
@@ -1570,6 +1578,19 @@
     return g;
   }
 
+  // Same bowl as the toilet, minus the tank, plus a small faucet — enough
+  // to read as a distinct fixture without a dedicated geometry pass.
+  function fp3dBuildBidet(w, d, h, color) {
+    var g = new THREE.Group();
+    var bowl = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), new THREE.MeshLambertMaterial({ color: 0xF2F2EE }));
+    bowl.position.y = h / 2;
+    g.add(bowl);
+    var faucet = new THREE.Mesh(new THREE.CylinderGeometry(0.012, 0.012, h * 0.3, 8), new THREE.MeshStandardMaterial({ color: 0xC9C9C9, metalness: 0.6, roughness: 0.3 }));
+    faucet.position.set(0, h * 1.1, -d * 0.3);
+    g.add(faucet);
+    return g;
+  }
+
   function fp3dBuildMat(w, d, h, color) {
     var g = new THREE.Group();
     var mesh = new THREE.Mesh(new THREE.BoxGeometry(w, 0.015, d), new THREE.MeshLambertMaterial({ color: color }));
@@ -1856,6 +1877,32 @@
     return g;
   }
 
+  function fp3dBuildWallLight(color) {
+    var g = new THREE.Group();
+    var plate = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.12, 0.02), new THREE.MeshStandardMaterial({ color: 0x8A8A86, metalness: 0.5, roughness: 0.4 }));
+    plate.position.z = 0.01;
+    g.add(plate);
+    var shade = new THREE.Mesh(new THREE.ConeGeometry(0.09, 0.14, 12, 1, true), new THREE.MeshLambertMaterial({ color: color, side: THREE.DoubleSide }));
+    shade.rotation.x = Math.PI / 2;
+    shade.position.set(0, 0, 0.1);
+    g.add(shade);
+    var bulb = new THREE.Mesh(new THREE.SphereGeometry(0.025, 8, 8), new THREE.MeshBasicMaterial({ color: 0xFCEFC7 }));
+    bulb.position.set(0, 0, 0.09);
+    g.add(bulb);
+    return g;
+  }
+
+  function fp3dBuildWallArt(color) {
+    var g = new THREE.Group();
+    var frame = new THREE.Mesh(new THREE.BoxGeometry(0.46, 0.34, 0.025), new THREE.MeshStandardMaterial({ color: 0xC2A05E, metalness: 0.3, roughness: 0.5 }));
+    frame.position.z = 0.0125;
+    g.add(frame);
+    var canvas = new THREE.Mesh(new THREE.PlaneGeometry(0.4, 0.28), new THREE.MeshLambertMaterial({ color: color, side: THREE.DoubleSide }));
+    canvas.position.z = 0.026;
+    g.add(canvas);
+    return g;
+  }
+
   // Always a dark screen regardless of furniture color, like every other
   // appliance here — the actual TV, as opposed to the stand (TV Unit),
   // which already existed but had no screen of its own to mount.
@@ -1916,6 +1963,42 @@
       var btn = new THREE.Mesh(new THREE.SphereGeometry(Math.min(w, d) * 0.035, 6, 6), new THREE.MeshLambertMaterial({ color: color }));
       btn.position.set(p[0] * w, h + 0.005, p[1] * d);
       g.add(btn);
+    });
+    return g;
+  }
+
+  // Foliage is always a fixed green regardless of furniture color (like the
+  // TV screen, always dark) — only the pot picks up the accent color.
+  function fp3dBuildPlant(w, d, h, color) {
+    var g = new THREE.Group();
+    var potH = h * 0.32;
+    var pot = new THREE.Mesh(new THREE.CylinderGeometry(w * 0.42, w * 0.32, potH, 14), new THREE.MeshLambertMaterial({ color: fp3dDarken(color, 0.75) }));
+    pot.position.y = potH / 2;
+    g.add(pot);
+    var foliageMat = new THREE.MeshLambertMaterial({ color: 0x4A7A4E });
+    for (var i = 0; i < 3; i++) {
+      var r = (w * 0.5) * (1 - i * 0.18);
+      var leaf = new THREE.Mesh(new THREE.SphereGeometry(r, 8, 8), foliageMat);
+      leaf.position.set((i - 1) * w * 0.12, potH + h * (0.35 + i * 0.18), (i % 2) * d * 0.08);
+      g.add(leaf);
+    }
+    return g;
+  }
+
+  function fp3dBuildRoundBed(w, d, h, color) {
+    var g = new THREE.Group();
+    var r = Math.min(w, d) / 2;
+    var base = new THREE.Mesh(new THREE.CylinderGeometry(r, r, h, 24), new THREE.MeshLambertMaterial({ color: 0xF2EFE8 }));
+    base.position.y = h / 2;
+    g.add(base);
+    var headboard = new THREE.Mesh(new THREE.CylinderGeometry(r * 1.05, r * 1.05, h * 1.3, 24, 1, true, 0, Math.PI), new THREE.MeshLambertMaterial({ color: color, side: THREE.DoubleSide }));
+    headboard.rotation.y = Math.PI / 2;
+    headboard.position.set(0, h * 0.75, 0);
+    g.add(headboard);
+    [-0.22, 0.22].forEach(function(fx) {
+      var pillow = new THREE.Mesh(new THREE.BoxGeometry(r * 0.5, 0.1, r * 0.5), new THREE.MeshLambertMaterial({ color: color }));
+      pillow.position.set(fx * r, h + 0.05, -r * 0.3);
+      g.add(pillow);
     });
     return g;
   }
@@ -2250,6 +2333,9 @@
   var FP3D_DEFS = [
     { keys: ['bunk bed'], w: 1.0, d: 2.0, h: 1.6, build: fp3dBuildBunkBed },
     { keys: ['nightstand', 'bedside'], w: 0.45, d: 0.4, h: 0.5, build: fp3dBuildNightstand },
+    { keys: ['kids bed', 'toddler bed'], w: 0.7, d: 1.4, h: 0.4, build: fp3dBuildSingleBed },
+    { keys: ['round bed'], w: 1.9, d: 1.9, h: 0.55, build: fp3dBuildRoundBed },
+    { keys: ['sofa bed'], w: 1.8, d: 0.95, h: 0.8, build: fp3dBuildSofa },
     { keys: ['small bed', 'single bed', 'twin bed'], w: 1.0, d: 1.9, h: 0.5, build: fp3dBuildSingleBed },
     { keys: ['large bed', 'king bed', 'queen bed'], w: 2.0, d: 2.1, h: 0.6, build: fp3dBuildBed },
     { keys: ['canopy bed'], w: 1.6, d: 2.0, h: 0.55, build: fp3dBuildCanopyBed },
@@ -2259,15 +2345,22 @@
     { keys: ['l-shaped sofa', 'l shaped sofa', 'sectional sofa', 'corner sofa'], w: 2.2, d: 0.9, h: 0.8, build: fp3dBuildSectionalSofa },
     { keys: ['curved sofa'], w: 2.2, d: 0.9, h: 0.8, build: fp3dBuildCurvedSofa },
     { keys: ['chesterfield'], w: 2.0, d: 0.9, h: 0.85, build: fp3dBuildChesterfieldSofa },
+    { keys: ['loveseat'], w: 1.5, d: 0.9, h: 0.8, build: fp3dBuildSofa },
+    { keys: ['u-shaped sofa', 'u shaped sofa'], w: 2.4, d: 1.8, h: 0.8, build: fp3dBuildSectionalSofa },
     { keys: ['sofa', 'couch'], w: 2.0, d: 0.9, h: 0.8, build: fp3dBuildSofa },
+    { keys: ['kids wardrobe'], w: 0.9, d: 0.5, h: 1.5, build: fp3dBuildWardrobe },
     { keys: ['wardrobe', 'closet'], w: 1.2, d: 0.6, h: 2.0, build: fp3dBuildWardrobe },
     { keys: ['toy shelf'], w: 0.8, d: 0.3, h: 0.9, build: fp3dBuildBookshelf },
     { keys: ['bookshelf', 'shelf'], w: 0.9, d: 0.35, h: 1.9, build: fp3dBuildBookshelf },
     { keys: ['pantry cabinet', 'pantry'], w: 0.8, d: 0.5, h: 2.0, build: fp3dBuildCabinet },
+    { keys: ['storage trunk', 'storage chest'], w: 0.9, d: 0.45, h: 0.45, build: fp3dBuildToyBox },
+    { keys: ['shoe cabinet'], w: 0.8, d: 0.3, h: 0.9, build: fp3dBuildCabinet },
+    { keys: ['display cabinet'], w: 1.0, d: 0.4, h: 1.6, build: fp3dBuildOpenShelf },
     { keys: ['filing cabinet', 'cabinet', 'storage', 'sideboard'], w: 0.9, d: 0.45, h: 1.0, build: fp3dBuildCabinet },
     { keys: ['tv unit', 'tv stand', 'television'], w: 1.4, d: 0.4, h: 0.5, build: fp3dBuildTVUnit },
     { keys: ['tv'], w: 1.1, d: 0.35, h: 0.45, build: fp3dBuildTVOnStand },
     { keys: ['l-shaped desk', 'l shaped desk'], w: 1.4, d: 1.3, h: 0.75, build: fp3dBuildLDesk },
+    { keys: ['study desk'], w: 0.9, d: 0.5, h: 0.6, build: fp3dBuildTable },
     { keys: ['desk'], w: 1.2, d: 0.6, h: 0.75, build: fp3dBuildTable },
     { keys: ['round coffee table'], w: 0.9, d: 0.9, h: 0.42, build: fp3dBuildSideTable },
     { keys: ['coffee table'], w: 1.0, d: 0.55, h: 0.42, build: fp3dBuildTable },
@@ -2275,15 +2368,21 @@
     { keys: ['oval table'], w: 1.6, d: 1.0, h: 0.75, build: fp3dBuildOvalTable },
     { keys: ['dining table'], w: 1.5, d: 0.9, h: 0.75, build: fp3dBuildTable },
     { keys: ['side table'], w: 0.45, d: 0.45, h: 0.5, build: fp3dBuildSideTable },
+    { keys: ['table lamp'], w: 0.22, d: 0.22, h: 0.45, build: fp3dBuildFloorLamp },
+    { keys: ['dressing table', 'makeup vanity'], w: 1.1, d: 0.45, h: 0.75, build: fp3dBuildDresser },
     { keys: ['table'], w: 1.2, d: 0.7, h: 0.75, build: fp3dBuildTable },
     { keys: ['countertop', 'counter'], w: 1.3, d: 0.6, h: 0.9, build: fp3dBuildCounter },
     { keys: ['island'], w: 1.3, d: 0.65, h: 0.9, build: fp3dBuildCounter },
+    { keys: ['double vanity', 'double sink'], w: 1.8, d: 0.55, h: 0.85, build: fp3dBuildVanity },
     { keys: ['vanity', 'sink'], w: 1.3, d: 0.55, h: 0.85, build: fp3dBuildVanity },
     { keys: ['mirror'], w: 0.9, d: 0.04, h: 1.1, build: fp3dBuildMirror },
     { keys: ['bathtub'], w: 1.7, d: 0.75, h: 0.55, build: fp3dBuildBathtub },
     { keys: ['shower'], w: 0.9, d: 0.9, h: 1.9, build: fp3dBuildShower },
     { keys: ['toilet'], w: 0.4, d: 0.6, h: 0.4, build: fp3dBuildToilet },
+    { keys: ['bidet'], w: 0.4, d: 0.55, h: 0.4, build: fp3dBuildBidet },
+    { keys: ['bath mat'], w: 0.7, d: 0.45, h: 0.02, build: fp3dBuildMat },
     { keys: ['towel'], w: 0.6, d: 0.08, h: 0.6, build: fp3dBuildTowelRail },
+    { keys: ['trash bin', 'recycling bin'], w: 0.3, d: 0.3, h: 0.45, build: fp3dBuildHamper },
     { keys: ['hamper', 'laundry'], w: 0.4, d: 0.4, h: 0.55, build: fp3dBuildHamper },
     { keys: ['dresser'], w: 1.0, d: 0.5, h: 0.9, build: fp3dBuildDresser },
     { keys: ['ottoman', 'pouf'], w: 0.5, d: 0.5, h: 0.4, build: fp3dBuildOttoman },
@@ -2304,6 +2403,10 @@
     { keys: ['rug'], w: 1.6, d: 1.0, h: 0.02, build: fp3dBuildMat },
     { keys: ['toy box', 'toybox'], w: 0.6, d: 0.4, h: 0.4, build: fp3dBuildToyBox },
     { keys: ['fridge', 'refrigerator'], w: 0.75, d: 0.7, h: 1.8, build: fp3dBuildFridge },
+    { keys: ['freezer'], w: 0.65, d: 0.7, h: 1.7, build: fp3dBuildFridge },
+    { keys: ['indoor plant', 'plant'], w: 0.4, d: 0.4, h: 0.9, build: fp3dBuildPlant },
+    { keys: ['swivel chair'], w: 0.6, d: 0.6, h: 0.85, build: fp3dBuildTaskChair },
+    { keys: ['kids chair'], w: 0.35, d: 0.35, h: 0.35, build: fp3dBuildChair },
     { keys: ['chair', 'stool'], w: 0.45, d: 0.45, h: 0.45, build: fp3dBuildChair },
     { keys: ['play tent', 'tent'], w: 0.9, d: 0.9, h: 1.1, build: fp3dBuildPlayTent },
     { keys: ['play area'], w: 1.3, d: 1.3, h: 0.02, build: fp3dBuildMat }
@@ -2984,17 +3087,33 @@
       { key: 'Nightstand', icon: 'cabinet' },
       { key: 'Wardrobe', icon: 'cabinet' },
       { key: 'Dresser', icon: 'cabinet' },
+      { key: 'Dressing Table', icon: 'cabinet' },
+      { key: 'Round Bed', icon: 'bed' },
+      { key: 'Storage Trunk', icon: 'cube' },
+      { key: 'Shoe Cabinet', icon: 'cabinet' },
       { key: 'Ottoman', icon: 'chair' },
       { key: 'Bench', icon: 'chair' },
-      { key: 'Wingback Chair', icon: 'chair' }
+      { key: 'Wingback Chair', icon: 'chair' },
+      { key: 'Recliner', icon: 'chair' },
+      { key: 'Side Table', icon: 'table' },
+      { key: 'Table Lamp', icon: 'bulb' },
+      { key: 'Wall Art', icon: 'cube' },
+      { key: 'Indoor Plant', icon: 'leaf' },
+      { key: 'Rug', icon: 'cube' }
     ] },
     { key: 'living', label: 'Living', icon: 'sofa', items: [
       { key: 'Sofa', icon: 'sofa' },
+      { key: 'Loveseat', icon: 'sofa' },
       { key: 'L-Shaped Sofa', icon: 'sofa' },
+      { key: 'U-Shaped Sofa', icon: 'sofa' },
       { key: 'Curved Sofa', icon: 'sofa' },
       { key: 'Chesterfield Sofa', icon: 'sofa' },
+      { key: 'Sofa Bed', icon: 'sofa' },
       { key: 'Armchair', icon: 'chair' },
       { key: 'Recliner', icon: 'chair' },
+      { key: 'Swivel Chair', icon: 'chair' },
+      { key: 'Ottoman', icon: 'chair' },
+      { key: 'Rocking Chair', icon: 'chair' },
       { key: 'Coffee Table', icon: 'table' },
       { key: 'Round Coffee Table', icon: 'table' },
       { key: 'Console Table', icon: 'table' },
@@ -3002,7 +3121,13 @@
       { key: 'TV Unit', icon: 'tv' },
       { key: 'TV', icon: 'tv' },
       { key: 'Bookshelf', icon: 'books' },
+      { key: 'Display Cabinet', icon: 'cabinet' },
+      { key: 'Mirror', icon: 'mirror' },
       { key: 'Floor Lamp', icon: 'sparkle' },
+      { key: 'Table Lamp', icon: 'bulb' },
+      { key: 'Wall Light', icon: 'bulb' },
+      { key: 'Wall Art', icon: 'cube' },
+      { key: 'Indoor Plant', icon: 'leaf' },
       { key: 'Rug', icon: 'cube' }
     ] },
     { key: 'dining', label: 'Dining', icon: 'table', items: [
@@ -3030,25 +3155,39 @@
       { key: 'Microwave', icon: 'cabinet' },
       { key: 'Pantry Cabinet', icon: 'cabinet' },
       { key: 'Fridge', icon: 'cabinet' },
-      { key: 'Dishwasher', icon: 'cabinet' }
+      { key: 'Freezer', icon: 'cabinet' },
+      { key: 'Dishwasher', icon: 'cabinet' },
+      { key: 'Bar Stool', icon: 'chair' },
+      { key: 'Shelf', icon: 'books' },
+      { key: 'Trash Bin', icon: 'cube' }
     ] },
     { key: 'bathroom', label: 'Bathroom', icon: 'bathtub', items: [
       { key: 'Vanity', icon: 'sink' },
+      { key: 'Double Vanity', icon: 'sink' },
       { key: 'Mirror', icon: 'mirror' },
       { key: 'Bathtub', icon: 'bathtub' },
       { key: 'Shower', icon: 'shower' },
       { key: 'Toilet', icon: 'toilet' },
+      { key: 'Bidet', icon: 'toilet' },
+      { key: 'Medicine Cabinet', icon: 'cabinet' },
       { key: 'Shelf', icon: 'books' },
       { key: 'Towel Rail', icon: 'books' },
+      { key: 'Bench', icon: 'chair' },
+      { key: 'Bath Mat', icon: 'cube' },
       { key: 'Laundry Hamper', icon: 'cube' }
     ] },
     { key: 'kids', label: 'Kids', icon: 'teddy', items: [
+      { key: 'Kids Bed', icon: 'bed' },
       { key: 'Bunk Bed', icon: 'bed' },
+      { key: 'Kids Wardrobe', icon: 'cabinet' },
+      { key: 'Study Desk', icon: 'table' },
+      { key: 'Kids Chair', icon: 'chair' },
       { key: 'Rocking Chair', icon: 'chair' },
       { key: 'Toy Shelf', icon: 'books' },
       { key: 'Play Tent', icon: 'teddy' },
       { key: 'Play Area', icon: 'teddy' },
       { key: 'Toy Box', icon: 'cube' },
+      { key: 'Night Light', icon: 'bulb' },
       { key: 'Rug', icon: 'cube' }
     ] },
     { key: 'electrical', label: 'Electrical', icon: 'switchPlate', items: [
@@ -3301,19 +3440,26 @@
   // instead of the floor — generalizes what used to be the 'switch'-only
   // path so Wall Clock/AC Unit/Water Heater reuse the exact same
   // placement, rotation, and thumbnail logic.
-  var D3D_WALL_ITEM_KEYS = ['switch', 'Wall Clock', 'AC Unit', 'Water Heater'];
+  var D3D_WALL_ITEM_KEYS = ['switch', 'Wall Clock', 'AC Unit', 'Water Heater', 'Wall Light', 'Wall Art', 'Night Light'];
   var D3D_WALL_ITEM_DIMS = {
     switch: { w: 0.3, d: 0.2, h: 0.4 },
     'Wall Clock': { w: 0.32, d: 0.1, h: 0.32 },
     'AC Unit': { w: 0.36, d: 0.14, h: 0.2 },
     'Water Heater': { w: 0.5, d: 0.3, h: 0.3 },
-    'TV': { w: 1.0, d: 0.035, h: 0.56 }
+    'TV': { w: 1.0, d: 0.035, h: 0.56 },
+    'Wall Light': { w: 0.18, d: 0.18, h: 0.18 },
+    'Wall Art': { w: 0.46, d: 0.025, h: 0.34 },
+    // Same fixture as Wall Light, just the smaller size a bedside night
+    // light actually is — reuses fp3dBuildWallLight rather than a new build.
+    'Night Light': { w: 0.1, d: 0.1, h: 0.1 }
   };
   function d3dBuildWallItemMesh(key) {
     if (key === 'Wall Clock') return fp3dBuildWallClock(d3dFurnColor);
     if (key === 'AC Unit') return fp3dBuildACUnit(d3dFurnColor);
     if (key === 'Water Heater') return fp3dBuildWaterHeater(d3dFurnColor);
     if (key === 'TV') return fp3dBuildTVScreen(d3dFurnColor);
+    if (key === 'Wall Light' || key === 'Night Light') return fp3dBuildWallLight(d3dFurnColor);
+    if (key === 'Wall Art') return fp3dBuildWallArt(d3dFurnColor);
     return d3dBuildSwitchMesh();
   }
 
