@@ -302,6 +302,37 @@
      mobile media query below for its visible styling. */
   .card-sheet-header { display: none; }
 
+  /* METHOD CHOOSER — the auth card's default state on load: an icon,
+     a title, and three pill buttons (Google / Apple / email) instead of
+     jumping straight to the Sign In form. "Continue with Email" reveals
+     #emailAuthForm (the existing tabs+form, untouched) in its place;
+     Google/Apple are visual-only for now — see handleSocialComingSoon(). */
+  #authMethodChooser { text-align: center; padding: 8px 0 4px; }
+  .method-icon {
+    width: 64px; height: 64px; margin: 0 auto 18px; border-radius: 50%;
+    background: var(--gold-dim); color: var(--gold-deep);
+    display: flex; align-items: center; justify-content: center;
+  }
+  .method-icon .icon-svg { width: 28px; height: 28px; }
+  .method-title { font-size: 20px; font-weight: 900; color: var(--white); margin-bottom: 6px; }
+  .method-sub { font-size: 13px; color: var(--gray); line-height: 1.6; margin-bottom: 26px; }
+  .method-btn {
+    width: 100%; display: flex; align-items: center; justify-content: center; gap: 10px;
+    padding: 13px 16px; border-radius: 12px; margin-bottom: 12px; cursor: pointer;
+    font-family: 'Tajawal', sans-serif; font-size: 14.5px; font-weight: 700;
+    border: 1.5px solid var(--border); background: var(--dark); color: var(--white);
+    transition: border-color 0.2s;
+  }
+  .method-btn:hover { border-color: var(--gold); }
+  .method-btn svg, .method-btn .apple-glyph { width: 19px; height: 19px; flex-shrink: 0; }
+  .method-btn-primary {
+    background: linear-gradient(135deg, #eef0f2 0%, var(--gold-light) 16%, var(--gold) 42%, var(--gold-deep) 65%, var(--gold) 84%, #eef0f2 100%);
+    color: var(--card); text-shadow: 0 1px 2px rgba(0,0,0,0.25); border: none;
+    box-shadow: 0 14px 30px -10px rgba(61,67,75,0.5);
+  }
+  .method-divider { display: flex; align-items: center; gap: 10px; margin: 6px 0 16px; color: var(--gray); font-size: 11.5px; }
+  .method-divider::before, .method-divider::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+
   /* TABS */
   .auth-tabs {
     display: flex;
@@ -851,6 +882,32 @@
       <p class="left-sub card-sub">أول منصة تصميم داخلي بالذكاء الاصطناعي — بثماني لغات، لكل بيت، في كل مكان.</p>
     </div>
 
+    <!-- METHOD CHOOSER — default state; "Continue with Email" reveals
+         #emailAuthForm below in its place. Google/Apple are visual-only
+         until real OAuth credentials are wired up (see
+         handleSocialComingSoon()). Hidden entirely for Telegram Mini App
+         visitors and a direct password-reset link — both call
+         showAuthForm() themselves on load, skipping this screen. -->
+    <div id="authMethodChooser">
+      <div class="method-icon"><svg class="icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8L12 3z"/></svg></div>
+      <div class="method-title" id="methodTitle">تسجيل الدخول / إنشاء حساب</div>
+      <div class="method-sub" id="methodSub">اختر طريقة المتابعة</div>
+      <button type="button" class="method-btn" onclick="handleSocialComingSoon('Google')">
+        <svg viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg"><path fill="#FFC107" d="M43.6 20.5H42V20H24v8h11.3c-1.6 4.7-6.1 8-11.3 8-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.8 1.1 8 3l5.7-5.7C34.9 6.1 29.7 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20 20-8.9 20-20c0-1.3-.1-2.7-.4-3.5z"/><path fill="#FF3D00" d="M6.3 14.7l6.6 4.8C14.6 15.1 18.9 12 24 12c3.1 0 5.8 1.1 8 3l5.7-5.7C34.9 6.1 29.7 4 24 4c-7.5 0-14 4.2-17.7 10.7z"/><path fill="#4CAF50" d="M24 44c5.6 0 10.6-1.9 14.3-5.1l-6.6-5.6C29.7 35.1 27 36 24 36c-5.2 0-9.6-3.3-11.3-8l-6.6 5.1C9.9 39.8 16.4 44 24 44z"/><path fill="#1976D2" d="M43.6 20.5H42V20H24v8h11.3c-.8 2.2-2.2 4.1-4.1 5.4l6.6 5.6C40.5 36.6 44 30.9 44 24c0-1.3-.1-2.7-.4-3.5z"/></svg>
+        <span id="btnGoogleLabel">المتابعة مع Google</span>
+      </button>
+      <button type="button" class="method-btn" onclick="handleSocialComingSoon('Apple')">
+        <svg class="apple-glyph" viewBox="0 0 24 24" fill="currentColor"><path d="M16.1 12.7c0-2.1 1.7-3.1 1.8-3.2-1-1.4-2.5-1.6-3-1.6-1.3-.1-2.5.8-3.1.8-.6 0-1.6-.7-2.6-.7-1.3 0-2.6.8-3.3 2-1.4 2.4-.4 6 1 8 .7 1 1.5 2.1 2.6 2 1-.1 1.4-.7 2.7-.7 1.2 0 1.6.7 2.7.6 1.1 0 1.8-1 2.5-2 .8-1.1 1.1-2.2 1.1-2.3-.1 0-2.4-.9-2.4-3.9zM14 6c.6-.7 1-1.7.9-2.7-.8.1-1.9.6-2.5 1.3-.6.6-1.1 1.6-.9 2.6 1 .1 1.9-.5 2.5-1.2z"/></svg>
+        <span id="btnAppleLabel">المتابعة مع Apple</span>
+      </button>
+      <div class="method-divider" id="methodDivider">أو</div>
+      <button type="button" class="method-btn method-btn-primary" onclick="showAuthForm()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="5.5" width="17" height="13" rx="2"/><path d="M4 6.5l8 6.5 8-6.5"/></svg>
+        <span id="btnEmailLabel">المتابعة بالإيميل</span>
+      </button>
+    </div>
+
+    <div id="emailAuthForm" style="display:none;">
     <!-- TABS -->
     <div class="auth-tabs" id="authTabs">
       <div class="auth-tab active" onclick="switchTab('login')" id="tab-login">تسجيل الدخول</div>
@@ -932,6 +989,7 @@
         </p>
       </div>
 
+    </div>
     </div>
 
     <!-- Always visible regardless of which tab (login/register) is active, unlike the register-only terms-text above -->
@@ -1067,6 +1125,27 @@
     document.getElementById('tab-register').classList.toggle('active', tab === 'register');
     document.getElementById('loginForm').style.display = tab === 'login' ? 'block' : 'none';
     document.getElementById('registerForm').style.display = tab === 'register' ? 'block' : 'none';
+  }
+
+  // METHOD CHOOSER — reveals the existing email tabs+form in place of the
+  // Google/Apple/Email picker. Telegram auto-login and a direct
+  // password-reset link both call this themselves on load to skip the
+  // chooser entirely (see telegramAutoLogin() and the DOMContentLoaded
+  // handler below).
+  function showAuthForm() {
+    document.getElementById('authMethodChooser').style.display = 'none';
+    document.getElementById('emailAuthForm').style.display = '';
+  }
+
+  // Google/Apple aren't wired up yet — real sign-in needs OAuth
+  // credentials from the Lamsa team (Google Client ID; Apple Services
+  // ID/Team ID/Key ID/private key) that aren't available yet. Shown as a
+  // toast rather than silently doing nothing, so tapping the button is
+  // never a dead end.
+  function handleSocialComingSoon(provider) {
+    var isAr = currentLang === 'ar';
+    var label = provider === 'Google' ? (isAr ? 'جوجل' : 'Google') : (isAr ? 'آبل' : 'Apple');
+    showToast(isAr ? ('تسجيل الدخول عبر ' + label + ' قريباً — فيك تستخدمي الإيميل الآن') : ('Sign in with ' + label + ' is coming soon — use email for now'), 'info');
   }
 
   // TOGGLE PASSWORD
@@ -1383,6 +1462,10 @@
     var tg = window.Telegram && window.Telegram.WebApp;
     if (!isTelegramMiniApp || !tg || !tg.initData) return;
 
+    // Telegram already vouches for this user's identity — skip the
+    // Google/Apple/Email picker entirely rather than showing it only to
+    // immediately cover it with the loading spinner.
+    showAuthForm();
     document.getElementById('authTabs').style.display = 'none';
     document.getElementById('formContent').style.display = 'none';
     document.getElementById('tgLoginLoading').style.display = '';
@@ -1433,6 +1516,8 @@
       leftTitle: 'صمّم بيتك<br><span class="gold">بلمستك</span> الخاصة',
       leftSub: 'أول منصة تصميم داخلي بالذكاء الاصطناعي — بثماني لغات، لكل بيت، في كل مكان.',
       tabLogin: 'تسجيل الدخول', tabRegister: 'حساب جديد',
+      methodTitle: 'تسجيل الدخول / إنشاء حساب', methodSub: 'اختر طريقة المتابعة',
+      methodGoogle: 'المتابعة مع Google', methodApple: 'المتابعة مع Apple', methodEmail: 'المتابعة بالإيميل', methodOr: 'أو',
       userLabel: 'اسم المستخدم أو الإيميل', userPlaceholder: 'اسم المستخدم أو الإيميل',
       passLabel: 'كلمة المرور', passPlaceholder: 'كلمة المرور',
       forgotPass: 'نسيت كلمة المرور؟',
@@ -1452,6 +1537,8 @@
       leftTitle: 'Design Your Home<br>With Your <span class="gold">Touch</span>',
       leftSub: 'First AI interior design platform — in 8 languages, for every home, everywhere.',
       tabLogin: 'Sign In', tabRegister: 'New Account',
+      methodTitle: 'Sign In / Register', methodSub: "Choose how you'd like to continue",
+      methodGoogle: 'Continue with Google', methodApple: 'Continue with Apple', methodEmail: 'Continue with Email', methodOr: 'or',
       userLabel: 'Username or Email', userPlaceholder: 'Username or Email',
       passLabel: 'Password', passPlaceholder: 'Password',
       forgotPass: 'Forgot password?',
@@ -1471,6 +1558,8 @@
       leftTitle: 'Gestalte dein Zuhause<br>Mit deiner <span class="gold">Note</span>',
       leftSub: 'Erste KI-Innendesignplattform — in 8 Sprachen, für jedes Zuhause, überall.',
       tabLogin: 'Anmelden', tabRegister: 'Neues Konto',
+      methodTitle: 'Anmelden / Registrieren', methodSub: 'Wähle, wie du fortfahren möchtest',
+      methodGoogle: 'Mit Google fortfahren', methodApple: 'Mit Apple fortfahren', methodEmail: 'Mit E-Mail fortfahren', methodOr: 'oder',
       userLabel: 'Benutzername oder E-Mail', userPlaceholder: 'Benutzername oder E-Mail',
       passLabel: 'Passwort', passPlaceholder: 'Passwort',
       forgotPass: 'Passwort vergessen?',
@@ -1490,6 +1579,8 @@
       leftTitle: 'Diseña tu hogar<br>Con tu <span class="gold">toque</span>',
       leftSub: 'Primera plataforma de diseño interior con IA — en 8 idiomas, para cada hogar, en todas partes.',
       tabLogin: 'Iniciar sesión', tabRegister: 'Nueva cuenta',
+      methodTitle: 'Iniciar sesión / Registrarse', methodSub: 'Elige cómo quieres continuar',
+      methodGoogle: 'Continuar con Google', methodApple: 'Continuar con Apple', methodEmail: 'Continuar con correo electrónico', methodOr: 'o',
       userLabel: 'Usuario o correo', userPlaceholder: 'Usuario o correo electrónico',
       passLabel: 'Contraseña', passPlaceholder: 'Contraseña',
       forgotPass: '¿Olvidaste tu contraseña?',
@@ -1509,6 +1600,8 @@
       leftTitle: 'Evinizi Tasarlayin<br><span class="gold">Kendi</span> Dokunusunuzla',
       leftSub: 'Ilk yapay zeka ic tasarim platformu — 8 dilde, her ev icin, her yerde.',
       tabLogin: 'Giris Yap', tabRegister: 'Yeni Hesap',
+      methodTitle: 'Giris Yap / Kayit Ol', methodSub: 'Nasil devam etmek istedigini sec',
+      methodGoogle: 'Google ile devam et', methodApple: 'Apple ile devam et', methodEmail: 'E-posta ile devam et', methodOr: 'veya',
       userLabel: 'Kullanici adi veya E-posta', userPlaceholder: 'Kullanici adi veya E-posta',
       passLabel: 'Sifre', passPlaceholder: 'Sifre',
       forgotPass: 'Sifreni mi unuttun?',
@@ -1528,6 +1621,8 @@
       leftTitle: 'Concevez votre maison<br>Avec votre <span class="gold">touche</span>',
       leftSub: 'Premiere plateforme de design interieur IA — en 8 langues, pour chaque maison, partout.',
       tabLogin: 'Connexion', tabRegister: 'Nouveau compte',
+      methodTitle: 'Connexion / Inscription', methodSub: 'Choisissez comment continuer',
+      methodGoogle: 'Continuer avec Google', methodApple: 'Continuer avec Apple', methodEmail: 'Continuer avec email', methodOr: 'ou',
       userLabel: 'Nom utilisateur ou email', userPlaceholder: 'Nom utilisateur ou email',
       passLabel: 'Mot de passe', passPlaceholder: 'Mot de passe',
       forgotPass: 'Mot de passe oublie?',
@@ -1547,6 +1642,8 @@
       leftTitle: 'Progetta la tua casa<br>Con il tuo <span class="gold">tocco</span>',
       leftSub: 'Prima piattaforma di interior design IA — in 8 lingue, per ogni casa, ovunque.',
       tabLogin: 'Accedi', tabRegister: 'Nuovo account',
+      methodTitle: 'Accedi / Registrati', methodSub: 'Scegli come continuare',
+      methodGoogle: 'Continua con Google', methodApple: 'Continua con Apple', methodEmail: "Continua con l'email", methodOr: 'o',
       userLabel: 'Nome utente o email', userPlaceholder: 'Nome utente o email',
       passLabel: 'Password', passPlaceholder: 'Password',
       forgotPass: 'Password dimenticata?',
@@ -1566,6 +1663,8 @@
       leftTitle: 'Oformite svoy dom<br>So svoim <span class="gold">stilem</span>',
       leftSub: 'Pervaya platforma dizayna na II — na 8 yazykakh, dlya kazhdogo doma, vezde.',
       tabLogin: 'Vkhod', tabRegister: 'Novyy akkaunt',
+      methodTitle: 'Vkhod / Registratsiya', methodSub: 'Vyberite, kak prodolzhit',
+      methodGoogle: 'Prodolzhit s Google', methodApple: 'Prodolzhit s Apple', methodEmail: 'Prodolzhit s email', methodOr: 'ili',
       userLabel: 'Imya polzovatelya ili email', userPlaceholder: 'Imya polzovatelya ili email',
       passLabel: 'Parol', passPlaceholder: 'Parol',
       forgotPass: 'Zabyli parol?',
@@ -1621,6 +1720,12 @@
     document.querySelectorAll('.left-sub').forEach(function(el) { el.textContent = t.leftSub; });
     document.getElementById('tab-login').textContent = t.tabLogin;
     document.getElementById('tab-register').textContent = t.tabRegister;
+    document.getElementById('methodTitle').textContent = t.methodTitle;
+    document.getElementById('methodSub').textContent = t.methodSub;
+    document.getElementById('btnGoogleLabel').textContent = t.methodGoogle;
+    document.getElementById('btnAppleLabel').textContent = t.methodApple;
+    document.getElementById('btnEmailLabel').textContent = t.methodEmail;
+    document.getElementById('methodDivider').textContent = t.methodOr;
 
     // Update feature list
     document.querySelectorAll('.feature-item span[data-en], .eyebrow span[data-en]').forEach(function(el) {
@@ -1694,7 +1799,7 @@
     telegramAutoLogin();
     try {
       var resetToken = new URLSearchParams(window.location.search).get('reset');
-      if (resetToken) openResetPassword(resetToken);
+      if (resetToken) { showAuthForm(); openResetPassword(resetToken); }
     } catch (e) {}
   });
 

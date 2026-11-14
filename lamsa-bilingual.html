@@ -5,18 +5,12 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <meta name="color-scheme" content="light">
 <script>
-  // Fast, optimistic auth check to avoid a flash of the app before redirecting
-  // — this only looks at a local cache and can't be trusted for anything
-  // security-relevant. The real check is checkAuth() (calls /api/me against
-  // the actual server session) run on DOMContentLoaded further down.
-  (function() {
-    try {
-      var user = JSON.parse(localStorage.getItem('lamsa_user') || 'null');
-      if (!user || !user.loggedIn) window.location.replace('lamsa-auth.html');
-    } catch (e) {
-      window.location.replace('lamsa-auth.html');
-    }
-  })();
+  // Home is browsable as a guest — no redirect here. An account is only
+  // required at the point of an actual action that costs money (hitting
+  // Generate) or needs an identity (History, Settings, subscribing);
+  // those gate themselves. checkAuth() (calls /api/me against the real
+  // server session, further down) still runs on load so currentUser is
+  // populated for anyone who IS already logged in.
 </script>
 <title>لمستي | Lamsa</title>
 <link rel="icon" type="image/png" sizes="32x32" href="assets/favicon-32.png">
@@ -457,7 +451,10 @@
   /* ===== HOME SCREEN (tool grid + feed) ===== */
   #homeScreen { padding: 88px 16px 24px; max-width: 900px; margin: 0 auto; }
   .home-credits {
-    display: flex; align-items: center; justify-content: center; gap: 6px;
+    /* Hidden until renderCreditBalance() actually has a balance to show —
+       guests never trigger that, so this stays empty/invisible for them
+       instead of floating as a blank pill. */
+    display: none; align-items: center; justify-content: center; gap: 6px;
     background: var(--gold-dim); color: var(--gold-deep); border-radius: 20px;
     padding: 7px 16px; font-size: 12.5px; font-weight: 800; width: fit-content;
     margin: 0 auto 20px;
@@ -1261,8 +1258,12 @@
       </div>
     </div>
     <button class="nav-cta" onclick="scrollToForm()" data-ar="ابدأ مجاناً" data-en="Start Free" data-de="Kostenlos starten" data-es="Empezar gratis">Start Free</button>
-    <button type="button" class="nav-logout" onclick="logout()" data-en="Log Out" data-ar="تسجيل الخروج">Log Out</button>
-    <button type="button" class="nav-logout" onclick="deleteAccount()" data-en="Delete Account" data-ar="حذف الحساب" data-de="Konto löschen" data-es="Eliminar cuenta">Delete Account</button>
+    <!-- Swapped for a single "Sign In" link for guests — see the
+         checkAuth().then() branch below; nothing to log out of or
+         delete until there's an actual account. -->
+    <a class="nav-logout" href="lamsa-auth.html" id="navSignInBtn" style="display:none;text-decoration:none;" data-en="Sign In" data-ar="تسجيل الدخول">Sign In</a>
+    <button type="button" class="nav-logout" onclick="logout()" id="navLogoutBtn" data-en="Log Out" data-ar="تسجيل الخروج">Log Out</button>
+    <button type="button" class="nav-logout" onclick="deleteAccount()" id="navDeleteBtn" data-en="Delete Account" data-ar="حذف الحساب" data-de="Konto löschen" data-es="Eliminar cuenta">Delete Account</button>
   </div>
 </nav>
 
@@ -2848,12 +2849,16 @@
   // generate()/credits/checkout — this call is what enforces that, redirecting
   // to login if the session is missing or expired. The localStorage flag some
   // older code paths still read is just a display cache, not a security check.
+  // Resolves to the logged-in user, or null for a guest — never redirects.
+  // Callers that actually require an account (generate(), History,
+  // Settings, checkout) check the result themselves and send the visitor
+  // to lamsa-auth.html only at that point.
   function checkAuth() {
     return fetch('/api/me', { credentials: 'include' })
       .then(function(r) { return r.json().then(function(data) { return { ok: r.ok, data: data }; }); })
       .then(function(result) {
         if (!result.ok) {
-          window.location.replace('lamsa-auth.html');
+          try { localStorage.removeItem('lamsa_user'); } catch (e) {}
           return null;
         }
         currentUser = result.data;
@@ -2862,9 +2867,18 @@
       })
       .catch(function(err) {
         console.error('[auth] session check failed:', err);
-        window.location.replace('lamsa-auth.html');
         return null;
       });
+  }
+
+  // Guest-safe gate for anything that needs a real account — generating a
+  // design (costs real fal.ai money per call), viewing History/Settings,
+  // or subscribing. Returns true and does nothing if already logged in;
+  // otherwise sends the visitor to sign in and returns false.
+  function requireLogin() {
+    if (currentUser) return true;
+    window.location.href = 'lamsa-auth.html';
+    return false;
   }
 
   // Permanent, in-app account deletion (required by Google Play for any app
@@ -2912,6 +2926,7 @@
 
     var homeBadge = document.getElementById('homeCreditsBadge');
     if (homeBadge && lastCreditBalance !== null) {
+      homeBadge.style.display = 'flex';
       homeBadge.innerHTML = (window.icon ? window.icon('sparkle') : '') + ' ' +
         '<b>' + lastCreditBalance + '</b> ' +
         (isAr ? (lastCreditBalance === 1 ? 'تصميم' : 'تصاميم') : ('credit' + (lastCreditBalance === 1 ? '' : 's')));
@@ -3395,10 +3410,11 @@
       return;
     }
 
-    // No email/login check here — the page-load auth guard (checkAuth())
-    // already redirects to lamsa-auth.html if there's no valid session, and
-    // callGenerate() below handles a 401 defensively in case the session
-    // expired mid-visit.
+    // Guests can fill out the whole wizard freely — this is the one place
+    // an account is actually required, since a real fal.ai call costs
+    // money. callGenerate() below still handles a 401 defensively in case
+    // the session expired mid-visit after this check passed.
+    if (!requireLogin()) return;
     doGenerate();
   }
 
@@ -4185,7 +4201,10 @@
     resultAreaSnapshot = document.getElementById('resultArea').innerHTML;
     initHomeScreen();
     checkAuth().then(function(user) {
-      if (!user) return; // checkAuth() already redirected to login
+      document.getElementById('navSignInBtn').style.display = user ? 'none' : '';
+      document.getElementById('navLogoutBtn').style.display = user ? '' : 'none';
+      document.getElementById('navDeleteBtn').style.display = user ? '' : 'none';
+      if (!user) return; // guest — nothing more to do until they sign in
       refreshCreditBalance();
       handleCheckoutRedirect();
 

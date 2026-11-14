@@ -5,19 +5,9 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <meta name="color-scheme" content="light">
 <script>
-  // Fast, optimistic auth check to avoid a flash of the app before
-  // redirecting — this page previously had no auth guard at all. This local
-  // check can't be trusted for anything security-relevant; the real check is
-  // checkAuth() (calls /api/me against the actual server session) on
-  // DOMContentLoaded further down.
-  (function() {
-    try {
-      var user = JSON.parse(localStorage.getItem('lamsa_user') || 'null');
-      if (!user || !user.loggedIn) window.location.replace('lamsa-auth.html');
-    } catch (e) {
-      window.location.replace('lamsa-auth.html');
-    }
-  })();
+  // This tool is browsable as a guest — no redirect here. An account is
+  // only required when Generate is actually clicked (a real fal.ai call
+  // costs money); see the guard in generate() further down.
 </script>
 <title>Rearrange My Room | Lamsa</title>
 <link rel="icon" type="image/png" sizes="32x32" href="assets/favicon-32.png">
@@ -289,7 +279,8 @@
   </a>
   <div class="nav-right">
     <a class="back-link" href="lamsa-bilingual.html"><svg class="icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M11 6l-6 6 6 6"/></svg> Full Designer</a>
-    <button type="button" class="nav-logout" onclick="logout()">Log Out</button>
+    <a class="nav-logout" href="lamsa-auth.html" id="navSignInBtn" style="display:none;text-decoration:none;">Sign In</a>
+    <button type="button" class="nav-logout" onclick="logout()" id="navLogoutBtn">Log Out</button>
   </div>
 </nav>
 
@@ -854,12 +845,13 @@
   // checkout — this call enforces that, redirecting to login if the session
   // is missing or expired. The localStorage flag checked at the top of
   // <head> is just a fast optimistic check, not a security boundary.
+  // Resolves to the logged-in user, or null for a guest — never redirects.
   function checkAuth() {
     return fetch('/api/me', { credentials: 'include' })
       .then(function(r) { return r.json().then(function(data) { return { ok: r.ok, data: data }; }); })
       .then(function(result) {
         if (!result.ok) {
-          window.location.replace('lamsa-auth.html');
+          try { localStorage.removeItem('lamsa_user'); } catch (e) {}
           return null;
         }
         currentUser = result.data;
@@ -868,9 +860,16 @@
       })
       .catch(function(err) {
         console.error('[auth] session check failed:', err);
-        window.location.replace('lamsa-auth.html');
         return null;
       });
+  }
+
+  // Guest-safe gate for Generate — sends the visitor to sign in and
+  // returns false if there's no account yet.
+  function requireLogin() {
+    if (currentUser) return true;
+    window.location.href = 'lamsa-auth.html';
+    return false;
   }
 
   function logout() {
@@ -1021,7 +1020,9 @@
 
   window.addEventListener('DOMContentLoaded', function() {
     checkAuth().then(function(user) {
-      if (!user) return; // checkAuth() already redirected to login
+      document.getElementById('navSignInBtn').style.display = user ? 'none' : '';
+      document.getElementById('navLogoutBtn').style.display = user ? '' : 'none';
+      if (!user) return; // guest — nothing more to do until they sign in
       refreshCreditBalance();
       handleCheckoutRedirect();
     });
@@ -1029,11 +1030,8 @@
 
   function generate() {
     if (!state.uploadedFile) return;
+    if (!requireLogin()) return;
 
-    // No email/login check here — the page-load auth guard (checkAuth())
-    // already redirects to lamsa-auth.html if there's no valid session, and
-    // callGenerate() handles a 401 defensively in case the session expired
-    // mid-visit.
     console.log('[auto] Generate clicked, sub-mode =', state.subMode);
 
     document.getElementById('generateBtn').disabled = true;
