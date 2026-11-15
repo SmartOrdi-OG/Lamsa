@@ -13,6 +13,16 @@ const STATS_VISIBLE_EMAILS = new Set(['team@smartordi.eu']);
 export default async function handler(req, res) {
   if (req.method !== 'GET' && req.method !== 'POST' && req.method !== 'DELETE') return res.status(405).json({ error: 'Method not allowed' });
 
+  // Public, unauthenticated config for the login screen (Google/Apple
+  // Client IDs aren't secrets — they're meant to be read by the browser —
+  // so this needs no session and no database, unlike everything else here.
+  if (req.method === 'GET' && req.query.view === 'config') {
+    return res.status(200).json({
+      googleClientId: process.env.GOOGLE_CLIENT_ID || null,
+      appleClientId: process.env.APPLE_CLIENT_ID || null
+    });
+  }
+
   if (!redis) {
     console.error('[me] Upstash Redis not configured');
     return res.status(500).json({ error: 'Database not configured' });

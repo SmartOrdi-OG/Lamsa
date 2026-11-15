@@ -2,17 +2,19 @@ import { redis, logError } from './_db.js';
 import {
   resolveLoginEmail, getUser, verifyPassword, createSession, setSessionCookie,
   deleteUser, getSessionTokenFromRequest, destroySession, clearSessionCookie,
-  createPasswordResetToken, resetPasswordWithToken, sendPasswordResetEmail
+  createPasswordResetToken, resetPasswordWithToken, sendPasswordResetEmail,
+  verifyGoogleIdToken, verifyAppleIdToken, getOrCreateOAuthUser
 } from './_auth.js';
 
-// action: 'delete', 'request_reset' and 'reset_password' are piggybacked on
-// this endpoint (rather than new API files) for the same reason api/me.js
-// does it for 'rate' — Vercel's Hobby plan caps serverless functions at 12
-// and this project is already at that limit. 'delete' is the
+// action: 'delete', 'request_reset', 'reset_password' and 'oauth' are
+// piggybacked on this endpoint (rather than new API files) for the same
+// reason api/me.js does it for 'rate' — Vercel's Hobby plan caps serverless
+// functions at 12 and this project is already at that limit. 'delete' is the
 // password-verified account deletion used by the public delete-account.html
 // page; 'request_reset'/'reset_password' back the "Forgot password?" flow,
 // neither of which take a password up front, so they're handled before the
-// email+password check every other action needs.
+// email+password check every other action needs; 'oauth' is Google/Apple
+// sign-in, which takes a provider ID token instead of email+password.
 export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
 
@@ -23,10 +25,11 @@ export default async function handler(req, res) {
 
   // The `email` field accepts either an email address or a username — kept
   // as `email` for frontend/API compatibility, resolved below.
-  const { email, password, action, token, newPassword } = req.body || {};
+  const { email, password, action, token, newPassword, provider, idToken, fullName } = req.body || {};
 
   if (action === 'request_reset') return handleRequestReset(req, res, email);
   if (action === 'reset_password') return handleResetPassword(req, res, token, newPassword);
+  if (action === 'oauth') return handleOAuthLogin(req, res, provider, idToken, fullName);
 
   if (!email || !password) {
     return res.status(400).json({ error: 'Please enter your email or username and password' });
@@ -113,5 +116,38 @@ async function handleResetPassword(req, res, token, newPassword) {
     console.error('[auth-login] reset_password error:', err.message);
     await logError('auth-login:reset_password', err.message, err.stack);
     return res.status(500).json({ error: 'Could not reset your password' });
+  }
+}
+
+// Google/Apple sign-in: the frontend already got an identity token straight
+// from the provider's own JS SDK (no redirect hop, no client secret) — this
+// just verifies it server-side and finds-or-creates the account by its
+// verified email, same session as an email/password login from here on.
+async function handleOAuthLogin(req, res, provider, idToken, fullName) {
+  if (provider !== 'google' && provider !== 'apple') {
+    return res.status(400).json({ error: 'Unknown sign-in provider' });
+  }
+  if (!idToken) return res.status(400).json({ error: 'Missing sign-in token' });
+
+  try {
+    const claims = provider === 'google'
+      ? await verifyGoogleIdToken(idToken)
+      : await verifyAppleIdToken(idToken);
+
+    const { user, isNew } = await getOrCreateOAuthUser({
+      email: claims.email,
+      name: claims.name || fullName || null,
+      provider
+    });
+
+    const token = await createSession(user.email);
+    setSessionCookie(res, req, token);
+
+    console.log('[auth-login] oauth', provider, isNew ? 'created' : 'logged in', user.email);
+    return res.status(200).json({ username: user.username, email: user.email });
+  } catch (err) {
+    console.error('[auth-login] oauth error:', err.message);
+    await logError('auth-login:oauth', err.message, err.stack);
+    return res.status(401).json({ error: 'Sign-in failed — please try again' });
   }
 }
