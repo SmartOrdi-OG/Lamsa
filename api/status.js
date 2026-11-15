@@ -1,5 +1,5 @@
-import { redis, getAllRatings, getRecentErrors, clearErrors, getGenerationCount, saveDesignToHistory } from './_db.js';
-import { requireSessionEmail } from './_auth.js';
+import { redis, getAllRatings, getRecentErrors, clearErrors, getGenerationCount, saveDesignToHistory, addCredits } from './_db.js';
+import { requireSessionEmail, EMAIL_RE } from './_auth.js';
 import { stripe } from './_stripe.js';
 
 // Same shape-sniffing the client already does in extractResultImages() —
@@ -145,6 +145,23 @@ async function handleAdmin(req, res) {
     if (view === 'clear_errors') {
       await clearErrors();
       return res.status(200).json({ ok: true });
+    }
+
+    // Manual credit grant for support/QA — e.g. topping up the team's own
+    // test account after it burns through its credits trying a fix.
+    if (view === 'grant_credit') {
+      const { targetEmail, amount } = req.body || {};
+      const normalizedTarget = (targetEmail || '').trim().toLowerCase();
+      if (!EMAIL_RE.test(normalizedTarget)) {
+        return res.status(400).json({ error: 'Valid targetEmail required' });
+      }
+      const amt = parseInt(amount, 10);
+      if (!Number.isFinite(amt) || amt === 0) {
+        return res.status(400).json({ error: 'amount must be a non-zero integer' });
+      }
+      const newBalance = await addCredits(normalizedTarget, amt);
+      console.log('[api/status admin] granted', amt, 'credit(s) to', normalizedTarget, '-> balance', newBalance);
+      return res.status(200).json({ ok: true, email: normalizedTarget, newBalance });
     }
 
     if (view === 'config') {
