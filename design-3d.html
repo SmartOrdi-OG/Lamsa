@@ -271,6 +271,43 @@
   .d3d-card-icon img { width: 42px; height: 42px; display: block; margin: 0 auto; object-fit: contain; }
   .d3d-card-label { font-size: 10.5px; color: var(--gray); font-weight: 600; }
   .d3d-card.active .d3d-card-label { color: var(--gold-deep); }
+
+  /* Cycling before/after background (Ken Burns zoom + wipe reveal) for the
+     paywall's hero image — same mechanic as the main app's hero/demo
+     gallery, ported here since this page has its own standalone paywall. */
+  .hero-pair { position: absolute; inset: 0; opacity: 0; transition: opacity 1.4s ease; }
+  .hero-pair.active { opacity: 1; }
+  .hero-pair-zoom { position: absolute; inset: -3%; }
+  .hero-pair.active .hero-pair-zoom { animation: heroKenburns 2s ease-in-out forwards; }
+  @keyframes heroKenburns { 0% { transform: scale(1.02); } 100% { transform: scale(1.08); } }
+  .hero-layer { position: absolute; inset: 0; background-size: cover; background-position: center; }
+  .hero-layer-after { clip-path: inset(0 100% 0 0); }
+  .hero-pair.active .hero-layer-after { animation: heroWipeReveal 2s cubic-bezier(.65,0,.35,1) forwards; }
+  @keyframes heroWipeReveal {
+    0%   { clip-path: inset(0 100% 0 0); }
+    38%  { clip-path: inset(0 100% 0 0); }
+    66%  { clip-path: inset(0 0% 0 0); }
+    100% { clip-path: inset(0 0% 0 0); }
+  }
+  .hero-edge {
+    position: absolute; top: 0; bottom: 0; width: 3px;
+    background: rgba(255,255,255,0.85);
+    box-shadow: 0 0 18px 2px rgba(255,255,255,0.55);
+    opacity: 0;
+  }
+  .hero-pair.active .hero-edge { animation: heroEdgeSweep 2s cubic-bezier(.65,0,.35,1) forwards; }
+  @keyframes heroEdgeSweep {
+    0%   { left: 0%; opacity: 0; }
+    36%  { left: 0%; opacity: 0; }
+    38%  { opacity: 1; }
+    66%  { left: 100%; opacity: 1; }
+    68%  { opacity: 0; }
+    100% { left: 100%; opacity: 0; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .hero-pair.active .hero-pair-zoom, .hero-pair.active .hero-layer-after, .hero-pair.active .hero-edge { animation: none; }
+    .hero-pair.active .hero-layer-after { clip-path: inset(0 0% 0 0); }
+  }
 </style>
 </head>
 <body>
@@ -4152,6 +4189,61 @@
     });
   }
 
+  var D3D_BG_CYCLE_PAIRS = [
+    { before: 'assets/hero-bg/pair1-before.jpg', after: 'assets/hero-bg/pair1-after.jpg' },
+    { before: 'assets/hero-bg/pair2-before.jpg', after: 'assets/hero-bg/pair2-after.jpg' },
+    { before: 'assets/hero-bg/pair3-before.jpg', after: 'assets/hero-bg/pair3-after.jpg' },
+    { before: 'assets/hero-bg/pair4-before.jpg', after: 'assets/hero-bg/pair4-after.jpg' },
+    { before: 'assets/hero-bg/pair5-before.jpg', after: 'assets/hero-bg/pair5-after.jpg' },
+    { before: 'assets/hero-bg/pair6-before.jpg', after: 'assets/hero-bg/pair6-after.jpg' },
+    { before: 'assets/hero-bg/pair7-before.jpg', after: 'assets/hero-bg/pair7-after.jpg' }
+  ];
+
+  function d3dBuildBgCycle(containerId) {
+    var stackEl = document.getElementById(containerId);
+    if (!stackEl) return;
+
+    var pairs = [];
+    D3D_BG_CYCLE_PAIRS.forEach(function(p) {
+      var pair = document.createElement('div');
+      pair.className = 'hero-pair';
+      var zoom = document.createElement('div');
+      zoom.className = 'hero-pair-zoom';
+      var before = document.createElement('div');
+      before.className = 'hero-layer hero-layer-before';
+      before.style.backgroundImage = 'url(' + p.before + ')';
+      var after = document.createElement('div');
+      after.className = 'hero-layer hero-layer-after';
+      after.style.backgroundImage = 'url(' + p.after + ')';
+      var edge = document.createElement('div');
+      edge.className = 'hero-edge';
+      zoom.appendChild(before);
+      zoom.appendChild(after);
+      zoom.appendChild(edge);
+      pair.appendChild(zoom);
+      stackEl.appendChild(pair);
+      pairs.push(pair);
+    });
+
+    var current = -1;
+    var HOLD_MS = 2000;
+    function restartAnim(el) { if (el) { el.style.animation = 'none'; void el.offsetWidth; el.style.animation = ''; } }
+    function show(i) {
+      pairs.forEach(function(p, idx) {
+        p.classList.toggle('active', idx === i);
+        if (idx === i) {
+          restartAnim(p.querySelector('.hero-pair-zoom'));
+          restartAnim(p.querySelector('.hero-layer-after'));
+          restartAnim(p.querySelector('.hero-edge'));
+        }
+      });
+      current = i;
+    }
+    function next() { show((current + 1) % pairs.length); }
+    show(0);
+    return setInterval(next, HOLD_MS);
+  }
+
   function d3dShowCreditsModal(message) {
     var existing = document.getElementById('d3dCreditsModalOverlay');
     if (existing) existing.remove();
@@ -4202,15 +4294,10 @@
 
     overlay.innerHTML =
       '<div style="position:relative;">' +
-        '<img src="assets/hero-bg/pair1-after.jpg" style="width:100%;height:38vh;min-height:220px;object-fit:cover;display:block;">' +
-        '<div style="position:absolute;inset:0;background:linear-gradient(180deg, rgba(0,0,0,0.15) 0%, rgba(0,0,0,0) 30%, rgba(0,0,0,0.55) 100%);"></div>' +
-        '<button type="button" onclick="document.getElementById(\'d3dCreditsModalOverlay\').remove()" style="position:absolute;top:16px;' + (isAr ? 'right' : 'left') + ':16px;width:34px;height:34px;border-radius:50%;background:rgba(0,0,0,0.35);color:#fff;border:none;font-size:16px;cursor:pointer;">' + (window.icon ? window.icon('close') : '×') + '</button>' +
+        '<div id="d3dCreditsModalBgStack" style="position:relative;width:100%;height:38vh;min-height:220px;overflow:hidden;"></div>' +
+        '<div style="position:absolute;inset:0;background:linear-gradient(180deg, rgba(0,0,0,0.15) 0%, rgba(0,0,0,0) 30%, rgba(0,0,0,0.55) 100%);pointer-events:none;"></div>' +
+        '<button type="button" id="d3dCreditsModalCloseBtn" style="position:absolute;top:16px;' + (isAr ? 'right' : 'left') + ':16px;width:34px;height:34px;border-radius:50%;background:rgba(0,0,0,0.35);color:#fff;border:none;font-size:16px;cursor:pointer;">' + (window.icon ? window.icon('close') : '×') + '</button>' +
         '<div style="position:absolute;bottom:16px;left:20px;right:20px;color:#fff;">' +
-          '<div style="display:flex;gap:5px;margin-bottom:10px;">' +
-            '<span style="width:16px;height:4px;border-radius:2px;background:#fff;"></span>' +
-            '<span style="width:16px;height:4px;border-radius:2px;background:rgba(255,255,255,0.4);"></span>' +
-            '<span style="width:16px;height:4px;border-radius:2px;background:rgba(255,255,255,0.4);"></span>' +
-          '</div>' +
           '<div style="font-size:26px;font-weight:900;">' + (isAr ? 'المزيد من التصاميم' : 'More Designs') + '</div>' +
         '</div>' +
       '</div>' +
@@ -4224,6 +4311,11 @@
       '</div>';
 
     document.body.appendChild(overlay);
+    var d3dCreditsModalBgTimer = d3dBuildBgCycle('d3dCreditsModalBgStack');
+    document.getElementById('d3dCreditsModalCloseBtn').onclick = function() {
+      clearInterval(d3dCreditsModalBgTimer);
+      overlay.remove();
+    };
 
     var selectedTier = 'monthly';
     function paintSelection() {

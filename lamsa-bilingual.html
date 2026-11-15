@@ -3105,15 +3105,10 @@
 
     overlay.innerHTML =
       '<div style="position:relative;">' +
-        '<img src="assets/hero-bg/pair1-after.jpg" style="width:100%;height:38vh;min-height:220px;object-fit:cover;display:block;">' +
+        '<div id="creditsModalBgStack" style="position:relative;width:100%;height:38vh;min-height:220px;overflow:hidden;"></div>' +
         '<div style="position:absolute;inset:0;background:linear-gradient(180deg, rgba(0,0,0,0.15) 0%, rgba(0,0,0,0) 30%, rgba(0,0,0,0.55) 100%);"></div>' +
-        '<button type="button" onclick="document.getElementById(\'creditsModalOverlay\').remove()" style="position:absolute;top:16px;' + (isAr ? 'right' : 'left') + ':16px;width:34px;height:34px;border-radius:50%;background:rgba(0,0,0,0.35);color:#fff;border:none;font-size:16px;cursor:pointer;">' + (window.icon ? window.icon('close') : '×') + '</button>' +
+        '<button type="button" id="creditsModalCloseBtn" style="position:absolute;top:16px;' + (isAr ? 'right' : 'left') + ':16px;width:34px;height:34px;border-radius:50%;background:rgba(0,0,0,0.35);color:#fff;border:none;font-size:16px;cursor:pointer;">' + (window.icon ? window.icon('close') : '×') + '</button>' +
         '<div style="position:absolute;bottom:16px;left:20px;right:20px;color:#fff;">' +
-          '<div style="display:flex;gap:5px;margin-bottom:10px;">' +
-            '<span style="width:16px;height:4px;border-radius:2px;background:#fff;"></span>' +
-            '<span style="width:16px;height:4px;border-radius:2px;background:rgba(255,255,255,0.4);"></span>' +
-            '<span style="width:16px;height:4px;border-radius:2px;background:rgba(255,255,255,0.4);"></span>' +
-          '</div>' +
           '<div style="font-size:26px;font-weight:900;">' + (isAr ? 'المزيد من التصاميم' : 'More Designs') + '</div>' +
         '</div>' +
       '</div>' +
@@ -3131,6 +3126,11 @@
       '</div>';
 
     document.body.appendChild(overlay);
+    var creditsModalBgTimer = buildBgCycle('creditsModalBgStack', false);
+    document.getElementById('creditsModalCloseBtn').onclick = function() {
+      clearInterval(creditsModalBgTimer);
+      overlay.remove();
+    };
 
     var selectedTier = 'monthly';
     function paintSelection() {
@@ -3405,15 +3405,10 @@
 
     overlay.innerHTML =
       '<div style="position:relative;">' +
-        '<img src="assets/hero-bg/pair1-after.jpg" style="width:100%;height:38vh;min-height:220px;object-fit:cover;display:block;">' +
+        '<div id="welcomePaywallBgStack" style="position:relative;width:100%;height:38vh;min-height:220px;overflow:hidden;"></div>' +
         '<div style="position:absolute;inset:0;background:linear-gradient(180deg, rgba(0,0,0,0.15) 0%, rgba(0,0,0,0) 30%, rgba(0,0,0,0.55) 100%);"></div>' +
-        '<button type="button" onclick="document.getElementById(\'welcomePaywallOverlay\').remove()" style="position:absolute;top:16px;' + (isAr ? 'right' : 'left') + ':16px;width:34px;height:34px;border-radius:50%;background:rgba(0,0,0,0.35);color:#fff;border:none;font-size:16px;cursor:pointer;">' + (window.icon ? window.icon('close') : '×') + '</button>' +
+        '<button type="button" id="welcomePaywallCloseBtn" style="position:absolute;top:16px;' + (isAr ? 'right' : 'left') + ':16px;width:34px;height:34px;border-radius:50%;background:rgba(0,0,0,0.35);color:#fff;border:none;font-size:16px;cursor:pointer;">' + (window.icon ? window.icon('close') : '×') + '</button>' +
         '<div style="position:absolute;bottom:16px;left:20px;right:20px;color:#fff;">' +
-          '<div style="display:flex;gap:5px;margin-bottom:10px;">' +
-            '<span style="width:16px;height:4px;border-radius:2px;background:#fff;"></span>' +
-            '<span style="width:16px;height:4px;border-radius:2px;background:rgba(255,255,255,0.4);"></span>' +
-            '<span style="width:16px;height:4px;border-radius:2px;background:rgba(255,255,255,0.4);"></span>' +
-          '</div>' +
           '<div style="font-size:26px;font-weight:900;">' + (isAr ? 'تصميم داخلي بالذكاء الاصطناعي' : 'AI Interior Design') + '</div>' +
         '</div>' +
       '</div>' +
@@ -3430,6 +3425,11 @@
       '</div>';
 
     document.body.appendChild(overlay);
+    var welcomePaywallBgTimer = buildBgCycle('welcomePaywallBgStack', false);
+    document.getElementById('welcomePaywallCloseBtn').onclick = function() {
+      clearInterval(welcomePaywallBgTimer);
+      overlay.remove();
+    };
 
     var selectedTier = 'monthly';
     function paintSelection() {
