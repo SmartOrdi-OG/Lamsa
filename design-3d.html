@@ -536,7 +536,13 @@
         <button type="button" class="fp-tool-btn" onclick="d3dClearPlaced()" data-en="Clear All" data-ar="حذف الكل">Clear All</button>
         <button type="button" class="fp-tool-btn" id="d3dWalkToggleBtn" onclick="d3dEnterWalkMode()" data-en="🚶 Walk Mode" data-ar="🚶 وضع المشي">🚶 Walk Mode</button>
         <button type="button" class="fp-tool-btn" onclick="d3dSaveImage()" data-en="📷 Save Image" data-ar="📷 حفظ الصورة">📷 Save Image</button>
+        <button type="button" class="fp-tool-btn" onclick="d3dGeneratePhotoReal()" data-en="✨ AI Photoreal Render" data-ar="✨ تصيير واقعي بالذكاء الاصطناعي">✨ AI Photoreal Render</button>
       </div>
+      <!-- Optional, paid (1 credit) step — the free real-time 3D view above
+           is always available either way. Hidden until logged in: a guest
+           would just hit the login redirect immediately on tapping it, and
+           a credit balance has no meaning before that anyway. -->
+      <div class="d3d-palette-hint" id="d3dPhotoRealBalanceLine" style="display:none;"></div>
       <div class="d3d-viewport-wrap">
         <div id="d3dResultWrap"></div>
         <div class="d3d-tiltshift" id="d3dTiltShift" aria-hidden="true">
@@ -754,6 +760,12 @@
     if (typeof d3dBuildPalette === 'function') d3dBuildPalette();
     var hint = document.getElementById('d3dPaletteHint');
     if (hint && typeof d3dTool !== 'undefined' && !d3dTool) hint.textContent = d3dTr('Pick a category, then a piece, then click inside the room to place it.');
+
+    // The credit-balance line is JS-generated, not a data-en/data-ar
+    // element, so it needs its own re-render — only if it's already
+    // showing (i.e. the user is logged in; a guest never fetched it).
+    var balanceLine = document.getElementById('d3dPhotoRealBalanceLine');
+    if (balanceLine && balanceLine.style.display !== 'none') d3dRefreshCreditBalance();
   }
 
   // ═══════════════════════════════════════════════
@@ -3975,6 +3987,369 @@
       });
   }
 
+  // ═══════════════════════════════════════════════
+  // OPTIONAL AI PHOTOREAL RENDER (1 credit) — everything above this is the
+  // free, real-time 3D view; this turns the current room+furniture into a
+  // photorealistic "miniature dollhouse model" photo via the same Flux→
+  // Nano pipeline every other tool uses, submitting the 3D canvas's own
+  // screenshot as the source image instead of a user-uploaded photo.
+  // ═══════════════════════════════════════════════
+  var D3D_PR_POLL_INTERVAL_MS = 3000;
+  var D3D_PR_POLL_TIMEOUT_MS = 2 * 60 * 1000;
+
+  // Strong prompt lock on "nothing moves" — this has to preserve the exact
+  // room/furniture layout the user actually built, unlike a normal redesign
+  // which is free to invent a new layout. Lower strength than any other
+  // tool's prompt (0.45 vs. 0.6-0.85 elsewhere) for the same reason: it
+  // caps how far the model may drift from the source pixels, and drifting
+  // too far here means literally moving furniture the user placed.
+  var D3D_PHOTOREAL_PROMPT =
+    'Transform this photo of a miniature architectural dollhouse model into a professional, photorealistic version of the exact same miniature model — like a high-end product photograph of a real physical dollhouse or diorama.\n\n' +
+    'CRITICAL — do not change anything structural: keep the exact same room shape, wall positions, camera angle, and isometric cutaway composition, and keep every piece of furniture in the exact same position, orientation and arrangement already shown in this image. Do not add, remove, move, or restyle any furniture or architectural element.\n\n' +
+    'Only improve: make every material look real and tactile (genuine fabric weave, real wood grain, real metal and glass reflections), add soft, warm, professional studio lighting with realistic soft shadows, and photorealistic rendering quality.\n\n' +
+    'The result must still clearly read as a small-scale miniature model/diorama — not a full-size real room.';
+
+  var D3D_PHOTOREAL_REFINE_PROMPT =
+    'This photo already shows a photorealistic miniature dollhouse model render. Your ONLY task is to further enhance photorealism, material detail, and lighting quality. Do NOT change the room layout, camera angle, furniture positions, or overall composition in any way — this is a quality-enhancement pass only.';
+
+  function d3dFetchJson(url, options) {
+    return fetch(url, options).then(function(res) {
+      return res.json().then(function(data) { return { ok: res.ok, status: res.status, data: data }; });
+    });
+  }
+
+  // Same varying-shape fal.ai response handling as every other tool here.
+  function d3dExtractResultImages(data) {
+    if (!data) return null;
+    if (Array.isArray(data.images) && data.images.length) return data.images;
+    if (data.image && data.image.url) return [data.image];
+    if (data.output && Array.isArray(data.output.images) && data.output.images.length) return data.output.images;
+    if (data.response && Array.isArray(data.response.images) && data.response.images.length) return data.response.images;
+    if (data.data && Array.isArray(data.data.images) && data.data.images.length) return data.data.images;
+    return null;
+  }
+
+  function d3dPollForResult(requestId, model, startTime, onError) {
+    return new Promise(function(resolve) {
+      function tick() {
+        if (Date.now() - startTime >= D3D_PR_POLL_TIMEOUT_MS) {
+          onError(d3dTr('Generation took too long. Please try again.'));
+          resolve(null);
+          return;
+        }
+        d3dFetchJson('/api/status?request_id=' + encodeURIComponent(requestId) + '&model=' + encodeURIComponent(model))
+          .then(function(result) {
+            if (!result.ok) { onError(d3dTr('Error generating image. Please try again.')); resolve(null); return; }
+            var status = (result.data.status || '').toString().toUpperCase();
+            if (status === 'COMPLETED') {
+              d3dFetchJson('/api/status?request_id=' + encodeURIComponent(requestId) + '&model=' + encodeURIComponent(model) + '&mode=result&tool=design3d')
+                .then(function(resultResp) {
+                  if (!resultResp.ok) { onError(d3dTr('Error generating image. Please try again.')); resolve(null); return; }
+                  var images = d3dExtractResultImages(resultResp.data);
+                  resolve(images && images.length ? images[0] : null);
+                })
+                .catch(function() { onError(d3dTr('Connection error. Please try again.')); resolve(null); });
+            } else if (status === 'FAILED' || status === 'ERROR') {
+              onError(d3dTr('Error generating image. Please try again.'));
+              resolve(null);
+            } else {
+              setTimeout(tick, D3D_PR_POLL_INTERVAL_MS);
+            }
+          })
+          .catch(function() { onError(d3dTr('Connection error. Please try again.')); resolve(null); });
+      }
+      tick();
+    });
+  }
+
+  function d3dRefineWithNano(fluxImage, refineToken, onError) {
+    if (!refineToken) return Promise.resolve(fluxImage);
+    return fetch('/api/generate', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' }, credentials: 'include',
+      body: JSON.stringify({ prompt: D3D_PHOTOREAL_REFINE_PROMPT, image_url: fluxImage.url, refine_token: refineToken })
+    })
+    .then(function(res) { return res.json().then(function(data) { return { ok: res.ok, data: data }; }); })
+    .then(function(result) {
+      if (!result.ok || !result.data || !Array.isArray(result.data.requests) || !result.data.requests.length) return fluxImage;
+      var req = result.data.requests[0];
+      return d3dPollForResult(req.request_id, req.model, Date.now(), onError).then(function(image) { return image || fluxImage; });
+    })
+    .catch(function() { return fluxImage; });
+  }
+
+  function d3dCreateDownloadBtn(url, filename) {
+    var btn = document.createElement('button');
+    btn.type = 'button';
+    btn.style.cssText = 'flex:1;background:var(--gold);color:var(--black);border:none;padding:14px;border-radius:10px;font-weight:900;font-size:14px;cursor:pointer;font-family:Tajawal,sans-serif;';
+    btn.innerHTML = (window.icon ? window.icon('download') : '') + ' ' + d3dTr('Save Image');
+    btn.onclick = function() {
+      fetch('/api/download-image?url=' + encodeURIComponent(url) + '&filename=' + encodeURIComponent(filename))
+        .then(function(resp) { return resp.blob(); })
+        .then(function(blob) {
+          var file = new File([blob], filename, { type: blob.type || 'image/jpeg' });
+          if (navigator.canShare && navigator.canShare({ files: [file] })) { return navigator.share({ files: [file] }); }
+          var blobUrl = URL.createObjectURL(blob);
+          var link = document.createElement('a');
+          link.href = blobUrl; link.download = filename;
+          document.body.appendChild(link); link.click(); document.body.removeChild(link);
+          setTimeout(function() { URL.revokeObjectURL(blobUrl); }, 5000);
+        })
+        .catch(function() { window.open(url, '_blank'); });
+    };
+    return btn;
+  }
+
+  function d3dRefreshCreditBalance() {
+    var line = document.getElementById('d3dPhotoRealBalanceLine');
+    if (!line) return;
+    fetch('/api/credits', { credentials: 'include' })
+      .then(function(r) { return r.json(); })
+      .then(function(data) {
+        if (typeof data.credits !== 'number') return;
+        line.style.display = '';
+        var isAr = currentLang === 'ar';
+        var label = isAr
+          ? ('رصيدك: ' + data.credits + ' كريدت')
+          : ('Your balance: ' + data.credits + ' credit' + (data.credits === 1 ? '' : 's'));
+        line.innerHTML = label + ' &middot; <a href="javascript:void(0)" onclick="d3dShowCreditsModal()" style="color:var(--gold-deep);text-decoration:underline;">' + (isAr ? 'اشترك' : 'Subscribe') + '</a>';
+      })
+      .catch(function(err) { console.error('[credits] failed to load balance:', err); });
+  }
+
+  // Same full-screen paywall look used everywhere else in the app.
+  var D3D_CREDIT_PAYWALL_TIERS = [
+    { id: 'weekly', tag: { ar: 'الأكثر مرونة', en: 'MOST FLEXIBLE' }, period: { ar: '10 تصاميم', en: '10 Designs' }, sub: { ar: 'أسبوعياً (€0.60/تصميم)', en: 'per week (€0.60/design)' }, price: '€5.99' },
+    { id: 'monthly', badge: { ar: 'وفر 37% للتصميم', en: 'SAVE 37% PER DESIGN' }, period: { ar: '40 تصميم', en: '40 Designs' }, sub: { ar: 'شهرياً (€0.37/تصميم)', en: 'per month (€0.37/design)' }, price: '€14.99', highlighted: true }
+  ];
+
+  function d3dStartCheckout(planId, buttonEl, errorElId) {
+    var isAr = currentLang === 'ar';
+    var errorEl = document.getElementById(errorElId || 'd3dCreditsModalError');
+    var buttons = buttonEl ? [buttonEl] : [];
+    buttons.forEach(function(b) { b.disabled = true; b.style.opacity = '0.5'; });
+
+    fetch('/api/create-checkout-session', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' }, credentials: 'include',
+      body: JSON.stringify({ plan: planId, return_page: 'design-3d.html' })
+    })
+    .then(function(r) { return r.json().then(function(data) { return { ok: r.ok, status: r.status, data: data }; }); })
+    .then(function(result) {
+      if (result.status === 401) { window.location.replace('lamsa-auth.html'); return; }
+      if (!result.ok || !result.data || !result.data.url) {
+        if (errorEl) errorEl.textContent = (result.data && result.data.error) || (isAr ? 'حدث خطأ، حاول مرة أخرى' : 'Something went wrong, please try again');
+        buttons.forEach(function(b) { b.disabled = false; b.style.opacity = '1'; });
+        return;
+      }
+      if (window.openOutsideAndroidTWA && window.openOutsideAndroidTWA(result.data.url)) {
+        buttons.forEach(function(b) { b.disabled = false; b.style.opacity = '1'; });
+      } else {
+        window.location.href = result.data.url;
+      }
+    })
+    .catch(function() {
+      if (errorEl) errorEl.textContent = isAr ? 'خطأ في الاتصال' : 'Connection error';
+      buttons.forEach(function(b) { b.disabled = false; b.style.opacity = '1'; });
+    });
+  }
+
+  function d3dShowCreditsModal(message) {
+    var existing = document.getElementById('d3dCreditsModalOverlay');
+    if (existing) existing.remove();
+
+    var isAr = currentLang === 'ar';
+    var overlay = document.createElement('div');
+    overlay.id = 'd3dCreditsModalOverlay';
+    overlay.style.cssText = 'position:fixed;inset:0;background:#fff;z-index:9999;display:flex;flex-direction:column;overflow-y:auto;font-family:Tajawal,sans-serif;';
+
+    var features = [
+      { icon: 'sparkles', ar: 'تصاميم لغرفتك بالذكاء الاصطناعي', en: 'AI-generated designs for your room' },
+      { icon: 'swatch', ar: 'اختر من كل الستايلات المتوفرة', en: 'Choose from every available style' },
+      { icon: 'download', ar: 'حمّل تصاميمك بجودة عالية', en: 'Download your designs in high quality' },
+      { icon: 'bulb', ar: 'أفكار وتنسيقات جديدة بكل تصميم', en: 'Fresh ideas with every design' }
+    ];
+    var featuresHtml = features.map(function(f) {
+      return '<div style="display:flex;align-items:center;gap:14px;margin-bottom:18px;">' +
+        '<div style="width:36px;height:36px;border-radius:50%;background:#1b1e22;color:var(--gold);display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;">' + (window.icon ? window.icon(f.icon) : '') + '</div>' +
+        '<div style="font-size:15px;font-weight:700;color:#1b1e22;">' + (isAr ? f.ar : f.en) + '</div>' +
+        '</div>';
+    }).join('');
+
+    var tiersHtml = D3D_CREDIT_PAYWALL_TIERS.map(function(t) {
+      var topHtml = t.tag
+        ? '<div style="font-size:10px;font-weight:900;color:#767d86;letter-spacing:0.3px;text-align:center;margin-bottom:6px;white-space:nowrap;">' + (isAr ? t.tag.ar : t.tag.en) + '</div>'
+        : (t.badge
+          ? '<div style="background:var(--gold);color:#1b1e22;font-size:10px;font-weight:900;letter-spacing:0.3px;text-align:center;padding:5px 4px;margin-bottom:0;">' + (isAr ? t.badge.ar : t.badge.en) + '</div>'
+          : '<div style="height:16px;margin-bottom:6px;"></div>');
+      var border = t.highlighted ? '2px solid var(--gold)' : '1px solid #dfe2e6';
+      var cardHtml =
+        '<div style="padding:14px 8px;">' +
+          '<div style="font-size:16px;font-weight:900;color:#1b1e22;">' + (isAr ? t.period.ar : t.period.en) + '</div>' +
+          '<div style="font-size:10px;color:#767d86;min-height:14px;margin-bottom:8px;">' + (isAr ? t.sub.ar : t.sub.en) + '</div>' +
+          '<div style="border-top:1px solid #eef0f2;padding-top:8px;font-size:15px;font-weight:900;color:#1b1e22;">' + t.price + '</div>' +
+        '</div>';
+      return t.tag
+        ? '<div style="flex:1;">' + topHtml +
+            '<div class="d3d-cm-tier-card" data-tier="' + t.id + '" style="cursor:pointer;border:' + border + ';border-radius:14px;overflow:hidden;text-align:center;background:#fff;">' + cardHtml + '</div>' +
+          '</div>'
+        : '<div style="flex:1;">' +
+            '<div class="d3d-cm-tier-card" data-tier="' + t.id + '" style="cursor:pointer;border:' + border + ';border-radius:14px;overflow:hidden;text-align:center;background:#fff;">' + topHtml + cardHtml + '</div>' +
+          '</div>';
+    }).join('<div style="width:8px;"></div>');
+
+    var alertHtml = message
+      ? '<div style="background:#fdf0ec;color:#c0432b;border-radius:10px;padding:10px 14px;font-size:13px;font-weight:700;text-align:center;margin-bottom:18px;">' + message + '</div>'
+      : '';
+
+    overlay.innerHTML =
+      '<div style="position:relative;">' +
+        '<img src="assets/hero-bg/pair1-after.jpg" style="width:100%;height:38vh;min-height:220px;object-fit:cover;display:block;">' +
+        '<div style="position:absolute;inset:0;background:linear-gradient(180deg, rgba(0,0,0,0.15) 0%, rgba(0,0,0,0) 30%, rgba(0,0,0,0.55) 100%);"></div>' +
+        '<button type="button" onclick="document.getElementById(\'d3dCreditsModalOverlay\').remove()" style="position:absolute;top:16px;' + (isAr ? 'right' : 'left') + ':16px;width:34px;height:34px;border-radius:50%;background:rgba(0,0,0,0.35);color:#fff;border:none;font-size:16px;cursor:pointer;">' + (window.icon ? window.icon('close') : '×') + '</button>' +
+        '<div style="position:absolute;bottom:16px;left:20px;right:20px;color:#fff;">' +
+          '<div style="display:flex;gap:5px;margin-bottom:10px;">' +
+            '<span style="width:16px;height:4px;border-radius:2px;background:#fff;"></span>' +
+            '<span style="width:16px;height:4px;border-radius:2px;background:rgba(255,255,255,0.4);"></span>' +
+            '<span style="width:16px;height:4px;border-radius:2px;background:rgba(255,255,255,0.4);"></span>' +
+          '</div>' +
+          '<div style="font-size:26px;font-weight:900;">' + (isAr ? 'المزيد من التصاميم' : 'More Designs') + '</div>' +
+        '</div>' +
+      '</div>' +
+      '<div style="flex:1;background:#fff;border-radius:24px 24px 0 0;margin-top:-20px;position:relative;padding:26px 20px 20px;">' +
+        alertHtml +
+        '<div style="margin-bottom:22px;">' + featuresHtml + '</div>' +
+        '<div style="display:flex;margin-bottom:18px;">' + tiersHtml + '</div>' +
+        '<button type="button" id="d3dCreditsModalContinueBtn" style="width:100%;background:var(--gold);color:#1b1e22;border:none;padding:16px;border-radius:14px;font-size:17px;font-weight:900;cursor:pointer;font-family:Tajawal,sans-serif;">' + (isAr ? 'متابعة' : 'Continue') + '</button>' +
+        '<div id="d3dCreditsModalError" style="color:#e05555;font-size:12px;text-align:center;margin-top:10px;min-height:16px;"></div>' +
+        '<div style="text-align:center;font-size:11.5px;color:#767d86;margin-top:12px;">' + (isAr ? 'يتجدد تلقائياً. يمكنك الإلغاء في أي وقت.' : 'Automatically renews. Cancel anytime.') + '</div>' +
+      '</div>';
+
+    document.body.appendChild(overlay);
+
+    var selectedTier = 'monthly';
+    function paintSelection() {
+      Array.prototype.forEach.call(overlay.querySelectorAll('.d3d-cm-tier-card'), function(card) {
+        var isSel = card.getAttribute('data-tier') === selectedTier;
+        card.style.border = isSel ? '2px solid var(--gold)' : '1px solid #dfe2e6';
+        card.style.boxShadow = isSel ? '0 8px 20px -8px rgba(201,169,110,0.5)' : 'none';
+      });
+    }
+    paintSelection();
+    Array.prototype.forEach.call(overlay.querySelectorAll('.d3d-cm-tier-card'), function(card) {
+      card.onclick = function() { selectedTier = card.getAttribute('data-tier'); paintSelection(); };
+    });
+    document.getElementById('d3dCreditsModalContinueBtn').onclick = function() {
+      d3dStartCheckout(selectedTier, document.getElementById('d3dCreditsModalContinueBtn'), 'd3dCreditsModalError');
+    };
+  }
+
+  // Loading / result / error states for the photoreal render all live in
+  // one overlay, rebuilt fresh each run (simpler than trying to patch a
+  // previous run's DOM into a different state).
+  function d3dShowPhotoRealOverlay(innerHtml) {
+    var existing = document.getElementById('d3dPhotoRealOverlay');
+    if (existing) { existing.innerHTML = innerHtml; return existing; }
+    var overlay = document.createElement('div');
+    overlay.id = 'd3dPhotoRealOverlay';
+    overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.9);z-index:9999;display:flex;align-items:center;justify-content:center;padding:20px;overflow-y:auto;';
+    overlay.innerHTML = innerHtml;
+    document.body.appendChild(overlay);
+    return overlay;
+  }
+
+  function d3dClosePhotoRealOverlay() {
+    var existing = document.getElementById('d3dPhotoRealOverlay');
+    if (existing) existing.remove();
+  }
+
+  function d3dPhotoRealLoadingHtml(isAr) {
+    return '<div style="position:relative;background:#fff;border-radius:20px;padding:36px 24px;max-width:380px;width:100%;text-align:center;box-shadow:0 30px 70px -25px rgba(0,0,0,0.5);">' +
+      '<div style="width:48px;height:48px;margin:0 auto 18px;border:4px solid #eef0f2;border-top-color:var(--gold);border-radius:50%;animation:d3dSpin 0.9s linear infinite;"></div>' +
+      '<div style="font-size:16px;font-weight:900;color:#1b1e22;margin-bottom:6px;">' + (isAr ? 'عم نحوّل تصميمك لصورة واقعية...' : 'Turning your design into a photoreal render...') + '</div>' +
+      '<div style="font-size:12.5px;color:#767d86;">' + (isAr ? 'بياخد 20-40 ثانية' : 'Takes 20-40 seconds') + '</div>' +
+      '</div>' +
+      '<style>@keyframes d3dSpin { to { transform: rotate(360deg); } }</style>';
+  }
+
+  function d3dPhotoRealErrorHtml(message, isAr) {
+    return '<div style="position:relative;background:#fff;border-radius:20px;padding:30px 24px;max-width:380px;width:100%;text-align:center;box-shadow:0 30px 70px -25px rgba(0,0,0,0.5);">' +
+      '<div style="color:#e05555;font-size:14px;font-weight:700;margin-bottom:18px;">' + message + '</div>' +
+      '<button type="button" onclick="d3dClosePhotoRealOverlay()" style="width:100%;background:transparent;border:1px solid #dfe2e6;color:#767d86;padding:10px;border-radius:10px;font-size:13px;cursor:pointer;font-family:Tajawal,sans-serif;">' + (isAr ? 'إغلاق' : 'Close') + '</button>' +
+      '</div>';
+  }
+
+  function d3dPhotoRealResultHtml(imageUrl, isAr) {
+    return '<div style="position:relative;background:#fff;border-radius:20px;padding:20px;max-width:440px;width:100%;box-shadow:0 30px 70px -25px rgba(0,0,0,0.5);">' +
+      '<img src="' + imageUrl + '" style="width:100%;border-radius:12px;display:block;margin-bottom:14px;">' +
+      '<div style="display:flex;gap:10px;">' +
+        '<div id="d3dPhotoRealSaveWrap" style="flex:1;display:flex;"></div>' +
+        '<button type="button" onclick="d3dClosePhotoRealOverlay()" style="flex:1;background:transparent;border:1px solid #dfe2e6;color:#767d86;padding:14px;border-radius:10px;font-size:14px;cursor:pointer;font-family:Tajawal,sans-serif;">' + (isAr ? 'إغلاق' : 'Close') + '</button>' +
+      '</div>' +
+      '</div>';
+  }
+
+  function d3dGeneratePhotoReal() {
+    var isAr = currentLang === 'ar';
+    if (!d3dRenderer || !d3dScene || !d3dCamera) return;
+
+    checkAuth().then(function(user) {
+      if (!user) { window.location.href = 'lamsa-auth.html'; return; }
+
+      d3dShowPhotoRealOverlay(d3dPhotoRealLoadingHtml(isAr));
+
+      d3dRenderer.render(d3dScene, d3dCamera);
+      var dataUrl = d3dRenderer.domElement.toDataURL('image/jpeg', 0.92);
+
+      function onError(message) {
+        d3dShowPhotoRealOverlay(d3dPhotoRealErrorHtml(message, isAr));
+      }
+
+      fetch('/api/upload', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ image_data: dataUrl, mime_type: 'image/jpeg' })
+      })
+      .then(function(res) { return res.json().then(function(data) { return { ok: res.ok, data: data }; }); })
+      .then(function(uploadResult) {
+        if (!uploadResult.ok || !uploadResult.data || !uploadResult.data.url) {
+          onError(isAr ? 'تعذّر رفع الصورة، حاول مرة أخرى' : 'Image upload failed. Please try again.');
+          return;
+        }
+
+        fetch('/api/generate', {
+          method: 'POST', headers: { 'Content-Type': 'application/json' }, credentials: 'include',
+          body: JSON.stringify({ prompt: D3D_PHOTOREAL_PROMPT, image_url: uploadResult.data.url, num_images: 1, guidance_scale: 6.5, strength: 0.45 })
+        })
+        .then(function(res) { return res.json().then(function(data) { return { ok: res.ok, status: res.status, data: data }; }); })
+        .then(function(result) {
+          if (result.status === 401) { window.location.replace('lamsa-auth.html'); return; }
+          if (result.status === 402) {
+            d3dClosePhotoRealOverlay();
+            d3dShowCreditsModal(isAr ? 'نفد رصيدك من التصاميم — اشترِ المزيد للمتابعة' : "You're out of credits — buy more to continue");
+            d3dRefreshCreditBalance();
+            return;
+          }
+          if (!result.ok || !result.data || !Array.isArray(result.data.requests) || !result.data.requests.length) {
+            onError(isAr ? 'حدث خطأ، حاول مرة أخرى' : 'Error generating image. Please try again.');
+            return;
+          }
+
+          var fluxReq = result.data.requests[0];
+          var refineToken = result.data.refineToken;
+          d3dPollForResult(fluxReq.request_id, fluxReq.model, Date.now(), onError).then(function(fluxImage) {
+            if (!fluxImage) return;
+            d3dRefineWithNano(fluxImage, refineToken, onError).then(function(finalImage) {
+              d3dShowPhotoRealOverlay(d3dPhotoRealResultHtml(finalImage.url, isAr));
+              var saveWrap = document.getElementById('d3dPhotoRealSaveWrap');
+              if (saveWrap) saveWrap.appendChild(d3dCreateDownloadBtn(finalImage.url, 'lamsa-3d-photoreal.jpg'));
+              d3dRefreshCreditBalance();
+            });
+          });
+        })
+        .catch(function() { onError(isAr ? 'خطأ في الاتصال' : 'Connection error. Please try again.'); });
+      })
+      .catch(function() { onError(isAr ? 'خطأ في الاتصال' : 'Connection error. Please try again.'); });
+    });
+  }
+
   // Injects a shared icon (from js/icons.js) in front of each chip's label
   // text — a cheap, static-asset "catalog card" look (icon + name) instead
   // of a plain text pill, without needing any real product photos.
@@ -4037,6 +4412,7 @@
     checkAuth().then(function(user) {
       document.getElementById('navSignInBtn').style.display = user ? 'none' : '';
       document.getElementById('navLogoutBtn').style.display = user ? '' : 'none';
+      if (user) d3dRefreshCreditBalance();
     });
     drawFloorPlan();
     d3dBuildPalette();
