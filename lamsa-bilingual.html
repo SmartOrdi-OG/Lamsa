@@ -1268,10 +1268,12 @@
     <button class="nav-cta" onclick="scrollToForm()" data-ar="ابدأ مجاناً" data-en="Start Free" data-de="Kostenlos starten" data-es="Empezar gratis">Start Free</button>
     <!-- Swapped for a single "Sign In" link for guests — see the
          checkAuth().then() branch below; nothing to log out of or
-         delete until there's an actual account. -->
+         delete until there's an actual account. All 3 start hidden so a
+         guest never sees Log Out/Delete Account flash before checkAuth()
+         resolves (or stick around if that call ever fails). -->
     <a class="nav-logout" href="lamsa-auth.html" id="navSignInBtn" style="display:none;text-decoration:none;" data-en="Sign In" data-ar="تسجيل الدخول">Sign In</a>
-    <button type="button" class="nav-logout" onclick="logout()" id="navLogoutBtn" data-en="Log Out" data-ar="تسجيل الخروج">Log Out</button>
-    <button type="button" class="nav-logout" onclick="deleteAccount()" id="navDeleteBtn" data-en="Delete Account" data-ar="حذف الحساب" data-de="Konto löschen" data-es="Eliminar cuenta">Delete Account</button>
+    <button type="button" class="nav-logout" onclick="logout()" id="navLogoutBtn" style="display:none;" data-en="Log Out" data-ar="تسجيل الخروج">Log Out</button>
+    <button type="button" class="nav-logout" onclick="deleteAccount()" id="navDeleteBtn" style="display:none;" data-en="Delete Account" data-ar="حذف الحساب" data-de="Konto löschen" data-es="Eliminar cuenta">Delete Account</button>
   </div>
 </nav>
 
