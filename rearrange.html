@@ -1046,8 +1046,14 @@
     // far too conservative for a full redesign. 1 (max) let the model
     // regenerate the room's actual structure instead of just its contents,
     // so it's capped at 0.85 — same fix as the main designer page.
-    var guidanceScale = isRedesign ? 7.5 : 3.5;
-    var strength = isRedesign ? 0.85 : 0.6;
+    // Plain rearrange was at 3.5/0.6 — too low for the model to actually
+    // move furniture; it mostly just tweaked lighting/wall tone instead,
+    // since that low a strength barely lets it diverge from the source
+    // pixels. Raised, but kept below redesign's, so it still has enough
+    // "hold the source image" pull to keep the same furniture pieces
+    // instead of replacing them.
+    var guidanceScale = isRedesign ? 7.5 : 5.5;
+    var strength = isRedesign ? 0.85 : 0.75;
 
     // Stage 2 (Nano refine) polishes Flux's own output image, not the
     // original photo — reusing promptToUse here would resend redesign/
