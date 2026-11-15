@@ -137,19 +137,36 @@
       <button class="tab active" data-view="ratings" onclick="switchTab('ratings')">Ratings</button>
       <button class="tab" data-view="errors" onclick="switchTab('errors')">Errors</button>
       <button class="tab" data-view="config" onclick="switchTab('config')">Configuration</button>
+      <button class="tab" data-view="credits" onclick="switchTab('credits')">Credits</button>
       <button class="btn secondary" style="margin-inline-start:auto" onclick="loadView(currentView, true)">Refresh</button>
     </div>
 
     <div class="panel active" id="panel-ratings"><div class="loading">Loading…</div></div>
     <div class="panel" id="panel-errors"><div class="loading">Loading…</div></div>
     <div class="panel" id="panel-config"><div class="loading">Loading…</div></div>
+    <div class="panel" id="panel-credits">
+      <div class="list-item">
+        <div style="display:flex; gap:10px; flex-wrap:wrap; align-items:center;">
+          <input id="creditEmail" type="email" placeholder="user@email.com" autocomplete="off"
+                 style="flex:1; min-width:200px; border:1.5px solid var(--border); border-radius:10px; padding:10px 12px; font-family:inherit; font-size:14px; background:var(--card-2); color:var(--white);">
+          <input id="creditAmount" type="number" value="1" step="1"
+                 style="width:80px; border:1.5px solid var(--border); border-radius:10px; padding:10px 12px; font-family:inherit; font-size:14px; background:var(--card-2); color:var(--white);">
+          <button class="btn" id="grantCreditBtn" onclick="grantCredit()">Grant</button>
+        </div>
+        <div style="margin-top:10px; font-size:13px; color:var(--gray);">Positive amount adds credits, negative removes them.</div>
+        <div id="creditResult" style="margin-top:10px; font-size:14px; font-weight:700;"></div>
+      </div>
+    </div>
   </div>
 </div>
 
 <script>
   var adminPassword = null;
   var currentView = 'ratings';
-  var loaded = { ratings: false, errors: false, config: false };
+  // 'credits' is a static form, not a fetched view — marking it already
+  // loaded keeps switchTab() from calling loadView('credits'), which would
+  // just 400 ("Unknown view") against the admin endpoint.
+  var loaded = { ratings: false, errors: false, config: false, credits: true };
 
   function escapeHtml(s) {
     return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) {
@@ -161,15 +178,39 @@
     try { return new Date(iso).toLocaleString(); } catch (e) { return iso || ''; }
   }
 
-  async function callAdmin(view) {
+  async function callAdmin(view, extra) {
+    var body = Object.assign({ adminPassword: adminPassword, view: view }, extra || {});
     var res = await fetch('/api/status', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ adminPassword: adminPassword, view: view })
+      body: JSON.stringify(body)
     });
     var data = await res.json().catch(function () { return {}; });
     if (!res.ok) throw new Error(data.error || 'Request failed');
     return data;
+  }
+
+  async function grantCredit() {
+    var email = document.getElementById('creditEmail').value.trim();
+    var amount = document.getElementById('creditAmount').value;
+    var btn = document.getElementById('grantCreditBtn');
+    var resultEl = document.getElementById('creditResult');
+    resultEl.style.color = '';
+    resultEl.textContent = '';
+    if (!email) { resultEl.style.color = 'var(--error)'; resultEl.textContent = 'Enter an email.'; return; }
+    btn.disabled = true;
+    btn.textContent = 'Granting…';
+    try {
+      var data = await callAdmin('grant_credit', { targetEmail: email, amount: amount });
+      resultEl.style.color = 'var(--success)';
+      resultEl.textContent = 'Done — ' + data.email + ' now has ' + data.newBalance + ' credit(s).';
+    } catch (e) {
+      resultEl.style.color = 'var(--error)';
+      resultEl.textContent = e.message || 'Failed';
+    } finally {
+      btn.disabled = false;
+      btn.textContent = 'Grant';
+    }
   }
 
   async function unlock() {
