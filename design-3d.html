@@ -4049,6 +4049,32 @@
   var D3D_PHOTOREAL_REFINE_PROMPT =
     'This photo already shows a photorealistic miniature dollhouse model render. Your ONLY task is to further enhance photorealism, material detail, and lighting quality. The walls and ceiling must look like smooth, clean, polished painted gypsum/plaster — never cardboard, cardstock, or any paper-like material, and never worn, stained, dirty, or torn. Do NOT change the room layout, camera angle, furniture positions, or overall composition in any way — this is a quality-enhancement pass only.';
 
+  // The flat 3D floor texture doesn't always read clearly enough as the
+  // user's chosen material for the image model to infer it on its own, so
+  // we tell it explicitly which one to render.
+  var D3D_FLOOR_MATERIAL_PROMPTS = {
+    'Wood/Parquet': 'natural wood parquet flooring, with visible wood grain and a warm satin finish',
+    'Marble': 'polished marble flooring, with natural stone veining and realistic glossy reflections',
+    'Tile': 'large-format floor tiles, with visible grout lines and a matte-to-satin finish',
+    'Ceramic': 'glossy ceramic tile flooring, with visible grout lines and realistic light reflections',
+    'Concrete': 'smooth polished concrete flooring, with a subtle matte sheen',
+    'Carpet': 'soft woven carpet flooring, with a visible fabric texture'
+  };
+
+  function d3dFloorMaterialNote() {
+    var floorText = d3dSelectedText('d3dFloorChips');
+    var floorDesc = D3D_FLOOR_MATERIAL_PROMPTS[floorText];
+    return floorDesc ? ('\n\nThe floor material is specifically ' + floorDesc + ' — render the floor as exactly this material, not any other flooring type.') : '';
+  }
+
+  function d3dBuildPhotoRealPrompt() {
+    return D3D_PHOTOREAL_PROMPT + d3dFloorMaterialNote();
+  }
+
+  function d3dBuildPhotoRealRefinePrompt() {
+    return D3D_PHOTOREAL_REFINE_PROMPT + d3dFloorMaterialNote();
+  }
+
   function d3dFetchJson(url, options) {
     return fetch(url, options).then(function(res) {
       return res.json().then(function(data) { return { ok: res.ok, status: res.status, data: data }; });
@@ -4103,7 +4129,7 @@
     if (!refineToken) return Promise.resolve(fluxImage);
     return fetch('/api/generate', {
       method: 'POST', headers: { 'Content-Type': 'application/json' }, credentials: 'include',
-      body: JSON.stringify({ prompt: D3D_PHOTOREAL_REFINE_PROMPT, image_url: fluxImage.url, refine_token: refineToken })
+      body: JSON.stringify({ prompt: d3dBuildPhotoRealRefinePrompt(), image_url: fluxImage.url, refine_token: refineToken })
     })
     .then(function(res) { return res.json().then(function(data) { return { ok: res.ok, data: data }; }); })
     .then(function(result) {
@@ -4408,7 +4434,7 @@
 
         fetch('/api/generate', {
           method: 'POST', headers: { 'Content-Type': 'application/json' }, credentials: 'include',
-          body: JSON.stringify({ prompt: D3D_PHOTOREAL_PROMPT, image_url: uploadResult.data.url, num_images: 1, guidance_scale: 6.5, strength: 0.45 })
+          body: JSON.stringify({ prompt: d3dBuildPhotoRealPrompt(), image_url: uploadResult.data.url, num_images: 1, guidance_scale: 6.5, strength: 0.45 })
         })
         .then(function(res) { return res.json().then(function(data) { return { ok: res.ok, status: res.status, data: data }; }); })
         .then(function(result) {
