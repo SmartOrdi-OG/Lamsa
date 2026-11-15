@@ -1,5 +1,12 @@
 import crypto from 'crypto';
+import { createRemoteJWKSet, jwtVerify } from 'jose';
 import { redis } from './_db.js';
+
+// JWKS fetches are cached in-memory by `jose` itself (keyed by this
+// function instance), so a cold start pays one fetch per provider and
+// every later verification in the same warm instance reuses it.
+const googleJWKS = createRemoteJWKSet(new URL('https://www.googleapis.com/oauth2/v3/certs'));
+const appleJWKS = createRemoteJWKSet(new URL('https://appleid.apple.com/auth/keys'));
 
 const SESSION_TTL_SECONDS = 60 * 60 * 24 * 30; // 30 days
 const SCRYPT_KEYLEN = 64;
@@ -103,6 +110,56 @@ export async function createUser({ username, email, password, country }) {
   await redis.set(key, user);
   await redis.set(uKey, normalizedEmail);
   return { user };
+}
+
+// Verifies a Google Identity Services ID token against Google's own public
+// keys (no client secret needed for this flow) and returns the claims we
+// care about. Throws on any failure — bad signature, wrong audience, wrong
+// issuer, expired token — callers treat that as "sign-in failed".
+export async function verifyGoogleIdToken(idToken) {
+  const { payload } = await jwtVerify(idToken, googleJWKS, {
+    issuer: ['https://accounts.google.com', 'accounts.google.com'],
+    audience: process.env.GOOGLE_CLIENT_ID
+  });
+  if (!payload.email || payload.email_verified !== true) {
+    throw new Error('Google account has no verified email');
+  }
+  return { email: payload.email, name: payload.name || null };
+}
+
+// Same idea for "Sign in with Apple" — the identity token Apple returns to
+// the page. Apple's token carries the email but never the user's name; the
+// name (first/last) is only ever handed over once, in the client-side
+// authorization response on the very first sign-in, so the caller passes
+// it through separately as `fullName` when it has it.
+export async function verifyAppleIdToken(idToken) {
+  const { payload } = await jwtVerify(idToken, appleJWKS, {
+    issuer: 'https://appleid.apple.com',
+    audience: process.env.APPLE_CLIENT_ID
+  });
+  if (!payload.email) throw new Error('Apple account has no email');
+  return { email: payload.email, emailVerified: payload.email_verified === true || payload.email_verified === 'true' };
+}
+
+// Find-or-create for a Google/Apple sign-in, keyed on the provider's own
+// verified email (Apple's private-relay address is stable per app+user, so
+// it works as a normal key just like a real address). Mirrors
+// getOrCreateTelegramUser below: no password, no username-index entry —
+// these accounts only ever log back in through the same provider.
+export async function getOrCreateOAuthUser({ email, name, provider }) {
+  const normalizedEmail = email.trim().toLowerCase();
+  const key = userKey(normalizedEmail);
+  const existing = await redis.get(key);
+  if (existing) return { user: existing, isNew: false };
+
+  const user = {
+    username: name || normalizedEmail.split('@')[0],
+    email: normalizedEmail,
+    oauthProvider: provider,
+    createdAt: new Date().toISOString()
+  };
+  await redis.set(key, user);
+  return { user, isNew: true };
 }
 
 // Telegram Mini App users have no email/password — they're identified by
