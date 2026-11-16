@@ -364,7 +364,9 @@
     var overlay = document.getElementById('inviteOverlay');
     // Always the canonical domain, not window.location.origin — see the
     // same fix in lamsa-bilingual.html's showInviteModal().
-    var link = lastReferralCode ? ('https://lamsa-ai.com/lamsa-auth.html?ref=' + lastReferralCode) : '';
+    // vercel.json already rewrites "/" to lamsa-auth.html, so this is the
+    // exact same destination as before, just a cleaner-looking URL.
+    var link = lastReferralCode ? ('https://lamsa-ai.com/?ref=' + lastReferralCode) : '';
     document.getElementById('inviteLinkInput').value = link;
     var countEl = document.getElementById('inviteCount');
     if (lastReferralCount > 0) {

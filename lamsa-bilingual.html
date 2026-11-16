@@ -3186,7 +3186,9 @@
       // Always the canonical domain, not window.location.origin — a link
       // generated while someone is on the old lamsa-ten.vercel.app URL
       // should still hand out the new domain, not perpetuate the old one.
-      : ('https://lamsa-ai.com/lamsa-auth.html?ref=' + code);
+      // vercel.json already rewrites "/" to lamsa-auth.html, so this is
+      // the exact same destination as before, just a cleaner-looking URL.
+      : ('https://lamsa-ai.com/?ref=' + code);
 
     var title = isAr ? '🎁 دعوة صديق' : '🎁 Invite a friend';
     var sub = isAr
