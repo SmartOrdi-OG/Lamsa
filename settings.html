@@ -362,7 +362,9 @@
   // ===== Invite-a-friend modal =====
   function openInviteModal() {
     var overlay = document.getElementById('inviteOverlay');
-    var link = lastReferralCode ? (window.location.origin + '/lamsa-auth.html?ref=' + lastReferralCode) : '';
+    // Always the canonical domain, not window.location.origin — see the
+    // same fix in lamsa-bilingual.html's showInviteModal().
+    var link = lastReferralCode ? ('https://lamsa-ai.com/lamsa-auth.html?ref=' + lastReferralCode) : '';
     document.getElementById('inviteLinkInput').value = link;
     var countEl = document.getElementById('inviteCount');
     if (lastReferralCount > 0) {
