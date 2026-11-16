@@ -1,5 +1,5 @@
-import { redis, logError, getUserSubscription } from './_db.js';
-import { stripe, SUBSCRIPTION_PLANS } from './_stripe.js';
+import { redis, logError, getUserSubscription, getEngineerEntitlement } from './_db.js';
+import { stripe, SUBSCRIPTION_PLANS, ENGINEER_PLANS } from './_stripe.js';
 import { requireSessionEmail, EMAIL_RE } from './_auth.js';
 
 export default async function handler(req, res) {
@@ -20,16 +20,24 @@ export default async function handler(req, res) {
   const email = await requireSessionEmail(req);
   if (!email) return res.status(401).json({ error: 'Please log in' });
 
-  const { plan: planId, return_page } = req.body || {};
+  // `kind` tells apart Lamsa's two independent subscription families: the
+  // regular credits plans and the flat Engineers access plan. They are
+  // deliberately checked/stored against separate records (see below) so a
+  // user can hold one of each at the same time without either blocking or
+  // overwriting the other.
+  const { plan: planId, return_page, kind } = req.body || {};
+  const isEngineer = kind === 'engineer';
 
-  const plan = SUBSCRIPTION_PLANS[planId];
+  const plan = isEngineer ? ENGINEER_PLANS[planId] : SUBSCRIPTION_PLANS[planId];
   if (!plan) return res.status(400).json({ error: 'Unknown subscription plan' });
 
-  // One active recurring charge per user at a time — otherwise a double
-  // click (or subscribing to the other plan without realizing one is
-  // already running) would leave the buyer with two separate Stripe
-  // subscriptions billing them in parallel.
-  const existing = await getUserSubscription(email);
+  // One active recurring charge per user at a time *within the same plan
+  // family* — otherwise a double click (or subscribing to the other plan
+  // without realizing one is already running) would leave the buyer with
+  // two separate Stripe subscriptions billing them in parallel. Checked
+  // against the matching record only, so an Engineers purchase never blocks
+  // (or is blocked by) a regular credits subscription.
+  const existing = isEngineer ? await getEngineerEntitlement(email) : await getUserSubscription(email);
   if (existing && (existing.status === 'active' || existing.status === 'trialing')) {
     return res.status(409).json({ error: 'You already have an active subscription. Cancel it first to switch plans.' });
   }
@@ -37,7 +45,7 @@ export default async function handler(req, res) {
   // Send the user back to whichever page they started the purchase from.
   // Validated against an allowlist rather than trusting an arbitrary
   // client-supplied path, since this becomes a redirect target.
-  const ALLOWED_RETURN_PAGES = ['lamsa-bilingual.html', 'rearrange.html', 'inspirations.html'];
+  const ALLOWED_RETURN_PAGES = ['lamsa-bilingual.html', 'rearrange.html', 'inspirations.html', 'engineers/index.html'];
   const returnPage = ALLOWED_RETURN_PAGES.includes(return_page) ? return_page : 'lamsa-bilingual.html';
 
   // Prefer the request's own origin so this works the same in preview
@@ -51,6 +59,15 @@ export default async function handler(req, res) {
     // Omitting it just means Stripe Checkout asks the buyer for an email
     // itself (for the receipt); crediting the right account never depends
     // on it — see metadata.email below, which the webhook reads first.
+    // `credits` is only meaningful for the credits-plan family; the
+    // Engineers plan sends '0' so the webhook's own kind check (not this
+    // value) decides what to do with the invoice.
+    const metadata = {
+      email: email,
+      plan: planId,
+      kind: isEngineer ? 'engineer' : 'credits',
+      credits: String(isEngineer ? 0 : plan.credits)
+    };
     const stripeParams = {
       mode: 'subscription',
       line_items: [{
@@ -64,16 +81,17 @@ export default async function handler(req, res) {
       }],
       // Set on the Subscription itself (not just this Checkout Session) so
       // every invoice it ever produces — the first one and every renewal —
-      // carries the same email/plan/credits the webhook reads to know who
-      // to credit and by how much. Checkout Sessions don't require a
-      // pre-existing Stripe Customer.
-      subscription_data: {
-        metadata: { email: email, plan: planId, credits: String(plan.credits) }
-      },
-      metadata: { email: email, plan: planId, credits: String(plan.credits) },
+      // carries the same email/plan/kind/credits the webhook reads to know
+      // who to credit (or grant Engineers access to) and how. Checkout
+      // Sessions don't require a pre-existing Stripe Customer.
+      subscription_data: { metadata },
+      metadata,
       success_url: origin + '/' + returnPage + '?checkout=success',
       cancel_url: origin + '/' + returnPage + '?checkout=cancel'
     };
+    if (isEngineer && plan.trialDays) {
+      stripeParams.subscription_data.trial_period_days = plan.trialDays;
+    }
     if (EMAIL_RE.test(email)) stripeParams.customer_email = email;
 
     const session = await stripe.checkout.sessions.create(stripeParams);
