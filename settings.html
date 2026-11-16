@@ -196,7 +196,7 @@
     <div class="invite-sub" data-ar="شارك رابطك، وكل صديق ينضم عبره يمنحكما معاً تصميماً مجانياً إضافياً." data-en="Share your link — every friend who joins through it gets you both an extra free design.">Share your link — every friend who joins through it gets you both an extra free design.</div>
     <div class="invite-link-row"><input type="text" id="inviteLinkInput" readonly value=""></div>
     <div class="invite-count" id="inviteCount" style="display:none;"></div>
-    <button type="button" class="invite-btn-primary" id="inviteCopyBtn" data-ar="نسخ الرابط" data-en="Copy link">Copy link</button>
+    <button type="button" class="invite-btn-primary" id="inviteCopyBtn" data-ar="مشاركة الرابط" data-en="Share link">Share link</button>
     <button type="button" class="invite-btn-close" onclick="closeInviteModal()" data-ar="إغلاق" data-en="Close">Close</button>
   </div>
 </div>
@@ -233,7 +233,7 @@
       'Privacy Policy': 'Datenschutzerklärung', 'Contact & Feedback': 'Kontakt & Feedback', 'Account': 'Konto',
       'Log Out': 'Abmelden', 'Delete Account': 'Konto löschen', 'Invite a friend': 'Freund einladen',
       'Share your link — every friend who joins through it gets you both an extra free design.': 'Teile deinen Link — jeder Freund, der sich darüber anmeldet, schenkt euch beiden ein zusätzliches kostenloses Design.',
-      'Copy link': 'Link kopieren', 'Close': 'Schließen'
+      'Share link': 'Link teilen', 'Close': 'Schließen'
     },
     es: {
       'Account & Billing': 'Cuenta y facturación', 'Subscription': 'Suscripción', 'Checking...': 'Comprobando...',
@@ -244,7 +244,7 @@
       'Privacy Policy': 'Política de privacidad', 'Contact & Feedback': 'Contacto y comentarios', 'Account': 'Cuenta',
       'Log Out': 'Cerrar sesión', 'Delete Account': 'Eliminar cuenta', 'Invite a friend': 'Invitar a un amigo',
       'Share your link — every friend who joins through it gets you both an extra free design.': 'Comparte tu enlace — cada amigo que se una a través de él os dará a ambos un diseño gratis adicional.',
-      'Copy link': 'Copiar enlace', 'Close': 'Cerrar'
+      'Share link': 'Compartir enlace', 'Close': 'Cerrar'
     },
     tr: {
       'Account & Billing': 'Hesap ve Faturalandırma', 'Subscription': 'Abonelik', 'Checking...': 'Kontrol ediliyor...',
@@ -255,7 +255,7 @@
       'Privacy Policy': 'Gizlilik Politikası', 'Contact & Feedback': 'İletişim ve Geri Bildirim', 'Account': 'Hesap',
       'Log Out': 'Çıkış Yap', 'Delete Account': 'Hesabı Sil', 'Invite a friend': 'Arkadaşını davet et',
       'Share your link — every friend who joins through it gets you both an extra free design.': 'Linkini paylaş — onun üzerinden katılan her arkadaşın ikinize de ekstra bir ücretsiz tasarım kazandırır.',
-      'Copy link': 'Linki kopyala', 'Close': 'Kapat'
+      'Share link': 'Bağlantıyı paylaş', 'Close': 'Kapat'
     },
     fr: {
       'Account & Billing': 'Compte et facturation', 'Subscription': 'Abonnement', 'Checking...': 'Vérification...',
@@ -266,7 +266,7 @@
       'Privacy Policy': 'Politique de confidentialité', 'Contact & Feedback': 'Contact et retours', 'Account': 'Compte',
       'Log Out': 'Se déconnecter', 'Delete Account': 'Supprimer le compte', 'Invite a friend': 'Parrainer un ami',
       'Share your link — every friend who joins through it gets you both an extra free design.': 'Partagez votre lien — chaque ami qui vous rejoint grâce à lui vous offre à tous les deux un design gratuit supplémentaire.',
-      'Copy link': 'Copier le lien', 'Close': 'Fermer'
+      'Share link': 'Partager le lien', 'Close': 'Fermer'
     },
     it: {
       'Account & Billing': 'Account e fatturazione', 'Subscription': 'Abbonamento', 'Checking...': 'Verifica in corso...',
@@ -277,7 +277,7 @@
       'Privacy Policy': 'Informativa sulla privacy', 'Contact & Feedback': 'Contatti e feedback', 'Account': 'Account',
       'Log Out': 'Esci', 'Delete Account': 'Elimina account', 'Invite a friend': 'Invita un amico',
       'Share your link — every friend who joins through it gets you both an extra free design.': 'Condividi il tuo link — ogni amico che si unisce tramite esso vi darà entrambi un design gratuito extra.',
-      'Copy link': 'Copia link', 'Close': 'Chiudi'
+      'Share link': 'Condividi link', 'Close': 'Chiudi'
     },
     ru: {
       'Account & Billing': 'Аккаунт и оплата', 'Subscription': 'Подписка', 'Checking...': 'Проверка...',
@@ -288,7 +288,7 @@
       'Privacy Policy': 'Политика конфиденциальности', 'Contact & Feedback': 'Связь и отзывы', 'Account': 'Аккаунт',
       'Log Out': 'Выйти', 'Delete Account': 'Удалить аккаунт', 'Invite a friend': 'Пригласить друга',
       'Share your link — every friend who joins through it gets you both an extra free design.': 'Поделитесь своей ссылкой — каждый друг, который присоединится по ней, подарит вам обоим дополнительный бесплатный дизайн.',
-      'Copy link': 'Копировать ссылку', 'Close': 'Закрыть'
+      'Share link': 'Поделиться ссылкой', 'Close': 'Закрыть'
     }
   };
 
@@ -378,18 +378,30 @@
   function closeInviteModal() { document.getElementById('inviteOverlay').classList.remove('open'); }
   document.getElementById('inviteCopyBtn').addEventListener('click', function() {
     var input = document.getElementById('inviteLinkInput');
-    var done = function() {
+    var doneCopied = function() {
       var btn = document.getElementById('inviteCopyBtn');
-      var original = (T[currentLang] && T[currentLang]['Copy link']) || 'Copy link';
+      var original = (T[currentLang] && T[currentLang]['Share link']) || 'Share link';
       btn.textContent = dyn().copiedLink;
       setTimeout(function() { btn.textContent = original; }, 1600);
     };
-    if (navigator.clipboard && navigator.clipboard.writeText && input.value) {
-      navigator.clipboard.writeText(input.value).then(done).catch(done);
+    var fallbackCopy = function() {
+      if (navigator.clipboard && navigator.clipboard.writeText && input.value) {
+        navigator.clipboard.writeText(input.value).then(doneCopied).catch(doneCopied);
+      } else {
+        input.select();
+        try { document.execCommand('copy'); } catch (e) {}
+        doneCopied();
+      }
+    };
+    // Prefer the native share sheet — clipboard copy is now only a
+    // fallback for browsers without the Web Share API (mainly desktop).
+    if (navigator.share && input.value) {
+      navigator.share({ title: 'Lamsa', url: input.value }).catch(function(err) {
+        if (err && err.name === 'AbortError') return; // user canceled the share sheet
+        fallbackCopy();
+      });
     } else {
-      input.select();
-      try { document.execCommand('copy'); } catch (e) {}
-      done();
+      fallbackCopy();
     }
   });
   document.getElementById('inviteOverlay').addEventListener('click', function(e) {
