@@ -207,6 +207,59 @@ export async function getUserSubscription(email) {
   return redis.get(subscriptionKey(email));
 }
 
+function engineerKey(email) {
+  return 'lamsa:engineer:' + email.trim().toLowerCase();
+}
+
+// Deliberately a separate key from subscriptionKey() above — a user can
+// hold a regular credits subscription and Engineers access at the same
+// time, so the two must never share or overwrite one record.
+export async function setEngineerEntitlement(email, data) {
+  await redis.set(engineerKey(email), data);
+}
+
+export async function getEngineerEntitlement(email) {
+  return redis.get(engineerKey(email));
+}
+
+function engineerProjectKey(email, projectId) {
+  return 'lamsa:engineer:project:' + email.trim().toLowerCase() + ':' + projectId;
+}
+
+function engineerProjectIndexKey(email) {
+  return 'lamsa:engineer:projects:' + email.trim().toLowerCase();
+}
+
+// One denormalized JSON blob per project (rooms carry their own embedded
+// openings/furniture, see engineers-app's data model) plus a per-user Set
+// of project ids for cheap listing without scanning.
+export async function saveEngineerProject(email, projectId, project) {
+  await redis.sadd(engineerProjectIndexKey(email), projectId);
+  await redis.set(engineerProjectKey(email, projectId), project);
+}
+
+export async function getEngineerProject(email, projectId) {
+  return redis.get(engineerProjectKey(email, projectId));
+}
+
+export async function deleteEngineerProject(email, projectId) {
+  await redis.srem(engineerProjectIndexKey(email), projectId);
+  await redis.del(engineerProjectKey(email, projectId));
+}
+
+export async function listEngineerProjects(email) {
+  const ids = await redis.smembers(engineerProjectIndexKey(email));
+  if (!ids.length) return [];
+  const projects = await Promise.all(ids.map((id) => redis.get(engineerProjectKey(email, id))));
+  return ids
+    .map((id, i) => {
+      const p = projects[i];
+      if (!p) return null;
+      return { id, name: (p.project && p.project.name) || 'Untitled', updatedAt: p.updatedAt || null };
+    })
+    .filter(Boolean);
+}
+
 function referralCodeKey(code) {
   return 'lamsa:refcode:' + code;
 }

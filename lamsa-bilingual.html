@@ -3183,7 +3183,10 @@
     var code = lastReferralCode || '';
     var link = isTelegramMiniApp
       ? 'https://t.me/LamsaDesignBot?startapp=' + code
-      : (window.location.origin + '/lamsa-auth.html?ref=' + code);
+      // Always the canonical domain, not window.location.origin — a link
+      // generated while someone is on the old lamsa-ten.vercel.app URL
+      // should still hand out the new domain, not perpetuate the old one.
+      : ('https://lamsa-ai.com/lamsa-auth.html?ref=' + code);
 
     var title = isAr ? '🎁 دعوة صديق' : '🎁 Invite a friend';
     var sub = isAr

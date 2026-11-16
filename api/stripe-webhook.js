@@ -1,5 +1,5 @@
 import { stripe } from './_stripe.js';
-import { addCredits, markEventProcessed, logError, setUserSubscription } from './_db.js';
+import { addCredits, markEventProcessed, logError, setUserSubscription, setEngineerEntitlement } from './_db.js';
 
 // Stripe signature verification needs the exact raw request bytes — Vercel's
 // default JSON body parser would re-serialize the body and break the
@@ -59,7 +59,34 @@ export default async function handler(req, res) {
       const subscription = await stripe.subscriptions.retrieve(subscriptionId);
       const email = ((subscription.metadata && subscription.metadata.email) || '').trim().toLowerCase();
       const plan = (subscription.metadata && subscription.metadata.plan) || null;
+      const isEngineer = (subscription.metadata && subscription.metadata.kind) === 'engineer';
       const credits = parseInt((subscription.metadata && subscription.metadata.credits) || '0', 10);
+
+      // The Engineers plan is checked (and can short-circuit) before the
+      // credits guard below, since its invoices legitimately carry no/zero
+      // credits — falling through to that guard would silently skip every
+      // real Engineers purchase.
+      if (isEngineer) {
+        if (!email) {
+          console.error('[stripe-webhook] engineer subscription missing email in metadata:', subscriptionId);
+          return res.status(200).json({ received: true, skipped: 'missing email' });
+        }
+
+        const isNewEvent = await markEventProcessed(event.id);
+        if (!isNewEvent) {
+          console.log('[stripe-webhook] duplicate delivery of event', event.id, '- skipping entitlement grant');
+          return res.status(200).json({ received: true, duplicate: true });
+        }
+
+        await setEngineerEntitlement(email, {
+          email, plan, status: subscription.status,
+          subscriptionId, customerId: subscription.customer,
+          currentPeriodEnd: subscription.current_period_end || null,
+          trialEnd: subscription.trial_end || null
+        });
+        console.log('[stripe-webhook] granted Engineers access to', email, '- status:', subscription.status);
+        return res.status(200).json({ received: true });
+      }
 
       if (!email || !credits) {
         console.error('[stripe-webhook] subscription missing email/credits in metadata:', subscriptionId);
@@ -89,8 +116,17 @@ export default async function handler(req, res) {
       const subscription = event.data.object;
       const email = ((subscription.metadata && subscription.metadata.email) || '').trim().toLowerCase();
       const plan = (subscription.metadata && subscription.metadata.plan) || null;
+      const isEngineer = (subscription.metadata && subscription.metadata.kind) === 'engineer';
 
-      if (email) {
+      if (email && isEngineer) {
+        await setEngineerEntitlement(email, {
+          email, plan, status: subscription.status,
+          subscriptionId: subscription.id, customerId: subscription.customer,
+          currentPeriodEnd: subscription.current_period_end || null,
+          trialEnd: subscription.trial_end || null
+        });
+        console.log('[stripe-webhook] engineer subscription', subscription.id, 'for', email, '-> status', subscription.status);
+      } else if (email) {
         await setUserSubscription(email, {
           email, plan, status: subscription.status,
           subscriptionId: subscription.id, customerId: subscription.customer,

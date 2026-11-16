@@ -1,5 +1,18 @@
-import { redis, addRating, getGenerationCount, getUserSubscription, getDesignHistory, logError } from './_db.js';
+import crypto from 'crypto';
+import {
+  redis, addRating, getGenerationCount, getUserSubscription, getDesignHistory, logError,
+  getEngineerEntitlement, listEngineerProjects, getEngineerProject, saveEngineerProject, deleteEngineerProject
+} from './_db.js';
 import { requireSessionEmail, getUser, deleteUser, getSessionTokenFromRequest, destroySession, clearSessionCookie } from './_auth.js';
+
+// A project blob is user-authored JSON (rooms/openings/furniture/stairs) —
+// unlike every other value this file writes, its size isn't fixed, so it
+// gets its own guard rather than trusting the client.
+const MAX_ENGINEER_PROJECT_BYTES = 500 * 1024;
+
+function hasEngineerAccess(entitlement) {
+  return !!entitlement && (entitlement.status === 'active' || entitlement.status === 'trialing');
+}
 
 // Shown only to the team account — this is a site-wide number, not
 // something any other logged-in user should see on their own /api/me call.
@@ -40,16 +53,42 @@ export default async function handler(req, res) {
     }
 
     if (req.method === 'POST') {
-      const { action, rating, comment } = req.body || {};
-      if (action !== 'rate') return res.status(400).json({ error: 'Unknown action' });
+      const { action, rating, comment, projectId, project } = req.body || {};
 
-      const ratingNum = parseInt(rating, 10);
-      if (!(ratingNum >= 1 && ratingNum <= 5)) {
-        return res.status(400).json({ error: 'rating must be an integer from 1 to 5' });
+      if (action === 'rate') {
+        const ratingNum = parseInt(rating, 10);
+        if (!(ratingNum >= 1 && ratingNum <= 5)) {
+          return res.status(400).json({ error: 'rating must be an integer from 1 to 5' });
+        }
+        await addRating(email, ratingNum, comment);
+        return res.status(200).json({ ok: true });
       }
 
-      await addRating(email, ratingNum, comment);
-      return res.status(200).json({ ok: true });
+      // Engineers section project save/delete — gated server-side on the
+      // entitlement regardless of what the client-side UI already hid,
+      // since that's cosmetic only.
+      if (action === 'engineer_save' || action === 'engineer_delete') {
+        const entitlement = await getEngineerEntitlement(email);
+        if (!hasEngineerAccess(entitlement)) return res.status(403).json({ error: 'Engineers access required' });
+
+        if (action === 'engineer_delete') {
+          if (!projectId) return res.status(400).json({ error: 'projectId is required' });
+          await deleteEngineerProject(email, projectId);
+          return res.status(200).json({ ok: true });
+        }
+
+        if (!project || typeof project !== 'object') return res.status(400).json({ error: 'project is required' });
+        const serialized = JSON.stringify(project);
+        if (serialized.length > MAX_ENGINEER_PROJECT_BYTES) {
+          return res.status(413).json({ error: 'Project is too large to save' });
+        }
+        const id = projectId || crypto.randomUUID();
+        const blob = { project, updatedAt: new Date().toISOString() };
+        await saveEngineerProject(email, id, blob);
+        return res.status(200).json({ ok: true, projectId: id });
+      }
+
+      return res.status(400).json({ error: 'Unknown action' });
     }
 
     // History screen's design grid — folded into this GET handler (rather
@@ -58,6 +97,20 @@ export default async function handler(req, res) {
     if (req.query.view === 'history') {
       const designs = await getDesignHistory(email, 60);
       return res.status(200).json({ designs });
+    }
+
+    // Engineers section's project list/load — same reasoning as `view=history`.
+    if (req.query.view === 'engineer') {
+      const entitlement = await getEngineerEntitlement(email);
+      if (!hasEngineerAccess(entitlement)) return res.status(403).json({ error: 'Engineers access required' });
+
+      if (req.query.projectId) {
+        const blob = await getEngineerProject(email, req.query.projectId);
+        if (!blob) return res.status(404).json({ error: 'Project not found' });
+        return res.status(200).json({ project: blob.project, updatedAt: blob.updatedAt });
+      }
+      const projects = await listEngineerProjects(email);
+      return res.status(200).json({ projects });
     }
 
     const user = await getUser(email);
@@ -70,6 +123,9 @@ export default async function handler(req, res) {
     // Settings screen's subscription-status row — read-only here, so no
     // separate endpoint is needed just to check it.
     response.subscription = await getUserSubscription(email);
+    // Lets the Engineers app's own bootstrap decide paywall vs. editor from
+    // this same call, without a separate request.
+    response.engineerSubscription = await getEngineerEntitlement(email);
     return res.status(200).json(response);
   } catch (err) {
     console.error('[me] error:', err.message);

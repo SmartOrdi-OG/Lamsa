@@ -1,0 +1,21 @@
+{
+  "name": "lamsa-engineers-app",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Source for Lamsa's Engineers section. Built locally/in CI; the production build output is committed to ../engineers/ and served as plain static files by the main Lamsa deployment. This sub-project's package.json is intentionally never the Vercel project's root package.json, so it is never auto-built by Vercel.",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "three": "^0.160.0"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-react": "^4.3.4",
+    "vite": "^5.4.11"
+  }
+}
