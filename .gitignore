@@ -4,3 +4,8 @@ node_modules/
 .env.local
 *.log
 .DS_Store
+
+# engineers-app/ is a self-contained source sub-project built locally/in CI;
+# only its build OUTPUT (committed at /engineers/) is deployed.
+engineers-app/node_modules/
+engineers-app/dist/
