@@ -3196,7 +3196,7 @@
       ? (isAr ? ('دعوت ' + lastReferralCount + (lastReferralCount === 1 ? ' صديق حتى الآن' : ' أصدقاء حتى الآن')) : ('You\'ve invited ' + lastReferralCount + ' friend' + (lastReferralCount === 1 ? '' : 's') + ' so far'))
       : '';
     var closeLabel = isAr ? 'إغلاق' : 'Close';
-    var copyLabel = isAr ? 'نسخ الرابط' : 'Copy link';
+    var copyLabel = isAr ? 'مشاركة الرابط' : 'Share link';
     var shareLabel = isAr ? 'مشاركة على تيلغرام' : 'Share on Telegram';
 
     box.innerHTML =
@@ -3218,18 +3218,31 @@
     var copyBtn = document.getElementById('inviteCopyBtn');
     copyBtn.onclick = function() {
       var input = document.getElementById('inviteLinkInput');
-      var done = function() {
+      var doneCopied = function() {
         copyBtn.textContent = isAr ? 'تم النسخ ✓' : 'Copied ✓';
         setTimeout(function() { copyBtn.textContent = copyLabel; }, 2000);
       };
-      if (navigator.clipboard && navigator.clipboard.writeText) {
-        navigator.clipboard.writeText(link).then(done).catch(function() {
+      var fallbackCopy = function() {
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          navigator.clipboard.writeText(link).then(doneCopied).catch(function() {
+            input.select();
+            try { document.execCommand('copy'); doneCopied(); } catch (e) {}
+          });
+        } else {
           input.select();
-          try { document.execCommand('copy'); done(); } catch (e) {}
+          try { document.execCommand('copy'); doneCopied(); } catch (e) {}
+        }
+      };
+      // Prefer the native share sheet (WhatsApp, Telegram, SMS, etc.) —
+      // copying to the clipboard is now only a fallback for browsers
+      // without the Web Share API (mainly desktop).
+      if (navigator.share) {
+        navigator.share({ title: 'Lamsa', text: sub, url: link }).catch(function(err) {
+          if (err && err.name === 'AbortError') return; // user canceled the share sheet
+          fallbackCopy();
         });
       } else {
-        input.select();
-        try { document.execCommand('copy'); done(); } catch (e) {}
+        fallbackCopy();
       }
     };
 
