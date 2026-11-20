@@ -1285,6 +1285,10 @@
     <h2 data-ar="كل الأدوات" data-en="All Tools">All Tools</h2>
   </div>
   <div class="home-tool-row">
+    <a class="home-tool-tile" href="engineers/index.html">
+      <div class="home-tool-icon"></div>
+      <span data-ar="قسم المهندسين" data-en="Engineers">Engineers</span>
+    </a>
     <div class="home-tool-tile" onclick="openInteriorDesignTool()">
       <div class="home-tool-icon"></div>
       <span data-ar="تصميم داخلي" data-en="Interior Design">Interior Design</span>
@@ -1300,10 +1304,6 @@
     <a class="home-tool-tile" href="inspirations.html">
       <div class="home-tool-icon"></div>
       <span data-ar="معرض الإلهام" data-en="Style Gallery">Style Gallery</span>
-    </a>
-    <a class="home-tool-tile" href="engineers/index.html">
-      <div class="home-tool-icon"></div>
-      <span data-ar="قسم المهندسين" data-en="Engineers">Engineers</span>
     </a>
   </div>
 
@@ -2643,7 +2643,7 @@
   // data-ar, so setLang()'s generic pass never touches them) and mounts
   // the shared bottom tab bar.
   function initHomeScreen() {
-    var icons = ['sparkles', 'refresh', 'cube', 'palette', 'ruler'];
+    var icons = ['ruler', 'sparkles', 'refresh', 'cube', 'palette'];
     document.querySelectorAll('.home-tool-icon').forEach(function (el, i) {
       el.innerHTML = window.icon ? window.icon(icons[i] || 'sparkle') : '';
     });
