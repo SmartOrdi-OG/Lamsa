@@ -2648,6 +2648,17 @@
       el.innerHTML = window.icon ? window.icon(icons[i] || 'sparkle') : '';
     });
     if (window.AppShell) AppShell.renderTabBar('home');
+
+    // In a dir="rtl" document, Safari/WebKit (unlike Chrome/Firefox) keeps
+    // treating scrollLeft as if the row were still LTR, so an
+    // overflow-x:auto row can load already scrolled past its first
+    // (rightmost, "most important") tile — Engineers — instead of
+    // starting flush on it. scrollIntoView sidesteps the sign/zero-point
+    // quirk entirely instead of trying to compute the right scrollLeft
+    // per browser.
+    var row = document.querySelector('.home-tool-row');
+    var firstTile = row && row.querySelector('.home-tool-tile');
+    if (firstTile) firstTile.scrollIntoView({ inline: 'start', block: 'nearest' });
   }
 
   function goTo(n) {

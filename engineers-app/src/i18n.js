@@ -59,7 +59,21 @@ export const AR = {
   'Dollhouse view': 'عرض مقطعي',
   'Render view': 'عرض فني',
   'Export DXF': 'تصدير DXF',
-  'Back to Home': 'الرئيسية'
+  'Back to Home': 'الرئيسية',
+  'Generate realistic image': 'توليد صورة واقعية',
+  'Optional — uses 1 credit from your weekly/monthly plan': 'اختياري — يستهلك كريدت واحد من رصيدك الأسبوعي أو الشهري',
+  'Turning your design into a photoreal render...': 'عم نحوّل تصميمك لصورة واقعية...',
+  'Takes 20-40 seconds': 'بياخد 20-40 ثانية',
+  'Close': 'إغلاق',
+  'Image upload failed. Please try again.': 'تعذّر رفع الصورة، حاول مرة أخرى',
+  'Error generating image. Please try again.': 'حدث خطأ أثناء توليد الصورة، حاول مرة أخرى',
+  'Connection error. Please try again.': 'خطأ بالاتصال، حاول مرة أخرى',
+  "You're out of credits": 'نفد رصيدك من الكريدت',
+  'Subscribe to generate photoreal renders of your floor plans.': 'اشترك لتوليد صور واقعية لمخططاتك',
+  'Weekly': 'أسبوعي',
+  'Monthly': 'شهري',
+  'credits': 'كريدت',
+  'Download': 'تحميل'
 };
 
 export const T = {
@@ -111,7 +125,21 @@ export const T = {
     'Dollhouse view': 'Schnittansicht',
     'Render view': 'Render-Ansicht',
     'Export DXF': 'DXF exportieren',
-    'Back to Home': 'Zurück zur Startseite'
+    'Back to Home': 'Zurück zur Startseite',
+    'Generate realistic image': 'Realistisches Bild erzeugen',
+    'Optional — uses 1 credit from your weekly/monthly plan': 'Optional — verbraucht 1 Guthaben aus deinem Wochen-/Monatsabo',
+    'Turning your design into a photoreal render...': 'Dein Entwurf wird in ein fotorealistisches Bild verwandelt...',
+    'Takes 20-40 seconds': 'Dauert 20-40 Sekunden',
+    'Close': 'Schließen',
+    'Image upload failed. Please try again.': 'Bild-Upload fehlgeschlagen, bitte erneut versuchen',
+    'Error generating image. Please try again.': 'Fehler bei der Bilderzeugung, bitte erneut versuchen',
+    'Connection error. Please try again.': 'Verbindungsfehler, bitte erneut versuchen',
+    "You're out of credits": 'Dein Guthaben ist aufgebraucht',
+    'Subscribe to generate photoreal renders of your floor plans.': 'Abonniere, um fotorealistische Bilder deiner Grundrisse zu erzeugen.',
+    'Weekly': 'Wöchentlich',
+    'Monthly': 'Monatlich',
+    'credits': 'Guthaben',
+    'Download': 'Herunterladen'
   },
   es: {
     'Lamsa Engineers': 'Lamsa Ingenieros',
@@ -161,7 +189,21 @@ export const T = {
     'Dollhouse view': 'Vista seccionada',
     'Render view': 'Vista renderizada',
     'Export DXF': 'Exportar DXF',
-    'Back to Home': 'Volver al Inicio'
+    'Back to Home': 'Volver al Inicio',
+    'Generate realistic image': 'Generar imagen realista',
+    'Optional — uses 1 credit from your weekly/monthly plan': 'Opcional — usa 1 crédito de tu plan semanal/mensual',
+    'Turning your design into a photoreal render...': 'Convirtiendo tu diseño en una imagen fotorrealista...',
+    'Takes 20-40 seconds': 'Tarda 20-40 segundos',
+    'Close': 'Cerrar',
+    'Image upload failed. Please try again.': 'Error al subir la imagen, inténtalo de nuevo',
+    'Error generating image. Please try again.': 'Error al generar la imagen, inténtalo de nuevo',
+    'Connection error. Please try again.': 'Error de conexión, inténtalo de nuevo',
+    "You're out of credits": 'Te has quedado sin créditos',
+    'Subscribe to generate photoreal renders of your floor plans.': 'Suscríbete para generar imágenes fotorrealistas de tus planos.',
+    'Weekly': 'Semanal',
+    'Monthly': 'Mensual',
+    'credits': 'créditos',
+    'Download': 'Descargar'
   },
   tr: {
     'Lamsa Engineers': 'Lamsa Muhendisler',
@@ -211,7 +253,21 @@ export const T = {
     'Dollhouse view': 'Kesit Gorunumu',
     'Render view': 'Render Gorunumu',
     'Export DXF': 'DXF Disa Aktar',
-    'Back to Home': 'Ana Sayfaya Don'
+    'Back to Home': 'Ana Sayfaya Don',
+    'Generate realistic image': 'Gercekci Gorsel Olustur',
+    'Optional — uses 1 credit from your weekly/monthly plan': 'Istege bagli — haftalik/aylik paketinizden 1 kredi kullanir',
+    'Turning your design into a photoreal render...': 'Tasariminiz gercekci bir gorsele donusturuluyor...',
+    'Takes 20-40 seconds': '20-40 saniye surer',
+    'Close': 'Kapat',
+    'Image upload failed. Please try again.': 'Gorsel yuklenemedi, lutfen tekrar deneyin',
+    'Error generating image. Please try again.': 'Gorsel olusturulurken hata olustu, lutfen tekrar deneyin',
+    'Connection error. Please try again.': 'Baglanti hatasi, lutfen tekrar deneyin',
+    "You're out of credits": 'Krediniz kalmadi',
+    'Subscribe to generate photoreal renders of your floor plans.': 'Kat planlarinizin gercekci gorsellerini olusturmak icin abone olun.',
+    'Weekly': 'Haftalik',
+    'Monthly': 'Aylik',
+    'credits': 'kredi',
+    'Download': 'Indir'
   },
   fr: {
     'Lamsa Engineers': 'Lamsa Ingénieurs',
@@ -261,7 +317,21 @@ export const T = {
     'Dollhouse view': 'Vue en coupe',
     'Render view': 'Vue rendue',
     'Export DXF': 'Exporter en DXF',
-    'Back to Home': "Retour à l'accueil"
+    'Back to Home': "Retour à l'accueil",
+    'Generate realistic image': 'Générer une image réaliste',
+    'Optional — uses 1 credit from your weekly/monthly plan': 'Optionnel — utilise 1 crédit de votre forfait hebdomadaire/mensuel',
+    'Turning your design into a photoreal render...': 'Transformation de votre conception en image photoréaliste...',
+    'Takes 20-40 seconds': 'Prend 20 à 40 secondes',
+    'Close': 'Fermer',
+    'Image upload failed. Please try again.': "Échec de l'envoi de l'image, veuillez réessayer",
+    'Error generating image. Please try again.': "Erreur lors de la génération de l'image, veuillez réessayer",
+    'Connection error. Please try again.': 'Erreur de connexion, veuillez réessayer',
+    "You're out of credits": 'Vous n\'avez plus de crédits',
+    'Subscribe to generate photoreal renders of your floor plans.': 'Abonnez-vous pour générer des rendus photoréalistes de vos plans.',
+    'Weekly': 'Hebdomadaire',
+    'Monthly': 'Mensuel',
+    'credits': 'crédits',
+    'Download': 'Télécharger'
   },
   it: {
     'Lamsa Engineers': 'Lamsa Ingegneri',
@@ -311,7 +381,21 @@ export const T = {
     'Dollhouse view': 'Vista in sezione',
     'Render view': 'Vista renderizzata',
     'Export DXF': 'Esporta DXF',
-    'Back to Home': 'Torna alla Home'
+    'Back to Home': 'Torna alla Home',
+    'Generate realistic image': 'Genera immagine realistica',
+    'Optional — uses 1 credit from your weekly/monthly plan': 'Opzionale — usa 1 credito del tuo piano settimanale/mensile',
+    'Turning your design into a photoreal render...': 'Trasformazione del tuo progetto in un rendering fotorealistico...',
+    'Takes 20-40 seconds': 'Richiede 20-40 secondi',
+    'Close': 'Chiudi',
+    'Image upload failed. Please try again.': "Caricamento dell'immagine non riuscito, riprova",
+    'Error generating image. Please try again.': "Errore durante la generazione dell'immagine, riprova",
+    'Connection error. Please try again.': 'Errore di connessione, riprova',
+    "You're out of credits": 'Hai esaurito i crediti',
+    'Subscribe to generate photoreal renders of your floor plans.': 'Abbonati per generare rendering fotorealistici delle tue planimetrie.',
+    'Weekly': 'Settimanale',
+    'Monthly': 'Mensile',
+    'credits': 'crediti',
+    'Download': 'Scarica'
   },
   ru: {
     'Lamsa Engineers': 'Lamsa Inzhenery',
@@ -361,7 +445,21 @@ export const T = {
     'Dollhouse view': 'Razrez doma',
     'Render view': 'Render vid',
     'Export DXF': 'Eksportirovat DXF',
-    'Back to Home': 'Na glavnuyu'
+    'Back to Home': 'Na glavnuyu',
+    'Generate realistic image': 'Sozdat realistichnoe izobrazhenie',
+    'Optional — uses 1 credit from your weekly/monthly plan': 'Neobyazatelno — ispolzuet 1 kredit iz vashego nedelnogo/mesyachnogo plana',
+    'Turning your design into a photoreal render...': 'Prevrashchaem vash proekt v fotorealistichnoe izobrazhenie...',
+    'Takes 20-40 seconds': 'Zanimaet 20-40 sekund',
+    'Close': 'Zakryt',
+    'Image upload failed. Please try again.': 'Ne udalos zagruzit izobrazhenie, poprobuyte snova',
+    'Error generating image. Please try again.': 'Oshibka pri sozdanii izobrazheniya, poprobuyte snova',
+    'Connection error. Please try again.': 'Oshibka soedineniya, poprobuyte snova',
+    "You're out of credits": 'U vas konchilis kredity',
+    'Subscribe to generate photoreal renders of your floor plans.': 'Oformite podpisku, chtoby sozdavat realistichnye izobrazheniya vashikh planov.',
+    'Weekly': 'Nedelnyy',
+    'Monthly': 'Mesyachnyy',
+    'credits': 'kreditov',
+    'Download': 'Skachat'
   }
 };
 

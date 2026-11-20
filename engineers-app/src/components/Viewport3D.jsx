@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { forwardRef, useEffect, useImperativeHandle, useRef, useState } from 'react';
 import * as THREE from 'three';
 import { computeCenter, computeFloorBaseYMap, rebuildGroup } from '../lib/build3d.js';
 import { clamp } from '../lib/planGeometry.js';
@@ -53,7 +53,10 @@ function makeRoomLabelSprite(text) {
 const DOLLHOUSE_PHI = 0.62;
 const DOLLHOUSE_THETA = Math.PI / 4;
 
-export default function Viewport3D({ rooms, stairs, columns = [], wallHeight, wallColor, wallMaterial, autoRotate, dollhouse = false, floorGap = 0, renderView = false, t = (s) => s }) {
+const Viewport3D = forwardRef(function Viewport3D(
+  { rooms, stairs, columns = [], wallHeight, wallColor, wallMaterial, autoRotate, dollhouse = false, floorGap = 0, renderView = false, t = (s) => s },
+  ref
+) {
   const mountRef = useRef(null);
   const stateRef = useRef({});
   const flagsRef = useRef({ autoRotate });
@@ -63,6 +66,19 @@ export default function Viewport3D({ rooms, stairs, columns = [], wallHeight, wa
   const [resetKey, setResetKey] = useState(0);
 
   useEffect(() => { flagsRef.current.autoRotate = autoRotate; }, [autoRotate]);
+
+  // Lets a parent (the "Generate realistic image" feature) grab whatever
+  // this viewport currently has rendered — render() runs again right
+  // before reading the canvas so the capture can't catch a stale frame
+  // from before the latest prop/orbit change.
+  useImperativeHandle(ref, () => ({
+    captureImage(mimeType = 'image/jpeg', quality = 0.92) {
+      const s = stateRef.current;
+      if (!s.renderer || !s.scene || !s.camera) return null;
+      s.renderer.render(s.scene, s.camera);
+      return s.renderer.domElement.toDataURL(mimeType, quality);
+    }
+  }), []);
 
   useEffect(() => {
     const mount = mountRef.current;
@@ -222,7 +238,7 @@ export default function Viewport3D({ rooms, stairs, columns = [], wallHeight, wa
     render();
 
     stateRef.current = {
-      scene, group, orbit, updateCamera, animState, dirLight: dir,
+      scene, group, orbit, updateCamera, animState, dirLight: dir, renderer, camera,
       center: center0, defaultRadius: center0.radius, defaultTargetY: center0.targetY
     };
     limitsRef.current.maxRadius = Math.max(50, center0.radius * 2);
@@ -327,4 +343,6 @@ export default function Viewport3D({ rooms, stairs, columns = [], wallHeight, wa
       </button>
     </div>
   );
-}
+});
+
+export default Viewport3D;
