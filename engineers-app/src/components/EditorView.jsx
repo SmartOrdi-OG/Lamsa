@@ -85,17 +85,17 @@ export default function EditorView({ initialProject, projectId, onBack, onSave, 
   }
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', fontFamily: 'sans-serif' }}>
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 14px', borderBottom: '1px solid #e5e7eb' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', fontFamily: 'sans-serif', overflowX: 'hidden' }}>
+      <div style={{ display: 'flex', flexWrap: 'wrap', rowGap: 8, alignItems: 'center', justifyContent: 'space-between', padding: '10px 14px', borderBottom: '1px solid #e5e7eb' }}>
         <button type="button" onClick={onBack} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 13, color: '#374151' }}>
           ← {t('Projects')}
         </button>
         <input
           value={project.name}
           onChange={(e) => actions.setMeta({ name: e.target.value })}
-          style={{ fontWeight: 800, fontSize: 15, border: 'none', textAlign: 'center', flex: 1 }}
+          style={{ fontWeight: 800, fontSize: 15, border: 'none', textAlign: 'center', flex: '1 1 140px', minWidth: 0 }}
         />
-        <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+        <div style={{ display: 'flex', flexWrap: 'wrap', rowGap: 8, gap: 8, alignItems: 'center', justifyContent: 'flex-end' }}>
           <span style={{ fontSize: 12, color: '#6b7280' }}>{saveMsg}</span>
           <label style={{ fontSize: 12, color: '#6b7280', display: 'flex', alignItems: 'center', gap: 4 }}>
             <input type="checkbox" checked={dollhouse} onChange={(e) => setDollhouse(e.target.checked)} />

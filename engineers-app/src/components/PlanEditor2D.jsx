@@ -6,7 +6,16 @@ import {
 } from '../lib/planGeometry.js';
 import { DOOR_W, WIN_W, WALL_T, stairFootprint, COLUMN_SIZE } from '../lib/build3d.js';
 
-const COLUMN_HIT_TOLERANCE = 0.3; // meters — generous click target for a small 0.3m column
+// A fixed meters-based hit tolerance shrinks to almost nothing in actual
+// screen pixels once the canvas is scaled down to fit a phone-width
+// container (see PlanEditor2D's canvas style) — a 0.35m target that's a
+// comfortable 11px at full desktop resolution becomes ~6px on a phone,
+// which is well under a fingertip and made closing a polygon or grabbing
+// a column nearly impossible by touch. TOUCH_TOLERANCE_PX is a constant
+// *screen*-pixel target instead, converted to meters against the canvas's
+// actual displayed size at hit-test time, so it stays a real fingertip's
+// worth of target on any device/zoom level.
+const TOUCH_TOLERANCE_PX = 24;
 
 // Phase 1 scope was rectangular rooms on a single floor. Phase 2 adds
 // multi-floor editing (one floor shown/edited at a time, via `activeFloor`),
@@ -15,7 +24,6 @@ const COLUMN_HIT_TOLERANCE = 0.3; // meters — generous click target for a smal
 // lib/build3d.js (this file never had to invent new math for them).
 const MIN_ROOM_SIZE = 1.5;
 const ROOM_COLORS = ['#cfd6cf', '#d8cfc2', '#c9d3df', '#dccfd6', '#cfd8d3'];
-const CLOSE_VERTEX_TOLERANCE = 0.35; // meters — click near the first vertex to close the polygon
 
 export default function PlanEditor2D({
   rooms,       // ALL floors — height/stair calcs need the full list
@@ -208,6 +216,12 @@ export default function PlanEditor2D({
     return clientToPlanMeters(e.clientX, e.clientY, rect, gridW, gridH);
   }
 
+  function touchToleranceMeters() {
+    const rect = canvasRef.current && canvasRef.current.getBoundingClientRect();
+    if (!rect || !rect.width) return TOUCH_TOLERANCE_PX / PPM;
+    return TOUCH_TOLERANCE_PX / (rect.width / gridW);
+  }
+
   function roomAt(cx, cy) {
     return floorRooms.find((r) =>
       r.points ? pointInPolygon(r.points, cx, cy) : (cx >= r.gx && cx <= r.gx + r.gw && cy >= r.gy && cy <= r.gy + r.gh)
@@ -227,7 +241,7 @@ export default function PlanEditor2D({
       const pt = { x: snap(cx), y: snap(cy) };
       if (polyPoints && polyPoints.length >= 3) {
         const first = polyPoints[0];
-        if (Math.hypot(pt.x - first.x, pt.y - first.y) <= CLOSE_VERTEX_TOLERANCE) {
+        if (Math.hypot(pt.x - first.x, pt.y - first.y) <= touchToleranceMeters()) {
           onAddPolygonRoom(polyPoints);
           setPolyPoints(null);
           return;
@@ -275,7 +289,8 @@ export default function PlanEditor2D({
     }
     onSelectStair(null);
 
-    const columnHit = floorColumns.find((c) => Math.hypot(cx - c.x, cy - c.y) <= COLUMN_HIT_TOLERANCE);
+    const colTolerance = touchToleranceMeters();
+    const columnHit = floorColumns.find((c) => Math.hypot(cx - c.x, cy - c.y) <= colTolerance);
     if (columnHit) {
       onSelectColumn(columnHit.id);
       onSelectRoom(null);
