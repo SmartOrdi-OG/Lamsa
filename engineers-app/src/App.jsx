@@ -4,12 +4,14 @@ import ProjectList from './components/ProjectList.jsx';
 import EditorView from './components/EditorView.jsx';
 import { getMe, listProjects, getProject, saveProject, deleteProject } from './api/client.js';
 import { createEmptyProject } from './state/projectStore.js';
+import { useLang } from './i18n.js';
 
 function hasAccess(entitlement) {
   return !!entitlement && (entitlement.status === 'active' || entitlement.status === 'trialing');
 }
 
 export default function App() {
+  const { t } = useLang();
   // 'loading' | 'signin' | 'paywall' | 'list' | 'editor'
   const [view, setView] = useState('loading');
   const [entitlementStatus, setEntitlementStatus] = useState(null);
@@ -44,7 +46,7 @@ export default function App() {
   }
 
   function handleCreate() {
-    setEditing({ projectId: null, project: createEmptyProject('Untitled Project') });
+    setEditing({ projectId: null, project: createEmptyProject(t('Untitled Project')) });
     setView('editor');
   }
 
@@ -75,19 +77,19 @@ export default function App() {
   if (view === 'signin') {
     return (
       <div style={{ maxWidth: 420, margin: '100px auto', textAlign: 'center', fontFamily: 'sans-serif' }}>
-        <h1 style={{ fontSize: 20, fontWeight: 800, marginBottom: 12 }}>Lamsa Engineers</h1>
-        <p style={{ color: '#6b7280', marginBottom: 20 }}>Please sign in to continue.</p>
+        <h1 style={{ fontSize: 20, fontWeight: 800, marginBottom: 12 }}>{t('Lamsa Engineers')}</h1>
+        <p style={{ color: '#6b7280', marginBottom: 20 }}>{t('Please sign in to continue.')}</p>
         <a
           href="/lamsa-auth.html?return=engineers/index.html"
           style={{ display: 'inline-block', background: '#c9a96e', color: '#1b1e22', padding: '12px 24px', borderRadius: 10, fontWeight: 800, textDecoration: 'none' }}
         >
-          Sign in
+          {t('Sign in')}
         </a>
       </div>
     );
   }
 
-  if (view === 'paywall') return <PaywallScreen status={entitlementStatus} />;
+  if (view === 'paywall') return <PaywallScreen status={entitlementStatus} t={t} />;
 
   if (view === 'editor' && editing) {
     return (
@@ -96,9 +98,10 @@ export default function App() {
         projectId={editing.projectId}
         onBack={() => loadProjects()}
         onSave={handleSave}
+        t={t}
       />
     );
   }
 
-  return <ProjectList projects={projects} onOpen={handleOpen} onCreate={handleCreate} onDelete={handleDelete} />;
+  return <ProjectList projects={projects} onOpen={handleOpen} onCreate={handleCreate} onDelete={handleDelete} t={t} />;
 }
