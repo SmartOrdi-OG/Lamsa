@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { startEngineerCheckout } from '../api/client.js';
 
-export default function PaywallScreen({ status }) {
+export default function PaywallScreen({ status, t }) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
@@ -14,7 +14,7 @@ export default function PaywallScreen({ status }) {
       return;
     }
     if (!result.ok || !result.data || !result.data.url) {
-      setError((result.data && result.data.error) || 'Something went wrong, please try again');
+      setError((result.data && result.data.error) || t('Something went wrong, please try again'));
       setLoading(false);
       return;
     }
@@ -25,20 +25,20 @@ export default function PaywallScreen({ status }) {
 
   return (
     <div style={{ maxWidth: 480, margin: '80px auto', padding: 24, textAlign: 'center', fontFamily: 'sans-serif' }}>
-      <h1 style={{ fontSize: 24, fontWeight: 900, marginBottom: 8 }}>Lamsa Engineers</h1>
+      <h1 style={{ fontSize: 24, fontWeight: 900, marginBottom: 8 }}>{t('Lamsa Engineers')}</h1>
       <p style={{ color: '#6b7280', marginBottom: 24 }}>
         {lapsed
-          ? 'Your Engineers access has ended. Subscribe again to continue designing full floor plans.'
-          : 'Design complete floor plans, preview them in 3D, and export real architectural deliverables.'}
+          ? t('Your Engineers access has ended. Subscribe again to continue designing full floor plans.')
+          : t('Design complete floor plans, preview them in 3D, and export real architectural deliverables.')}
       </p>
       <ul style={{ textAlign: 'start', listStyle: 'none', padding: 0, marginBottom: 28, color: '#374151', fontSize: 14 }}>
-        <li>— Rectangular rooms, doors &amp; windows, single-floor plans</li>
-        <li>— Live 3D preview of your design</li>
-        <li>— Printable floor plan export</li>
-        <li>— Use Lamsa's existing furniture-styling tools per room</li>
+        <li>— {t('Rectangular rooms, doors & windows, single-floor plans')}</li>
+        <li>— {t('Live 3D preview of your design')}</li>
+        <li>— {t('Printable floor plan export')}</li>
+        <li>— {t("Use Lamsa's existing furniture-styling tools per room")}</li>
       </ul>
-      <div style={{ fontSize: 28, fontWeight: 900, marginBottom: 4 }}>$250<span style={{ fontSize: 14, fontWeight: 600, color: '#6b7280' }}> / year</span></div>
-      <div style={{ fontSize: 13, color: '#6b7280', marginBottom: 20 }}>14-day free trial, cancel anytime</div>
+      <div style={{ fontSize: 28, fontWeight: 900, marginBottom: 4 }}>$250<span style={{ fontSize: 14, fontWeight: 600, color: '#6b7280' }}> {t('/ year')}</span></div>
+      <div style={{ fontSize: 13, color: '#6b7280', marginBottom: 20 }}>{t('14-day free trial, cancel anytime')}</div>
       <button
         type="button"
         onClick={handleStart}
@@ -49,7 +49,7 @@ export default function PaywallScreen({ status }) {
           opacity: loading ? 0.6 : 1
         }}
       >
-        {loading ? 'Starting…' : 'Start free trial'}
+        {loading ? t('Starting…') : t('Start free trial')}
       </button>
       {error && <div style={{ color: '#e05555', fontSize: 13, marginTop: 10 }}>{error}</div>}
     </div>

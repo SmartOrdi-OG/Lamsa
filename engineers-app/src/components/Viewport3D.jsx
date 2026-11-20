@@ -13,7 +13,7 @@ import { clamp } from '../lib/planGeometry.js';
 const DOLLHOUSE_PHI = 0.62;
 const DOLLHOUSE_THETA = Math.PI / 4;
 
-export default function Viewport3D({ rooms, stairs, wallHeight, wallColor, wallMaterial, autoRotate, dollhouse = false, floorGap = 0 }) {
+export default function Viewport3D({ rooms, stairs, wallHeight, wallColor, wallMaterial, autoRotate, dollhouse = false, floorGap = 0, t = (s) => s }) {
   const mountRef = useRef(null);
   const stateRef = useRef({});
   const flagsRef = useRef({ autoRotate });
@@ -268,7 +268,7 @@ export default function Viewport3D({ rooms, stairs, wallHeight, wallColor, wallM
           borderRadius: 8, padding: '6px 12px', cursor: 'pointer'
         }}
       >
-        Reset camera
+        {t('Reset camera')}
       </button>
     </div>
   );
