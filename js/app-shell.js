@@ -1,15 +1,17 @@
 // Shared bottom tab bar used across every logged-in page (Home, Explore,
 // History, Settings). Reads the language the user already picked — stored
 // under 'lamsa_lang' by lamsa-bilingual.html/design-3d.html — rather than
-// each page tracking its own; rearrange.html/inspirations.html are
-// English-only pages today, so this just renders English labels there,
-// same as the rest of their content.
+// each page tracking its own.
 (function (global) {
   var TABS = [
-    { id: 'home', href: 'lamsa-bilingual.html', icon: 'home', ar: 'الرئيسية', en: 'Home' },
-    { id: 'explore', href: 'inspirations.html', icon: 'compass', ar: 'استكشف', en: 'Explore' },
-    { id: 'history', href: 'history.html', icon: 'clock', ar: 'السجل', en: 'History' },
-    { id: 'settings', href: 'settings.html', icon: 'gear', ar: 'الإعدادات', en: 'Settings' }
+    { id: 'home', href: 'lamsa-bilingual.html', icon: 'home',
+      ar: 'الرئيسية', en: 'Home', de: 'Start', es: 'Inicio', tr: 'Ana Sayfa', fr: 'Accueil', it: 'Home', ru: 'Glavnaya' },
+    { id: 'explore', href: 'inspirations.html', icon: 'compass',
+      ar: 'استكشف', en: 'Explore', de: 'Entdecken', es: 'Explorar', tr: 'Kesfet', fr: 'Explorer', it: 'Esplora', ru: 'Obzor' },
+    { id: 'history', href: 'history.html', icon: 'clock',
+      ar: 'السجل', en: 'History', de: 'Verlauf', es: 'Historial', tr: 'Gecmis', fr: 'Historique', it: 'Cronologia', ru: 'Istoriya' },
+    { id: 'settings', href: 'settings.html', icon: 'gear',
+      ar: 'الإعدادات', en: 'Settings', de: 'Einstellungen', es: 'Ajustes', tr: 'Ayarlar', fr: 'Parametres', it: 'Impostazioni', ru: 'Nastroiki' }
   ];
 
   function shellLang() {
@@ -45,7 +47,7 @@
     var wasHidden = existing && existing.style.display === 'none';
     if (existing) existing.remove();
 
-    var isAr = shellLang() === 'ar';
+    var lang = shellLang();
     // A plain div, not a <nav> — every page that mounts this already has
     // its own `nav { position:fixed; top:0; backdrop-filter:blur(20px); ...}`
     // tag-selector rule for its header bar, which would otherwise apply
@@ -57,7 +59,7 @@
     bar.className = 'app-tabbar';
     if (wasHidden) bar.style.display = 'none';
     bar.innerHTML = TABS.map(function (t) {
-      var label = isAr ? t.ar : t.en;
+      var label = t[lang] || t.en;
       var iconMarkup = (global.icon ? global.icon(t.icon) : '');
       return '<a href="' + t.href + '" class="' + (t.id === activeId ? 'active' : '') + '">' + iconMarkup + '<span>' + label + '</span></a>';
     }).join('');
