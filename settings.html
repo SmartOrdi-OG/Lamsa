@@ -176,6 +176,11 @@
 
   <div class="group-title" data-ar="الحساب" data-en="Account">Account</div>
   <div class="group">
+    <a class="row" href="lamsa-admin.html" id="adminRow" style="display:none;">
+      <span class="row-icon" data-icon="gear"></span>
+      <div class="row-main"><div class="row-label" data-ar="لوحة الإدارة" data-en="Admin">Admin</div></div>
+      <span class="row-chevron chevron-icon"></span>
+    </a>
     <button type="button" class="row" onclick="logout()">
       <span class="row-icon" data-icon="user"></span>
       <div class="row-main"><div class="row-label" data-ar="تسجيل الخروج" data-en="Log Out">Log Out</div></div>
@@ -233,7 +238,7 @@
       'Privacy Policy': 'Datenschutzerklärung', 'Contact & Feedback': 'Kontakt & Feedback', 'Account': 'Konto',
       'Log Out': 'Abmelden', 'Delete Account': 'Konto löschen', 'Invite a friend': 'Freund einladen',
       'Share your link — every friend who joins through it gets you both an extra free design.': 'Teile deinen Link — jeder Freund, der sich darüber anmeldet, schenkt euch beiden ein zusätzliches kostenloses Design.',
-      'Share link': 'Link teilen', 'Close': 'Schließen'
+      'Share link': 'Link teilen', 'Close': 'Schließen', 'Admin': 'Admin'
     },
     es: {
       'Account & Billing': 'Cuenta y facturación', 'Subscription': 'Suscripción', 'Checking...': 'Comprobando...',
@@ -244,7 +249,7 @@
       'Privacy Policy': 'Política de privacidad', 'Contact & Feedback': 'Contacto y comentarios', 'Account': 'Cuenta',
       'Log Out': 'Cerrar sesión', 'Delete Account': 'Eliminar cuenta', 'Invite a friend': 'Invitar a un amigo',
       'Share your link — every friend who joins through it gets you both an extra free design.': 'Comparte tu enlace — cada amigo que se una a través de él os dará a ambos un diseño gratis adicional.',
-      'Share link': 'Compartir enlace', 'Close': 'Cerrar'
+      'Share link': 'Compartir enlace', 'Close': 'Cerrar', 'Admin': 'Administración'
     },
     tr: {
       'Account & Billing': 'Hesap ve Faturalandırma', 'Subscription': 'Abonelik', 'Checking...': 'Kontrol ediliyor...',
@@ -255,7 +260,7 @@
       'Privacy Policy': 'Gizlilik Politikası', 'Contact & Feedback': 'İletişim ve Geri Bildirim', 'Account': 'Hesap',
       'Log Out': 'Çıkış Yap', 'Delete Account': 'Hesabı Sil', 'Invite a friend': 'Arkadaşını davet et',
       'Share your link — every friend who joins through it gets you both an extra free design.': 'Linkini paylaş — onun üzerinden katılan her arkadaşın ikinize de ekstra bir ücretsiz tasarım kazandırır.',
-      'Share link': 'Bağlantıyı paylaş', 'Close': 'Kapat'
+      'Share link': 'Bağlantıyı paylaş', 'Close': 'Kapat', 'Admin': 'Yönetici'
     },
     fr: {
       'Account & Billing': 'Compte et facturation', 'Subscription': 'Abonnement', 'Checking...': 'Vérification...',
@@ -266,7 +271,7 @@
       'Privacy Policy': 'Politique de confidentialité', 'Contact & Feedback': 'Contact et retours', 'Account': 'Compte',
       'Log Out': 'Se déconnecter', 'Delete Account': 'Supprimer le compte', 'Invite a friend': 'Parrainer un ami',
       'Share your link — every friend who joins through it gets you both an extra free design.': 'Partagez votre lien — chaque ami qui vous rejoint grâce à lui vous offre à tous les deux un design gratuit supplémentaire.',
-      'Share link': 'Partager le lien', 'Close': 'Fermer'
+      'Share link': 'Partager le lien', 'Close': 'Fermer', 'Admin': 'Administration'
     },
     it: {
       'Account & Billing': 'Account e fatturazione', 'Subscription': 'Abbonamento', 'Checking...': 'Verifica in corso...',
@@ -277,7 +282,7 @@
       'Privacy Policy': 'Informativa sulla privacy', 'Contact & Feedback': 'Contatti e feedback', 'Account': 'Account',
       'Log Out': 'Esci', 'Delete Account': 'Elimina account', 'Invite a friend': 'Invita un amico',
       'Share your link — every friend who joins through it gets you both an extra free design.': 'Condividi il tuo link — ogni amico che si unisce tramite esso vi darà entrambi un design gratuito extra.',
-      'Share link': 'Condividi link', 'Close': 'Chiudi'
+      'Share link': 'Condividi link', 'Close': 'Chiudi', 'Admin': 'Amministrazione'
     },
     ru: {
       'Account & Billing': 'Аккаунт и оплата', 'Subscription': 'Подписка', 'Checking...': 'Проверка...',
@@ -288,7 +293,7 @@
       'Privacy Policy': 'Политика конфиденциальности', 'Contact & Feedback': 'Связь и отзывы', 'Account': 'Аккаунт',
       'Log Out': 'Выйти', 'Delete Account': 'Удалить аккаунт', 'Invite a friend': 'Пригласить друга',
       'Share your link — every friend who joins through it gets you both an extra free design.': 'Поделитесь своей ссылкой — каждый друг, который присоединится по ней, подарит вам обоим дополнительный бесплатный дизайн.',
-      'Share link': 'Поделиться ссылкой', 'Close': 'Закрыть'
+      'Share link': 'Поделиться ссылкой', 'Close': 'Закрыть', 'Admin': 'Админ-панель'
     }
   };
 
@@ -421,6 +426,14 @@
     .then(function(data) {
       lastSubscription = data.subscription || false;
       refreshSubscriptionRow();
+      // Same team-only signal lamsa-bilingual.html already keys off of
+      // (see api/me.js's STATS_VISIBLE_EMAILS) — only the team account's
+      // /api/me response ever has this field, so this never shows for a
+      // regular user.
+      if (typeof data.totalGenerations === 'number') {
+        var adminRow = document.getElementById('adminRow');
+        if (adminRow) adminRow.style.display = '';
+      }
     })
     .catch(function() { lastSubscription = false; refreshSubscriptionRow(); });
 
