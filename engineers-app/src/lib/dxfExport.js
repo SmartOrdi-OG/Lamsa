@@ -9,7 +9,7 @@
 // القياسي بملفات CAD) بيصير بخطوة أخيرة صريحة (flip) على كل نقطة قبل كتابتها، وبعدين أي حساب
 // إضافي (زوايا فتح الباب، مضلعات الجدران) بيصير بفراغ DXF المُسطّح مباشرة — نفس المعادلات
 // بالضبط، بس بلا أي حاجة للقلق بخصوص كيف الانعكاس بيأثر على الزوايا حسابياً
-import { DOOR_W, WIN_W, WALL_T, roomArea } from "./build3d";
+import { DOOR_W, WIN_W, WALL_T, COLUMN_SIZE, roomArea } from "./build3d";
 import { openingMarkPoints, roomCentroid, DIM_OFFSET, DIM_EXT, stairEffectiveFootprint, floorToFloorHeight } from "./planGeometry";
 
 const LAYERS = {
@@ -19,6 +19,7 @@ const LAYERS = {
   DIMENSIONS: 3,
   TEXT: 7,
   STAIRS: 8,
+  COLUMNS: 2,
 };
 
 function deg(rad) {
@@ -200,7 +201,21 @@ function drawStairsDxf(entities, allRooms, stairsForFloor, projectWallHeight, xO
   });
 }
 
-function buildFloorEntities(allRooms, floorRoomsList, stairsForFloor, wallHeight, xOffset, label, showDimensions) {
+function drawColumnsDxf(entities, columnsForFloor, xOffset) {
+  columnsForFloor.forEach((c) => {
+    const size = c.size ?? COLUMN_SIZE;
+    const half = size / 2;
+    const x0 = c.x - half, x1 = c.x + half, y0 = c.y - half, y1 = c.y + half;
+    const corners = [{ x: x0, y: y0 }, { x: x1, y: y0 }, { x: x1, y: y1 }, { x: x0, y: y1 }].map((p) => flip(p, xOffset));
+    dxfLwPolyline(entities, "COLUMNS", corners, true);
+    // Diagonal cross — the standard CAD convention marking a solid
+    // structural column so it reads clearly at any zoom level.
+    dxfLine(entities, "COLUMNS", flip({ x: x0, y: y0 }, xOffset), flip({ x: x1, y: y1 }, xOffset));
+    dxfLine(entities, "COLUMNS", flip({ x: x0, y: y1 }, xOffset), flip({ x: x1, y: y0 }, xOffset));
+  });
+}
+
+function buildFloorEntities(allRooms, floorRoomsList, stairsForFloor, columnsForFloor, wallHeight, xOffset, label, showDimensions) {
   const entities = [];
   dxfText(entities, "TEXT", flip({ x: 0, y: -0.7 }, xOffset), 0.35, label);
 
@@ -233,11 +248,12 @@ function buildFloorEntities(allRooms, floorRoomsList, stairsForFloor, wallHeight
   });
 
   drawStairsDxf(entities, allRooms, stairsForFloor, wallHeight, xOffset);
+  drawColumnsDxf(entities, columnsForFloor, xOffset);
   return entities;
 }
 
 // floorsMeta: [{floorNum, label, rooms}] — نفس شكل مصفوفة floors بدالة handlePrint بالضبط
-export function exportFloorsToDxf(allRooms, floorsMeta, stairsList, wallHeight, showDimensions = true) {
+export function exportFloorsToDxf(allRooms, floorsMeta, stairsList, columnsList, wallHeight, showDimensions = true) {
   const layerDefs = Object.entries(LAYERS)
     .map(([name, color]) => `0\nLAYER\n2\n${name}\n70\n0\n62\n${color}\n6\nCONTINUOUS`)
     .join("\n");
@@ -247,7 +263,8 @@ export function exportFloorsToDxf(allRooms, floorsMeta, stairsList, wallHeight, 
   const GUTTER = 3;
   floorsMeta.forEach((f) => {
     const stairsForFloor = stairsList.filter((s) => (s.floor ?? 0) === f.floorNum);
-    allEntities.push(...buildFloorEntities(allRooms, f.rooms, stairsForFloor, wallHeight, xOffset, f.label, showDimensions));
+    const columnsForFloor = (columnsList || []).filter((c) => (c.floor ?? 0) === f.floorNum);
+    allEntities.push(...buildFloorEntities(allRooms, f.rooms, stairsForFloor, columnsForFloor, wallHeight, xOffset, f.label, showDimensions));
     const maxX = f.rooms.length
       ? Math.max(...f.rooms.map((r) => (r.points ? Math.max(...r.points.map((p) => p.x)) : r.gx + r.gw)))
       : 10;

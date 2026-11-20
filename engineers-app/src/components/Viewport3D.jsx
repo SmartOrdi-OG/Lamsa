@@ -53,7 +53,7 @@ function makeRoomLabelSprite(text) {
 const DOLLHOUSE_PHI = 0.62;
 const DOLLHOUSE_THETA = Math.PI / 4;
 
-export default function Viewport3D({ rooms, stairs, wallHeight, wallColor, wallMaterial, autoRotate, dollhouse = false, floorGap = 0, renderView = false, t = (s) => s }) {
+export default function Viewport3D({ rooms, stairs, columns = [], wallHeight, wallColor, wallMaterial, autoRotate, dollhouse = false, floorGap = 0, renderView = false, t = (s) => s }) {
   const mountRef = useRef(null);
   const stateRef = useRef({});
   const flagsRef = useRef({ autoRotate });
@@ -245,7 +245,7 @@ export default function Viewport3D({ rooms, stairs, wallHeight, wallColor, wallM
     const s = stateRef.current;
     if (!s.group) return;
     const effectiveWallMaterial = renderView ? 'brick' : wallMaterial;
-    rebuildGroup(s.group, rooms, stairs, wallHeight, wallColor, s.center, s.animState, textureCacheRef.current, effectiveWallMaterial, { hideRoofs: dollhouse, floorGap });
+    rebuildGroup(s.group, rooms, stairs, wallHeight, wallColor, s.center, s.animState, textureCacheRef.current, effectiveWallMaterial, { hideRoofs: dollhouse, floorGap, columns });
 
     if (renderView) {
       const floorBaseYMap = computeFloorBaseYMap(rooms, wallHeight, Math.max(0, ...(stairs || []).map((st) => (st.floor ?? 0) + 1)), floorGap);
@@ -274,7 +274,7 @@ export default function Viewport3D({ rooms, stairs, wallHeight, wallColor, wallM
       cam.far = radius * 3 + maxWallHeight * 2;
       cam.updateProjectionMatrix();
     }
-  }, [rooms, stairs, wallHeight, wallColor, wallMaterial, dollhouse, floorGap, renderView]);
+  }, [rooms, stairs, columns, wallHeight, wallColor, wallMaterial, dollhouse, floorGap, renderView]);
 
   useEffect(() => {
     const s = stateRef.current;

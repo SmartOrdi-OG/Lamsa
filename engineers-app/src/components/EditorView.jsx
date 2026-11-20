@@ -2,18 +2,19 @@ import { useState, useEffect } from 'react';
 import Viewport3D from './Viewport3D.jsx';
 import PlanEditor2D from './PlanEditor2D.jsx';
 import Toolbar from './Toolbar.jsx';
-import { useProjectStore, createStair } from '../state/projectStore.js';
+import { useProjectStore, createStair, createColumn } from '../state/projectStore.js';
 import { exportPlanImage } from '../lib/exportPlan.js';
 import { exportFloorsToDxf } from '../lib/dxfExport.js';
 import { floorLabel } from '../lib/planGeometry.js';
 
 export default function EditorView({ initialProject, projectId, onBack, onSave, t }) {
-  const { project, rooms, stairs, actions } = useProjectStore(initialProject);
+  const { project, rooms, stairs, columns, actions } = useProjectStore(initialProject);
   const [mode, setMode] = useState('select');
   const [activeFloor, setActiveFloor] = useState(0);
   const [selectedRoomId, setSelectedRoomId] = useState(null);
   const [selectedOpening, setSelectedOpening] = useState(null);
   const [selectedStairId, setSelectedStairId] = useState(null);
+  const [selectedColumnId, setSelectedColumnId] = useState(null);
   const [saving, setSaving] = useState(false);
   const [saveMsg, setSaveMsg] = useState('');
   const [dollhouse, setDollhouse] = useState(false);
@@ -31,13 +32,14 @@ export default function EditorView({ initialProject, projectId, onBack, onSave, 
 
   const selectedRoom = rooms.find((r) => r.id === selectedRoomId) || null;
   const selectedStair = stairs.find((s) => s.id === selectedStairId) || null;
+  const selectedColumn = columns.find((c) => c.id === selectedColumnId) || null;
 
   // The floor switcher always shows at least one floor, plus whatever a room
   // or stair already references (covers a project saved before this feature
   // existed, which has no explicit floor_count) and project.floor_count
   // (covers "+ Floor" on an otherwise-empty new floor, which has no room or
   // stair yet to imply its existence).
-  const maxDataFloor = Math.max(0, ...rooms.map((r) => r.floor ?? 0), ...stairs.map((s) => (s.floor ?? 0) + 1));
+  const maxDataFloor = Math.max(0, ...rooms.map((r) => r.floor ?? 0), ...stairs.map((s) => (s.floor ?? 0) + 1), ...columns.map((c) => c.floor ?? 0));
   const floorCount = Math.max(project.floor_count || 1, maxDataFloor + 1);
 
   function handleAddFloor() {
@@ -49,7 +51,7 @@ export default function EditorView({ initialProject, projectId, onBack, onSave, 
   async function handleSave() {
     setSaving(true);
     setSaveMsg('');
-    const result = await onSave(projectId, { project, rooms, stairs });
+    const result = await onSave(projectId, { project, rooms, stairs, columns });
     setSaving(false);
     setSaveMsg(result.ok ? t('Saved') : (result.error || t('Save failed')));
     setTimeout(() => setSaveMsg(''), 2500);
@@ -59,10 +61,21 @@ export default function EditorView({ initialProject, projectId, onBack, onSave, 
   function handleExportPdf() {
     const floorRooms = rooms.filter((r) => (r.floor ?? 0) === activeFloor);
     const dataUrl = exportPlanImage(floorRooms, 20, 16);
+    // iOS Safari doesn't honor the `download` attribute on a data: URI — it
+    // just navigates/opens it instead of saving, so the export silently
+    // appeared to do nothing there. A blob: URL (same approach the DXF
+    // export already uses successfully) downloads correctly everywhere.
+    const [, base64] = dataUrl.split(',');
+    const binary = atob(base64);
+    const bytes = new Uint8Array(binary.length);
+    for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+    const blob = new Blob([bytes], { type: 'image/png' });
+    const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
-    a.href = dataUrl;
+    a.href = url;
     a.download = (project.name || 'floor-plan') + '-' + floorLabel(activeFloor) + '.png';
     a.click();
+    URL.revokeObjectURL(url);
   }
 
   function handleExportDxf() {
@@ -72,7 +85,7 @@ export default function EditorView({ initialProject, projectId, onBack, onSave, 
       rooms: rooms.filter((r) => (r.floor ?? 0) === floorNum)
     })).filter((f) => f.rooms.length > 0);
     if (!floorsMeta.length) return;
-    const dxfText = exportFloorsToDxf(rooms, floorsMeta, stairs, project.wall_height);
+    const dxfText = exportFloorsToDxf(rooms, floorsMeta, stairs, columns, project.wall_height);
     const blob = new Blob([dxfText], { type: 'application/dxf' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
@@ -83,17 +96,17 @@ export default function EditorView({ initialProject, projectId, onBack, onSave, 
   }
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', fontFamily: 'sans-serif' }}>
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 14px', borderBottom: '1px solid #e5e7eb' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', fontFamily: 'sans-serif', overflowX: 'hidden' }}>
+      <div style={{ display: 'flex', flexWrap: 'wrap', rowGap: 8, alignItems: 'center', justifyContent: 'space-between', padding: '10px 14px', borderBottom: '1px solid #e5e7eb' }}>
         <button type="button" onClick={onBack} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 13, color: '#374151' }}>
           ← {t('Projects')}
         </button>
         <input
           value={project.name}
           onChange={(e) => actions.setMeta({ name: e.target.value })}
-          style={{ fontWeight: 800, fontSize: 15, border: 'none', textAlign: 'center', flex: 1 }}
+          style={{ fontWeight: 800, fontSize: 15, border: 'none', textAlign: 'center', flex: '1 1 140px', minWidth: 0 }}
         />
-        <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+        <div style={{ display: 'flex', flexWrap: 'wrap', rowGap: 8, gap: 8, alignItems: 'center', justifyContent: 'flex-end' }}>
           <span style={{ fontSize: 12, color: '#6b7280' }}>{saveMsg}</span>
           <label style={{ fontSize: 12, color: '#6b7280', display: 'flex', alignItems: 'center', gap: 4 }}>
             <input type="checkbox" checked={dollhouse} onChange={(e) => setDollhouse(e.target.checked)} />
@@ -136,6 +149,8 @@ export default function EditorView({ initialProject, projectId, onBack, onSave, 
         onAddFloor={handleAddFloor}
         selectedStair={selectedStair}
         onDeleteStair={(id) => { actions.removeStair(id); setSelectedStairId(null); }}
+        selectedColumn={selectedColumn}
+        onDeleteColumn={(id) => { actions.removeColumn(id); setSelectedColumnId(null); }}
       />
 
       <div style={{ display: 'flex', flexDirection: isNarrow ? 'column' : 'row', flex: 1, minHeight: 0 }}>
@@ -143,12 +158,14 @@ export default function EditorView({ initialProject, projectId, onBack, onSave, 
           <PlanEditor2D
             rooms={rooms}
             stairs={stairs}
+            columns={columns}
             wallHeight={project.wall_height}
             mode={mode}
             activeFloor={activeFloor}
             selectedRoomId={selectedRoomId}
             selectedOpening={selectedOpening}
             selectedStairId={selectedStairId}
+            selectedColumnId={selectedColumnId}
             onAddRoom={(rect) => actions.addRectRoom(rect)}
             onAddPolygonRoom={(points) => actions.addPolygonRoom({ points, floor: activeFloor })}
             onMoveRoom={(id, gx, gy) => actions.updateRoom(id, { gx, gy })}
@@ -165,12 +182,16 @@ export default function EditorView({ initialProject, projectId, onBack, onSave, 
             onAddStair={(opts) => actions.addStair(createStair(opts))}
             onMoveStair={(id, x, y, rotation) => actions.moveStair(id, x, y, rotation)}
             onSelectStair={setSelectedStairId}
+            onAddColumn={(opts) => actions.addColumn(createColumn(opts))}
+            onMoveColumn={(id, x, y) => actions.moveColumn(id, x, y)}
+            onSelectColumn={setSelectedColumnId}
           />
         </div>
         <div style={{ flex: 1, minHeight: 0 }}>
           <Viewport3D
             rooms={rooms}
             stairs={stairs}
+            columns={columns}
             wallHeight={project.wall_height}
             wallColor={project.wall_color}
             wallMaterial={project.wall_material}

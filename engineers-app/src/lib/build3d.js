@@ -91,6 +91,11 @@ export const DOOR_W = 0.9;     // standard interior door: typically 0.8-0.9 m
 export const DOOR_H = 2.05;    // standard interior door: typically 2.0-2.1 m
 export const WIN_W = 0.9;      // standard window width: commonly ~0.9 m
 export const WIN_SILL = 0.9;   // standard window sill height off the floor
+// Structural columns: no single standard size exists (it's the structural
+// engineer's own calculation based on load/span), so this is just a
+// reasonable residential default in the common 0.2-0.4 m range — always
+// overridable per column.
+export const COLUMN_SIZE = 0.3;
 const WIN_MARGIN = 0.4;
 const WIN_MIN_GAP = 0.6;
 export const ROOF_T = 0.18;
@@ -1258,13 +1263,15 @@ function roomHasOverlapAbove(room, rooms) {
  * @param {any} animState
  * @param {Map<string, THREE.Texture>} textureCache
  * @param {string} [wallMaterialDefault]
- * @param {{ hideRoofs?: boolean, floorGap?: number }} [options] وضع "بيت الدمية": بلا أسقف
+ * @param {{ hideRoofs?: boolean, floorGap?: number, columns?: Column[] }} [options] وضع "بيت الدمية": بلا أسقف
  *   (بتشوف جوا كل غرفة من فوق) وبفراغ بين الطوابق. القيم الافتراضية = البناء الطبيعي تماماً،
- *   فكل نداء قديم بيضل يعطي نفس النتيجة حرفياً
+ *   فكل نداء قديم بيضل يعطي نفس النتيجة حرفياً. columns اختياري بالمثل (مصفوفة فارغة
+ *   افتراضياً) فمافي تغيير بالسلوك القديم إذا ما انمرر
  */
 export function rebuildGroup(group, rooms, stairs, wallHeight, wallColor, center, animState, textureCache, wallMaterialDefault = "plaster", options = {}) {
   const hideRoofs = !!options.hideRoofs;
   const floorGap = options.floorGap ?? 0;
+  const columns = options.columns || [];
   while (group.children.length) {
     disposeDeep(group.children.pop());
   }
@@ -1423,6 +1430,17 @@ export function rebuildGroup(group, rooms, stairs, wallHeight, wallColor, center
     if (!(floorToFloorHeight > 0)) return;
     const worldX = Number(s.x) - center.x, worldZ = Number(s.y) - center.z;
     buildStaircase(group, animState, textureCache, s, floorToFloorHeight, worldX, worldZ, floorBaseY, wallColor);
+  });
+
+  columns.forEach((c) => {
+    const floorNum = c.floor ?? 0;
+    const floorBaseY = floorBaseYMap.get(floorNum);
+    if (floorBaseY == null) return;
+    const columnHeight = c.height ?? wallHeight;
+    const size = c.size ?? COLUMN_SIZE;
+    const worldX = Number(c.x) - center.x, worldZ = Number(c.y) - center.z;
+    const mat = texturedMaterial(textureCache, "#9a9a9a", "wall", size, columnHeight, 0.85, "concrete");
+    addGrowBox(group, animState, size, columnHeight, size, worldX, floorBaseY, worldZ, mat, WALL_DELAY);
   });
 
   animState.progress = 0;
