@@ -78,7 +78,7 @@ export default function App() {
         <h1 style={{ fontSize: 20, fontWeight: 800, marginBottom: 12 }}>Lamsa Engineers</h1>
         <p style={{ color: '#6b7280', marginBottom: 20 }}>Please sign in to continue.</p>
         <a
-          href="/lamsa-auth.html"
+          href="/lamsa-auth.html?return=engineers/index.html"
           style={{ display: 'inline-block', background: '#c9a96e', color: '#1b1e22', padding: '12px 24px', borderRadius: 10, fontWeight: 800, textDecoration: 'none' }}
         >
           Sign in

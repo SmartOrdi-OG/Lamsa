@@ -1531,8 +1531,19 @@
     }
   }
 
+  // Lets a page that sent the user here to sign in (e.g. the Engineers
+  // section, which has its own sign-in link) get them back to where they
+  // came from instead of always landing on the main consumer home screen.
+  // Validated against a fixed allowlist of real pages — never redirects to
+  // an arbitrary URL from the query string.
+  var ALLOWED_RETURN_PAGES = ['lamsa-bilingual.html', 'rearrange.html', 'inspirations.html', 'engineers/index.html'];
+  function getReturnPage() {
+    var requested = new URLSearchParams(window.location.search).get('return');
+    return ALLOWED_RETURN_PAGES.includes(requested) ? requested : 'lamsa-bilingual.html';
+  }
+
   function goToApp() {
-    window.location.href = 'lamsa-bilingual.html';
+    window.location.href = getReturnPage();
   }
 
   // TELEGRAM AUTO-LOGIN — when this page is opened inside Telegram's Mini
