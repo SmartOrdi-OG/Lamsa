@@ -61,10 +61,21 @@ export default function EditorView({ initialProject, projectId, onBack, onSave, 
   function handleExportPdf() {
     const floorRooms = rooms.filter((r) => (r.floor ?? 0) === activeFloor);
     const dataUrl = exportPlanImage(floorRooms, 20, 16);
+    // iOS Safari doesn't honor the `download` attribute on a data: URI — it
+    // just navigates/opens it instead of saving, so the export silently
+    // appeared to do nothing there. A blob: URL (same approach the DXF
+    // export already uses successfully) downloads correctly everywhere.
+    const [, base64] = dataUrl.split(',');
+    const binary = atob(base64);
+    const bytes = new Uint8Array(binary.length);
+    for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+    const blob = new Blob([bytes], { type: 'image/png' });
+    const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
-    a.href = dataUrl;
+    a.href = url;
     a.download = (project.name || 'floor-plan') + '-' + floorLabel(activeFloor) + '.png';
     a.click();
+    URL.revokeObjectURL(url);
   }
 
   function handleExportDxf() {
