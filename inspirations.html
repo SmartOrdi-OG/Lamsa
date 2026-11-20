@@ -22,6 +22,7 @@
 <script src="js/platform.js"></script>
 <script src="js/icons.js"></script>
 <script src="js/app-shell.js"></script>
+<script src="js/lang8.js"></script>
 <script>
   if ('serviceWorker' in navigator) {
     window.addEventListener('load', function () { navigator.serviceWorker.register('sw.js').catch(function () {}); });
@@ -88,6 +89,11 @@
     font-family: 'Tajawal', sans-serif; cursor: pointer; white-space: nowrap; transition: all 0.2s;
   }
   .nav-logout:hover { border-color: var(--gold); color: var(--gold); }
+  .lang-select {
+    background: transparent; border: 1px solid var(--border); color: var(--gray);
+    padding: 6px 8px; border-radius: 6px; font-size: 12.5px; font-weight: 700; font-family: 'Tajawal', sans-serif;
+    cursor: pointer; max-width: 110px;
+  }
 
   .wrap { max-width: 640px; margin: 0 auto; padding: 96px 16px 60px; }
   .hero { text-align: center; margin-bottom: 8px; }
@@ -205,52 +211,53 @@
     <div class="logo-text">LAMSA</div>
   </a>
   <div class="nav-right">
-    <a class="back-link" href="lamsa-bilingual.html"><svg class="icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M11 6l-6 6 6 6"/></svg> Full Designer</a>
-    <a class="nav-logout" href="lamsa-auth.html" id="navSignInBtn" style="display:none;text-decoration:none;">Sign In</a>
-    <button type="button" class="nav-logout" onclick="logout()" id="navLogoutBtn">Log Out</button>
+    <select class="lang-select" id="langSelect" data-lang-select aria-label="Language"></select>
+    <a class="back-link" href="lamsa-bilingual.html"><svg class="icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M11 6l-6 6 6 6"/></svg> <span data-ar="المصمم الكامل" data-en="Full Designer">Full Designer</span></a>
+    <a class="nav-logout" href="lamsa-auth.html" id="navSignInBtn" style="display:none;text-decoration:none;" data-ar="تسجيل الدخول" data-en="Sign In">Sign In</a>
+    <button type="button" class="nav-logout" onclick="logout()" id="navLogoutBtn" data-ar="تسجيل الخروج" data-en="Log Out">Log Out</button>
   </div>
 </nav>
 
 <div class="wrap">
   <div class="hero">
-    <h1><svg class="icon-svg" viewBox="0 0 24 24"><path d="M12 3l1.4 4 4 1.4-4 1.4L12 14l-1.4-4.2-4-1.4 4-1.4L12 3z" fill="currentColor" stroke="none"/><path d="M19 15l.8 2.2L22 18l-2.2.8L19 21l-.8-2.2L16 18l2.2-.8L19 15z" fill="currentColor" stroke="none"/></svg> Inspirations Gallery</h1>
-    <p class="sub">Browse real interior styles, then apply one directly to a photo of your own room.</p>
+    <h1><svg class="icon-svg" viewBox="0 0 24 24"><path d="M12 3l1.4 4 4 1.4-4 1.4L12 14l-1.4-4.2-4-1.4 4-1.4L12 3z" fill="currentColor" stroke="none"/><path d="M19 15l.8 2.2L22 18l-2.2.8L19 21l-.8-2.2L16 18l2.2-.8L19 15z" fill="currentColor" stroke="none"/></svg> <span data-ar="معرض الإلهام" data-en="Inspirations Gallery">Inspirations Gallery</span></h1>
+    <p class="sub" data-ar="تصفح أنماط تصميم داخلي حقيقية، ثم طبّق أحدها مباشرة على صورة غرفتك." data-en="Browse real interior styles, then apply one directly to a photo of your own room.">Browse real interior styles, then apply one directly to a photo of your own room.</p>
   </div>
   <div id="creditsBadge"></div>
 
   <div class="cat-section" data-cat="living">
     <div class="cat-head">
-      <h2>Living Room</h2>
-      <button class="see-all" data-target="living">See all »</button>
+      <h2 data-ar="غرفة المعيشة" data-en="Living Room">Living Room</h2>
+      <button class="see-all" data-target="living" data-ar="عرض الكل »" data-en="See all »">See all »</button>
     </div>
     <div class="cat-row" id="row-living">
       <div class="style-card" data-img="assets/hero-bg/pair7-after.jpg" data-name="Modern &amp; Warm">
         <img src="assets/hero-bg/pair7-after.jpg" alt="Modern and warm living room">
-        <div class="label">Modern &amp; Warm</div>
+        <div class="label" data-ar="عصري ودافئ" data-en="Modern &amp; Warm">Modern &amp; Warm</div>
       </div>
       <div class="style-card" data-img="assets/inspiration/living-dark-lounge.jpg" data-name="Cozy Lounge">
         <img src="assets/inspiration/living-dark-lounge.jpg" alt="Cozy dark lounge living room">
-        <div class="label">Cozy Lounge</div>
+        <div class="label" data-ar="صالة مريحة" data-en="Cozy Lounge">Cozy Lounge</div>
       </div>
       <div class="style-card" data-img="assets/inspiration/living-blue-eclectic.jpg" data-name="Open &amp; Bright">
         <img src="assets/inspiration/living-blue-eclectic.jpg" alt="Bright blue eclectic living room">
-        <div class="label">Open &amp; Bright</div>
+        <div class="label" data-ar="مفتوح ومضيء" data-en="Open &amp; Bright">Open &amp; Bright</div>
       </div>
       <div class="style-card" data-img="assets/inspiration/living-gold-classic.jpg" data-name="Classic Luxury">
         <img src="assets/inspiration/living-gold-classic.jpg" alt="Gold classic luxury living room">
-        <div class="label">Classic Luxury</div>
+        <div class="label" data-ar="فخامة كلاسيكية" data-en="Classic Luxury">Classic Luxury</div>
       </div>
       <div class="style-card" data-img="assets/inspiration/living-teal-glam.jpg" data-name="Deep Green Glam">
         <img src="assets/inspiration/living-teal-glam.jpg" alt="Deep green glam living room">
-        <div class="label">Deep Green Glam</div>
+        <div class="label" data-ar="أخضر غامق فاخر" data-en="Deep Green Glam">Deep Green Glam</div>
       </div>
       <div class="style-card" data-img="assets/inspiration/living-emerald-gold.jpg" data-name="Emerald &amp; Gold">
         <img src="assets/inspiration/living-emerald-gold.jpg" alt="Emerald and gold living room">
-        <div class="label">Emerald &amp; Gold</div>
+        <div class="label" data-ar="زمردي وذهبي" data-en="Emerald &amp; Gold">Emerald &amp; Gold</div>
       </div>
       <div class="style-card" data-img="assets/inspiration/living-navy-emerald.jpg" data-name="Navy &amp; Emerald">
         <img src="assets/inspiration/living-navy-emerald.jpg" alt="Navy and emerald living room">
-        <div class="label">Navy &amp; Emerald</div>
+        <div class="label" data-ar="كحلي وزمردي" data-en="Navy &amp; Emerald">Navy &amp; Emerald</div>
       </div>
     </div>
     <div class="cat-grid" id="grid-living"></div>
@@ -258,85 +265,85 @@
 
   <div class="cat-section" data-cat="bedroom">
     <div class="cat-head">
-      <h2>Bedroom</h2>
-      <button class="see-all" data-target="bedroom">See all »</button>
+      <h2 data-ar="غرفة النوم" data-en="Bedroom">Bedroom</h2>
+      <button class="see-all" data-target="bedroom" data-ar="عرض الكل »" data-en="See all »">See all »</button>
     </div>
     <div class="cat-row" id="row-bedroom">
       <div class="style-card" data-img="assets/hero-bg/pair1-after.jpg" data-name="Rustic Pink">
         <img src="assets/hero-bg/pair1-after.jpg" alt="Rustic pink bedroom">
-        <div class="label">Rustic Pink</div>
+        <div class="label" data-ar="وردي ريفي" data-en="Rustic Pink">Rustic Pink</div>
       </div>
       <div class="style-card" data-img="assets/inspiration/bedroom-warm-luxury.jpg" data-name="Warm Luxury">
         <img src="assets/inspiration/bedroom-warm-luxury.jpg" alt="Warm luxury bedroom">
-        <div class="label">Warm Luxury</div>
+        <div class="label" data-ar="فخامة دافئة" data-en="Warm Luxury">Warm Luxury</div>
       </div>
       <div class="style-card" data-img="assets/inspiration/bedroom-modern-luxury.jpg" data-name="Modern Luxury">
         <img src="assets/inspiration/bedroom-modern-luxury.jpg" alt="Modern luxury bedroom">
-        <div class="label">Modern Luxury</div>
+        <div class="label" data-ar="فخامة عصرية" data-en="Modern Luxury">Modern Luxury</div>
       </div>
       <div class="style-card" data-img="assets/inspiration/bedroom-industrial-warm.jpg" data-name="Warm Industrial">
         <img src="assets/inspiration/bedroom-industrial-warm.jpg" alt="Warm industrial bedroom">
-        <div class="label">Warm Industrial</div>
+        <div class="label" data-ar="صناعي دافئ" data-en="Warm Industrial">Warm Industrial</div>
       </div>
       <div class="style-card" data-img="assets/inspiration/bedroom-silver-glam.jpg" data-name="Silver Glam">
         <img src="assets/inspiration/bedroom-silver-glam.jpg" alt="Silver glam bedroom">
-        <div class="label">Silver Glam</div>
+        <div class="label" data-ar="فضي فاخر" data-en="Silver Glam">Silver Glam</div>
       </div>
       <div class="style-card" data-img="assets/inspiration/bedroom-japanese-zen.jpg" data-name="Japanese Zen">
         <img src="assets/inspiration/bedroom-japanese-zen.jpg" alt="Japanese zen bedroom with shoji screens and platform bed">
-        <div class="label">Japanese Zen</div>
+        <div class="label" data-ar="ياباني زن" data-en="Japanese Zen">Japanese Zen</div>
       </div>
       <div class="style-card" data-img="assets/inspiration/bedroom-modern-elegance.jpg" data-name="Modern Elegance">
         <img src="assets/inspiration/bedroom-modern-elegance.jpg" alt="Modern bedroom with gray tufted headboard and blue curtains">
-        <div class="label">Modern Elegance</div>
+        <div class="label" data-ar="أناقة عصرية" data-en="Modern Elegance">Modern Elegance</div>
       </div>
       <div class="style-card" data-img="assets/inspiration/bedroom-japanese-walnut.jpg" data-name="Japanese Walnut">
         <img src="assets/inspiration/bedroom-japanese-walnut.jpg" alt="Japanese-style walnut bedroom with crane artwork and green curtains">
-        <div class="label">Japanese Walnut</div>
+        <div class="label" data-ar="جوز ياباني" data-en="Japanese Walnut">Japanese Walnut</div>
       </div>
       <div class="style-card" data-img="assets/inspiration/bedroom-arabic-luxury.jpg" data-name="Arabic Luxury">
         <img src="assets/inspiration/bedroom-arabic-luxury.jpg" alt="Arabic-style luxury bedroom with gold calligraphy wall and mashrabiya divider">
-        <div class="label">Arabic Luxury</div>
+        <div class="label" data-ar="فخامة عربية" data-en="Arabic Luxury">Arabic Luxury</div>
       </div>
       <div class="style-card" data-img="assets/inspiration/bedroom-ai-modern-01.jpg" data-name="AI Modern I">
         <img src="assets/inspiration/bedroom-ai-modern-01.jpg" alt="AI-generated modern bedroom design">
-        <div class="label">AI Modern I</div>
+        <div class="label" data-ar="عصري بالذكاء الاصطناعي 1" data-en="AI Modern I">AI Modern I</div>
       </div>
       <div class="style-card" data-img="assets/inspiration/bedroom-ai-modern-02.jpg" data-name="AI Modern II">
         <img src="assets/inspiration/bedroom-ai-modern-02.jpg" alt="AI-generated modern bedroom design">
-        <div class="label">AI Modern II</div>
+        <div class="label" data-ar="عصري بالذكاء الاصطناعي 2" data-en="AI Modern II">AI Modern II</div>
       </div>
       <div class="style-card" data-img="assets/inspiration/bedroom-ai-modern-03.jpg" data-name="AI Modern III">
         <img src="assets/inspiration/bedroom-ai-modern-03.jpg" alt="AI-generated modern bedroom design">
-        <div class="label">AI Modern III</div>
+        <div class="label" data-ar="عصري بالذكاء الاصطناعي 3" data-en="AI Modern III">AI Modern III</div>
       </div>
       <div class="style-card" data-img="assets/inspiration/bedroom-ai-modern-04.jpg" data-name="AI Modern IV">
         <img src="assets/inspiration/bedroom-ai-modern-04.jpg" alt="AI-generated modern bedroom design">
-        <div class="label">AI Modern IV</div>
+        <div class="label" data-ar="عصري بالذكاء الاصطناعي 4" data-en="AI Modern IV">AI Modern IV</div>
       </div>
       <div class="style-card" data-img="assets/inspiration/bedroom-ai-classic-01.jpg" data-name="AI Classic I">
         <img src="assets/inspiration/bedroom-ai-classic-01.jpg" alt="AI-generated classic bedroom design">
-        <div class="label">AI Classic I</div>
+        <div class="label" data-ar="كلاسيكي بالذكاء الاصطناعي 1" data-en="AI Classic I">AI Classic I</div>
       </div>
       <div class="style-card" data-img="assets/inspiration/bedroom-ai-classic-02.jpg" data-name="AI Classic II">
         <img src="assets/inspiration/bedroom-ai-classic-02.jpg" alt="AI-generated classic bedroom design">
-        <div class="label">AI Classic II</div>
+        <div class="label" data-ar="كلاسيكي بالذكاء الاصطناعي 2" data-en="AI Classic II">AI Classic II</div>
       </div>
       <div class="style-card" data-img="assets/inspiration/bedroom-ai-scandi-01.jpg" data-name="AI Scandinavian I">
         <img src="assets/inspiration/bedroom-ai-scandi-01.jpg" alt="AI-generated Scandinavian-style bedroom design">
-        <div class="label">AI Scandinavian I</div>
+        <div class="label" data-ar="اسكندنافي بالذكاء الاصطناعي 1" data-en="AI Scandinavian I">AI Scandinavian I</div>
       </div>
       <div class="style-card" data-img="assets/inspiration/bedroom-ai-scandi-02.jpg" data-name="AI Scandinavian II">
         <img src="assets/inspiration/bedroom-ai-scandi-02.jpg" alt="AI-generated Scandinavian-style bedroom design">
-        <div class="label">AI Scandinavian II</div>
+        <div class="label" data-ar="اسكندنافي بالذكاء الاصطناعي 2" data-en="AI Scandinavian II">AI Scandinavian II</div>
       </div>
       <div class="style-card" data-img="assets/inspiration/bedroom-ai-boho-01.jpg" data-name="AI Bohemian I">
         <img src="assets/inspiration/bedroom-ai-boho-01.jpg" alt="AI-generated bohemian-style bedroom design">
-        <div class="label">AI Bohemian I</div>
+        <div class="label" data-ar="بوهيمي بالذكاء الاصطناعي 1" data-en="AI Bohemian I">AI Bohemian I</div>
       </div>
       <div class="style-card" data-img="assets/inspiration/bedroom-ai-boho-02.jpg" data-name="AI Bohemian II">
         <img src="assets/inspiration/bedroom-ai-boho-02.jpg" alt="AI-generated bohemian-style bedroom design">
-        <div class="label">AI Bohemian II</div>
+        <div class="label" data-ar="بوهيمي بالذكاء الاصطناعي 2" data-en="AI Bohemian II">AI Bohemian II</div>
       </div>
     </div>
     <div class="cat-grid" id="grid-bedroom"></div>
@@ -344,89 +351,89 @@
 
   <div class="cat-section" data-cat="kitchen">
     <div class="cat-head">
-      <h2>Kitchen</h2>
-      <button class="see-all" data-target="kitchen">See all »</button>
+      <h2 data-ar="المطبخ" data-en="Kitchen">Kitchen</h2>
+      <button class="see-all" data-target="kitchen" data-ar="عرض الكل »" data-en="See all »">See all »</button>
     </div>
     <div class="cat-row" id="row-kitchen">
       <div class="style-card" data-img="assets/inspiration/kitchen-modern-dark.jpg" data-name="Dark &amp; Patterned">
         <img src="assets/inspiration/kitchen-modern-dark.jpg" alt="Dark patterned kitchen">
-        <div class="label">Dark &amp; Patterned</div>
+        <div class="label" data-ar="غامق ومزخرف" data-en="Dark &amp; Patterned">Dark &amp; Patterned</div>
       </div>
       <div class="style-card" data-img="assets/inspiration/kitchen-black-gold.jpg" data-name="Black &amp; Gold">
         <img src="assets/inspiration/kitchen-black-gold.jpg" alt="Black and gold kitchen">
-        <div class="label">Black &amp; Gold</div>
+        <div class="label" data-ar="أسود وذهبي" data-en="Black &amp; Gold">Black &amp; Gold</div>
       </div>
       <div class="style-card" data-img="assets/inspiration/kitchen-wood-classic.jpg" data-name="Classic Wood">
         <img src="assets/inspiration/kitchen-wood-classic.jpg" alt="Classic wood kitchen">
-        <div class="label">Classic Wood</div>
+        <div class="label" data-ar="خشب كلاسيكي" data-en="Classic Wood">Classic Wood</div>
       </div>
       <div class="style-card" data-img="assets/inspiration/kitchen-navy-modern.jpg" data-name="Modern Navy">
         <img src="assets/inspiration/kitchen-navy-modern.jpg" alt="Modern navy kitchen">
-        <div class="label">Modern Navy</div>
+        <div class="label" data-ar="كحلي عصري" data-en="Modern Navy">Modern Navy</div>
       </div>
       <div class="style-card" data-img="assets/inspiration/kitchen-navy-classic.jpg" data-name="Classic Navy">
         <img src="assets/inspiration/kitchen-navy-classic.jpg" alt="Classic navy kitchen">
-        <div class="label">Classic Navy</div>
+        <div class="label" data-ar="كحلي كلاسيكي" data-en="Classic Navy">Classic Navy</div>
       </div>
       <div class="style-card" data-img="assets/inspiration/kitchen-beige-marble.jpg" data-name="Beige Marble">
         <img src="assets/inspiration/kitchen-beige-marble.jpg" alt="Beige marble kitchen">
-        <div class="label">Beige Marble</div>
+        <div class="label" data-ar="رخام بيج" data-en="Beige Marble">Beige Marble</div>
       </div>
       <div class="style-card" data-img="assets/inspiration/kitchen-navy-artdeco.jpg" data-name="Navy Art Deco">
         <img src="assets/inspiration/kitchen-navy-artdeco.jpg" alt="Navy art deco kitchen and dining">
-        <div class="label">Navy Art Deco</div>
+        <div class="label" data-ar="آرت ديكو كحلي" data-en="Navy Art Deco">Navy Art Deco</div>
       </div>
       <div class="style-card" data-img="assets/inspiration/kitchen-japanese-walnut.jpg" data-name="Japanese Walnut">
         <img src="assets/inspiration/kitchen-japanese-walnut.jpg" alt="Japanese-style walnut kitchen and dining with garden view">
-        <div class="label">Japanese Walnut</div>
+        <div class="label" data-ar="جوز ياباني" data-en="Japanese Walnut">Japanese Walnut</div>
       </div>
       <div class="style-card" data-img="assets/inspiration/kitchen-marble-garden.jpg" data-name="Marble &amp; Garden">
         <img src="assets/inspiration/kitchen-marble-garden.jpg" alt="Light wood kitchen with marble backsplash and garden fountain view">
-        <div class="label">Marble &amp; Garden</div>
+        <div class="label" data-ar="رخام وحديقة" data-en="Marble &amp; Garden">Marble &amp; Garden</div>
       </div>
       <div class="style-card" data-img="assets/inspiration/kitchen-japanese-zen.jpg" data-name="Japanese Zen">
         <img src="assets/inspiration/kitchen-japanese-zen.jpg" alt="Japanese zen kitchen and dining with tatami flooring and rock garden view">
-        <div class="label">Japanese Zen</div>
+        <div class="label" data-ar="ياباني زن" data-en="Japanese Zen">Japanese Zen</div>
       </div>
       <div class="style-card" data-img="assets/inspiration/kitchen-ai-modern-01.jpg" data-name="AI Modern I">
         <img src="assets/inspiration/kitchen-ai-modern-01.jpg" alt="AI-generated modern kitchen design">
-        <div class="label">AI Modern I</div>
+        <div class="label" data-ar="عصري بالذكاء الاصطناعي 1" data-en="AI Modern I">AI Modern I</div>
       </div>
       <div class="style-card" data-img="assets/inspiration/kitchen-ai-modern-02.jpg" data-name="AI Modern II">
         <img src="assets/inspiration/kitchen-ai-modern-02.jpg" alt="AI-generated modern kitchen design">
-        <div class="label">AI Modern II</div>
+        <div class="label" data-ar="عصري بالذكاء الاصطناعي 2" data-en="AI Modern II">AI Modern II</div>
       </div>
       <div class="style-card" data-img="assets/inspiration/kitchen-ai-modern-03.jpg" data-name="AI Modern III">
         <img src="assets/inspiration/kitchen-ai-modern-03.jpg" alt="AI-generated modern kitchen design">
-        <div class="label">AI Modern III</div>
+        <div class="label" data-ar="عصري بالذكاء الاصطناعي 3" data-en="AI Modern III">AI Modern III</div>
       </div>
       <div class="style-card" data-img="assets/inspiration/kitchen-ai-modern-04.jpg" data-name="AI Modern IV">
         <img src="assets/inspiration/kitchen-ai-modern-04.jpg" alt="AI-generated modern kitchen design">
-        <div class="label">AI Modern IV</div>
+        <div class="label" data-ar="عصري بالذكاء الاصطناعي 4" data-en="AI Modern IV">AI Modern IV</div>
       </div>
       <div class="style-card" data-img="assets/inspiration/kitchen-ai-classic-01.jpg" data-name="AI Classic I">
         <img src="assets/inspiration/kitchen-ai-classic-01.jpg" alt="AI-generated classic kitchen design">
-        <div class="label">AI Classic I</div>
+        <div class="label" data-ar="كلاسيكي بالذكاء الاصطناعي 1" data-en="AI Classic I">AI Classic I</div>
       </div>
       <div class="style-card" data-img="assets/inspiration/kitchen-ai-classic-02.jpg" data-name="AI Classic II">
         <img src="assets/inspiration/kitchen-ai-classic-02.jpg" alt="AI-generated classic kitchen design">
-        <div class="label">AI Classic II</div>
+        <div class="label" data-ar="كلاسيكي بالذكاء الاصطناعي 2" data-en="AI Classic II">AI Classic II</div>
       </div>
       <div class="style-card" data-img="assets/inspiration/kitchen-ai-scandi-01.jpg" data-name="AI Scandinavian I">
         <img src="assets/inspiration/kitchen-ai-scandi-01.jpg" alt="AI-generated Scandinavian-style kitchen design">
-        <div class="label">AI Scandinavian I</div>
+        <div class="label" data-ar="اسكندنافي بالذكاء الاصطناعي 1" data-en="AI Scandinavian I">AI Scandinavian I</div>
       </div>
       <div class="style-card" data-img="assets/inspiration/kitchen-ai-scandi-02.jpg" data-name="AI Scandinavian II">
         <img src="assets/inspiration/kitchen-ai-scandi-02.jpg" alt="AI-generated Scandinavian-style kitchen design">
-        <div class="label">AI Scandinavian II</div>
+        <div class="label" data-ar="اسكندنافي بالذكاء الاصطناعي 2" data-en="AI Scandinavian II">AI Scandinavian II</div>
       </div>
       <div class="style-card" data-img="assets/inspiration/kitchen-ai-boho-01.jpg" data-name="AI Bohemian I">
         <img src="assets/inspiration/kitchen-ai-boho-01.jpg" alt="AI-generated bohemian-style kitchen design">
-        <div class="label">AI Bohemian I</div>
+        <div class="label" data-ar="بوهيمي بالذكاء الاصطناعي 1" data-en="AI Bohemian I">AI Bohemian I</div>
       </div>
       <div class="style-card" data-img="assets/inspiration/kitchen-ai-boho-02.jpg" data-name="AI Bohemian II">
         <img src="assets/inspiration/kitchen-ai-boho-02.jpg" alt="AI-generated bohemian-style kitchen design">
-        <div class="label">AI Bohemian II</div>
+        <div class="label" data-ar="بوهيمي بالذكاء الاصطناعي 2" data-en="AI Bohemian II">AI Bohemian II</div>
       </div>
     </div>
     <div class="cat-grid" id="grid-kitchen"></div>
@@ -434,85 +441,85 @@
 
   <div class="cat-section" data-cat="exterior">
     <div class="cat-head">
-      <h2>Front of the House</h2>
-      <button class="see-all" data-target="exterior">See all »</button>
+      <h2 data-ar="واجهة المنزل" data-en="Front of the House">Front of the House</h2>
+      <button class="see-all" data-target="exterior" data-ar="عرض الكل »" data-en="See all »">See all »</button>
     </div>
     <div class="cat-row" id="row-exterior">
       <div class="style-card" data-img="assets/inspiration/exterior-modern-entrance.jpg" data-name="Modern Entrance">
         <img src="assets/inspiration/exterior-modern-entrance.jpg" alt="Modern concrete entrance with glass pergola">
-        <div class="label">Modern Entrance</div>
+        <div class="label" data-ar="مدخل عصري" data-en="Modern Entrance">Modern Entrance</div>
       </div>
       <div class="style-card" data-img="assets/inspiration/exterior-arched-courtyard.jpg" data-name="Arched Courtyard">
         <img src="assets/inspiration/exterior-arched-courtyard.jpg" alt="Arched marble courtyard entrance">
-        <div class="label">Arched Courtyard</div>
+        <div class="label" data-ar="فناء مقوّس" data-en="Arched Courtyard">Arched Courtyard</div>
       </div>
       <div class="style-card" data-img="assets/inspiration/exterior-garden-day.jpg" data-name="Garden Retreat">
         <img src="assets/inspiration/exterior-garden-day.jpg" alt="Cozy garden with swing, daytime">
-        <div class="label">Garden Retreat</div>
+        <div class="label" data-ar="ملاذ الحديقة" data-en="Garden Retreat">Garden Retreat</div>
       </div>
       <div class="style-card" data-img="assets/inspiration/exterior-garden-night.jpg" data-name="Garden by Night">
         <img src="assets/inspiration/exterior-garden-night.jpg" alt="Cozy garden with swing, lit up at night">
-        <div class="label">Garden by Night</div>
+        <div class="label" data-ar="الحديقة ليلاً" data-en="Garden by Night">Garden by Night</div>
       </div>
       <div class="style-card" data-img="assets/inspiration/exterior-terrace-fireplace.jpg" data-name="Terrace &amp; Fireplace">
         <img src="assets/inspiration/exterior-terrace-fireplace.jpg" alt="Modern terraced backyard with stone outdoor fireplace">
-        <div class="label">Terrace &amp; Fireplace</div>
+        <div class="label" data-ar="تراس ومدفأة" data-en="Terrace &amp; Fireplace">Terrace &amp; Fireplace</div>
       </div>
       <div class="style-card" data-img="assets/inspiration/exterior-tuscan-path.jpg" data-name="Tuscan Path">
         <img src="assets/inspiration/exterior-tuscan-path.jpg" alt="Tuscan style house with garden path">
-        <div class="label">Tuscan Path</div>
+        <div class="label" data-ar="ممر توسكاني" data-en="Tuscan Path">Tuscan Path</div>
       </div>
       <div class="style-card" data-img="assets/inspiration/exterior-floral-doorway.jpg" data-name="Floral Doorway">
         <img src="assets/inspiration/exterior-floral-doorway.jpg" alt="Front door framed with flowers and string lights">
-        <div class="label">Floral Doorway</div>
+        <div class="label" data-ar="مدخل مزهّر" data-en="Floral Doorway">Floral Doorway</div>
       </div>
       <div class="style-card" data-img="assets/inspiration/exterior-secret-garden-foyer.jpg" data-name="Secret Garden Foyer">
         <img src="assets/inspiration/exterior-secret-garden-foyer.jpg" alt="Narrow entrance alley with green living wall">
-        <div class="label">Secret Garden Foyer</div>
+        <div class="label" data-ar="ردهة الحديقة السرية" data-en="Secret Garden Foyer">Secret Garden Foyer</div>
       </div>
       <div class="style-card" data-img="assets/inspiration/exterior-glass-veranda.jpg" data-name="Glass Veranda">
         <img src="assets/inspiration/exterior-glass-veranda.jpg" alt="Glass-walled veranda with plants and swing chair">
-        <div class="label">Glass Veranda</div>
+        <div class="label" data-ar="شرفة زجاجية" data-en="Glass Veranda">Glass Veranda</div>
       </div>
       <div class="style-card" data-img="assets/inspiration/exterior-ai-modern-01.jpg" data-name="AI Modern I">
         <img src="assets/inspiration/exterior-ai-modern-01.jpg" alt="AI-generated modern exterior design">
-        <div class="label">AI Modern I</div>
+        <div class="label" data-ar="عصري بالذكاء الاصطناعي 1" data-en="AI Modern I">AI Modern I</div>
       </div>
       <div class="style-card" data-img="assets/inspiration/exterior-ai-modern-02.jpg" data-name="AI Modern II">
         <img src="assets/inspiration/exterior-ai-modern-02.jpg" alt="AI-generated modern exterior design">
-        <div class="label">AI Modern II</div>
+        <div class="label" data-ar="عصري بالذكاء الاصطناعي 2" data-en="AI Modern II">AI Modern II</div>
       </div>
       <div class="style-card" data-img="assets/inspiration/exterior-ai-modern-03.jpg" data-name="AI Modern III">
         <img src="assets/inspiration/exterior-ai-modern-03.jpg" alt="AI-generated modern exterior design">
-        <div class="label">AI Modern III</div>
+        <div class="label" data-ar="عصري بالذكاء الاصطناعي 3" data-en="AI Modern III">AI Modern III</div>
       </div>
       <div class="style-card" data-img="assets/inspiration/exterior-ai-modern-04.jpg" data-name="AI Modern IV">
         <img src="assets/inspiration/exterior-ai-modern-04.jpg" alt="AI-generated modern exterior design">
-        <div class="label">AI Modern IV</div>
+        <div class="label" data-ar="عصري بالذكاء الاصطناعي 4" data-en="AI Modern IV">AI Modern IV</div>
       </div>
       <div class="style-card" data-img="assets/inspiration/exterior-ai-classic-01.jpg" data-name="AI Classic I">
         <img src="assets/inspiration/exterior-ai-classic-01.jpg" alt="AI-generated classic exterior design">
-        <div class="label">AI Classic I</div>
+        <div class="label" data-ar="كلاسيكي بالذكاء الاصطناعي 1" data-en="AI Classic I">AI Classic I</div>
       </div>
       <div class="style-card" data-img="assets/inspiration/exterior-ai-classic-02.jpg" data-name="AI Classic II">
         <img src="assets/inspiration/exterior-ai-classic-02.jpg" alt="AI-generated classic exterior design">
-        <div class="label">AI Classic II</div>
+        <div class="label" data-ar="كلاسيكي بالذكاء الاصطناعي 2" data-en="AI Classic II">AI Classic II</div>
       </div>
       <div class="style-card" data-img="assets/inspiration/exterior-ai-scandi-01.jpg" data-name="AI Scandinavian I">
         <img src="assets/inspiration/exterior-ai-scandi-01.jpg" alt="AI-generated Scandinavian-style exterior design">
-        <div class="label">AI Scandinavian I</div>
+        <div class="label" data-ar="اسكندنافي بالذكاء الاصطناعي 1" data-en="AI Scandinavian I">AI Scandinavian I</div>
       </div>
       <div class="style-card" data-img="assets/inspiration/exterior-ai-scandi-02.jpg" data-name="AI Scandinavian II">
         <img src="assets/inspiration/exterior-ai-scandi-02.jpg" alt="AI-generated Scandinavian-style exterior design">
-        <div class="label">AI Scandinavian II</div>
+        <div class="label" data-ar="اسكندنافي بالذكاء الاصطناعي 2" data-en="AI Scandinavian II">AI Scandinavian II</div>
       </div>
       <div class="style-card" data-img="assets/inspiration/exterior-ai-boho-01.jpg" data-name="AI Bohemian I">
         <img src="assets/inspiration/exterior-ai-boho-01.jpg" alt="AI-generated bohemian-style exterior design">
-        <div class="label">AI Bohemian I</div>
+        <div class="label" data-ar="بوهيمي بالذكاء الاصطناعي 1" data-en="AI Bohemian I">AI Bohemian I</div>
       </div>
       <div class="style-card" data-img="assets/inspiration/exterior-ai-boho-02.jpg" data-name="AI Bohemian II">
         <img src="assets/inspiration/exterior-ai-boho-02.jpg" alt="AI-generated bohemian-style exterior design">
-        <div class="label">AI Bohemian II</div>
+        <div class="label" data-ar="بوهيمي بالذكاء الاصطناعي 2" data-en="AI Bohemian II">AI Bohemian II</div>
       </div>
     </div>
     <div class="cat-grid" id="grid-exterior"></div>
@@ -520,117 +527,117 @@
 
   <div class="cat-section" data-cat="garden">
     <div class="cat-head">
-      <h2>Garden</h2>
-      <button class="see-all" data-target="garden">See all »</button>
+      <h2 data-ar="الحديقة" data-en="Garden">Garden</h2>
+      <button class="see-all" data-target="garden" data-ar="عرض الكل »" data-en="See all »">See all »</button>
     </div>
     <div class="cat-row" id="row-garden">
       <div class="style-card" data-img="assets/inspiration/garden-stone-waterfall.jpg" data-name="Stone Waterfall">
         <img src="assets/inspiration/garden-stone-waterfall.jpg" alt="Courtyard garden with stone wall water feature and succulents">
-        <div class="label">Stone Waterfall</div>
+        <div class="label" data-ar="شلال حجري" data-en="Stone Waterfall">Stone Waterfall</div>
       </div>
       <div class="style-card" data-img="assets/inspiration/garden-pool-deck.jpg" data-name="Pool &amp; Deck">
         <img src="assets/inspiration/garden-pool-deck.jpg" alt="Backyard with plunge pool, wooden deck, and pebble path">
-        <div class="label">Pool &amp; Deck</div>
+        <div class="label" data-ar="مسبح وتراس خشبي" data-en="Pool &amp; Deck">Pool &amp; Deck</div>
       </div>
       <div class="style-card" data-img="assets/inspiration/garden-modern-patio.jpg" data-name="Modern Patio">
         <img src="assets/inspiration/garden-modern-patio.jpg" alt="Modern patio with dining set and sconce lighting">
-        <div class="label">Modern Patio</div>
+        <div class="label" data-ar="باحة عصرية" data-en="Modern Patio">Modern Patio</div>
       </div>
       <div class="style-card" data-img="assets/inspiration/garden-tropical-path.jpg" data-name="Tropical Path">
         <img src="assets/inspiration/garden-tropical-path.jpg" alt="Tropical garden path with palms and reflecting pool">
-        <div class="label">Tropical Path</div>
+        <div class="label" data-ar="ممر استوائي" data-en="Tropical Path">Tropical Path</div>
       </div>
       <div class="style-card" data-img="assets/inspiration/garden-rooftop-lounge.jpg" data-name="Rooftop Lounge">
         <img src="assets/inspiration/garden-rooftop-lounge.jpg" alt="Rooftop garden lounge with pergola, swing sofa, and pool table">
-        <div class="label">Rooftop Lounge</div>
+        <div class="label" data-ar="صالة السطح" data-en="Rooftop Lounge">Rooftop Lounge</div>
       </div>
       <div class="style-card" data-img="assets/inspiration/garden-geometric-courtyard.jpg" data-name="Geometric Courtyard">
         <img src="assets/inspiration/garden-geometric-courtyard.jpg" alt="Modern courtyard with geometric dome wall and dining table">
-        <div class="label">Geometric Courtyard</div>
+        <div class="label" data-ar="فناء هندسي" data-en="Geometric Courtyard">Geometric Courtyard</div>
       </div>
       <div class="style-card" data-img="assets/inspiration/garden-stone-lounge.jpg" data-name="Stone Lounge">
         <img src="assets/inspiration/garden-stone-lounge.jpg" alt="Stone wall garden lounge with fire feature and palms">
-        <div class="label">Stone Lounge</div>
+        <div class="label" data-ar="صالة حجرية" data-en="Stone Lounge">Stone Lounge</div>
       </div>
       <div class="style-card" data-img="assets/inspiration/garden-arabic-majlis.jpg" data-name="Arabic Majlis">
         <img src="assets/inspiration/garden-arabic-majlis.jpg" alt="Arabic-style rooftop majlis with lanterns and mashrabiya ceiling">
-        <div class="label">Arabic Majlis</div>
+        <div class="label" data-ar="مجلس عربي" data-en="Arabic Majlis">Arabic Majlis</div>
       </div>
       <div class="style-card" data-img="assets/inspiration/garden-japanese-zen.jpg" data-name="Japanese Zen">
         <img src="assets/inspiration/garden-japanese-zen.jpg" alt="Japanese zen rooftop garden with bonsai and rock garden">
-        <div class="label">Japanese Zen</div>
+        <div class="label" data-ar="ياباني زن" data-en="Japanese Zen">Japanese Zen</div>
       </div>
       <div class="style-card" data-img="assets/inspiration/garden-pebble-patio.jpg" data-name="Pebble Patio">
         <img src="assets/inspiration/garden-pebble-patio.jpg" alt="House entrance patio with concrete pavers and pebble borders">
-        <div class="label">Pebble Patio</div>
+        <div class="label" data-ar="باحة حصى" data-en="Pebble Patio">Pebble Patio</div>
       </div>
       <div class="style-card" data-img="assets/inspiration/garden-moroccan-lounge.jpg" data-name="Moroccan Lounge">
         <img src="assets/inspiration/garden-moroccan-lounge.jpg" alt="Moroccan-style rooftop lounge with papasan chairs and lanterns">
-        <div class="label">Moroccan Lounge</div>
+        <div class="label" data-ar="صالة مغربية" data-en="Moroccan Lounge">Moroccan Lounge</div>
       </div>
       <div class="style-card" data-img="assets/inspiration/garden-bougainvillea-wall.jpg" data-name="Bougainvillea Wall">
         <img src="assets/inspiration/garden-bougainvillea-wall.jpg" alt="Rooftop lounge with a flowering bougainvillea trellis wall">
-        <div class="label">Bougainvillea Wall</div>
+        <div class="label" data-ar="جدار الجهنمية" data-en="Bougainvillea Wall">Bougainvillea Wall</div>
       </div>
       <div class="style-card" data-img="assets/inspiration/garden-french-courtyard.jpg" data-name="French Courtyard">
         <img src="assets/inspiration/garden-french-courtyard.jpg" alt="Glass-roofed French courtyard with fountain, roses, and topiary">
-        <div class="label">French Courtyard</div>
+        <div class="label" data-ar="فناء فرنسي" data-en="French Courtyard">French Courtyard</div>
       </div>
       <div class="style-card" data-img="assets/inspiration/garden-zen-courtyard.jpg" data-name="Zen Courtyard">
         <img src="assets/inspiration/garden-zen-courtyard.jpg" alt="Japanese zen indoor courtyard with raked gravel and bonsai">
-        <div class="label">Zen Courtyard</div>
+        <div class="label" data-ar="فناء زن" data-en="Zen Courtyard">Zen Courtyard</div>
       </div>
       <div class="style-card" data-img="assets/inspiration/garden-andalusian-courtyard.jpg" data-name="Andalusian Courtyard">
         <img src="assets/inspiration/garden-andalusian-courtyard.jpg" alt="Arabic-style courtyard with mashrabiya walls, lawn, and swing daybed">
-        <div class="label">Andalusian Courtyard</div>
+        <div class="label" data-ar="فناء أندلسي" data-en="Andalusian Courtyard">Andalusian Courtyard</div>
       </div>
       <div class="style-card" data-img="assets/inspiration/garden-marble-atrium.jpg" data-name="Marble Atrium">
         <img src="assets/inspiration/garden-marble-atrium.jpg" alt="Minimalist white marble atrium courtyard with skylight, olive trees, and water feature">
-        <div class="label">Marble Atrium</div>
+        <div class="label" data-ar="ردهة رخامية" data-en="Marble Atrium">Marble Atrium</div>
       </div>
       <div class="style-card" data-img="assets/inspiration/garden-sandstone-atrium.jpg" data-name="Sandstone Atrium">
         <img src="assets/inspiration/garden-sandstone-atrium.jpg" alt="Warm sandstone atrium courtyard with skylight, olive trees, and water feature">
-        <div class="label">Sandstone Atrium</div>
+        <div class="label" data-ar="ردهة حجر رملي" data-en="Sandstone Atrium">Sandstone Atrium</div>
       </div>
       <div class="style-card" data-img="assets/inspiration/garden-ai-modern-01.jpg" data-name="AI Modern I">
         <img src="assets/inspiration/garden-ai-modern-01.jpg" alt="AI-generated modern garden design">
-        <div class="label">AI Modern I</div>
+        <div class="label" data-ar="عصري بالذكاء الاصطناعي 1" data-en="AI Modern I">AI Modern I</div>
       </div>
       <div class="style-card" data-img="assets/inspiration/garden-ai-modern-02.jpg" data-name="AI Modern II">
         <img src="assets/inspiration/garden-ai-modern-02.jpg" alt="AI-generated modern garden design">
-        <div class="label">AI Modern II</div>
+        <div class="label" data-ar="عصري بالذكاء الاصطناعي 2" data-en="AI Modern II">AI Modern II</div>
       </div>
       <div class="style-card" data-img="assets/inspiration/garden-ai-modern-03.jpg" data-name="AI Modern III">
         <img src="assets/inspiration/garden-ai-modern-03.jpg" alt="AI-generated modern garden design">
-        <div class="label">AI Modern III</div>
+        <div class="label" data-ar="عصري بالذكاء الاصطناعي 3" data-en="AI Modern III">AI Modern III</div>
       </div>
       <div class="style-card" data-img="assets/inspiration/garden-ai-modern-04.jpg" data-name="AI Modern IV">
         <img src="assets/inspiration/garden-ai-modern-04.jpg" alt="AI-generated modern garden design">
-        <div class="label">AI Modern IV</div>
+        <div class="label" data-ar="عصري بالذكاء الاصطناعي 4" data-en="AI Modern IV">AI Modern IV</div>
       </div>
       <div class="style-card" data-img="assets/inspiration/garden-ai-classic-01.jpg" data-name="AI Classic I">
         <img src="assets/inspiration/garden-ai-classic-01.jpg" alt="AI-generated classic garden design">
-        <div class="label">AI Classic I</div>
+        <div class="label" data-ar="كلاسيكي بالذكاء الاصطناعي 1" data-en="AI Classic I">AI Classic I</div>
       </div>
       <div class="style-card" data-img="assets/inspiration/garden-ai-classic-02.jpg" data-name="AI Classic II">
         <img src="assets/inspiration/garden-ai-classic-02.jpg" alt="AI-generated classic garden design">
-        <div class="label">AI Classic II</div>
+        <div class="label" data-ar="كلاسيكي بالذكاء الاصطناعي 2" data-en="AI Classic II">AI Classic II</div>
       </div>
       <div class="style-card" data-img="assets/inspiration/garden-ai-scandi-01.jpg" data-name="AI Scandinavian I">
         <img src="assets/inspiration/garden-ai-scandi-01.jpg" alt="AI-generated Scandinavian-style garden design">
-        <div class="label">AI Scandinavian I</div>
+        <div class="label" data-ar="اسكندنافي بالذكاء الاصطناعي 1" data-en="AI Scandinavian I">AI Scandinavian I</div>
       </div>
       <div class="style-card" data-img="assets/inspiration/garden-ai-scandi-02.jpg" data-name="AI Scandinavian II">
         <img src="assets/inspiration/garden-ai-scandi-02.jpg" alt="AI-generated Scandinavian-style garden design">
-        <div class="label">AI Scandinavian II</div>
+        <div class="label" data-ar="اسكندنافي بالذكاء الاصطناعي 2" data-en="AI Scandinavian II">AI Scandinavian II</div>
       </div>
       <div class="style-card" data-img="assets/inspiration/garden-ai-boho-01.jpg" data-name="AI Bohemian I">
         <img src="assets/inspiration/garden-ai-boho-01.jpg" alt="AI-generated bohemian-style garden design">
-        <div class="label">AI Bohemian I</div>
+        <div class="label" data-ar="بوهيمي بالذكاء الاصطناعي 1" data-en="AI Bohemian I">AI Bohemian I</div>
       </div>
       <div class="style-card" data-img="assets/inspiration/garden-ai-boho-02.jpg" data-name="AI Bohemian II">
         <img src="assets/inspiration/garden-ai-boho-02.jpg" alt="AI-generated bohemian-style garden design">
-        <div class="label">AI Bohemian II</div>
+        <div class="label" data-ar="بوهيمي بالذكاء الاصطناعي 2" data-en="AI Bohemian II">AI Bohemian II</div>
       </div>
     </div>
     <div class="cat-grid" id="grid-garden"></div>
@@ -642,24 +649,379 @@
     <img class="style-photo" id="lightboxImg" src="" alt="">
     <div class="lightbox-body">
       <h3 id="lightboxName"></h3>
-      <p>Pick a photo of your own room and Lamsa's AI will apply this style to it — same walls, doors and windows, new look. Uses 1 credit.</p>
+      <p data-ar="اختر صورة لغرفتك وذكاء لمسة الاصطناعي رح يطبّق هاد الستايل عليها — نفس الجدران والأبواب والنوافذ، بس بإطلالة جديدة. بتستخدم رصيد واحد." data-en="Pick a photo of your own room and Lamsa's AI will apply this style to it — same walls, doors and windows, new look. Uses 1 credit.">Pick a photo of your own room and Lamsa's AI will apply this style to it — same walls, doors and windows, new look. Uses 1 credit.</p>
       <input type="file" id="roomFileInput" accept="image/*" style="display:none;">
       <div class="gen-result-wrap" id="genResultWrap" style="display:none;">
         <img id="genResultImg" src="" alt="Result">
-        <div class="gen-result-label">Result (top) vs. your original room photo (below)</div>
+        <div class="gen-result-label" data-ar="النتيجة (فوق) مقابل صورة غرفتك الأصلية (تحت)" data-en="Result (top) vs. your original room photo (below)">Result (top) vs. your original room photo (below)</div>
         <img id="genOriginalImg" src="" alt="Original room">
       </div>
       <div class="loading-dots" id="loadingDots"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div>
       <div class="gen-status" id="genStatus"></div>
       <div id="downloadBtnWrap"></div>
-      <button class="use-style-btn" id="useStyleBtn">Use This Style</button>
-      <button class="reset-btn" id="resetBtn" style="display:none;">Try Another Photo</button>
-      <button class="close-lightbox" id="closeLightboxBtn">Close</button>
+      <button class="use-style-btn" id="useStyleBtn" data-ar="استخدم هذا الستايل" data-en="Use This Style">Use This Style</button>
+      <button class="reset-btn" id="resetBtn" style="display:none;" data-ar="جرّب صورة أخرى" data-en="Try Another Photo">Try Another Photo</button>
+      <button class="close-lightbox" id="closeLightboxBtn" data-ar="إغلاق" data-en="Close">Close</button>
     </div>
   </div>
 </div>
 
 <script>
+  // ===== i18n for JS-generated strings (static [data-en][data-ar] text is
+  // handled by Lang8.apply itself) =====
+  var currentLang = 'en';
+  var T = {
+    de: {
+      'Full Designer': 'Vollständiger Designer', 'Sign In': 'Anmelden', 'Log Out': 'Abmelden',
+      'Inspirations Gallery': 'Inspirationsgalerie',
+      'Browse real interior styles, then apply one directly to a photo of your own room.': 'Durchstöbere echte Einrichtungsstile und wende einen direkt auf ein Foto deines Zimmers an.',
+      'See all »': 'Alle anzeigen »',
+      'Living Room': 'Wohnzimmer', 'Bedroom': 'Schlafzimmer', 'Kitchen': 'Küche',
+      'Front of the House': 'Hausfassade', 'Garden': 'Garten',
+      "Pick a photo of your own room and Lamsa's AI will apply this style to it — same walls, doors and windows, new look. Uses 1 credit.": 'Wähle ein Foto deines eigenen Zimmers aus, und Lamsas KI wendet diesen Stil darauf an — gleiche Wände, Türen und Fenster, neuer Look. Kostet 1 Guthaben.',
+      'Result (top) vs. your original room photo (below)': 'Ergebnis (oben) vs. dein Originalfoto (unten)',
+      'Try Another Photo': 'Anderes Foto versuchen', 'Close': 'Schließen',
+      'Hide «': '« Ausblenden',
+      'Processing...': 'Wird verarbeitet...', 'Try Again': 'Erneut versuchen', 'Use This Style': 'Diesen Stil verwenden',
+      'Uploading your room photo...': 'Raumfoto wird hochgeladen...',
+      'Applying the style with AI... this can take up to 30 seconds': 'Stil wird mit KI angewendet... kann bis zu 30 Sekunden dauern',
+      'Done — compare the result with your original photo.': 'Fertig — vergleiche das Ergebnis mit deinem Originalfoto.',
+      'Error: ': 'Fehler: ',
+      'Image upload failed': 'Bild-Upload fehlgeschlagen', 'Could not start generation': 'Generierung konnte nicht gestartet werden',
+      'This is taking longer than expected. Please try again.': 'Das dauert länger als erwartet. Bitte versuche es erneut.',
+      'Error generating image. Please try again.': 'Fehler beim Erstellen des Bildes. Bitte versuche es erneut.',
+      'Generation failed. Please try again.': 'Generierung fehlgeschlagen. Bitte versuche es erneut.',
+      'Connection error. Please try again.': 'Verbindungsfehler. Bitte versuche es erneut.',
+      "You're out of credits — buy more to continue": 'Dein Guthaben ist aufgebraucht — kaufe mehr, um fortzufahren',
+      'Your balance: ': 'Dein Guthaben: ', 'credit': 'Guthaben', 'credits': 'Guthaben',
+      ' · Subscribe': ' · Abonnieren', ' · Total generated: ': ' · Insgesamt erstellt: ',
+      'MOST FLEXIBLE': 'AM FLEXIBELSTEN', 'SAVE 37% PER DESIGN': '37% PRO DESIGN SPAREN',
+      '10 Designs': '10 Designs', '40 Designs': '40 Designs',
+      'per week (€0.60/design)': 'pro Woche (0,60€/Design)', 'per month (€0.37/design)': 'pro Monat (0,37€/Design)',
+      'AI-generated designs for your room': 'KI-generierte Designs für dein Zimmer',
+      'Choose from every available style': 'Wähle aus jedem verfügbaren Stil',
+      'Download your designs in high quality': 'Lade deine Designs in hoher Qualität herunter',
+      'Fresh ideas with every design': 'Frische Ideen mit jedem Design',
+      'More Designs': 'Mehr Designs', 'Continue': 'Weiter',
+      'Automatically renews. Cancel anytime.': 'Verlängert sich automatisch. Jederzeit kündbar.',
+      'Something went wrong, please try again': 'Etwas ist schiefgelaufen, bitte versuche es erneut',
+      'Connection error': 'Verbindungsfehler', 'Save Image': 'Bild speichern',
+      'Payment successful! Your balance will update in a few seconds.': 'Zahlung erfolgreich! Dein Guthaben wird in wenigen Sekunden aktualisiert.',
+      'AI Modern I': 'KI Modern I', 'AI Modern II': 'KI Modern II', 'AI Modern III': 'KI Modern III', 'AI Modern IV': 'KI Modern IV',
+      'AI Classic I': 'KI Klassisch I', 'AI Classic II': 'KI Klassisch II',
+      'AI Scandinavian I': 'KI Skandinavisch I', 'AI Scandinavian II': 'KI Skandinavisch II',
+      'AI Bohemian I': 'KI Boho I', 'AI Bohemian II': 'KI Boho II',
+      'Modern & Warm': 'Modern & Warm', 'Cozy Lounge': 'Gemütliche Lounge', 'Open & Bright': 'Offen & Hell',
+      'Classic Luxury': 'Klassischer Luxus', 'Deep Green Glam': 'Tiefgrünes Glamour', 'Emerald & Gold': 'Smaragd & Gold',
+      'Navy & Emerald': 'Marineblau & Smaragd', 'Rustic Pink': 'Rustikales Rosa', 'Warm Luxury': 'Warmer Luxus',
+      'Modern Luxury': 'Moderner Luxus', 'Warm Industrial': 'Warmer Industrial-Stil', 'Silver Glam': 'Silbernes Glamour',
+      'Japanese Zen': 'Japanischer Zen', 'Modern Elegance': 'Moderne Eleganz', 'Japanese Walnut': 'Japanisches Walnussholz',
+      'Arabic Luxury': 'Arabischer Luxus', 'Dark & Patterned': 'Dunkel & Gemustert', 'Black & Gold': 'Schwarz & Gold',
+      'Classic Wood': 'Klassisches Holz', 'Modern Navy': 'Modernes Marineblau', 'Classic Navy': 'Klassisches Marineblau',
+      'Beige Marble': 'Beige Marmor', 'Navy Art Deco': 'Marineblau Art Deco', 'Marble & Garden': 'Marmor & Garten',
+      'Modern Entrance': 'Moderner Eingang', 'Arched Courtyard': 'Gewölbter Innenhof', 'Garden Retreat': 'Gartenoase',
+      'Garden by Night': 'Garten bei Nacht', 'Terrace & Fireplace': 'Terrasse & Kamin', 'Tuscan Path': 'Toskanischer Weg',
+      'Floral Doorway': 'Blumiger Eingang', 'Secret Garden Foyer': 'Geheimer Gartenflur', 'Glass Veranda': 'Glasveranda',
+      'Stone Waterfall': 'Steinwasserfall', 'Pool & Deck': 'Pool & Terrasse', 'Modern Patio': 'Moderne Terrasse',
+      'Tropical Path': 'Tropischer Pfad', 'Rooftop Lounge': 'Dachterrassen-Lounge', 'Geometric Courtyard': 'Geometrischer Innenhof',
+      'Stone Lounge': 'Stein-Lounge', 'Arabic Majlis': 'Arabischer Majlis', 'Pebble Patio': 'Kiesterrasse',
+      'Moroccan Lounge': 'Marokkanische Lounge', 'Bougainvillea Wall': 'Bougainvillea-Wand', 'French Courtyard': 'Französischer Innenhof',
+      'Zen Courtyard': 'Zen-Innenhof', 'Andalusian Courtyard': 'Andalusischer Innenhof', 'Marble Atrium': 'Marmoratrium',
+      'Sandstone Atrium': 'Sandstein-Atrium'
+    },
+    es: {
+      'Full Designer': 'Diseñador completo', 'Sign In': 'Iniciar sesión', 'Log Out': 'Cerrar sesión',
+      'Inspirations Gallery': 'Galería de inspiración',
+      'Browse real interior styles, then apply one directly to a photo of your own room.': 'Explora estilos de interiores reales y aplica uno directamente a una foto de tu habitación.',
+      'See all »': 'Ver todo »',
+      'Living Room': 'Sala de estar', 'Bedroom': 'Dormitorio', 'Kitchen': 'Cocina',
+      'Front of the House': 'Fachada de la casa', 'Garden': 'Jardin',
+      "Pick a photo of your own room and Lamsa's AI will apply this style to it — same walls, doors and windows, new look. Uses 1 credit.": 'Elige una foto de tu propia habitación y la IA de Lamsa aplicará este estilo — mismas paredes, puertas y ventanas, look nuevo. Usa 1 crédito.',
+      'Result (top) vs. your original room photo (below)': 'Resultado (arriba) vs. tu foto original (abajo)',
+      'Try Another Photo': 'Probar otra foto', 'Close': 'Cerrar',
+      'Hide «': '« Ocultar',
+      'Processing...': 'Procesando...', 'Try Again': 'Intentar de nuevo', 'Use This Style': 'Usar este estilo',
+      'Uploading your room photo...': 'Subiendo la foto de tu habitación...',
+      'Applying the style with AI... this can take up to 30 seconds': 'Aplicando el estilo con IA... puede tardar hasta 30 segundos',
+      'Done — compare the result with your original photo.': 'Listo — compara el resultado con tu foto original.',
+      'Error: ': 'Error: ',
+      'Image upload failed': 'Error al subir la imagen', 'Could not start generation': 'No se pudo iniciar la generación',
+      'This is taking longer than expected. Please try again.': 'Esto está tardando más de lo esperado. Inténtalo de nuevo.',
+      'Error generating image. Please try again.': 'Error al generar la imagen. Inténtalo de nuevo.',
+      'Generation failed. Please try again.': 'Error en la generación. Inténtalo de nuevo.',
+      'Connection error. Please try again.': 'Error de conexión. Inténtalo de nuevo.',
+      "You're out of credits — buy more to continue": 'Te quedaste sin créditos — compra más para continuar',
+      'Your balance: ': 'Tu saldo: ', 'credit': 'crédito', 'credits': 'créditos',
+      ' · Subscribe': ' · Suscribirse', ' · Total generated: ': ' · Total generado: ',
+      'MOST FLEXIBLE': 'MAS FLEXIBLE', 'SAVE 37% PER DESIGN': 'AHORRA 37% POR DISENO',
+      '10 Designs': '10 Disenos', '40 Designs': '40 Disenos',
+      'per week (€0.60/design)': 'por semana (0,60€/diseno)', 'per month (€0.37/design)': 'por mes (0,37€/diseno)',
+      'AI-generated designs for your room': 'Disenos generados por IA para tu habitacion',
+      'Choose from every available style': 'Elige entre todos los estilos disponibles',
+      'Download your designs in high quality': 'Descarga tus disenos en alta calidad',
+      'Fresh ideas with every design': 'Ideas frescas con cada diseno',
+      'More Designs': 'Mas disenos', 'Continue': 'Continuar',
+      'Automatically renews. Cancel anytime.': 'Se renueva automaticamente. Cancela cuando quieras.',
+      'Something went wrong, please try again': 'Algo salio mal, intentalo de nuevo',
+      'Connection error': 'Error de conexion', 'Save Image': 'Guardar imagen',
+      'Payment successful! Your balance will update in a few seconds.': 'Pago exitoso! Tu saldo se actualizara en unos segundos.',
+      'AI Modern I': 'IA Moderno I', 'AI Modern II': 'IA Moderno II', 'AI Modern III': 'IA Moderno III', 'AI Modern IV': 'IA Moderno IV',
+      'AI Classic I': 'IA Clasico I', 'AI Classic II': 'IA Clasico II',
+      'AI Scandinavian I': 'IA Escandinavo I', 'AI Scandinavian II': 'IA Escandinavo II',
+      'AI Bohemian I': 'IA Boho I', 'AI Bohemian II': 'IA Boho II',
+      'Modern & Warm': 'Moderno y calido', 'Cozy Lounge': 'Salon acogedor', 'Open & Bright': 'Abierto y luminoso',
+      'Classic Luxury': 'Lujo clasico', 'Deep Green Glam': 'Glamour verde oscuro', 'Emerald & Gold': 'Esmeralda y oro',
+      'Navy & Emerald': 'Azul marino y esmeralda', 'Rustic Pink': 'Rosa rustico', 'Warm Luxury': 'Lujo calido',
+      'Modern Luxury': 'Lujo moderno', 'Warm Industrial': 'Industrial calido', 'Silver Glam': 'Glamour plateado',
+      'Japanese Zen': 'Zen japones', 'Modern Elegance': 'Elegancia moderna', 'Japanese Walnut': 'Nogal japones',
+      'Arabic Luxury': 'Lujo arabe', 'Dark & Patterned': 'Oscuro y estampado', 'Black & Gold': 'Negro y oro',
+      'Classic Wood': 'Madera clasica', 'Modern Navy': 'Azul marino moderno', 'Classic Navy': 'Azul marino clasico',
+      'Beige Marble': 'Marmol beige', 'Navy Art Deco': 'Art deco azul marino', 'Marble & Garden': 'Marmol y jardin',
+      'Modern Entrance': 'Entrada moderna', 'Arched Courtyard': 'Patio con arcos', 'Garden Retreat': 'Refugio en el jardin',
+      'Garden by Night': 'Jardin de noche', 'Terrace & Fireplace': 'Terraza y chimenea', 'Tuscan Path': 'Camino toscano',
+      'Floral Doorway': 'Entrada floral', 'Secret Garden Foyer': 'Vestibulo del jardin secreto', 'Glass Veranda': 'Veranda de vidrio',
+      'Stone Waterfall': 'Cascada de piedra', 'Pool & Deck': 'Piscina y terraza', 'Modern Patio': 'Patio moderno',
+      'Tropical Path': 'Camino tropical', 'Rooftop Lounge': 'Lounge en la azotea', 'Geometric Courtyard': 'Patio geometrico',
+      'Stone Lounge': 'Lounge de piedra', 'Arabic Majlis': 'Majlis arabe', 'Pebble Patio': 'Patio de guijarros',
+      'Moroccan Lounge': 'Lounge marroqui', 'Bougainvillea Wall': 'Pared de buganvilla', 'French Courtyard': 'Patio frances',
+      'Zen Courtyard': 'Patio zen', 'Andalusian Courtyard': 'Patio andaluz', 'Marble Atrium': 'Atrio de marmol',
+      'Sandstone Atrium': 'Atrio de piedra arenisca'
+    },
+    tr: {
+      'Full Designer': 'Tam Tasarimci', 'Sign In': 'Giris Yap', 'Log Out': 'Cikis Yap',
+      'Inspirations Gallery': 'Ilham Galerisi',
+      'Browse real interior styles, then apply one directly to a photo of your own room.': 'Gercek ic mekan stillerine goz atin, sonra birini dogrudan kendi odanizin fotografina uygulayin.',
+      'See all »': 'Tumunu gor »',
+      'Living Room': 'Oturma Odasi', 'Bedroom': 'Yatak Odasi', 'Kitchen': 'Mutfak',
+      'Front of the House': 'Ev Cephesi', 'Garden': 'Bahce',
+      "Pick a photo of your own room and Lamsa's AI will apply this style to it — same walls, doors and windows, new look. Uses 1 credit.": "Kendi odanizin bir fotografini secin, Lamsa'nin yapay zekasi bu stili uygulasin — ayni duvarlar, kapilar ve pencereler, yeni gorunum. 1 kredi kullanir.",
+      'Result (top) vs. your original room photo (below)': 'Sonuc (ustte) vs. orijinal oda fotografiniz (altta)',
+      'Try Another Photo': 'Baska Fotograf Dene', 'Close': 'Kapat',
+      'Hide «': '« Gizle',
+      'Processing...': 'Isleniyor...', 'Try Again': 'Tekrar Dene', 'Use This Style': 'Bu Stili Kullan',
+      'Uploading your room photo...': 'Oda fotografiniz yukleniyor...',
+      'Applying the style with AI... this can take up to 30 seconds': 'Stil yapay zeka ile uygulaniyor... 30 saniyeye kadar surebilir',
+      'Done — compare the result with your original photo.': 'Tamamlandi — sonucu orijinal fotografinizla karsilastirin.',
+      'Error: ': 'Hata: ',
+      'Image upload failed': 'Resim yukleme basarisiz', 'Could not start generation': 'Olusturma baslatilamadi',
+      'This is taking longer than expected. Please try again.': 'Bu beklenenden uzun suruyor. Lutfen tekrar deneyin.',
+      'Error generating image. Please try again.': 'Resim olusturma hatasi. Lutfen tekrar deneyin.',
+      'Generation failed. Please try again.': 'Olusturma basarisiz. Lutfen tekrar deneyin.',
+      'Connection error. Please try again.': 'Baglanti hatasi. Lutfen tekrar deneyin.',
+      "You're out of credits — buy more to continue": 'Krediniz bitti — devam etmek icin daha fazla satin alin',
+      'Your balance: ': 'Bakiyeniz: ', 'credit': 'kredi', 'credits': 'kredi',
+      ' · Subscribe': ' · Abone Ol', ' · Total generated: ': ' · Toplam olusturulan: ',
+      'MOST FLEXIBLE': 'EN ESNEK', 'SAVE 37% PER DESIGN': 'TASARIM BASINA %37 TASARRUF',
+      '10 Designs': '10 Tasarim', '40 Designs': '40 Tasarim',
+      'per week (€0.60/design)': 'haftalik (0.60€/tasarim)', 'per month (€0.37/design)': 'aylik (0.37€/tasarim)',
+      'AI-generated designs for your room': 'Odaniz icin yapay zeka ile olusturulan tasarimlar',
+      'Choose from every available style': 'Mevcut tum stiller arasindan secin',
+      'Download your designs in high quality': 'Tasarimlarinizi yuksek kalitede indirin',
+      'Fresh ideas with every design': 'Her tasarimda taze fikirler',
+      'More Designs': 'Daha Fazla Tasarim', 'Continue': 'Devam Et',
+      'Automatically renews. Cancel anytime.': 'Otomatik olarak yenilenir. Istediginiz zaman iptal edin.',
+      'Something went wrong, please try again': 'Bir seyler yanlis gitti, lutfen tekrar deneyin',
+      'Connection error': 'Baglanti hatasi', 'Save Image': 'Resmi kaydet',
+      'Payment successful! Your balance will update in a few seconds.': 'Odeme basarili! Bakiyeniz birkac saniye icinde guncellenecek.',
+      'AI Modern I': 'YZ Modern I', 'AI Modern II': 'YZ Modern II', 'AI Modern III': 'YZ Modern III', 'AI Modern IV': 'YZ Modern IV',
+      'AI Classic I': 'YZ Klasik I', 'AI Classic II': 'YZ Klasik II',
+      'AI Scandinavian I': 'YZ Iskandinav I', 'AI Scandinavian II': 'YZ Iskandinav II',
+      'AI Bohemian I': 'YZ Bohem I', 'AI Bohemian II': 'YZ Bohem II',
+      'Modern & Warm': 'Modern ve Sicak', 'Cozy Lounge': 'Rahat Salon', 'Open & Bright': 'Acik ve Aydinlik',
+      'Classic Luxury': 'Klasik Luks', 'Deep Green Glam': 'Koyu Yesil Goz Aliciligi', 'Emerald & Gold': 'Zumrut ve Altin',
+      'Navy & Emerald': 'Lacivert ve Zumrut', 'Rustic Pink': 'Rustik Pembe', 'Warm Luxury': 'Sicak Luks',
+      'Modern Luxury': 'Modern Luks', 'Warm Industrial': 'Sicak Endustriyel', 'Silver Glam': 'Gumus Goz Aliciligi',
+      'Japanese Zen': 'Japon Zen', 'Modern Elegance': 'Modern Zarafet', 'Japanese Walnut': 'Japon Cevizi',
+      'Arabic Luxury': 'Arap Luksu', 'Dark & Patterned': 'Koyu ve Desenli', 'Black & Gold': 'Siyah ve Altin',
+      'Classic Wood': 'Klasik Ahsap', 'Modern Navy': 'Modern Lacivert', 'Classic Navy': 'Klasik Lacivert',
+      'Beige Marble': 'Bej Mermer', 'Navy Art Deco': 'Lacivert Art Deco', 'Marble & Garden': 'Mermer ve Bahce',
+      'Modern Entrance': 'Modern Giris', 'Arched Courtyard': 'Kemerli Avlu', 'Garden Retreat': 'Bahce Sigina',
+      'Garden by Night': 'Gece Bahcesi', 'Terrace & Fireplace': 'Teras ve Sömine', 'Tuscan Path': 'Toskana Patikasi',
+      'Floral Doorway': 'Cicekli Giris', 'Secret Garden Foyer': 'Gizli Bahce Girisi', 'Glass Veranda': 'Cam Veranda',
+      'Stone Waterfall': 'Tas Selale', 'Pool & Deck': 'Havuz ve Teras', 'Modern Patio': 'Modern Veranda',
+      'Tropical Path': 'Tropikal Patika', 'Rooftop Lounge': 'Cati Terasi Lounge', 'Geometric Courtyard': 'Geometrik Avlu',
+      'Stone Lounge': 'Tas Lounge', 'Arabic Majlis': 'Arap Meclisi', 'Pebble Patio': 'Cakil Tasli Veranda',
+      'Moroccan Lounge': 'Fas Usulu Lounge', 'Bougainvillea Wall': 'Begonvil Duvari', 'French Courtyard': 'Fransiz Avlusu',
+      'Zen Courtyard': 'Zen Avlusu', 'Andalusian Courtyard': 'Endulus Avlusu', 'Marble Atrium': 'Mermer Avlu',
+      'Sandstone Atrium': 'Kumtasi Avlu'
+    },
+    fr: {
+      'Full Designer': 'Designer complet', 'Sign In': 'Connexion', 'Log Out': 'Deconnexion',
+      'Inspirations Gallery': "Galerie d'inspiration",
+      'Browse real interior styles, then apply one directly to a photo of your own room.': "Parcourez de vrais styles d'intérieur, puis appliquez-en un directement à une photo de votre pièce.",
+      'See all »': 'Tout voir »',
+      'Living Room': 'Salon', 'Bedroom': 'Chambre', 'Kitchen': 'Cuisine',
+      'Front of the House': 'Facade de la maison', 'Garden': 'Jardin',
+      "Pick a photo of your own room and Lamsa's AI will apply this style to it — same walls, doors and windows, new look. Uses 1 credit.": "Choisissez une photo de votre propre pièce et l'IA de Lamsa y appliquera ce style — mêmes murs, portes et fenêtres, nouveau look. Utilise 1 crédit.",
+      'Result (top) vs. your original room photo (below)': 'Résultat (en haut) vs. votre photo originale (en bas)',
+      'Try Another Photo': 'Essayer une autre photo', 'Close': 'Fermer',
+      'Hide «': '« Masquer',
+      'Processing...': 'Traitement...', 'Try Again': 'Réessayer', 'Use This Style': 'Utiliser ce style',
+      'Uploading your room photo...': 'Téléchargement de la photo de votre pièce...',
+      'Applying the style with AI... this can take up to 30 seconds': "Application du style par IA... peut prendre jusqu'à 30 secondes",
+      'Done — compare the result with your original photo.': 'Terminé — comparez le résultat avec votre photo originale.',
+      'Error: ': 'Erreur: ',
+      'Image upload failed': "Échec du téléchargement de l'image", 'Could not start generation': 'Impossible de démarrer la génération',
+      'This is taking longer than expected. Please try again.': 'Cela prend plus de temps que prévu. Veuillez réessayer.',
+      'Error generating image. Please try again.': "Erreur lors de la génération de l'image. Veuillez réessayer.",
+      'Generation failed. Please try again.': 'Échec de la génération. Veuillez réessayer.',
+      'Connection error. Please try again.': 'Erreur de connexion. Veuillez réessayer.',
+      "You're out of credits — buy more to continue": "Vous n'avez plus de crédits — achetez-en plus pour continuer",
+      'Your balance: ': 'Votre solde : ', 'credit': 'crédit', 'credits': 'crédits',
+      ' · Subscribe': " · S'abonner", ' · Total generated: ': ' · Total généré : ',
+      'MOST FLEXIBLE': 'LE PLUS FLEXIBLE', 'SAVE 37% PER DESIGN': 'ECONOMISEZ 37% PAR DESIGN',
+      '10 Designs': '10 Designs', '40 Designs': '40 Designs',
+      'per week (€0.60/design)': 'par semaine (0,60€/design)', 'per month (€0.37/design)': 'par mois (0,37€/design)',
+      'AI-generated designs for your room': 'Designs generes par IA pour votre piece',
+      'Choose from every available style': 'Choisissez parmi tous les styles disponibles',
+      'Download your designs in high quality': 'Téléchargez vos designs en haute qualité',
+      'Fresh ideas with every design': 'Des idees fraiches a chaque design',
+      'More Designs': 'Plus de designs', 'Continue': 'Continuer',
+      'Automatically renews. Cancel anytime.': 'Se renouvelle automatiquement. Annulable a tout moment.',
+      'Something went wrong, please try again': "Une erreur s'est produite, veuillez reessayer",
+      'Connection error': 'Erreur de connexion', 'Save Image': 'Sauvegarder',
+      'Payment successful! Your balance will update in a few seconds.': 'Paiement reussi! Votre solde sera mis a jour dans quelques secondes.',
+      'AI Modern I': 'IA Moderne I', 'AI Modern II': 'IA Moderne II', 'AI Modern III': 'IA Moderne III', 'AI Modern IV': 'IA Moderne IV',
+      'AI Classic I': 'IA Classique I', 'AI Classic II': 'IA Classique II',
+      'AI Scandinavian I': 'IA Scandinave I', 'AI Scandinavian II': 'IA Scandinave II',
+      'AI Bohemian I': 'IA Boheme I', 'AI Bohemian II': 'IA Boheme II',
+      'Modern & Warm': 'Moderne et chaleureux', 'Cozy Lounge': 'Salon cosy', 'Open & Bright': 'Ouvert et lumineux',
+      'Classic Luxury': 'Luxe classique', 'Deep Green Glam': 'Glamour vert fonce', 'Emerald & Gold': 'Emeraude et or',
+      'Navy & Emerald': 'Bleu marine et emeraude', 'Rustic Pink': 'Rose rustique', 'Warm Luxury': 'Luxe chaleureux',
+      'Modern Luxury': 'Luxe moderne', 'Warm Industrial': 'Industriel chaleureux', 'Silver Glam': 'Glamour argente',
+      'Japanese Zen': 'Zen japonais', 'Modern Elegance': 'Elegance moderne', 'Japanese Walnut': 'Noyer japonais',
+      'Arabic Luxury': 'Luxe arabe', 'Dark & Patterned': 'Sombre et motifs', 'Black & Gold': 'Noir et or',
+      'Classic Wood': 'Bois classique', 'Modern Navy': 'Bleu marine moderne', 'Classic Navy': 'Bleu marine classique',
+      'Beige Marble': 'Marbre beige', 'Navy Art Deco': 'Art deco bleu marine', 'Marble & Garden': 'Marbre et jardin',
+      'Modern Entrance': 'Entree moderne', 'Arched Courtyard': 'Cour en arches', 'Garden Retreat': 'Retraite au jardin',
+      'Garden by Night': 'Jardin de nuit', 'Terrace & Fireplace': 'Terrasse et cheminee', 'Tuscan Path': 'Chemin toscan',
+      'Floral Doorway': 'Entree fleurie', 'Secret Garden Foyer': 'Vestibule du jardin secret', 'Glass Veranda': 'Veranda vitree',
+      'Stone Waterfall': 'Cascade en pierre', 'Pool & Deck': 'Piscine et terrasse', 'Modern Patio': 'Patio moderne',
+      'Tropical Path': 'Chemin tropical', 'Rooftop Lounge': 'Lounge sur le toit', 'Geometric Courtyard': 'Cour geometrique',
+      'Stone Lounge': 'Lounge en pierre', 'Arabic Majlis': 'Majlis arabe', 'Pebble Patio': 'Patio en galets',
+      'Moroccan Lounge': 'Lounge marocain', 'Bougainvillea Wall': 'Mur de bougainvillier', 'French Courtyard': 'Cour francaise',
+      'Zen Courtyard': 'Cour zen', 'Andalusian Courtyard': 'Cour andalouse', 'Marble Atrium': 'Atrium en marbre',
+      'Sandstone Atrium': 'Atrium en gres'
+    },
+    it: {
+      'Full Designer': 'Designer completo', 'Sign In': 'Accedi', 'Log Out': 'Esci',
+      'Inspirations Gallery': "Galleria d'ispirazione",
+      'Browse real interior styles, then apply one directly to a photo of your own room.': "Sfoglia stili d'interni reali, poi applicane uno direttamente a una foto della tua stanza.",
+      'See all »': 'Vedi tutto »',
+      'Living Room': 'Soggiorno', 'Bedroom': 'Camera da letto', 'Kitchen': 'Cucina',
+      'Front of the House': 'Facciata della casa', 'Garden': 'Giardino',
+      "Pick a photo of your own room and Lamsa's AI will apply this style to it — same walls, doors and windows, new look. Uses 1 credit.": "Scegli una foto della tua stanza e l'IA di Lamsa applichera questo stile — stesse pareti, porte e finestre, nuovo look. Usa 1 credito.",
+      'Result (top) vs. your original room photo (below)': 'Risultato (sopra) vs. la tua foto originale (sotto)',
+      'Try Another Photo': "Prova un'altra foto", 'Close': 'Chiudi',
+      'Hide «': '« Nascondi',
+      'Processing...': 'Elaborazione...', 'Try Again': 'Riprova', 'Use This Style': 'Usa questo stile',
+      'Uploading your room photo...': 'Caricamento della foto della stanza...',
+      'Applying the style with AI... this can take up to 30 seconds': "Applicazione dello stile con IA... puo richiedere fino a 30 secondi",
+      'Done — compare the result with your original photo.': 'Fatto — confronta il risultato con la tua foto originale.',
+      'Error: ': 'Errore: ',
+      'Image upload failed': 'Caricamento immagine non riuscito', 'Could not start generation': 'Impossibile avviare la generazione',
+      'This is taking longer than expected. Please try again.': 'Questo sta impiegando più tempo del previsto. Riprova.',
+      'Error generating image. Please try again.': "Errore nella generazione dell'immagine. Riprova.",
+      'Generation failed. Please try again.': 'Generazione non riuscita. Riprova.',
+      'Connection error. Please try again.': 'Errore di connessione. Riprova.',
+      "You're out of credits — buy more to continue": 'Hai esaurito i crediti — acquistane altri per continuare',
+      'Your balance: ': 'Il tuo saldo: ', 'credit': 'credito', 'credits': 'crediti',
+      ' · Subscribe': ' · Abbonati', ' · Total generated: ': ' · Totale generato: ',
+      'MOST FLEXIBLE': 'PIU FLESSIBILE', 'SAVE 37% PER DESIGN': 'RISPARMIA IL 37% A DESIGN',
+      '10 Designs': '10 Design', '40 Designs': '40 Design',
+      'per week (€0.60/design)': 'a settimana (0,60€/design)', 'per month (€0.37/design)': 'al mese (0,37€/design)',
+      'AI-generated designs for your room': "Design generati dall'IA per la tua stanza",
+      'Choose from every available style': 'Scegli tra tutti gli stili disponibili',
+      'Download your designs in high quality': 'Scarica i tuoi design in alta qualita',
+      'Fresh ideas with every design': 'Idee fresche con ogni design',
+      'More Designs': 'Piu design', 'Continue': 'Continua',
+      'Automatically renews. Cancel anytime.': 'Si rinnova automaticamente. Annulla quando vuoi.',
+      'Something went wrong, please try again': "Qualcosa e andato storto, riprova",
+      'Connection error': 'Errore di connessione', 'Save Image': 'Salva immagine',
+      'Payment successful! Your balance will update in a few seconds.': 'Pagamento riuscito! Il tuo saldo verra aggiornato tra qualche secondo.',
+      'AI Modern I': 'IA Moderno I', 'AI Modern II': 'IA Moderno II', 'AI Modern III': 'IA Moderno III', 'AI Modern IV': 'IA Moderno IV',
+      'AI Classic I': 'IA Classico I', 'AI Classic II': 'IA Classico II',
+      'AI Scandinavian I': 'IA Scandinavo I', 'AI Scandinavian II': 'IA Scandinavo II',
+      'AI Bohemian I': 'IA Boho I', 'AI Bohemian II': 'IA Boho II',
+      'Modern & Warm': 'Moderno e caldo', 'Cozy Lounge': 'Salotto accogliente', 'Open & Bright': 'Aperto e luminoso',
+      'Classic Luxury': 'Lusso classico', 'Deep Green Glam': 'Glamour verde scuro', 'Emerald & Gold': 'Smeraldo e oro',
+      'Navy & Emerald': 'Blu navy e smeraldo', 'Rustic Pink': 'Rosa rustico', 'Warm Luxury': 'Lusso caldo',
+      'Modern Luxury': 'Lusso moderno', 'Warm Industrial': 'Industriale caldo', 'Silver Glam': 'Glamour argentato',
+      'Japanese Zen': 'Zen giapponese', 'Modern Elegance': 'Eleganza moderna', 'Japanese Walnut': 'Noce giapponese',
+      'Arabic Luxury': 'Lusso arabo', 'Dark & Patterned': 'Scuro e decorato', 'Black & Gold': 'Nero e oro',
+      'Classic Wood': 'Legno classico', 'Modern Navy': 'Blu navy moderno', 'Classic Navy': 'Blu navy classico',
+      'Beige Marble': 'Marmo beige', 'Navy Art Deco': 'Art deco blu navy', 'Marble & Garden': 'Marmo e giardino',
+      'Modern Entrance': 'Ingresso moderno', 'Arched Courtyard': 'Cortile ad arco', 'Garden Retreat': 'Rifugio in giardino',
+      'Garden by Night': 'Giardino di notte', 'Terrace & Fireplace': 'Terrazza e camino', 'Tuscan Path': 'Sentiero toscano',
+      'Floral Doorway': 'Ingresso floreale', 'Secret Garden Foyer': 'Ingresso del giardino segreto', 'Glass Veranda': 'Veranda in vetro',
+      'Stone Waterfall': 'Cascata di pietra', 'Pool & Deck': 'Piscina e terrazza', 'Modern Patio': 'Patio moderno',
+      'Tropical Path': 'Sentiero tropicale', 'Rooftop Lounge': 'Lounge sul tetto', 'Geometric Courtyard': 'Cortile geometrico',
+      'Stone Lounge': 'Lounge in pietra', 'Arabic Majlis': 'Majlis arabo', 'Pebble Patio': 'Patio di ciottoli',
+      'Moroccan Lounge': 'Lounge marocchino', 'Bougainvillea Wall': 'Muro di buganvillea', 'French Courtyard': 'Cortile francese',
+      'Zen Courtyard': 'Cortile zen', 'Andalusian Courtyard': 'Cortile andaluso', 'Marble Atrium': 'Atrio in marmo',
+      'Sandstone Atrium': 'Atrio in arenaria'
+    },
+    ru: {
+      'Full Designer': 'Polny dizayner', 'Sign In': 'Vkhod', 'Log Out': 'Vykhod',
+      'Inspirations Gallery': 'Galereya vdokhnoveniya',
+      'Browse real interior styles, then apply one directly to a photo of your own room.': 'Prosmotrite realnye stili interiera i primenite odin pryamo k foto vashey komnaty.',
+      'See all »': 'Vse »',
+      'Living Room': 'Gostinaya', 'Bedroom': 'Spalnya', 'Kitchen': 'Kuhnya',
+      'Front of the House': 'Fasad doma', 'Garden': 'Sad',
+      "Pick a photo of your own room and Lamsa's AI will apply this style to it — same walls, doors and windows, new look. Uses 1 credit.": 'Vyberite foto svoey komnaty, i II Lamsa primenit etot stil — te zhe steny, dveri i okna, novy vid. Ispolzuet 1 kredit.',
+      'Result (top) vs. your original room photo (below)': 'Rezultat (sverkhu) vs. vashe originalnoe foto (snizu)',
+      'Try Another Photo': 'Poprobovat drugoe foto', 'Close': 'Zakryt',
+      'Hide «': '« Skryt',
+      'Processing...': 'Obrabotka...', 'Try Again': 'Poprobovat snova', 'Use This Style': 'Ispolzovat etot stil',
+      'Uploading your room photo...': 'Zagruzka foto komnaty...',
+      'Applying the style with AI... this can take up to 30 seconds': 'Primenenie stilya s pomoshchyu II... mozhet zanyat do 30 sekund',
+      'Done — compare the result with your original photo.': 'Gotovo — sravnite rezultat s vashim originalnym foto.',
+      'Error: ': 'Oshibka: ',
+      'Image upload failed': 'Ne udalos zagruzit izobrazhenie', 'Could not start generation': 'Ne udalos nachat generatsiyu',
+      'This is taking longer than expected. Please try again.': 'Eto zanimaet bolshe vremeni, chem ozhidalos. Poprobuyte snova.',
+      'Error generating image. Please try again.': 'Oshibka pri generatsii izobrazheniya. Poprobuyte snova.',
+      'Generation failed. Please try again.': 'Generatsiya ne udalas. Poprobuyte snova.',
+      'Connection error. Please try again.': 'Oshibka soedineniya. Poprobuyte snova.',
+      "You're out of credits — buy more to continue": 'U vas konchilis kredity — kupite eshche, chtoby prodolzhit',
+      'Your balance: ': 'Vash balans: ', 'credit': 'kredit', 'credits': 'kreditov',
+      ' · Subscribe': ' · Podpisatsya', ' · Total generated: ': ' · Vsego sozdano: ',
+      'MOST FLEXIBLE': 'SAMY GIBKY', 'SAVE 37% PER DESIGN': 'EKONOMIYA 37% ZA DIZAYN',
+      '10 Designs': '10 Dizaynov', '40 Designs': '40 Dizaynov',
+      'per week (€0.60/design)': 'v nedelyu (0.60€/dizayn)', 'per month (€0.37/design)': 'v mesyats (0.37€/dizayn)',
+      'AI-generated designs for your room': 'Dizayny, sozdannye II, dlya vashey komnaty',
+      'Choose from every available style': 'Vyberite iz vsekh dostupnykh stiley',
+      'Download your designs in high quality': 'Skachayte svoi dizayny v vysokom kachestve',
+      'Fresh ideas with every design': 'Svezhie idei s kazhdym dizaynom',
+      'More Designs': 'Bolshe dizaynov', 'Continue': 'Prodolzhit',
+      'Automatically renews. Cancel anytime.': 'Avtomaticheski prodlevaetsya. Otmena v lyuboe vremya.',
+      'Something went wrong, please try again': 'Chto-to poshlo ne tak, poprobuyte snova',
+      'Connection error': 'Oshibka soedineniya', 'Save Image': 'Sohranit izobrazhenie',
+      'Payment successful! Your balance will update in a few seconds.': 'Oplata uspeshna! Vash balans obnovitsya cherez neskolko sekund.',
+      'AI Modern I': 'II Sovremenny I', 'AI Modern II': 'II Sovremenny II', 'AI Modern III': 'II Sovremenny III', 'AI Modern IV': 'II Sovremenny IV',
+      'AI Classic I': 'II Klassichesky I', 'AI Classic II': 'II Klassichesky II',
+      'AI Scandinavian I': 'II Skandinavsky I', 'AI Scandinavian II': 'II Skandinavsky II',
+      'AI Bohemian I': 'II Bogemny I', 'AI Bohemian II': 'II Bogemny II',
+      'Modern & Warm': 'Sovremenno i teplo', 'Cozy Lounge': 'Uyutnaya gostinaya', 'Open & Bright': 'Otkryto i svetlo',
+      'Classic Luxury': 'Klassicheskaya roskosh', 'Deep Green Glam': 'Temno-zeleny glamur', 'Emerald & Gold': 'Izumrud i zoloto',
+      'Navy & Emerald': 'Temno-siniy i izumrud', 'Rustic Pink': 'Derevensky rozovy', 'Warm Luxury': 'Teply lyuks',
+      'Modern Luxury': 'Sovremenny lyuks', 'Warm Industrial': 'Teply industrialny', 'Silver Glam': 'Serebryany glamur',
+      'Japanese Zen': 'Yaponsky dzen', 'Modern Elegance': 'Sovremennaya elegantnost', 'Japanese Walnut': 'Yaponsky orekh',
+      'Arabic Luxury': 'Arabskaya roskosh', 'Dark & Patterned': 'Temny i uzorchaty', 'Black & Gold': 'Cherny i zoloto',
+      'Classic Wood': 'Klassicheskoe derevo', 'Modern Navy': 'Sovremenny temno-siniy', 'Classic Navy': 'Klassichesky temno-siniy',
+      'Beige Marble': 'Bezhevy mramor', 'Navy Art Deco': 'Temno-siniy ar-deko', 'Marble & Garden': 'Mramor i sad',
+      'Modern Entrance': 'Sovremenny vkhod', 'Arched Courtyard': 'Arochny dvor', 'Garden Retreat': 'Sadovoe ubezhishche',
+      'Garden by Night': 'Sad nochyu', 'Terrace & Fireplace': 'Terrasa i kamin', 'Tuscan Path': 'Toskanskaya dorozhka',
+      'Floral Doorway': 'Tsvetochny vkhod', 'Secret Garden Foyer': 'Vkhod v taynyy sad', 'Glass Veranda': 'Steklyannaya veranda',
+      'Stone Waterfall': 'Kamenny vodopad', 'Pool & Deck': 'Basseyn i terrasa', 'Modern Patio': 'Sovremenny dvorik',
+      'Tropical Path': 'Tropicheskaya dorozhka', 'Rooftop Lounge': 'Lounge na kryshe', 'Geometric Courtyard': 'Geometricheskiy dvor',
+      'Stone Lounge': 'Kamennaya zona otdykha', 'Arabic Majlis': 'Arabsky mejlis', 'Pebble Patio': 'Dvorik s galkoy',
+      'Moroccan Lounge': 'Marokkanskaya zona otdykha', 'Bougainvillea Wall': 'Stena iz bugenvillei', 'French Courtyard': 'Frantsuzsky dvor',
+      'Zen Courtyard': 'Dzen-dvor', 'Andalusian Courtyard': 'Andaluzsky dvor', 'Marble Atrium': 'Mramorny atriy',
+      'Sandstone Atrium': 'Atriy iz peschanika'
+    }
+  };
+  function tr(key) { return (T[currentLang] && T[currentLang][key]) || key; }
+
   // ===== category rows / grid / lightbox =====
   function buildGrid(cat) {
     var row = document.getElementById('row-' + cat);
@@ -679,11 +1041,11 @@
         buildGrid(cat);
         grid.classList.add('open');
         row.classList.add('hidden');
-        btn.textContent = 'Hide «';
+        btn.textContent = tr('Hide «');
       } else {
         grid.classList.remove('open');
         row.classList.remove('hidden');
-        btn.textContent = 'See all »';
+        btn.textContent = tr('See all »');
       }
     });
   });
@@ -712,7 +1074,7 @@
     genStatus.classList.remove('error');
     useStyleBtn.style.display = 'block';
     useStyleBtn.disabled = false;
-    useStyleBtn.textContent = 'Use This Style';
+    useStyleBtn.textContent = tr('Use This Style');
     resetBtn.style.display = 'none';
     busy = false;
   }
@@ -721,7 +1083,7 @@
     var card = e.target.closest('.style-card');
     if (!card) return;
     lightboxImg.src = card.dataset.img;
-    lightboxName.textContent = card.dataset.name;
+    lightboxName.textContent = tr(card.dataset.name);
     currentStyleUrl = new URL(card.dataset.img, window.location.origin).href;
     resetLightboxState();
     lightbox.classList.add('open');
@@ -809,14 +1171,14 @@
       function tick() {
         var elapsed = Date.now() - startTime;
         if (elapsed >= POLL_TIMEOUT_MS) {
-          setStatus('This is taking longer than expected. Please try again.', true);
+          setStatus(tr('This is taking longer than expected. Please try again.'), true);
           resolve(null);
           return;
         }
         fetchJson('/api/status?request_id=' + encodeURIComponent(requestId) + '&model=' + encodeURIComponent(model))
           .then(function (result) {
             if (!result.ok) {
-              setStatus('Error generating image. Please try again.', true);
+              setStatus(tr('Error generating image. Please try again.'), true);
               resolve(null);
               return;
             }
@@ -825,7 +1187,7 @@
               fetchJson('/api/status?request_id=' + encodeURIComponent(requestId) + '&model=' + encodeURIComponent(model) + '&mode=result&tool=inspirations')
                 .then(function (resultResp) {
                   if (!resultResp.ok) {
-                    setStatus('Error generating image. Please try again.', true);
+                    setStatus(tr('Error generating image. Please try again.'), true);
                     resolve(null);
                     return;
                   }
@@ -833,18 +1195,18 @@
                   resolve(images && images.length ? images[0] : null);
                 })
                 .catch(function () {
-                  setStatus('Connection error. Please try again.', true);
+                  setStatus(tr('Connection error. Please try again.'), true);
                   resolve(null);
                 });
             } else if (status === 'FAILED' || status === 'ERROR') {
-              setStatus('Generation failed. Please try again.', true);
+              setStatus(tr('Generation failed. Please try again.'), true);
               resolve(null);
             } else {
               setTimeout(tick, POLL_INTERVAL_MS);
             }
           })
           .catch(function () {
-            setStatus('Connection error. Please try again.', true);
+            setStatus(tr('Connection error. Please try again.'), true);
             resolve(null);
           });
       }
@@ -859,7 +1221,7 @@
     var saveBtn = document.createElement('button');
     saveBtn.style.cssText = 'flex:1;background:var(--gold);color:var(--black);border:none;' +
       'padding:12px;border-radius:10px;font-weight:900;font-size:13px;cursor:pointer;font-family:Tajawal,sans-serif;';
-    saveBtn.textContent = 'Save Image';
+    saveBtn.textContent = tr('Save Image');
     saveBtn.onclick = function () {
       fetch('/api/download-image?url=' + encodeURIComponent(url) + '&filename=' + encodeURIComponent(filename))
         .then(function (resp) { return resp.blob(); })
@@ -880,26 +1242,26 @@
   }
 
   async function runStyleGeneration(dataUrl, mimeType) {
-    setBusy(true, 'Processing...');
+    setBusy(true, tr('Processing...'));
     genResultWrap.style.display = 'none';
     downloadBtnWrap.innerHTML = '';
     resetBtn.style.display = 'none';
     loadingDots.classList.add('show');
     try {
-      setStatus('Uploading your room photo...');
+      setStatus(tr('Uploading your room photo...'));
       var uploadRes = await fetchJson('/api/upload', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ image_data: dataUrl, mime_type: mimeType })
       });
       if (!uploadRes.ok || !uploadRes.data.url) {
-        var uploadErrMsg = uploadRes.data.error || 'Image upload failed';
+        var uploadErrMsg = uploadRes.data.error || tr('Image upload failed');
         if (uploadRes.data.details) uploadErrMsg += ' — ' + JSON.stringify(uploadRes.data.details).slice(0, 200);
         throw new Error(uploadErrMsg);
       }
       var roomImageUrl = uploadRes.data.url;
 
-      setStatus('Applying the style with AI... this can take up to 30 seconds');
+      setStatus(tr('Applying the style with AI... this can take up to 30 seconds'));
       // Generic enough to cover every gallery category, not just interior
       // rooms — "walls, doors, windows" alone would be the wrong structural
       // lock for a garden or exterior/facade photo, which has no room.
@@ -941,34 +1303,34 @@
       }
       if (genRes.status === 402) {
         loadingDots.classList.remove('show');
-        setBusy(false, 'Use This Style');
+        setBusy(false, tr('Use This Style'));
         setStatus('');
-        showCreditsModal("You're out of credits — buy more to continue");
+        showCreditsModal(tr("You're out of credits — buy more to continue"));
         refreshCreditBalance();
         return;
       }
       if (!genRes.ok || !genRes.data.requests || !genRes.data.requests[0]) {
-        throw new Error(genRes.data.error || 'Could not start generation');
+        throw new Error(genRes.data.error || tr('Could not start generation'));
       }
 
       var req = genRes.data.requests[0];
       var resultImage = await pollForResult(req.request_id, req.model || 'nano', Date.now());
-      if (!resultImage) { setBusy(false, 'Try Again'); loadingDots.classList.remove('show'); return; }
+      if (!resultImage) { setBusy(false, tr('Try Again')); loadingDots.classList.remove('show'); return; }
 
       loadingDots.classList.remove('show');
       genOriginalImg.src = roomImageUrl;
       genResultImg.src = resultImage.url;
       genResultWrap.style.display = 'block';
       downloadBtnWrap.appendChild(createDownloadBtn(resultImage.url, 'lamsa-style-transfer.jpg'));
-      setStatus('Done — compare the result with your original photo.');
+      setStatus(tr('Done — compare the result with your original photo.'));
       useStyleBtn.style.display = 'none';
       resetBtn.style.display = 'block';
       busy = false;
       refreshCreditBalance();
     } catch (err) {
       loadingDots.classList.remove('show');
-      setStatus('Error: ' + err.message, true);
-      setBusy(false, 'Try Again');
+      setStatus(tr('Error: ') + err.message, true);
+      setBusy(false, tr('Try Again'));
     }
   }
 
@@ -1016,12 +1378,12 @@
       .then(function (r) { return r.json(); })
       .then(function (data) {
         if (typeof data.credits !== 'number') return;
-        badge.innerHTML = 'Your balance: <b>' + data.credits + '</b> credit' + (data.credits === 1 ? '' : 's') +
-          ' &middot; <a href="javascript:void(0)" onclick="showCreditsModal()" style="color:var(--gold);text-decoration:underline;">Subscribe</a>';
+        badge.innerHTML = tr('Your balance: ') + '<b>' + data.credits + '</b> ' + tr(data.credits === 1 ? 'credit' : 'credits') +
+          '<a href="javascript:void(0)" onclick="showCreditsModal()" style="color:var(--gold);text-decoration:underline;">' + tr(' · Subscribe') + '</a>';
         // Only ever present for the team account (see api/me.js) — a
         // site-wide count, not per-user.
         if (currentUser && typeof currentUser.totalGenerations === 'number') {
-          badge.innerHTML += ' &middot; Total generated: <b>' + currentUser.totalGenerations + '</b>';
+          badge.innerHTML += tr(' · Total generated: ') + '<b>' + currentUser.totalGenerations + '</b>';
         }
       })
       .catch(function () {});
@@ -1044,10 +1406,10 @@
     overlay.style.cssText = 'position:fixed;inset:0;background:#fff;z-index:9999;display:flex;flex-direction:column;overflow-y:auto;font-family:Tajawal,sans-serif;';
 
     var features = [
-      { icon: 'sparkles', text: 'AI-generated designs for your room' },
-      { icon: 'swatch', text: 'Choose from every available style' },
-      { icon: 'download', text: 'Download your designs in high quality' },
-      { icon: 'bulb', text: 'Fresh ideas with every design' }
+      { icon: 'sparkles', text: tr('AI-generated designs for your room') },
+      { icon: 'swatch', text: tr('Choose from every available style') },
+      { icon: 'download', text: tr('Download your designs in high quality') },
+      { icon: 'bulb', text: tr('Fresh ideas with every design') }
     ];
     var featuresHtml = features.map(function (f) {
       return '<div style="display:flex;align-items:center;gap:14px;margin-bottom:18px;">' +
@@ -1058,15 +1420,15 @@
 
     var tiersHtml = CREDIT_PAYWALL_TIERS.map(function (t) {
       var topHtml = t.tag
-        ? '<div style="font-size:10px;font-weight:900;color:#767d86;letter-spacing:0.3px;text-align:center;margin-bottom:6px;white-space:nowrap;">' + t.tag + '</div>'
+        ? '<div style="font-size:10px;font-weight:900;color:#767d86;letter-spacing:0.3px;text-align:center;margin-bottom:6px;white-space:nowrap;">' + tr(t.tag) + '</div>'
         : (t.badge
-          ? '<div style="background:var(--gold);color:#1b1e22;font-size:10px;font-weight:900;letter-spacing:0.3px;text-align:center;padding:5px 4px;margin-bottom:0;">' + t.badge + '</div>'
+          ? '<div style="background:var(--gold);color:#1b1e22;font-size:10px;font-weight:900;letter-spacing:0.3px;text-align:center;padding:5px 4px;margin-bottom:0;">' + tr(t.badge) + '</div>'
           : '<div style="height:16px;margin-bottom:6px;"></div>');
       var border = t.highlighted ? '2px solid var(--gold)' : '1px solid #dfe2e6';
       var cardHtml =
         '<div style="padding:14px 8px;">' +
-          '<div style="font-size:16px;font-weight:900;color:#1b1e22;">' + t.period + '</div>' +
-          '<div style="font-size:10px;color:#767d86;min-height:14px;margin-bottom:8px;">' + t.sub + '</div>' +
+          '<div style="font-size:16px;font-weight:900;color:#1b1e22;">' + tr(t.period) + '</div>' +
+          '<div style="font-size:10px;color:#767d86;min-height:14px;margin-bottom:8px;">' + tr(t.sub) + '</div>' +
           '<div style="border-top:1px solid #eef0f2;padding-top:8px;font-size:15px;font-weight:900;color:#1b1e22;">' + t.price + '</div>' +
         '</div>';
       return t.tag
@@ -1088,16 +1450,16 @@
         '<div style="position:absolute;inset:0;background:linear-gradient(180deg, rgba(0,0,0,0.15) 0%, rgba(0,0,0,0) 30%, rgba(0,0,0,0.55) 100%);pointer-events:none;"></div>' +
         '<button type="button" id="creditsModalCloseBtn" style="position:absolute;top:16px;left:16px;width:34px;height:34px;border-radius:50%;background:rgba(0,0,0,0.35);color:#fff;border:none;font-size:16px;cursor:pointer;">' + (window.icon ? window.icon('close') : '×') + '</button>' +
         '<div style="position:absolute;bottom:16px;left:20px;right:20px;color:#fff;">' +
-          '<div style="font-size:26px;font-weight:900;">More Designs</div>' +
+          '<div style="font-size:26px;font-weight:900;">' + tr('More Designs') + '</div>' +
         '</div>' +
       '</div>' +
       '<div style="flex:1;background:#fff;border-radius:24px 24px 0 0;margin-top:-20px;position:relative;padding:26px 20px 20px;">' +
         alertHtml +
         '<div style="margin-bottom:22px;">' + featuresHtml + '</div>' +
         '<div id="creditsModalTierList" style="display:flex;margin-bottom:18px;">' + tiersHtml + '</div>' +
-        '<button type="button" id="creditsModalContinueBtn" style="width:100%;background:var(--gold);color:#1b1e22;border:none;padding:16px;border-radius:14px;font-size:17px;font-weight:900;cursor:pointer;font-family:Tajawal,sans-serif;">Continue</button>' +
+        '<button type="button" id="creditsModalContinueBtn" style="width:100%;background:var(--gold);color:#1b1e22;border:none;padding:16px;border-radius:14px;font-size:17px;font-weight:900;cursor:pointer;font-family:Tajawal,sans-serif;">' + tr('Continue') + '</button>' +
         '<div id="creditsModalError" style="color:#e05555;font-size:12px;text-align:center;margin-top:10px;min-height:16px;"></div>' +
-        '<div style="text-align:center;font-size:11.5px;color:#767d86;margin-top:12px;">Automatically renews. Cancel anytime.</div>' +
+        '<div style="text-align:center;font-size:11.5px;color:#767d86;margin-top:12px;">' + tr('Automatically renews. Cancel anytime.') + '</div>' +
       '</div>';
 
     document.body.appendChild(overlay);
@@ -1194,14 +1556,14 @@
     .then(function (result) {
       if (result.status === 401) { window.location.replace('lamsa-auth.html'); return; }
       if (!result.ok || !result.data || !result.data.url) {
-        if (errorEl) errorEl.textContent = (result.data && result.data.error) || 'Something went wrong, please try again';
+        if (errorEl) errorEl.textContent = (result.data && result.data.error) || tr('Something went wrong, please try again');
         Array.prototype.forEach.call(buttons, function (b) { b.disabled = false; b.style.opacity = '1'; });
         return;
       }
       if (!window.openOutsideAndroidTWA(result.data.url)) window.location.href = result.data.url;
     })
     .catch(function () {
-      if (errorEl) errorEl.textContent = 'Connection error';
+      if (errorEl) errorEl.textContent = tr('Connection error');
       Array.prototype.forEach.call(buttons, function (b) { b.disabled = false; b.style.opacity = '1'; });
     });
   }
@@ -1236,7 +1598,7 @@
     var checkout = params.get('checkout');
     if (!checkout) return;
     if (checkout === 'success') {
-      showStatusBanner('Payment successful! Your balance will update in a few seconds.');
+      showStatusBanner(tr('Payment successful! Your balance will update in a few seconds.'));
       [500, 2000, 4000].forEach(function (delay) { setTimeout(refreshCreditBalance, delay); });
     }
     params.delete('checkout');
@@ -1244,8 +1606,28 @@
     window.history.replaceState({}, '', newUrl);
   }
 
+  // Lang8.apply resets every [data-en][data-ar] element unconditionally —
+  // including a "See all »" button already toggled open to "Hide «" — so
+  // re-sync any open category's button label right after switching.
+  function refreshSeeAllButtons() {
+    document.querySelectorAll('.see-all').forEach(function (btn) {
+      var grid = document.getElementById('grid-' + btn.dataset.target);
+      if (grid && grid.classList.contains('open')) btn.textContent = tr('Hide «');
+    });
+  }
+
+  function setLang(lang) {
+    var cfg = Lang8.apply(lang, T);
+    currentLang = cfg.code;
+    refreshSeeAllButtons();
+  }
+
   window.addEventListener('DOMContentLoaded', function () {
     if (window.AppShell) AppShell.renderTabBar('explore');
+    Lang8.buildSelect(document.getElementById('langSelect'), setLang);
+    var savedLang = 'en';
+    try { savedLang = localStorage.getItem('lamsa_lang') || 'en'; } catch (e) {}
+    setLang(savedLang);
     checkAuth().then(function (user) {
       document.getElementById('navSignInBtn').style.display = user ? 'none' : '';
       document.getElementById('navLogoutBtn').style.display = user ? '' : 'none';

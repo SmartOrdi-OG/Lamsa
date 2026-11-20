@@ -21,6 +21,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;700;900&family=Playfair+Display:wght@400;700&display=swap" rel="stylesheet">
 <script src="js/platform.js"></script>
 <script src="js/icons.js"></script>
+<script src="js/lang8.js"></script>
 <script>
   if ('serviceWorker' in navigator) {
     window.addEventListener('load', function () { navigator.serviceWorker.register('sw.js').catch(function () {}); });
@@ -134,6 +135,11 @@
     transition: all 0.2s;
   }
   .nav-logout:hover { border-color: var(--gold); color: var(--gold); }
+  .lang-select {
+    background: transparent; border: 1px solid var(--border); color: var(--gray);
+    padding: 6px 8px; border-radius: 6px; font-size: 12.5px; font-weight: 700; font-family: 'Tajawal', sans-serif;
+    cursor: pointer; max-width: 110px;
+  }
 
   .wrap { max-width: 560px; margin: 0 auto; padding: 100px 20px 60px; }
   .hero { max-width: 560px; margin: 0 auto; }
@@ -315,45 +321,46 @@
     <div class="logo-text">LAMSA</div>
   </a>
   <div class="nav-right">
-    <a class="back-link" href="lamsa-bilingual.html"><svg class="icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M11 6l-6 6 6 6"/></svg> Full Designer</a>
-    <a class="nav-logout" href="lamsa-auth.html" id="navSignInBtn" style="display:none;text-decoration:none;">Sign In</a>
-    <button type="button" class="nav-logout" onclick="logout()" id="navLogoutBtn">Log Out</button>
+    <select class="lang-select" id="langSelect" data-lang-select aria-label="Language"></select>
+    <a class="back-link" href="lamsa-bilingual.html"><svg class="icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M11 6l-6 6 6 6"/></svg> <span data-ar="المصمم الكامل" data-en="Full Designer">Full Designer</span></a>
+    <a class="nav-logout" href="lamsa-auth.html" id="navSignInBtn" style="display:none;text-decoration:none;" data-ar="تسجيل الدخول" data-en="Sign In">Sign In</a>
+    <button type="button" class="nav-logout" onclick="logout()" id="navLogoutBtn" data-ar="تسجيل الخروج" data-en="Log Out">Log Out</button>
   </div>
 </nav>
 
 <div class="wrap">
   <div class="hero">
-    <h1><svg class="icon-svg" viewBox="0 0 24 24"><path d="M12 3l1.4 4 4 1.4-4 1.4L12 14l-1.4-4.2-4-1.4 4-1.4L12 3z" fill="currentColor" stroke="none"/><path d="M19 15l.8 2.2L22 18l-2.2.8L19 21l-.8-2.2L16 18l2.2-.8L19 15z" fill="currentColor" stroke="none"/></svg> Rearrange My Room</h1>
-    <p class="sub">Upload a photo of your room and let AI find the best new layout.</p>
+    <h1><svg class="icon-svg" viewBox="0 0 24 24"><path d="M12 3l1.4 4 4 1.4-4 1.4L12 14l-1.4-4.2-4-1.4 4-1.4L12 3z" fill="currentColor" stroke="none"/><path d="M19 15l.8 2.2L22 18l-2.2.8L19 21l-.8-2.2L16 18l2.2-.8L19 15z" fill="currentColor" stroke="none"/></svg> <span data-ar="أعد ترتيب غرفتي" data-en="Rearrange My Room">Rearrange My Room</span></h1>
+    <p class="sub" data-ar="ارفع صورة لغرفتك ودع الذكاء الاصطناعي يلاقي أفضل ترتيب جديد." data-en="Upload a photo of your room and let AI find the best new layout.">Upload a photo of your room and let AI find the best new layout.</p>
   </div>
 
   <div class="module-card">
     <div class="module-header">
       <div class="module-icon"><svg class="icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="9" width="14" height="10" rx="2.5"/><path d="M12 9V5"/><circle cx="12" cy="3.5" r="1.3" fill="currentColor" stroke="none"/><circle cx="9" cy="14" r="1.2" fill="currentColor" stroke="none"/><circle cx="15" cy="14" r="1.2" fill="currentColor" stroke="none"/><path d="M2 13h3M19 13h3"/></svg></div>
-      <div class="module-title">AI Decides</div>
-      <p class="module-desc">AI automatically finds the best layout for your room</p>
+      <div class="module-title" data-ar="الذكاء الاصطناعي يقرر" data-en="AI Decides">AI Decides</div>
+      <p class="module-desc" data-ar="الذكاء الاصطناعي بيلاقي تلقائياً أفضل ترتيب لغرفتك" data-en="AI automatically finds the best layout for your room">AI automatically finds the best layout for your room</p>
     </div>
 
     <div class="sub-toggle" id="subToggle">
-      <button class="sub-toggle-btn active" data-submode="rearrange" onclick="selectSubMode('rearrange')" type="button">Rearrange Only</button>
-      <button class="sub-toggle-btn" data-submode="redesign" onclick="selectSubMode('redesign')" type="button">Full Redesign</button>
+      <button class="sub-toggle-btn active" data-submode="rearrange" onclick="selectSubMode('rearrange')" type="button" data-ar="إعادة ترتيب فقط" data-en="Rearrange Only">Rearrange Only</button>
+      <button class="sub-toggle-btn" data-submode="redesign" onclick="selectSubMode('redesign')" type="button" data-ar="تصميم كامل جديد" data-en="Full Redesign">Full Redesign</button>
     </div>
 
     <div class="upload-zone" id="uploadZone">
       <input type="file" accept="image/*" id="fileInput" onchange="handleUpload(this)">
       <div id="uploadContent">
         <div class="upload-icon"><svg class="icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8.5A1.5 1.5 0 0 1 5.5 7H8l1-2h6l1 2h2.5A1.5 1.5 0 0 1 20 8.5v9A1.5 1.5 0 0 1 18.5 19h-13A1.5 1.5 0 0 1 4 17.5v-9z"/><circle cx="12" cy="13" r="3.4"/></svg></div>
-        <div class="upload-title">Upload your room photo</div>
-        <div class="upload-sub">PNG, JPG, HEIC · Max 10MB</div>
+        <div class="upload-title" data-ar="ارفع صورة غرفتك" data-en="Upload your room photo">Upload your room photo</div>
+        <div class="upload-sub" data-ar="PNG أو JPG أو HEIC · بحد أقصى 10 ميجابايت" data-en="PNG, JPG, HEIC · Max 10MB">PNG, JPG, HEIC · Max 10MB</div>
       </div>
       <div class="upload-preview" id="uploadPreview">
         <img id="previewImg" alt="Room photo">
-        <button class="remove-btn" onclick="removeImage(event)">✕ Remove</button>
+        <button class="remove-btn" onclick="removeImage(event)">✕ <span data-ar="إزالة" data-en="Remove">Remove</span></button>
       </div>
     </div>
 
     <button class="generate-btn" id="generateBtn" onclick="generate()" disabled>
-      <svg class="icon-svg" viewBox="0 0 24 24"><path d="M12 3l1.4 4 4 1.4-4 1.4L12 14l-1.4-4.2-4-1.4 4-1.4L12 3z" fill="currentColor" stroke="none"/><path d="M19 15l.8 2.2L22 18l-2.2.8L19 21l-.8-2.2L16 18l2.2-.8L19 15z" fill="currentColor" stroke="none"/></svg> Generate
+      <svg class="icon-svg" viewBox="0 0 24 24"><path d="M12 3l1.4 4 4 1.4-4 1.4L12 14l-1.4-4.2-4-1.4 4-1.4L12 3z" fill="currentColor" stroke="none"/><path d="M19 15l.8 2.2L22 18l-2.2.8L19 21l-.8-2.2L16 18l2.2-.8L19 15z" fill="currentColor" stroke="none"/></svg> <span data-ar="توليد" data-en="Generate">Generate</span>
     </button>
     <div id="creditsBadge" style="text-align:center;margin-top:10px;font-size:12px;color:var(--gold);"></div>
   </div>
@@ -362,8 +369,8 @@
     <div class="result-img-wrap" id="resultImg">
       <div class="result-placeholder" id="resultPlaceholder">
         <div class="rp-icon"><svg class="icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3.5c-4.9 0-8.5 3.7-8.5 8.2 0 3.8 2.8 5.8 5.2 5.8.9 0 1.1-.5.6-1.2-.6-.9.1-1.6 1.1-1.6h2c3 0 6.1-2 6.1-6C18.5 5.8 15.6 3.5 12 3.5z"/><circle cx="8.3" cy="10.5" r="1.1" fill="currentColor" stroke="none"/><circle cx="12" cy="8" r="1.1" fill="currentColor" stroke="none"/><circle cx="15.5" cy="10.3" r="1.1" fill="currentColor" stroke="none"/></svg></div>
-        <p>Generating your new layout...</p>
-        <small>Takes 15-30 seconds</small>
+        <p data-ar="جارٍ توليد ترتيبك الجديد..." data-en="Generating your new layout...">Generating your new layout...</p>
+        <small data-ar="بتاخد 15-30 ثانية" data-en="Takes 15-30 seconds">Takes 15-30 seconds</small>
       </div>
     </div>
     <div class="loading-dots" id="loadingDots">
@@ -422,6 +429,187 @@
     'DO NOT add, move, or remove architectural elements (windows, doors, walls, structural beams).\n\n' +
     'The before and after must look like a completely different room in style, color, and furniture — only the architecture stays recognizable.\n' +
     'Output: photorealistic, professional interior design magazine quality result.';
+
+  // ===== i18n for JS-generated strings (static [data-en][data-ar] text is
+  // handled by Lang8.apply itself) =====
+  var currentLang = 'en';
+  var T = {
+    de: {
+      'Full Designer': 'Vollständiger Designer', 'Sign In': 'Anmelden', 'Log Out': 'Abmelden',
+      'Rearrange My Room': 'Mein Zimmer umgestalten',
+      'Upload a photo of your room and let AI find the best new layout.': 'Lade ein Foto deines Zimmers hoch und lass die KI das beste neue Layout finden.',
+      'AI Decides': 'KI entscheidet', 'AI automatically finds the best layout for your room': 'Die KI findet automatisch das beste Layout für dein Zimmer',
+      'Rearrange Only': 'Nur umgestalten', 'Full Redesign': 'Komplett neu gestalten',
+      'Upload your room photo': 'Lade dein Raumfoto hoch', 'PNG, JPG, HEIC · Max 10MB': 'PNG, JPG, HEIC · Max. 10MB',
+      'Remove': 'Entfernen', 'Generate': 'Generieren',
+      'Generating your new layout...': 'Dein neues Layout wird erstellt...', 'Takes 15-30 seconds': 'Dauert 15-30 Sekunden',
+      'Save Image': 'Bild speichern', 'Share': 'Teilen',
+      'Error generating image. Please try again.': 'Fehler beim Erstellen des Bildes. Bitte versuche es erneut.',
+      'Generation took too long. Please try again.': 'Die Generierung hat zu lange gedauert. Bitte versuche es erneut.',
+      'Connection error. Please try again.': 'Verbindungsfehler. Bitte versuche es erneut.',
+      'Image upload failed. Please try again.': 'Bild-Upload fehlgeschlagen. Bitte versuche es erneut.',
+      "You're out of credits — buy more to continue": 'Dein Guthaben ist aufgebraucht — kaufe mehr, um fortzufahren',
+      'Your balance: ': 'Dein Guthaben: ', 'credit': 'Guthaben', 'credits': 'Guthaben', ' · Subscribe': ' · Abonnieren',
+      'MOST FLEXIBLE': 'AM FLEXIBELSTEN', 'SAVE 37% PER DESIGN': '37% PRO DESIGN SPAREN',
+      '10 Designs': '10 Designs', '40 Designs': '40 Designs',
+      'per week (€0.60/design)': 'pro Woche (0,60€/Design)', 'per month (€0.37/design)': 'pro Monat (0,37€/Design)',
+      'AI-generated designs for your room': 'KI-generierte Designs für dein Zimmer',
+      'Choose from every available style': 'Wähle aus jedem verfügbaren Stil',
+      'Download your designs in high quality': 'Lade deine Designs in hoher Qualität herunter',
+      'Fresh ideas with every design': 'Frische Ideen mit jedem Design',
+      'More Designs': 'Mehr Designs', 'Continue': 'Weiter',
+      'Automatically renews. Cancel anytime.': 'Verlängert sich automatisch. Jederzeit kündbar.',
+      'Something went wrong, please try again': 'Etwas ist schiefgelaufen, bitte versuche es erneut',
+      'Connection error': 'Verbindungsfehler',
+      'Payment successful! Your balance will update in a few seconds.': 'Zahlung erfolgreich! Dein Guthaben wird in wenigen Sekunden aktualisiert.'
+    },
+    es: {
+      'Full Designer': 'Diseñador completo', 'Sign In': 'Iniciar sesión', 'Log Out': 'Cerrar sesión',
+      'Rearrange My Room': 'Reorganizar mi habitacion',
+      'Upload a photo of your room and let AI find the best new layout.': 'Sube una foto de tu habitacion y deja que la IA encuentre la mejor distribucion.',
+      'AI Decides': 'La IA decide', 'AI automatically finds the best layout for your room': 'La IA encuentra automaticamente la mejor distribucion para tu habitacion',
+      'Rearrange Only': 'Solo reorganizar', 'Full Redesign': 'Rediseno completo',
+      'Upload your room photo': 'Sube la foto de tu habitacion', 'PNG, JPG, HEIC · Max 10MB': 'PNG, JPG, HEIC · Max 10MB',
+      'Remove': 'Quitar', 'Generate': 'Generar',
+      'Generating your new layout...': 'Generando tu nueva distribución...', 'Takes 15-30 seconds': 'Tarda 15-30 segundos',
+      'Save Image': 'Guardar imagen', 'Share': 'Compartir',
+      'Error generating image. Please try again.': 'Error al generar la imagen. Inténtalo de nuevo.',
+      'Generation took too long. Please try again.': 'La generación tardó demasiado. Inténtalo de nuevo.',
+      'Connection error. Please try again.': 'Error de conexión. Inténtalo de nuevo.',
+      'Image upload failed. Please try again.': 'Error al subir la imagen. Inténtalo de nuevo.',
+      "You're out of credits — buy more to continue": 'Te quedaste sin créditos — compra más para continuar',
+      'Your balance: ': 'Tu saldo: ', 'credit': 'crédito', 'credits': 'créditos', ' · Subscribe': ' · Suscribirse',
+      'MOST FLEXIBLE': 'MAS FLEXIBLE', 'SAVE 37% PER DESIGN': 'AHORRA 37% POR DISENO',
+      '10 Designs': '10 Disenos', '40 Designs': '40 Disenos',
+      'per week (€0.60/design)': 'por semana (0,60€/diseno)', 'per month (€0.37/design)': 'por mes (0,37€/diseno)',
+      'AI-generated designs for your room': 'Disenos generados por IA para tu habitacion',
+      'Choose from every available style': 'Elige entre todos los estilos disponibles',
+      'Download your designs in high quality': 'Descarga tus disenos en alta calidad',
+      'Fresh ideas with every design': 'Ideas frescas con cada diseno',
+      'More Designs': 'Mas disenos', 'Continue': 'Continuar',
+      'Automatically renews. Cancel anytime.': 'Se renueva automaticamente. Cancela cuando quieras.',
+      'Something went wrong, please try again': 'Algo salio mal, intentalo de nuevo',
+      'Connection error': 'Error de conexion',
+      'Payment successful! Your balance will update in a few seconds.': 'Pago exitoso! Tu saldo se actualizara en unos segundos.'
+    },
+    tr: {
+      'Full Designer': 'Tam Tasarimci', 'Sign In': 'Giris Yap', 'Log Out': 'Cikis Yap',
+      'Rearrange My Room': 'Odami Yeniden Duzenle',
+      'Upload a photo of your room and let AI find the best new layout.': 'Odanizin bir fotografini yukleyin ve yapay zekanin en iyi yeni duzeni bulmasina izin verin.',
+      'AI Decides': 'Yapay Zeka Karar Verir', 'AI automatically finds the best layout for your room': 'Yapay zeka odaniz icin en iyi duzeni otomatik olarak bulur',
+      'Rearrange Only': 'Sadece Yeniden Duzenle', 'Full Redesign': 'Tam Yeniden Tasarim',
+      'Upload your room photo': 'Oda fotografinizi yukleyin', 'PNG, JPG, HEIC · Max 10MB': 'PNG, JPG, HEIC · Maks 10MB',
+      'Remove': 'Kaldir', 'Generate': 'Olustur',
+      'Generating your new layout...': 'Yeni düzeniniz oluşturuluyor...', 'Takes 15-30 seconds': '15-30 saniye sürer',
+      'Save Image': 'Resmi kaydet', 'Share': 'Paylas',
+      'Error generating image. Please try again.': 'Resim olusturma hatasi. Lutfen tekrar deneyin.',
+      'Generation took too long. Please try again.': 'Olusturma cok uzun surdu. Lutfen tekrar deneyin.',
+      'Connection error. Please try again.': 'Baglanti hatasi. Lutfen tekrar deneyin.',
+      'Image upload failed. Please try again.': 'Resim yukleme basarisiz. Lutfen tekrar deneyin.',
+      "You're out of credits — buy more to continue": 'Krediniz bitti — devam etmek icin daha fazla satin alin',
+      'Your balance: ': 'Bakiyeniz: ', 'credit': 'kredi', 'credits': 'kredi', ' · Subscribe': ' · Abone Ol',
+      'MOST FLEXIBLE': 'EN ESNEK', 'SAVE 37% PER DESIGN': 'TASARIM BASINA %37 TASARRUF',
+      '10 Designs': '10 Tasarim', '40 Designs': '40 Tasarim',
+      'per week (€0.60/design)': 'haftalik (0.60€/tasarim)', 'per month (€0.37/design)': 'aylik (0.37€/tasarim)',
+      'AI-generated designs for your room': 'Odaniz icin yapay zeka ile olusturulan tasarimlar',
+      'Choose from every available style': 'Mevcut tum stiller arasindan secin',
+      'Download your designs in high quality': 'Tasarimlarinizi yuksek kalitede indirin',
+      'Fresh ideas with every design': 'Her tasarimda taze fikirler',
+      'More Designs': 'Daha Fazla Tasarim', 'Continue': 'Devam Et',
+      'Automatically renews. Cancel anytime.': 'Otomatik olarak yenilenir. Istediginiz zaman iptal edin.',
+      'Something went wrong, please try again': 'Bir seyler yanlis gitti, lutfen tekrar deneyin',
+      'Connection error': 'Baglanti hatasi',
+      'Payment successful! Your balance will update in a few seconds.': 'Odeme basarili! Bakiyeniz birkac saniye icinde guncellenecek.'
+    },
+    fr: {
+      'Full Designer': 'Designer complet', 'Sign In': 'Connexion', 'Log Out': 'Deconnexion',
+      'Rearrange My Room': 'Reorganiser ma piece',
+      'Upload a photo of your room and let AI find the best new layout.': "Telechargez une photo de votre piece et laissez l'IA trouver la meilleure disposition.",
+      'AI Decides': "L'IA decide", 'AI automatically finds the best layout for your room': "L'IA trouve automatiquement la meilleure disposition pour votre piece",
+      'Rearrange Only': 'Reorganiser seulement', 'Full Redesign': 'Refonte complete',
+      'Upload your room photo': 'Telechargez la photo de votre piece', 'PNG, JPG, HEIC · Max 10MB': 'PNG, JPG, HEIC · Max 10 Mo',
+      'Remove': 'Supprimer', 'Generate': 'Generer',
+      'Generating your new layout...': 'Génération de votre nouvelle disposition...', 'Takes 15-30 seconds': 'Prend 15-30 secondes',
+      'Save Image': 'Sauvegarder', 'Share': 'Partager',
+      'Error generating image. Please try again.': "Erreur lors de la génération de l'image. Veuillez réessayer.",
+      'Generation took too long. Please try again.': 'La génération a pris trop de temps. Veuillez réessayer.',
+      'Connection error. Please try again.': 'Erreur de connexion. Veuillez réessayer.',
+      'Image upload failed. Please try again.': "Échec du téléchargement de l'image. Veuillez réessayer.",
+      "You're out of credits — buy more to continue": "Vous n'avez plus de crédits — achetez-en plus pour continuer",
+      'Your balance: ': 'Votre solde : ', 'credit': 'crédit', 'credits': 'crédits', ' · Subscribe': " · S'abonner",
+      'MOST FLEXIBLE': 'LE PLUS FLEXIBLE', 'SAVE 37% PER DESIGN': 'ECONOMISEZ 37% PAR DESIGN',
+      '10 Designs': '10 Designs', '40 Designs': '40 Designs',
+      'per week (€0.60/design)': 'par semaine (0,60€/design)', 'per month (€0.37/design)': 'par mois (0,37€/design)',
+      'AI-generated designs for your room': 'Designs generes par IA pour votre piece',
+      'Choose from every available style': 'Choisissez parmi tous les styles disponibles',
+      'Download your designs in high quality': 'Téléchargez vos designs en haute qualité',
+      'Fresh ideas with every design': 'Des idees fraiches a chaque design',
+      'More Designs': 'Plus de designs', 'Continue': 'Continuer',
+      'Automatically renews. Cancel anytime.': 'Se renouvelle automatiquement. Annulable a tout moment.',
+      'Something went wrong, please try again': "Une erreur s'est produite, veuillez reessayer",
+      'Connection error': 'Erreur de connexion',
+      'Payment successful! Your balance will update in a few seconds.': 'Paiement reussi! Votre solde sera mis a jour dans quelques secondes.'
+    },
+    it: {
+      'Full Designer': 'Designer completo', 'Sign In': 'Accedi', 'Log Out': 'Esci',
+      'Rearrange My Room': 'Riorganizza la mia stanza',
+      'Upload a photo of your room and let AI find the best new layout.': "Carica una foto della tua stanza e lascia che l'IA trovi la disposizione migliore.",
+      'AI Decides': "L'IA decide", 'AI automatically finds the best layout for your room': "L'IA trova automaticamente la disposizione migliore per la tua stanza",
+      'Rearrange Only': 'Solo riorganizzazione', 'Full Redesign': 'Redesign completo',
+      'Upload your room photo': 'Carica la foto della tua stanza', 'PNG, JPG, HEIC · Max 10MB': 'PNG, JPG, HEIC · Max 10MB',
+      'Remove': 'Rimuovi', 'Generate': 'Genera',
+      'Generating your new layout...': 'Generazione della tua nuova disposizione...', 'Takes 15-30 seconds': 'Richiede 15-30 secondi',
+      'Save Image': 'Salva immagine', 'Share': 'Condividi',
+      'Error generating image. Please try again.': "Errore nella generazione dell'immagine. Riprova.",
+      'Generation took too long. Please try again.': 'La generazione ha impiegato troppo tempo. Riprova.',
+      'Connection error. Please try again.': 'Errore di connessione. Riprova.',
+      'Image upload failed. Please try again.': 'Caricamento immagine non riuscito. Riprova.',
+      "You're out of credits — buy more to continue": 'Hai esaurito i crediti — acquistane altri per continuare',
+      'Your balance: ': 'Il tuo saldo: ', 'credit': 'credito', 'credits': 'crediti', ' · Subscribe': ' · Abbonati',
+      'MOST FLEXIBLE': 'PIU FLESSIBILE', 'SAVE 37% PER DESIGN': 'RISPARMIA IL 37% A DESIGN',
+      '10 Designs': '10 Design', '40 Designs': '40 Design',
+      'per week (€0.60/design)': 'a settimana (0,60€/design)', 'per month (€0.37/design)': 'al mese (0,37€/design)',
+      'AI-generated designs for your room': "Design generati dall'IA per la tua stanza",
+      'Choose from every available style': 'Scegli tra tutti gli stili disponibili',
+      'Download your designs in high quality': 'Scarica i tuoi design in alta qualita',
+      'Fresh ideas with every design': 'Idee fresche con ogni design',
+      'More Designs': 'Piu design', 'Continue': 'Continua',
+      'Automatically renews. Cancel anytime.': 'Si rinnova automaticamente. Annulla quando vuoi.',
+      'Something went wrong, please try again': 'Qualcosa e andato storto, riprova',
+      'Connection error': 'Errore di connessione',
+      'Payment successful! Your balance will update in a few seconds.': 'Pagamento riuscito! Il tuo saldo verra aggiornato tra qualche secondo.'
+    },
+    ru: {
+      'Full Designer': 'Polny dizayner', 'Sign In': 'Vkhod', 'Log Out': 'Vykhod',
+      'Rearrange My Room': 'Pereraspolozhit moyu komnatu',
+      'Upload a photo of your room and let AI find the best new layout.': 'Zagruzite foto svoey komnaty, i II naydet luchshuyu novuyu planirovku.',
+      'AI Decides': 'II reshaet', 'AI automatically finds the best layout for your room': 'II avtomaticheski nakhodit luchshuyu planirovku dlya vashey komnaty',
+      'Rearrange Only': 'Tolko pereraspolozhenie', 'Full Redesign': 'Polny redizayn',
+      'Upload your room photo': 'Zagruzite foto svoey komnaty', 'PNG, JPG, HEIC · Max 10MB': 'PNG, JPG, HEIC · Maks 10MB',
+      'Remove': 'Udalit', 'Generate': 'Sozdat',
+      'Generating your new layout...': 'Sozdanie vashey novoy planirovki...', 'Takes 15-30 seconds': 'Zanimaet 15-30 sekund',
+      'Save Image': 'Sohranit izobrazhenie', 'Share': 'Podelitsya',
+      'Error generating image. Please try again.': 'Oshibka pri generatsii izobrazheniya. Poprobuyte snova.',
+      'Generation took too long. Please try again.': 'Generatsiya zanyala slishkom mnogo vremeni. Poprobuyte snova.',
+      'Connection error. Please try again.': 'Oshibka soedineniya. Poprobuyte snova.',
+      'Image upload failed. Please try again.': 'Ne udalos zagruzit izobrazhenie. Poprobuyte snova.',
+      "You're out of credits — buy more to continue": 'U vas konchilis kredity — kupite eshche, chtoby prodolzhit',
+      'Your balance: ': 'Vash balans: ', 'credit': 'kredit', 'credits': 'kreditov', ' · Subscribe': ' · Podpisatsya',
+      'MOST FLEXIBLE': 'SAMY GIBKY', 'SAVE 37% PER DESIGN': 'EKONOMIYA 37% ZA DIZAYN',
+      '10 Designs': '10 Dizaynov', '40 Designs': '40 Dizaynov',
+      'per week (€0.60/design)': 'v nedelyu (0.60€/dizayn)', 'per month (€0.37/design)': 'v mesyats (0.37€/dizayn)',
+      'AI-generated designs for your room': 'Dizayny, sozdannye II, dlya vashey komnaty',
+      'Choose from every available style': 'Vyberite iz vsekh dostupnykh stiley',
+      'Download your designs in high quality': 'Skachayte svoi dizayny v vysokom kachestve',
+      'Fresh ideas with every design': 'Svezhie idei s kazhdym dizaynom',
+      'More Designs': 'Bolshe dizaynov', 'Continue': 'Prodolzhit',
+      'Automatically renews. Cancel anytime.': 'Avtomaticheski prodlevaetsya. Otmena v lyuboe vremya.',
+      'Something went wrong, please try again': 'Chto-to poshlo ne tak, poprobuyte snova',
+      'Connection error': 'Oshibka soedineniya',
+      'Payment successful! Your balance will update in a few seconds.': 'Oplata uspeshna! Vash balans obnovitsya cherez neskolko sekund.'
+    }
+  };
+  function tr(key) { return (T[currentLang] && T[currentLang][key]) || key; }
 
   var state = { uploadedFile: null, uploadedImageUrl: null, subMode: 'rearrange' };
 
@@ -521,7 +709,7 @@
     saveBtn.style.cssText = 'flex:1;background:var(--gold);color:var(--black);border:none;' +
       'padding:14px;border-radius:10px;font-weight:900;font-size:14px;cursor:pointer;' +
       'font-family:Tajawal,sans-serif;transition:all 0.2s;';
-    saveBtn.innerHTML = (window.icon ? window.icon('download') : '') + ' Save Image';
+    saveBtn.innerHTML = (window.icon ? window.icon('download') : '') + ' ' + tr('Save Image');
     saveBtn.onclick = function() {
       // `download` on an <a> is silently ignored for cross-origin URLs (the
       // image lives on fal.ai's domain, not ours), so this used to just
@@ -555,7 +743,7 @@
     shareBtn.style.cssText = 'background:transparent;color:var(--gold);border:1.5px solid var(--gold);' +
       'padding:14px 18px;border-radius:10px;font-weight:900;font-size:14px;cursor:pointer;' +
       'font-family:Tajawal,sans-serif;transition:all 0.2s;white-space:nowrap;';
-    shareBtn.innerHTML = (window.icon ? window.icon('share') : '') + ' Share';
+    shareBtn.innerHTML = (window.icon ? window.icon('share') : '') + ' ' + tr('Share');
     shareBtn.onclick = function() {
       // Sharing { url } hands apps like WhatsApp a link, which they render
       // as a page-preview card, not the photo itself. Fetching the actual
@@ -634,7 +822,7 @@
       refreshCreditBalance(); // a credit was just spent — reflect the new balance
     } else {
       console.error('[generate] no images in result data:', data);
-      showError('Error generating image. Please try again.');
+      showError(tr('Error generating image. Please try again.'));
     }
   }
 
@@ -655,7 +843,7 @@
         var elapsed = Date.now() - startTime;
         if (elapsed >= POLL_TIMEOUT_MS) {
           console.error('[generate] polling timed out after ' + Math.round(elapsed / 1000) + 's for request_id:', requestId);
-          showError('Generation took too long. Please try again.');
+          showError(tr('Generation took too long. Please try again.'));
           resolve(null);
           return;
         }
@@ -668,7 +856,7 @@
 
             if (!result.ok) {
               console.error('[generate] status check returned an error:', result.data);
-              showError('Error generating image. Please try again.');
+              showError(tr('Error generating image. Please try again.'));
               resolve(null);
               return;
             }
@@ -684,7 +872,7 @@
                   console.log('[generate] result response (http ' + resultResp.status + '):', resultResp.data);
                   if (!resultResp.ok) {
                     console.error('[generate] result fetch returned an error:', resultResp.data);
-                    showError('Error generating image. Please try again.');
+                    showError(tr('Error generating image. Please try again.'));
                     resolve(null);
                     return;
                   }
@@ -693,12 +881,12 @@
                 })
                 .catch(function(err) {
                   console.error('[generate] result fetch threw:', err);
-                  showError('Connection error. Please try again.');
+                  showError(tr('Connection error. Please try again.'));
                   resolve(null);
                 });
             } else if (status === 'FAILED' || status === 'ERROR') {
               console.error('[generate] generation failed:', result.data);
-              showError('Error generating image. Please try again.');
+              showError(tr('Error generating image. Please try again.'));
               resolve(null);
             } else {
               console.log('[generate] status = ' + status + ' — polling again in ' + (POLL_INTERVAL_MS / 1000) + 's');
@@ -707,7 +895,7 @@
           })
           .catch(function(err) {
             console.error('[generate] status check threw:', err);
-            showError('Connection error. Please try again.');
+            showError(tr('Connection error. Please try again.'));
             resolve(null);
           });
       }
@@ -782,14 +970,14 @@
         console.log('[generate] blocked - no credits remaining');
         document.getElementById('loadingDots').classList.remove('show');
         document.getElementById('resultArea').classList.remove('show');
-        showCreditsModal("You're out of credits — buy more to continue");
+        showCreditsModal(tr("You're out of credits — buy more to continue"));
         refreshCreditBalance();
         return;
       }
 
       if (!result.ok || !result.data || !Array.isArray(result.data.requests) || !result.data.requests.length) {
         console.error('[generate] no requests[] in response:', result.data);
-        showError('Error generating image. Please try again.');
+        showError(tr('Error generating image. Please try again.'));
         return;
       }
 
@@ -805,7 +993,7 @@
     })
     .catch(function(err) {
       console.error('[generate] /api/generate call threw:', err);
-      showError('Connection error. Please try again.');
+      showError(tr('Connection error. Please try again.'));
     });
   }
 
@@ -839,7 +1027,7 @@
       })
       .catch(function(err) {
         console.error('[upload] upload call threw:', err);
-        showError('Image upload failed. Please try again.');
+        showError(tr('Image upload failed. Please try again.'));
       });
     });
   }
@@ -852,8 +1040,8 @@
     document.getElementById('resultImg').innerHTML =
       '<div class="result-placeholder" id="resultPlaceholder">' +
         '<div class="rp-icon"><svg class="icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3.5c-4.9 0-8.5 3.7-8.5 8.2 0 3.8 2.8 5.8 5.2 5.8.9 0 1.1-.5.6-1.2-.6-.9.1-1.6 1.1-1.6h2c3 0 6.1-2 6.1-6C18.5 5.8 15.6 3.5 12 3.5z"/><circle cx="8.3" cy="10.5" r="1.1" fill="currentColor" stroke="none"/><circle cx="12" cy="8" r="1.1" fill="currentColor" stroke="none"/><circle cx="15.5" cy="10.3" r="1.1" fill="currentColor" stroke="none"/></svg></div>' +
-        '<p>Generating your new layout...</p>' +
-        '<small>Takes 15-30 seconds</small>' +
+        '<p>' + tr('Generating your new layout...') + '</p>' +
+        '<small>' + tr('Takes 15-30 seconds') + '</small>' +
       '</div>';
   }
 
@@ -866,7 +1054,7 @@
 
     var ph = document.getElementById('resultPlaceholder');
     ph.style.display = 'block';
-    ph.innerHTML = '<div class="rp-icon"><svg class="icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3.5c-4.9 0-8.5 3.7-8.5 8.2 0 3.8 2.8 5.8 5.2 5.8.9 0 1.1-.5.6-1.2-.6-.9.1-1.6 1.1-1.6h2c3 0 6.1-2 6.1-6C18.5 5.8 15.6 3.5 12 3.5z"/><circle cx="8.3" cy="10.5" r="1.1" fill="currentColor" stroke="none"/><circle cx="12" cy="8" r="1.1" fill="currentColor" stroke="none"/><circle cx="15.5" cy="10.3" r="1.1" fill="currentColor" stroke="none"/></svg></div><p>Generating your new layout...</p><small>Takes 15-30 seconds</small>';
+    ph.innerHTML = '<div class="rp-icon"><svg class="icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3.5c-4.9 0-8.5 3.7-8.5 8.2 0 3.8 2.8 5.8 5.2 5.8.9 0 1.1-.5.6-1.2-.6-.9.1-1.6 1.1-1.6h2c3 0 6.1-2 6.1-6C18.5 5.8 15.6 3.5 12 3.5z"/><circle cx="8.3" cy="10.5" r="1.1" fill="currentColor" stroke="none"/><circle cx="12" cy="8" r="1.1" fill="currentColor" stroke="none"/><circle cx="15.5" cy="10.3" r="1.1" fill="currentColor" stroke="none"/></svg></div><p>' + tr('Generating your new layout...') + '</p><small>' + tr('Takes 15-30 seconds') + '</small>';
     document.getElementById('loadingDots').classList.add('show');
   }
 
@@ -921,8 +1109,8 @@
       .then(function(r) { return r.json(); })
       .then(function(data) {
         if (typeof data.credits !== 'number') return;
-        badge.innerHTML = 'Your balance: <b>' + data.credits + '</b> credit' + (data.credits === 1 ? '' : 's') +
-          ' &middot; <a href="javascript:void(0)" onclick="showCreditsModal()" style="color:var(--gold);text-decoration:underline;">Subscribe</a>';
+        badge.innerHTML = tr('Your balance: ') + '<b>' + data.credits + '</b> ' + tr(data.credits === 1 ? 'credit' : 'credits') +
+          '<a href="javascript:void(0)" onclick="showCreditsModal()" style="color:var(--gold);text-decoration:underline;">' + tr(' · Subscribe') + '</a>';
       })
       .catch(function(err) { console.error('[credits] failed to load balance:', err); });
   }
@@ -944,10 +1132,10 @@
     overlay.style.cssText = 'position:fixed;inset:0;background:#fff;z-index:9999;display:flex;flex-direction:column;overflow-y:auto;font-family:Tajawal,sans-serif;';
 
     var features = [
-      { icon: 'sparkles', text: 'AI-generated designs for your room' },
-      { icon: 'swatch', text: 'Choose from every available style' },
-      { icon: 'download', text: 'Download your designs in high quality' },
-      { icon: 'bulb', text: 'Fresh ideas with every design' }
+      { icon: 'sparkles', text: tr('AI-generated designs for your room') },
+      { icon: 'swatch', text: tr('Choose from every available style') },
+      { icon: 'download', text: tr('Download your designs in high quality') },
+      { icon: 'bulb', text: tr('Fresh ideas with every design') }
     ];
     var featuresHtml = features.map(function(f) {
       return '<div style="display:flex;align-items:center;gap:14px;margin-bottom:18px;">' +
@@ -958,15 +1146,15 @@
 
     var tiersHtml = CREDIT_PAYWALL_TIERS.map(function(t) {
       var topHtml = t.tag
-        ? '<div style="font-size:10px;font-weight:900;color:#767d86;letter-spacing:0.3px;text-align:center;margin-bottom:6px;white-space:nowrap;">' + t.tag + '</div>'
+        ? '<div style="font-size:10px;font-weight:900;color:#767d86;letter-spacing:0.3px;text-align:center;margin-bottom:6px;white-space:nowrap;">' + tr(t.tag) + '</div>'
         : (t.badge
-          ? '<div style="background:var(--gold);color:#1b1e22;font-size:10px;font-weight:900;letter-spacing:0.3px;text-align:center;padding:5px 4px;margin-bottom:0;">' + t.badge + '</div>'
+          ? '<div style="background:var(--gold);color:#1b1e22;font-size:10px;font-weight:900;letter-spacing:0.3px;text-align:center;padding:5px 4px;margin-bottom:0;">' + tr(t.badge) + '</div>'
           : '<div style="height:16px;margin-bottom:6px;"></div>');
       var border = t.highlighted ? '2px solid var(--gold)' : '1px solid #dfe2e6';
       var cardHtml =
         '<div style="padding:14px 8px;">' +
-          '<div style="font-size:16px;font-weight:900;color:#1b1e22;">' + t.period + '</div>' +
-          '<div style="font-size:10px;color:#767d86;min-height:14px;margin-bottom:8px;">' + t.sub + '</div>' +
+          '<div style="font-size:16px;font-weight:900;color:#1b1e22;">' + tr(t.period) + '</div>' +
+          '<div style="font-size:10px;color:#767d86;min-height:14px;margin-bottom:8px;">' + tr(t.sub) + '</div>' +
           '<div style="border-top:1px solid #eef0f2;padding-top:8px;font-size:15px;font-weight:900;color:#1b1e22;">' + t.price + '</div>' +
         '</div>';
       return t.tag
@@ -988,16 +1176,16 @@
         '<div style="position:absolute;inset:0;background:linear-gradient(180deg, rgba(0,0,0,0.15) 0%, rgba(0,0,0,0) 30%, rgba(0,0,0,0.55) 100%);"></div>' +
         '<button type="button" id="creditsModalCloseBtn" style="position:absolute;top:16px;left:16px;width:34px;height:34px;border-radius:50%;background:rgba(0,0,0,0.35);color:#fff;border:none;font-size:16px;cursor:pointer;">' + (window.icon ? window.icon('close') : '×') + '</button>' +
         '<div style="position:absolute;bottom:16px;left:20px;right:20px;color:#fff;">' +
-          '<div style="font-size:26px;font-weight:900;">More Designs</div>' +
+          '<div style="font-size:26px;font-weight:900;">' + tr('More Designs') + '</div>' +
         '</div>' +
       '</div>' +
       '<div style="flex:1;background:#fff;border-radius:24px 24px 0 0;margin-top:-20px;position:relative;padding:26px 20px 20px;">' +
         alertHtml +
         '<div style="margin-bottom:22px;">' + featuresHtml + '</div>' +
         '<div id="creditsModalTierList" style="display:flex;margin-bottom:18px;">' + tiersHtml + '</div>' +
-        '<button type="button" id="creditsModalContinueBtn" style="width:100%;background:var(--gold);color:#1b1e22;border:none;padding:16px;border-radius:14px;font-size:17px;font-weight:900;cursor:pointer;font-family:Tajawal,sans-serif;">Continue</button>' +
+        '<button type="button" id="creditsModalContinueBtn" style="width:100%;background:var(--gold);color:#1b1e22;border:none;padding:16px;border-radius:14px;font-size:17px;font-weight:900;cursor:pointer;font-family:Tajawal,sans-serif;">' + tr('Continue') + '</button>' +
         '<div id="creditsModalError" style="color:#e05555;font-size:12px;text-align:center;margin-top:10px;min-height:16px;"></div>' +
-        '<div style="text-align:center;font-size:11.5px;color:#767d86;margin-top:12px;">Automatically renews. Cancel anytime.</div>' +
+        '<div style="text-align:center;font-size:11.5px;color:#767d86;margin-top:12px;">' + tr('Automatically renews. Cancel anytime.') + '</div>' +
       '</div>';
 
     document.body.appendChild(overlay);
@@ -1098,7 +1286,7 @@
     .then(function(result) {
       if (result.status === 401) { window.location.replace('lamsa-auth.html'); return; }
       if (!result.ok || !result.data || !result.data.url) {
-        if (errorEl) errorEl.textContent = (result.data && result.data.error) || 'Something went wrong, please try again';
+        if (errorEl) errorEl.textContent = (result.data && result.data.error) || tr('Something went wrong, please try again');
         Array.prototype.forEach.call(buttons, function(b) { b.disabled = false; b.style.opacity = '1'; });
         return;
       }
@@ -1106,7 +1294,7 @@
     })
     .catch(function(err) {
       console.error('[checkout] failed:', err);
-      if (errorEl) errorEl.textContent = 'Connection error';
+      if (errorEl) errorEl.textContent = tr('Connection error');
       Array.prototype.forEach.call(buttons, function(b) { b.disabled = false; b.style.opacity = '1'; });
     });
   }
@@ -1145,7 +1333,7 @@
     if (!checkout) return;
 
     if (checkout === 'success') {
-      showStatusBanner('Payment successful! Your balance will update in a few seconds.');
+      showStatusBanner(tr('Payment successful! Your balance will update in a few seconds.'));
       [500, 2000, 4000].forEach(function(delay) { setTimeout(refreshCreditBalance, delay); });
     }
 
@@ -1154,7 +1342,16 @@
     window.history.replaceState({}, '', newUrl);
   }
 
+  function setLang(lang) {
+    var cfg = Lang8.apply(lang, T);
+    currentLang = cfg.code;
+  }
+
   window.addEventListener('DOMContentLoaded', function() {
+    Lang8.buildSelect(document.getElementById('langSelect'), setLang);
+    var savedLang = 'en';
+    try { savedLang = localStorage.getItem('lamsa_lang') || 'en'; } catch (e) {}
+    setLang(savedLang);
     checkAuth().then(function(user) {
       document.getElementById('navSignInBtn').style.display = user ? 'none' : '';
       document.getElementById('navLogoutBtn').style.display = user ? '' : 'none';
