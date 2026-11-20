@@ -36,7 +36,8 @@ export function createEmptyProject(name) {
       wall_material: DEFAULT_WALL_MATERIAL
     },
     rooms: [],
-    stairs: [] // Phase 1 is single-floor; kept for shape-compatibility with build3d.js.
+    stairs: [], // Phase 1 is single-floor; kept for shape-compatibility with build3d.js.
+    columns: []
   };
 }
 
@@ -78,6 +79,10 @@ export function createPolygonRoom({ name, points, color, floor = 0 }) {
 
 export function createStair({ floor = 0, x, y, rotation = 0 }) {
   return { id: nextId('stair'), floor, x, y, rotation };
+}
+
+export function createColumn({ floor = 0, x, y }) {
+  return { id: nextId('column'), floor, x, y };
 }
 
 function createOpening(kind, wall, edgeIndex, position) {
@@ -184,6 +189,18 @@ function reducer(state, action) {
     case 'REMOVE_STAIR': {
       return { ...state, stairs: state.stairs.filter((s) => s.id !== action.stairId) };
     }
+    case 'ADD_COLUMN': {
+      return { ...state, columns: [...(state.columns || []), action.column] };
+    }
+    case 'MOVE_COLUMN': {
+      return {
+        ...state,
+        columns: (state.columns || []).map((c) => (c.id === action.columnId ? { ...c, x: action.x, y: action.y } : c))
+      };
+    }
+    case 'REMOVE_COLUMN': {
+      return { ...state, columns: (state.columns || []).filter((c) => c.id !== action.columnId) };
+    }
     default:
       return state;
   }
@@ -210,7 +227,10 @@ export function useProjectStore(initialProject) {
       removeFurniture: (roomId, furnitureId) => dispatch({ type: 'REMOVE_FURNITURE', roomId, furnitureId }),
       addStair: (stair) => dispatch({ type: 'ADD_STAIR', stair }),
       moveStair: (stairId, x, y, rotation) => dispatch({ type: 'MOVE_STAIR', stairId, x, y, rotation }),
-      removeStair: (stairId) => dispatch({ type: 'REMOVE_STAIR', stairId })
+      removeStair: (stairId) => dispatch({ type: 'REMOVE_STAIR', stairId }),
+      addColumn: (column) => dispatch({ type: 'ADD_COLUMN', column }),
+      moveColumn: (columnId, x, y) => dispatch({ type: 'MOVE_COLUMN', columnId, x, y }),
+      removeColumn: (columnId) => dispatch({ type: 'REMOVE_COLUMN', columnId })
     }),
     []
   );
@@ -237,6 +257,7 @@ export function useProjectStore(initialProject) {
     project: state.project,
     rooms: state.rooms,
     stairs: state.stairs,
+    columns: state.columns || [],
     actions: { ...actions, addRectRoom, addPolygonRoom }
   };
 }

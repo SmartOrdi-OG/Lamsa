@@ -4,7 +4,9 @@ import {
   drawRoomDimensions, drawDoorSwing, pointInPolygon, hitTestStairs, hitTestGridForStair,
   floorToFloorHeight, stairEffectiveFootprint, drawStairSymbol
 } from '../lib/planGeometry.js';
-import { DOOR_W, WIN_W, WALL_T, stairFootprint } from '../lib/build3d.js';
+import { DOOR_W, WIN_W, WALL_T, stairFootprint, COLUMN_SIZE } from '../lib/build3d.js';
+
+const COLUMN_HIT_TOLERANCE = 0.3; // meters — generous click target for a small 0.3m column
 
 // Phase 1 scope was rectangular rooms on a single floor. Phase 2 adds
 // multi-floor editing (one floor shown/edited at a time, via `activeFloor`),
@@ -18,6 +20,7 @@ const CLOSE_VERTEX_TOLERANCE = 0.35; // meters — click near the first vertex t
 export default function PlanEditor2D({
   rooms,       // ALL floors — height/stair calcs need the full list
   stairs,      // ALL floors
+  columns = [], // ALL floors
   wallHeight,
   gridW = 20,
   gridH = 16,
@@ -26,6 +29,7 @@ export default function PlanEditor2D({
   selectedRoomId,
   selectedOpening,
   selectedStairId,
+  selectedColumnId,
   onAddRoom,
   onAddPolygonRoom,
   onMoveRoom,
@@ -36,7 +40,10 @@ export default function PlanEditor2D({
   onSelectOpening,
   onAddStair,
   onMoveStair,
-  onSelectStair
+  onSelectStair,
+  onAddColumn,
+  onMoveColumn,
+  onSelectColumn
 }) {
   const canvasRef = useRef(null);
   const dragRef = useRef(null); // { kind: 'new-room'|'move'|'resize'|'move-polygon'|'move-stair', ... }
@@ -45,6 +52,7 @@ export default function PlanEditor2D({
 
   const floorRooms = rooms.filter((r) => (r.floor ?? 0) === activeFloor);
   const floorStairs = stairs.filter((s) => (s.floor ?? 0) === activeFloor);
+  const floorColumns = columns.filter((c) => (c.floor ?? 0) === activeFloor);
   const floorToFloorH = floorToFloorHeight(rooms, activeFloor, wallHeight);
 
   // Leaving polygon-drawing mid-shape (switching tools) should not leave a
@@ -152,6 +160,16 @@ export default function PlanEditor2D({
       drawStairSymbol(ctx, x0, y0, w, d, rotation, stairFootprint(floorToFloorH).numSteps, isSelected ? '#c9a96e' : '#6b5e3a');
     });
 
+    floorColumns.forEach((c) => {
+      const isSelected = c.id === selectedColumnId;
+      const half = COLUMN_SIZE / 2;
+      ctx.fillStyle = isSelected ? '#c9a96e' : '#6b7280';
+      ctx.fillRect((c.x - half) * PPM, (c.y - half) * PPM, COLUMN_SIZE * PPM, COLUMN_SIZE * PPM);
+      ctx.strokeStyle = '#374151';
+      ctx.lineWidth = 1;
+      ctx.strokeRect((c.x - half) * PPM, (c.y - half) * PPM, COLUMN_SIZE * PPM, COLUMN_SIZE * PPM);
+    });
+
     // Live preview while placing a polygon room.
     if (polyPoints && polyPoints.length) {
       ctx.strokeStyle = '#c9a96e';
@@ -232,11 +250,17 @@ export default function PlanEditor2D({
       return;
     }
 
-    // select mode: openings, then stairs, then room body/handle.
+    if (mode === 'column') {
+      onAddColumn({ floor: activeFloor, x: snap(cx), y: snap(cy) });
+      return;
+    }
+
+    // select mode: openings, then stairs, then columns, then room body/handle.
     const openingHit = hitTestOpenings(floorRooms, cx, cy);
     if (openingHit) {
       onSelectOpening({ roomId: openingHit.roomId, openingId: openingHit.id });
       onSelectStair(null);
+      onSelectColumn(null);
       return;
     }
     onSelectOpening(null);
@@ -244,11 +268,21 @@ export default function PlanEditor2D({
     const stairHit = hitTestStairs(floorStairs, rooms, wallHeight, cx, cy);
     if (stairHit) {
       onSelectStair(stairHit.id);
+      onSelectColumn(null);
       onSelectRoom(null);
       dragRef.current = { kind: 'move-stair', stairId: stairHit.id, offsetX: cx - stairHit.x, offsetY: cy - stairHit.y, rotation: stairHit.rotation };
       return;
     }
     onSelectStair(null);
+
+    const columnHit = floorColumns.find((c) => Math.hypot(cx - c.x, cy - c.y) <= COLUMN_HIT_TOLERANCE);
+    if (columnHit) {
+      onSelectColumn(columnHit.id);
+      onSelectRoom(null);
+      dragRef.current = { kind: 'move-column', columnId: columnHit.id, offsetX: cx - columnHit.x, offsetY: cy - columnHit.y };
+      return;
+    }
+    onSelectColumn(null);
 
     const room = roomAt(cx, cy);
     if (!room) {
@@ -310,6 +344,12 @@ export default function PlanEditor2D({
     if (drag.kind === 'move-stair') {
       const placed = hitTestGridForStair(gridW, gridH, snap(cx - drag.offsetX), snap(cy - drag.offsetY), floorToFloorH, drag.rotation);
       if (placed) onMoveStair(drag.stairId, placed.x, placed.y, drag.rotation);
+      return;
+    }
+    if (drag.kind === 'move-column') {
+      const x = snap(Math.max(0, Math.min(gridW, cx - drag.offsetX)));
+      const y = snap(Math.max(0, Math.min(gridH, cy - drag.offsetY)));
+      onMoveColumn(drag.columnId, x, y);
     }
   }
 

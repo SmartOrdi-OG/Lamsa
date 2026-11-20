@@ -6,7 +6,8 @@ const TOOLS = [
   { id: 'polygon', label: 'Add Polygon Room' },
   { id: 'door', label: 'Add Door' },
   { id: 'window', label: 'Add Window' },
-  { id: 'stairs', label: 'Add Stairs' }
+  { id: 'stairs', label: 'Add Stairs' },
+  { id: 'column', label: 'Add Column' }
 ];
 
 const btnStyle = (active) => ({
@@ -38,7 +39,9 @@ export default function Toolbar({
   onSetActiveFloor,
   onAddFloor,
   selectedStair,
-  onDeleteStair
+  onDeleteStair,
+  selectedColumn,
+  onDeleteColumn
 }) {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', borderBottom: '1px solid #e5e7eb' }}>
@@ -116,6 +119,12 @@ export default function Toolbar({
         {selectedStair && (
           <button type="button" style={btnStyle(false)} onClick={() => onDeleteStair(selectedStair.id)}>
             {t('Delete Stairs')}
+          </button>
+        )}
+
+        {selectedColumn && (
+          <button type="button" style={btnStyle(false)} onClick={() => onDeleteColumn(selectedColumn.id)}>
+            {t('Delete Column')}
           </button>
         )}
       </div>
