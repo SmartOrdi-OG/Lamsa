@@ -331,7 +331,15 @@ export default function PlanEditor2D({
       ref={canvasRef}
       width={gridW * PPM}
       height={gridH * PPM}
-      style={{ background: '#fff', touchAction: 'none', cursor: mode === 'select' ? 'default' : 'crosshair' }}
+      style={{
+        background: '#fff', touchAction: 'none', cursor: mode === 'select' ? 'default' : 'crosshair',
+        // The canvas's pixel grid stays fixed (gridW/gridH * PPM) so drawing
+        // math never changes, but it's allowed to shrink to fit a narrow
+        // container instead of overflowing — clientToPlanMeters() already
+        // maps clicks by ratio against the canvas's *displayed* rect, so
+        // this scaling never throws off hit-testing or room placement.
+        maxWidth: '100%', height: 'auto', display: 'block'
+      }}
       onPointerDown={handlePointerDown}
       onPointerMove={handlePointerMove}
       onPointerUp={handlePointerUp}
