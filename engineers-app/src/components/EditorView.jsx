@@ -17,6 +17,7 @@ export default function EditorView({ initialProject, projectId, onBack, onSave, 
   const [saving, setSaving] = useState(false);
   const [saveMsg, setSaveMsg] = useState('');
   const [dollhouse, setDollhouse] = useState(false);
+  const [renderView, setRenderView] = useState(false);
   // Side-by-side 2D/3D only works once there's room for both — below that,
   // stack them instead so neither gets squeezed into an unusable sliver
   // (the 2D canvas has a fixed pixel size, so splitting a phone-width
@@ -98,6 +99,10 @@ export default function EditorView({ initialProject, projectId, onBack, onSave, 
             <input type="checkbox" checked={dollhouse} onChange={(e) => setDollhouse(e.target.checked)} />
             {t('Dollhouse view')}
           </label>
+          <label style={{ fontSize: 12, color: '#6b7280', display: 'flex', alignItems: 'center', gap: 4 }}>
+            <input type="checkbox" checked={renderView} onChange={(e) => setRenderView(e.target.checked)} />
+            {t('Render view')}
+          </label>
           <button type="button" onClick={handleExportPdf} style={{ padding: '8px 14px', borderRadius: 8, border: '1px solid #d1d5db', background: '#fff', fontWeight: 700, fontSize: 13, cursor: 'pointer' }}>
             {t('Export plan')}
           </button>
@@ -172,6 +177,7 @@ export default function EditorView({ initialProject, projectId, onBack, onSave, 
             t={t}
             dollhouse={dollhouse}
             floorGap={dollhouse ? 1.2 : 0}
+            renderView={renderView}
           />
         </div>
       </div>

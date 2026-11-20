@@ -55,6 +55,7 @@ export const AR = {
   'Floor': 'الطابق',
   'Add Floor': 'إضافة طابق',
   'Dollhouse view': 'عرض مقطعي',
+  'Render view': 'عرض فني',
   'Export DXF': 'تصدير DXF'
 };
 
@@ -103,6 +104,7 @@ export const T = {
     'Floor': 'Stockwerk',
     'Add Floor': 'Stockwerk hinzufügen',
     'Dollhouse view': 'Schnittansicht',
+    'Render view': 'Render-Ansicht',
     'Export DXF': 'DXF exportieren'
   },
   es: {
@@ -149,6 +151,7 @@ export const T = {
     'Floor': 'Planta',
     'Add Floor': 'Añadir Planta',
     'Dollhouse view': 'Vista seccionada',
+    'Render view': 'Vista renderizada',
     'Export DXF': 'Exportar DXF'
   },
   tr: {
@@ -195,6 +198,7 @@ export const T = {
     'Floor': 'Kat',
     'Add Floor': 'Kat Ekle',
     'Dollhouse view': 'Kesit Gorunumu',
+    'Render view': 'Render Gorunumu',
     'Export DXF': 'DXF Disa Aktar'
   },
   fr: {
@@ -241,6 +245,7 @@ export const T = {
     'Floor': 'Étage',
     'Add Floor': 'Ajouter un étage',
     'Dollhouse view': 'Vue en coupe',
+    'Render view': 'Vue rendue',
     'Export DXF': 'Exporter en DXF'
   },
   it: {
@@ -287,6 +292,7 @@ export const T = {
     'Floor': 'Piano',
     'Add Floor': 'Aggiungi Piano',
     'Dollhouse view': 'Vista in sezione',
+    'Render view': 'Vista renderizzata',
     'Export DXF': 'Esporta DXF'
   },
   ru: {
@@ -333,6 +339,7 @@ export const T = {
     'Floor': 'Etazh',
     'Add Floor': 'Dobavit Etazh',
     'Dollhouse view': 'Razrez doma',
+    'Render view': 'Render vid',
     'Export DXF': 'Eksportirovat DXF'
   }
 };

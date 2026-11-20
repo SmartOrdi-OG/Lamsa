@@ -1,7 +1,47 @@
 import { useEffect, useRef, useState } from 'react';
 import * as THREE from 'three';
-import { computeCenter, rebuildGroup } from '../lib/build3d.js';
+import { computeCenter, computeFloorBaseYMap, rebuildGroup } from '../lib/build3d.js';
 import { clamp } from '../lib/planGeometry.js';
+
+// "Render view" floating room-name labels — plain canvas-texture sprites,
+// same lightweight texture-painting approach materials.js already uses for
+// wall surfaces, not a text-rendering library. depthTest stays on so a
+// label is correctly hidden behind a wall from angles where the room isn't
+// actually visible (matches how a real cutaway render reads).
+function makeRoomLabelSprite(text) {
+  const canvas = document.createElement('canvas');
+  const ctx = canvas.getContext('2d');
+  const fontSize = 40;
+  ctx.font = `700 ${fontSize}px Tajawal, sans-serif`;
+  const textWidth = ctx.measureText(text).width;
+  const padX = 22, padY = 14;
+  canvas.width = Math.ceil(textWidth + padX * 2);
+  canvas.height = fontSize + padY * 2;
+  // Measuring resets the context's font, so set it again post-resize.
+  ctx.font = `700 ${fontSize}px Tajawal, sans-serif`;
+  ctx.fillStyle = 'rgba(17,20,26,0.72)';
+  const r = 14;
+  ctx.beginPath();
+  ctx.moveTo(r, 0);
+  ctx.arcTo(canvas.width, 0, canvas.width, canvas.height, r);
+  ctx.arcTo(canvas.width, canvas.height, 0, canvas.height, r);
+  ctx.arcTo(0, canvas.height, 0, 0, r);
+  ctx.arcTo(0, 0, canvas.width, 0, r);
+  ctx.closePath();
+  ctx.fill();
+  ctx.fillStyle = '#ffffff';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText(text, canvas.width / 2, canvas.height / 2 + 2);
+
+  const texture = new THREE.CanvasTexture(canvas);
+  texture.needsUpdate = true;
+  const material = new THREE.SpriteMaterial({ map: texture, depthWrite: false, transparent: true });
+  const sprite = new THREE.Sprite(material);
+  const WORLD_UNITS_PER_PX = 0.014;
+  sprite.scale.set(canvas.width * WORLD_UNITS_PER_PX, canvas.height * WORLD_UNITS_PER_PX, 1);
+  return sprite;
+}
 
 // Ported from architect-studio-360's components/Viewport3D.jsx, adapted
 // only for this app's lack of Tailwind/lucide-react (plain inline styles
@@ -13,7 +53,7 @@ import { clamp } from '../lib/planGeometry.js';
 const DOLLHOUSE_PHI = 0.62;
 const DOLLHOUSE_THETA = Math.PI / 4;
 
-export default function Viewport3D({ rooms, stairs, wallHeight, wallColor, wallMaterial, autoRotate, dollhouse = false, floorGap = 0, t = (s) => s }) {
+export default function Viewport3D({ rooms, stairs, wallHeight, wallColor, wallMaterial, autoRotate, dollhouse = false, floorGap = 0, renderView = false, t = (s) => s }) {
   const mountRef = useRef(null);
   const stateRef = useRef({});
   const flagsRef = useRef({ autoRotate });
@@ -204,7 +244,22 @@ export default function Viewport3D({ rooms, stairs, wallHeight, wallColor, wallM
   useEffect(() => {
     const s = stateRef.current;
     if (!s.group) return;
-    rebuildGroup(s.group, rooms, stairs, wallHeight, wallColor, s.center, s.animState, textureCacheRef.current, wallMaterial, { hideRoofs: dollhouse, floorGap });
+    const effectiveWallMaterial = renderView ? 'brick' : wallMaterial;
+    rebuildGroup(s.group, rooms, stairs, wallHeight, wallColor, s.center, s.animState, textureCacheRef.current, effectiveWallMaterial, { hideRoofs: dollhouse, floorGap });
+
+    if (renderView) {
+      const floorBaseYMap = computeFloorBaseYMap(rooms, wallHeight, Math.max(0, ...(stairs || []).map((st) => (st.floor ?? 0) + 1)), floorGap);
+      rooms.forEach((r) => {
+        if (!r.name) return;
+        const roomWallHeight = r.wall_height ?? wallHeight;
+        const floorBaseY = floorBaseYMap.get(r.floor ?? 0) ?? 0;
+        const cx = r.gx + r.gw / 2 - s.center.x;
+        const cz = r.gy + r.gh / 2 - s.center.z;
+        const sprite = makeRoomLabelSprite(r.name);
+        sprite.position.set(cx, floorBaseY + roomWallHeight * 0.55, cz);
+        s.group.add(sprite);
+      });
+    }
 
     if (s.dirLight) {
       const radius = s.defaultRadius;
@@ -219,7 +274,7 @@ export default function Viewport3D({ rooms, stairs, wallHeight, wallColor, wallM
       cam.far = radius * 3 + maxWallHeight * 2;
       cam.updateProjectionMatrix();
     }
-  }, [rooms, stairs, wallHeight, wallColor, wallMaterial, dollhouse, floorGap]);
+  }, [rooms, stairs, wallHeight, wallColor, wallMaterial, dollhouse, floorGap, renderView]);
 
   useEffect(() => {
     const s = stateRef.current;
