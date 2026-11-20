@@ -2457,7 +2457,24 @@
 
   function toggleLangMenu() {
     langMenuOpen = !langMenuOpen;
-    document.getElementById('langMenu').classList.toggle('open', langMenuOpen);
+    var menu = document.getElementById('langMenu');
+    menu.classList.toggle('open', langMenuOpen);
+    if (langMenuOpen) {
+      // Default anchor is the dropdown's right edge, but on a narrow
+      // screen (or when the button sits near the left edge, e.g. the
+      // nav wraps on mobile) that pushes the menu off-screen to the
+      // left — flip the anchor so it always stays within the viewport.
+      menu.style.left = '';
+      menu.style.right = '0';
+      var rect = menu.getBoundingClientRect();
+      if (rect.left < 4) {
+        menu.style.right = 'auto';
+        menu.style.left = '0';
+      } else if (rect.right > window.innerWidth - 4) {
+        menu.style.left = 'auto';
+        menu.style.right = '0';
+      }
+    }
   }
 
   document.addEventListener('click', function(e) {
