@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Viewport3D from './Viewport3D.jsx';
 import PlanEditor2D from './PlanEditor2D.jsx';
 import Toolbar from './Toolbar.jsx';
@@ -17,6 +17,16 @@ export default function EditorView({ initialProject, projectId, onBack, onSave, 
   const [saving, setSaving] = useState(false);
   const [saveMsg, setSaveMsg] = useState('');
   const [dollhouse, setDollhouse] = useState(false);
+  // Side-by-side 2D/3D only works once there's room for both — below that,
+  // stack them instead so neither gets squeezed into an unusable sliver
+  // (the 2D canvas has a fixed pixel size, so splitting a phone-width
+  // screen in half left it nearly invisible before this).
+  const [isNarrow, setIsNarrow] = useState(() => (typeof window !== 'undefined' ? window.innerWidth < 900 : false));
+  useEffect(() => {
+    function onResize() { setIsNarrow(window.innerWidth < 900); }
+    window.addEventListener('resize', onResize);
+    return () => window.removeEventListener('resize', onResize);
+  }, []);
 
   const selectedRoom = rooms.find((r) => r.id === selectedRoomId) || null;
   const selectedStair = stairs.find((s) => s.id === selectedStairId) || null;
@@ -123,8 +133,8 @@ export default function EditorView({ initialProject, projectId, onBack, onSave, 
         onDeleteStair={(id) => { actions.removeStair(id); setSelectedStairId(null); }}
       />
 
-      <div style={{ display: 'flex', flex: 1, minHeight: 0 }}>
-        <div style={{ flex: 1, overflow: 'auto' }}>
+      <div style={{ display: 'flex', flexDirection: isNarrow ? 'column' : 'row', flex: 1, minHeight: 0 }}>
+        <div style={isNarrow ? { flex: '0 0 auto', maxHeight: '50%', overflow: 'auto' } : { flex: 1, overflow: 'auto' }}>
           <PlanEditor2D
             rooms={rooms}
             stairs={stairs}
@@ -152,7 +162,7 @@ export default function EditorView({ initialProject, projectId, onBack, onSave, 
             onSelectStair={setSelectedStairId}
           />
         </div>
-        <div style={{ flex: 1 }}>
+        <div style={{ flex: 1, minHeight: 0 }}>
           <Viewport3D
             rooms={rooms}
             stairs={stairs}
