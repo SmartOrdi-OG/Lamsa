@@ -1301,6 +1301,10 @@
       <div class="home-tool-icon"></div>
       <span data-ar="معرض الإلهام" data-en="Style Gallery">Style Gallery</span>
     </a>
+    <a class="home-tool-tile" href="engineers/index.html">
+      <div class="home-tool-icon"></div>
+      <span data-ar="قسم المهندسين" data-en="Engineers">Engineers</span>
+    </a>
   </div>
 
   <div class="home-section-head">
@@ -2095,7 +2099,7 @@
       'Rearrange your existing furniture in place': 'Ordne dein vorhandenes Mobiliar am gleichen Ort neu an',
       'Build your room from scratch with a live 3D preview': 'Gestalte dein Zimmer von Grund auf mit einer Live-3D-Vorschau',
       'Browse ready-made styles and apply one to your photo': 'Durchstöbere fertige Stile und wende einen auf dein Foto an',
-      'Sign In': 'Anmelden', 'Log Out': 'Abmelden', 'Delete Account': 'Konto löschen',
+      'Sign In': 'Anmelden', 'Log Out': 'Abmelden', 'Delete Account': 'Konto löschen', 'Engineers': 'Ingenieure',
     },
     es: {
       'Start Free': 'Comenzar gratis',
@@ -2148,7 +2152,7 @@
       'Rearrange your existing furniture in place': 'Reorganiza tus muebles actuales en el mismo lugar',
       'Build your room from scratch with a live 3D preview': 'Diseña tu habitación desde cero con una vista previa 3D en vivo',
       'Browse ready-made styles and apply one to your photo': 'Explora estilos ya hechos y aplícalos a tu foto',
-      'Sign In': 'Iniciar sesión', 'Log Out': 'Cerrar sesión', 'Delete Account': 'Eliminar cuenta',
+      'Sign In': 'Iniciar sesión', 'Log Out': 'Cerrar sesión', 'Delete Account': 'Eliminar cuenta', 'Engineers': 'Ingenieros',
     },
     tr: {
       'Start Free': 'Ucretsiz Basla',
@@ -2201,7 +2205,7 @@
       'Rearrange your existing furniture in place': 'Mevcut mobilyalarinizi ayni yerde yeniden duzenleyin',
       'Build your room from scratch with a live 3D preview': 'Odanizi sifirdan canli 3D onizleme ile tasarlayin',
       'Browse ready-made styles and apply one to your photo': 'Hazir stillere goz atin ve fotografiniza uygulayin',
-      'Sign In': 'Giris Yap', 'Log Out': 'Cikis Yap', 'Delete Account': 'Hesabi Sil',
+      'Sign In': 'Giris Yap', 'Log Out': 'Cikis Yap', 'Delete Account': 'Hesabi Sil', 'Engineers': 'Muhendisler',
     },
     fr: {
       'Start Free': 'Commencer gratuitement',
@@ -2254,7 +2258,7 @@
       'Rearrange your existing furniture in place': 'Réorganisez vos meubles actuels sur place',
       'Build your room from scratch with a live 3D preview': 'Concevez votre pièce de zéro avec un aperçu 3D en direct',
       'Browse ready-made styles and apply one to your photo': "Parcourez des styles prêts à l'emploi et appliquez-en un à votre photo",
-      'Sign In': 'Connexion', 'Log Out': 'Deconnexion', 'Delete Account': 'Supprimer le compte',
+      'Sign In': 'Connexion', 'Log Out': 'Deconnexion', 'Delete Account': 'Supprimer le compte', 'Engineers': 'Ingenieurs',
     },
     it: {
       'Start Free': 'Inizia gratuitamente',
@@ -2307,7 +2311,7 @@
       'Rearrange your existing furniture in place': 'Riorganizza i tuoi mobili esistenti nello stesso posto',
       'Build your room from scratch with a live 3D preview': "Progetta la tua stanza da zero con un'anteprima 3D dal vivo",
       'Browse ready-made styles and apply one to your photo': 'Sfoglia stili già pronti e applicane uno alla tua foto',
-      'Sign In': 'Accedi', 'Log Out': 'Esci', 'Delete Account': 'Elimina account',
+      'Sign In': 'Accedi', 'Log Out': 'Esci', 'Delete Account': 'Elimina account', 'Engineers': 'Ingegneri',
     },
     ru: {
       'Start Free': 'Nachat besplatno',
@@ -2360,7 +2364,7 @@
       'Rearrange your existing furniture in place': 'Pereraspolozhite vashu mebel na tom zhe meste',
       'Build your room from scratch with a live 3D preview': 'Sozdayte komnatu s nulya s zhivym 3D-predprosmotrom',
       'Browse ready-made styles and apply one to your photo': 'Prosmotrite gotovye stili i primenite odin k vashemu foto',
-      'Sign In': 'Vkhod', 'Log Out': 'Vykhod', 'Delete Account': 'Udalit akkaunt',
+      'Sign In': 'Vkhod', 'Log Out': 'Vykhod', 'Delete Account': 'Udalit akkaunt', 'Engineers': 'Inzhenery',
     },
     ar: {
       'Start Free': 'ابدأ مجاناً',
@@ -2639,7 +2643,7 @@
   // data-ar, so setLang()'s generic pass never touches them) and mounts
   // the shared bottom tab bar.
   function initHomeScreen() {
-    var icons = ['sparkles', 'refresh', 'cube', 'palette'];
+    var icons = ['sparkles', 'refresh', 'cube', 'palette', 'ruler'];
     document.querySelectorAll('.home-tool-icon').forEach(function (el, i) {
       el.innerHTML = window.icon ? window.icon(icons[i] || 'sparkle') : '';
     });
