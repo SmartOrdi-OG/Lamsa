@@ -58,7 +58,8 @@ export const AR = {
   'Add Floor': 'إضافة طابق',
   'Dollhouse view': 'عرض مقطعي',
   'Render view': 'عرض فني',
-  'Export DXF': 'تصدير DXF'
+  'Export DXF': 'تصدير DXF',
+  'Back to Home': 'الرئيسية'
 };
 
 export const T = {
@@ -109,7 +110,8 @@ export const T = {
     'Add Floor': 'Stockwerk hinzufügen',
     'Dollhouse view': 'Schnittansicht',
     'Render view': 'Render-Ansicht',
-    'Export DXF': 'DXF exportieren'
+    'Export DXF': 'DXF exportieren',
+    'Back to Home': 'Zurück zur Startseite'
   },
   es: {
     'Lamsa Engineers': 'Lamsa Ingenieros',
@@ -158,7 +160,8 @@ export const T = {
     'Add Floor': 'Añadir Planta',
     'Dollhouse view': 'Vista seccionada',
     'Render view': 'Vista renderizada',
-    'Export DXF': 'Exportar DXF'
+    'Export DXF': 'Exportar DXF',
+    'Back to Home': 'Volver al Inicio'
   },
   tr: {
     'Lamsa Engineers': 'Lamsa Muhendisler',
@@ -207,7 +210,8 @@ export const T = {
     'Add Floor': 'Kat Ekle',
     'Dollhouse view': 'Kesit Gorunumu',
     'Render view': 'Render Gorunumu',
-    'Export DXF': 'DXF Disa Aktar'
+    'Export DXF': 'DXF Disa Aktar',
+    'Back to Home': 'Ana Sayfaya Don'
   },
   fr: {
     'Lamsa Engineers': 'Lamsa Ingénieurs',
@@ -256,7 +260,8 @@ export const T = {
     'Add Floor': 'Ajouter un étage',
     'Dollhouse view': 'Vue en coupe',
     'Render view': 'Vue rendue',
-    'Export DXF': 'Exporter en DXF'
+    'Export DXF': 'Exporter en DXF',
+    'Back to Home': "Retour à l'accueil"
   },
   it: {
     'Lamsa Engineers': 'Lamsa Ingegneri',
@@ -305,7 +310,8 @@ export const T = {
     'Add Floor': 'Aggiungi Piano',
     'Dollhouse view': 'Vista in sezione',
     'Render view': 'Vista renderizzata',
-    'Export DXF': 'Esporta DXF'
+    'Export DXF': 'Esporta DXF',
+    'Back to Home': 'Torna alla Home'
   },
   ru: {
     'Lamsa Engineers': 'Lamsa Inzhenery',
@@ -354,7 +360,8 @@ export const T = {
     'Add Floor': 'Dobavit Etazh',
     'Dollhouse view': 'Razrez doma',
     'Render view': 'Render vid',
-    'Export DXF': 'Eksportirovat DXF'
+    'Export DXF': 'Eksportirovat DXF',
+    'Back to Home': 'Na glavnuyu'
   }
 };
 

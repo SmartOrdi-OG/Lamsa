@@ -1,7 +1,13 @@
 export default function ProjectList({ projects, onOpen, onCreate, onDelete, t }) {
   return (
     <div style={{ maxWidth: 720, margin: '40px auto', padding: 24, fontFamily: 'sans-serif' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
+      <a
+        href="/lamsa-bilingual.html"
+        style={{ display: 'inline-flex', alignItems: 'center', gap: 6, color: '#6b7280', fontSize: 13, fontWeight: 700, textDecoration: 'none', marginBottom: 16 }}
+      >
+        ← {t('Back to Home')}
+      </a>
+      <div style={{ display: 'flex', flexWrap: 'wrap', rowGap: 10, justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
         <h1 style={{ fontSize: 22, fontWeight: 900 }}>{t('Your Projects')}</h1>
         <button
           type="button"
