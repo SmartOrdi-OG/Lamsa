@@ -156,6 +156,17 @@
         <div style="margin-top:10px; font-size:13px; color:var(--gray);">Positive amount adds credits, negative removes them.</div>
         <div id="creditResult" style="margin-top:10px; font-size:14px; font-weight:700;"></div>
       </div>
+      <div class="list-item" style="margin-top:16px;">
+        <div style="font-weight:700; margin-bottom:10px;">Engineers Access</div>
+        <div style="display:flex; gap:10px; flex-wrap:wrap; align-items:center;">
+          <input id="engineerEmail" type="email" placeholder="user@email.com" autocomplete="off"
+                 style="flex:1; min-width:200px; border:1.5px solid var(--border); border-radius:10px; padding:10px 12px; font-family:inherit; font-size:14px; background:var(--card-2); color:var(--white);">
+          <button class="btn" id="grantEngineerBtn" onclick="grantEngineer()">Grant</button>
+          <button class="btn secondary" id="revokeEngineerBtn" onclick="revokeEngineer()">Revoke</button>
+        </div>
+        <div style="margin-top:10px; font-size:13px; color:var(--gray);">Grant gives free, permanent Engineers access (no Stripe subscription) — for support/QA/team testing.</div>
+        <div id="engineerResult" style="margin-top:10px; font-size:14px; font-weight:700;"></div>
+      </div>
     </div>
   </div>
 </div>
@@ -210,6 +221,50 @@
     } finally {
       btn.disabled = false;
       btn.textContent = 'Grant';
+    }
+  }
+
+  async function grantEngineer() {
+    var email = document.getElementById('engineerEmail').value.trim();
+    var btn = document.getElementById('grantEngineerBtn');
+    var resultEl = document.getElementById('engineerResult');
+    resultEl.style.color = '';
+    resultEl.textContent = '';
+    if (!email) { resultEl.style.color = 'var(--error)'; resultEl.textContent = 'Enter an email.'; return; }
+    btn.disabled = true;
+    btn.textContent = 'Granting…';
+    try {
+      var data = await callAdmin('grant_engineer', { targetEmail: email });
+      resultEl.style.color = 'var(--success)';
+      resultEl.textContent = 'Done — ' + data.email + ' now has free Engineers access.';
+    } catch (e) {
+      resultEl.style.color = 'var(--error)';
+      resultEl.textContent = e.message || 'Failed';
+    } finally {
+      btn.disabled = false;
+      btn.textContent = 'Grant';
+    }
+  }
+
+  async function revokeEngineer() {
+    var email = document.getElementById('engineerEmail').value.trim();
+    var btn = document.getElementById('revokeEngineerBtn');
+    var resultEl = document.getElementById('engineerResult');
+    resultEl.style.color = '';
+    resultEl.textContent = '';
+    if (!email) { resultEl.style.color = 'var(--error)'; resultEl.textContent = 'Enter an email.'; return; }
+    btn.disabled = true;
+    btn.textContent = 'Revoking…';
+    try {
+      var data = await callAdmin('revoke_engineer', { targetEmail: email });
+      resultEl.style.color = 'var(--success)';
+      resultEl.textContent = 'Done — Engineers access revoked for ' + data.email + '.';
+    } catch (e) {
+      resultEl.style.color = 'var(--error)';
+      resultEl.textContent = e.message || 'Failed';
+    } finally {
+      btn.disabled = false;
+      btn.textContent = 'Revoke';
     }
   }
 

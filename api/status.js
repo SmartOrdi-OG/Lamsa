@@ -1,4 +1,4 @@
-import { redis, getAllRatings, getRecentErrors, clearErrors, getGenerationCount, saveDesignToHistory, addCredits } from './_db.js';
+import { redis, getAllRatings, getRecentErrors, clearErrors, getGenerationCount, saveDesignToHistory, addCredits, setEngineerEntitlement, getEngineerEntitlement } from './_db.js';
 import { requireSessionEmail, EMAIL_RE } from './_auth.js';
 import { stripe } from './_stripe.js';
 
@@ -162,6 +162,42 @@ async function handleAdmin(req, res) {
       const newBalance = await addCredits(normalizedTarget, amt);
       console.log('[api/status admin] granted', amt, 'credit(s) to', normalizedTarget, '-> balance', newBalance);
       return res.status(200).json({ ok: true, email: normalizedTarget, newBalance });
+    }
+
+    // Manual Engineers-access grant/revoke for support/QA — e.g. giving the
+    // team's own account free access to test the Engineers section without
+    // going through a real Stripe checkout. Mirrors the shape
+    // stripe-webhook.js writes so hasAccess()/hasEngineerAccess() checks
+    // elsewhere treat it identically to a real paid subscription.
+    if (view === 'grant_engineer') {
+      const { targetEmail } = req.body || {};
+      const normalizedTarget = (targetEmail || '').trim().toLowerCase();
+      if (!EMAIL_RE.test(normalizedTarget)) {
+        return res.status(400).json({ error: 'Valid targetEmail required' });
+      }
+      await setEngineerEntitlement(normalizedTarget, {
+        email: normalizedTarget, plan: 'annual', status: 'active',
+        subscriptionId: null, customerId: null,
+        currentPeriodEnd: null, trialEnd: null,
+        manualGrant: true, grantedAt: Date.now()
+      });
+      console.log('[api/status admin] manually granted Engineers access to', normalizedTarget);
+      return res.status(200).json({ ok: true, email: normalizedTarget });
+    }
+
+    if (view === 'revoke_engineer') {
+      const { targetEmail } = req.body || {};
+      const normalizedTarget = (targetEmail || '').trim().toLowerCase();
+      if (!EMAIL_RE.test(normalizedTarget)) {
+        return res.status(400).json({ error: 'Valid targetEmail required' });
+      }
+      const existing = await getEngineerEntitlement(normalizedTarget);
+      await setEngineerEntitlement(normalizedTarget, {
+        ...(existing || { email: normalizedTarget, plan: 'annual' }),
+        status: 'canceled', revokedAt: Date.now()
+      });
+      console.log('[api/status admin] manually revoked Engineers access for', normalizedTarget);
+      return res.status(200).json({ ok: true, email: normalizedTarget });
     }
 
     if (view === 'config') {
