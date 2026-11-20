@@ -1,8 +1,12 @@
+import { floorLabel, FLOOR_CAP } from '../lib/planGeometry.js';
+
 const TOOLS = [
   { id: 'select', label: 'Select' },
   { id: 'room', label: 'Add Room' },
+  { id: 'polygon', label: 'Add Polygon Room' },
   { id: 'door', label: 'Add Door' },
-  { id: 'window', label: 'Add Window' }
+  { id: 'window', label: 'Add Window' },
+  { id: 'stairs', label: 'Add Stairs' }
 ];
 
 const btnStyle = (active) => ({
@@ -23,56 +27,93 @@ export default function Toolbar({
   onResizeRoomInputs,
   onDeleteRoom,
   selectedOpening,
-  onDeleteOpening
+  onDeleteOpening,
+  floorCount = 1,
+  activeFloor = 0,
+  onSetActiveFloor,
+  onAddFloor,
+  selectedStair,
+  onDeleteStair
 }) {
   return (
-    <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10, alignItems: 'center', padding: '10px 14px', borderBottom: '1px solid #e5e7eb' }}>
-      {TOOLS.map((t) => (
-        <button key={t.id} type="button" style={btnStyle(mode === t.id)} onClick={() => onModeChange(t.id)}>
-          {t.label}
-        </button>
-      ))}
-
-      {selectedRoom && (
-        <div style={{ display: 'flex', gap: 8, alignItems: 'center', marginInlineStart: 12 }}>
-          <input
-            value={selectedRoom.name}
-            onChange={(e) => onRenameRoom(selectedRoom.id, e.target.value)}
-            style={{ padding: '6px 10px', borderRadius: 6, border: '1px solid #d1d5db', fontSize: 13, width: 140 }}
-          />
-          <label style={{ fontSize: 12, color: '#6b7280' }}>
-            W
-            <input
-              type="number"
-              step="0.1"
-              min="1.5"
-              value={selectedRoom.gw}
-              onChange={(e) => onResizeRoomInputs(selectedRoom.id, parseFloat(e.target.value) || selectedRoom.gw, selectedRoom.gh)}
-              style={{ width: 60, marginInlineStart: 4, padding: '4px 6px', borderRadius: 6, border: '1px solid #d1d5db' }}
-            />
-          </label>
-          <label style={{ fontSize: 12, color: '#6b7280' }}>
-            H
-            <input
-              type="number"
-              step="0.1"
-              min="1.5"
-              value={selectedRoom.gh}
-              onChange={(e) => onResizeRoomInputs(selectedRoom.id, selectedRoom.gw, parseFloat(e.target.value) || selectedRoom.gh)}
-              style={{ width: 60, marginInlineStart: 4, padding: '4px 6px', borderRadius: 6, border: '1px solid #d1d5db' }}
-            />
-          </label>
-          <button type="button" style={btnStyle(false)} onClick={() => onDeleteRoom(selectedRoom.id)}>
-            Delete Room
+    <div style={{ display: 'flex', flexDirection: 'column', borderBottom: '1px solid #e5e7eb' }}>
+      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, alignItems: 'center', padding: '8px 14px', borderBottom: '1px solid #f3f4f6' }}>
+        {Array.from({ length: floorCount }, (_, i) => i).map((f) => (
+          <button
+            key={f}
+            type="button"
+            style={btnStyle(f === activeFloor)}
+            onClick={() => onSetActiveFloor && onSetActiveFloor(f)}
+            title={floorLabel(f)}
+          >
+            {floorLabel(f)}
           </button>
-        </div>
-      )}
+        ))}
+        {floorCount < FLOOR_CAP && (
+          <button type="button" style={btnStyle(false)} onClick={() => onAddFloor && onAddFloor()}>
+            + Floor
+          </button>
+        )}
+      </div>
 
-      {selectedOpening && (
-        <button type="button" style={btnStyle(false)} onClick={() => onDeleteOpening(selectedOpening.roomId, selectedOpening.openingId)}>
-          Delete Opening
-        </button>
-      )}
+      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10, alignItems: 'center', padding: '10px 14px' }}>
+        {TOOLS.map((t) => (
+          <button key={t.id} type="button" style={btnStyle(mode === t.id)} onClick={() => onModeChange(t.id)}>
+            {t.label}
+          </button>
+        ))}
+
+        {selectedRoom && (
+          <div style={{ display: 'flex', gap: 8, alignItems: 'center', marginInlineStart: 12 }}>
+            <input
+              value={selectedRoom.name}
+              onChange={(e) => onRenameRoom(selectedRoom.id, e.target.value)}
+              style={{ padding: '6px 10px', borderRadius: 6, border: '1px solid #d1d5db', fontSize: 13, width: 140 }}
+            />
+            {!selectedRoom.points && (
+              <>
+                <label style={{ fontSize: 12, color: '#6b7280' }}>
+                  W
+                  <input
+                    type="number"
+                    step="0.1"
+                    min="1.5"
+                    value={selectedRoom.gw}
+                    onChange={(e) => onResizeRoomInputs(selectedRoom.id, parseFloat(e.target.value) || selectedRoom.gw, selectedRoom.gh)}
+                    style={{ width: 60, marginInlineStart: 4, padding: '4px 6px', borderRadius: 6, border: '1px solid #d1d5db' }}
+                  />
+                </label>
+                <label style={{ fontSize: 12, color: '#6b7280' }}>
+                  H
+                  <input
+                    type="number"
+                    step="0.1"
+                    min="1.5"
+                    value={selectedRoom.gh}
+                    onChange={(e) => onResizeRoomInputs(selectedRoom.id, selectedRoom.gw, parseFloat(e.target.value) || selectedRoom.gh)}
+                    style={{ width: 60, marginInlineStart: 4, padding: '4px 6px', borderRadius: 6, border: '1px solid #d1d5db' }}
+                  />
+                </label>
+              </>
+            )}
+            <button type="button" style={btnStyle(false)} onClick={() => onDeleteRoom(selectedRoom.id)}>
+              Delete Room
+            </button>
+          </div>
+        )}
+
+        {selectedOpening && (
+          <button type="button" style={btnStyle(false)} onClick={() => onDeleteOpening(selectedOpening.roomId, selectedOpening.openingId)}>
+            Delete Opening
+          </button>
+        )}
+
+        {selectedStair && (
+          <button type="button" style={btnStyle(false)} onClick={() => onDeleteStair(selectedStair.id)}>
+            Delete Stairs
+          </button>
+        )}
+      </div>
     </div>
   );
 }

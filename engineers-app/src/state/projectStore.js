@@ -40,13 +40,13 @@ export function createEmptyProject(name) {
   };
 }
 
-export function createRectRoom({ name, gx, gy, gw, gh, color }) {
+export function createRectRoom({ name, gx, gy, gw, gh, color, floor = 0 }) {
   return {
     id: nextId('room'),
     name: name || 'Room',
     gx, gy, gw, gh,
     color: color || '#cfd6cf',
-    floor: 0,
+    floor,
     has_roof: true,
     roof_type: 'flat',
     openings: [],
@@ -54,8 +54,37 @@ export function createRectRoom({ name, gx, gy, gw, gh, color }) {
   };
 }
 
-function createOpening(kind, wall, position) {
-  return { id: nextId(kind), kind, wall, position };
+// Free-form room: gx/gy/gw/gh stays a valid bounding box (computed here from
+// `points`) even though it's not used to draw the shape itself — build3d.js
+// and planGeometry.js both rely on that bounding box staying accurate for
+// centering/grid math, see lib/build3d.js's roomArea comment.
+export function createPolygonRoom({ name, points, color, floor = 0 }) {
+  const xs = points.map((p) => p.x);
+  const ys = points.map((p) => p.y);
+  const gx = Math.min(...xs), gy = Math.min(...ys);
+  const gw = Math.max(...xs) - gx, gh = Math.max(...ys) - gy;
+  return {
+    id: nextId('room'),
+    name: name || 'Room',
+    points, gx, gy, gw, gh,
+    color: color || '#cfd6cf',
+    floor,
+    has_roof: true,
+    roof_type: 'flat',
+    openings: [],
+    furniture: []
+  };
+}
+
+export function createStair({ floor = 0, x, y, rotation = 0 }) {
+  return { id: nextId('stair'), floor, x, y, rotation };
+}
+
+function createOpening(kind, wall, edgeIndex, position) {
+  const o = { id: nextId(kind), kind, position };
+  if (edgeIndex != null) o.edge_index = edgeIndex;
+  else o.wall = wall;
+  return o;
 }
 
 function reducer(state, action) {
@@ -83,7 +112,7 @@ function reducer(state, action) {
         ...state,
         rooms: state.rooms.map((r) =>
           r.id === action.roomId
-            ? { ...r, openings: [...r.openings, createOpening(action.kind, action.wall, action.position)] }
+            ? { ...r, openings: [...r.openings, createOpening(action.kind, action.wall, action.edgeIndex, action.position)] }
             : r
         )
       };
@@ -141,6 +170,20 @@ function reducer(state, action) {
         )
       };
     }
+    case 'ADD_STAIR': {
+      return { ...state, stairs: [...state.stairs, action.stair] };
+    }
+    case 'MOVE_STAIR': {
+      return {
+        ...state,
+        stairs: state.stairs.map((s) =>
+          s.id === action.stairId ? { ...s, x: action.x, y: action.y, rotation: action.rotation ?? s.rotation } : s
+        )
+      };
+    }
+    case 'REMOVE_STAIR': {
+      return { ...state, stairs: state.stairs.filter((s) => s.id !== action.stairId) };
+    }
     default:
       return state;
   }
@@ -156,14 +199,18 @@ export function useProjectStore(initialProject) {
       addRoom: (room) => dispatch({ type: 'ADD_ROOM', room }),
       updateRoom: (roomId, patch) => dispatch({ type: 'UPDATE_ROOM', roomId, patch }),
       removeRoom: (roomId) => dispatch({ type: 'REMOVE_ROOM', roomId }),
-      addOpening: (roomId, kind, wall, position) => dispatch({ type: 'ADD_OPENING', roomId, kind, wall, position }),
+      addOpening: (roomId, kind, wall, edgeIndex, position) =>
+        dispatch({ type: 'ADD_OPENING', roomId, kind, wall, edgeIndex, position }),
       moveOpening: (roomId, openingId, wall, position) =>
         dispatch({ type: 'MOVE_OPENING', roomId, openingId, wall, position }),
       removeOpening: (roomId, openingId) => dispatch({ type: 'REMOVE_OPENING', roomId, openingId }),
       addFurniture: (roomId, kind, x, y) => dispatch({ type: 'ADD_FURNITURE', roomId, kind, x, y }),
       moveFurniture: (roomId, furnitureId, x, y, rotation) =>
         dispatch({ type: 'MOVE_FURNITURE', roomId, furnitureId, x, y, rotation }),
-      removeFurniture: (roomId, furnitureId) => dispatch({ type: 'REMOVE_FURNITURE', roomId, furnitureId })
+      removeFurniture: (roomId, furnitureId) => dispatch({ type: 'REMOVE_FURNITURE', roomId, furnitureId }),
+      addStair: (stair) => dispatch({ type: 'ADD_STAIR', stair }),
+      moveStair: (stairId, x, y, rotation) => dispatch({ type: 'MOVE_STAIR', stairId, x, y, rotation }),
+      removeStair: (stairId) => dispatch({ type: 'REMOVE_STAIR', stairId })
     }),
     []
   );
@@ -177,5 +224,19 @@ export function useProjectStore(initialProject) {
     [actions]
   );
 
-  return { project: state.project, rooms: state.rooms, stairs: state.stairs, actions: { ...actions, addRectRoom } };
+  const addPolygonRoom = useCallback(
+    (opts) => {
+      const room = createPolygonRoom(opts);
+      actions.addRoom(room);
+      return room;
+    },
+    [actions]
+  );
+
+  return {
+    project: state.project,
+    rooms: state.rooms,
+    stairs: state.stairs,
+    actions: { ...actions, addRectRoom, addPolygonRoom }
+  };
 }
