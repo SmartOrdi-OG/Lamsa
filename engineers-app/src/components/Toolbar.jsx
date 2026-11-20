@@ -16,6 +16,7 @@ const btnStyle = (active) => ({
 });
 
 export default function Toolbar({
+  t,
   mode,
   onModeChange,
   selectedRoom,
@@ -27,9 +28,9 @@ export default function Toolbar({
 }) {
   return (
     <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10, alignItems: 'center', padding: '10px 14px', borderBottom: '1px solid #e5e7eb' }}>
-      {TOOLS.map((t) => (
-        <button key={t.id} type="button" style={btnStyle(mode === t.id)} onClick={() => onModeChange(t.id)}>
-          {t.label}
+      {TOOLS.map((tool) => (
+        <button key={tool.id} type="button" style={btnStyle(mode === tool.id)} onClick={() => onModeChange(tool.id)}>
+          {t(tool.label)}
         </button>
       ))}
 
@@ -41,7 +42,7 @@ export default function Toolbar({
             style={{ padding: '6px 10px', borderRadius: 6, border: '1px solid #d1d5db', fontSize: 13, width: 140 }}
           />
           <label style={{ fontSize: 12, color: '#6b7280' }}>
-            W
+            {t('W')}
             <input
               type="number"
               step="0.1"
@@ -52,7 +53,7 @@ export default function Toolbar({
             />
           </label>
           <label style={{ fontSize: 12, color: '#6b7280' }}>
-            H
+            {t('H')}
             <input
               type="number"
               step="0.1"
@@ -63,14 +64,14 @@ export default function Toolbar({
             />
           </label>
           <button type="button" style={btnStyle(false)} onClick={() => onDeleteRoom(selectedRoom.id)}>
-            Delete Room
+            {t('Delete Room')}
           </button>
         </div>
       )}
 
       {selectedOpening && (
         <button type="button" style={btnStyle(false)} onClick={() => onDeleteOpening(selectedOpening.roomId, selectedOpening.openingId)}>
-          Delete Opening
+          {t('Delete Opening')}
         </button>
       )}
     </div>

@@ -5,7 +5,7 @@ import Toolbar from './Toolbar.jsx';
 import { useProjectStore } from '../state/projectStore.js';
 import { exportPlanImage } from '../lib/exportPlan.js';
 
-export default function EditorView({ initialProject, projectId, onBack, onSave }) {
+export default function EditorView({ initialProject, projectId, onBack, onSave, t }) {
   const { project, rooms, stairs, actions } = useProjectStore(initialProject);
   const [mode, setMode] = useState('select');
   const [selectedRoomId, setSelectedRoomId] = useState(null);
@@ -20,7 +20,7 @@ export default function EditorView({ initialProject, projectId, onBack, onSave }
     setSaveMsg('');
     const result = await onSave(projectId, { project, rooms, stairs });
     setSaving(false);
-    setSaveMsg(result.ok ? 'Saved' : (result.error || 'Save failed'));
+    setSaveMsg(result.ok ? t('Saved') : (result.error || t('Save failed')));
     setTimeout(() => setSaveMsg(''), 2500);
     return result;
   }
@@ -37,7 +37,7 @@ export default function EditorView({ initialProject, projectId, onBack, onSave }
     <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', fontFamily: 'sans-serif' }}>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 14px', borderBottom: '1px solid #e5e7eb' }}>
         <button type="button" onClick={onBack} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 13, color: '#374151' }}>
-          ← Projects
+          ← {t('Projects')}
         </button>
         <input
           value={project.name}
@@ -47,7 +47,7 @@ export default function EditorView({ initialProject, projectId, onBack, onSave }
         <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
           <span style={{ fontSize: 12, color: '#6b7280' }}>{saveMsg}</span>
           <button type="button" onClick={handleExportPdf} style={{ padding: '8px 14px', borderRadius: 8, border: '1px solid #d1d5db', background: '#fff', fontWeight: 700, fontSize: 13, cursor: 'pointer' }}>
-            Export plan
+            {t('Export plan')}
           </button>
           <button
             type="button"
@@ -55,12 +55,13 @@ export default function EditorView({ initialProject, projectId, onBack, onSave }
             disabled={saving}
             style={{ padding: '8px 16px', borderRadius: 8, border: 'none', background: '#c9a96e', color: '#1b1e22', fontWeight: 800, fontSize: 13, cursor: 'pointer', opacity: saving ? 0.6 : 1 }}
           >
-            {saving ? 'Saving…' : 'Save'}
+            {saving ? t('Saving…') : t('Save')}
           </button>
         </div>
       </div>
 
       <Toolbar
+        t={t}
         mode={mode}
         onModeChange={setMode}
         selectedRoom={selectedRoom}
@@ -93,6 +94,7 @@ export default function EditorView({ initialProject, projectId, onBack, onSave }
             wallHeight={project.wall_height}
             wallColor={project.wall_color}
             wallMaterial={project.wall_material}
+            t={t}
           />
         </div>
       </div>
