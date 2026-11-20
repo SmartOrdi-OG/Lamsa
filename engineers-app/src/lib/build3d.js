@@ -82,11 +82,15 @@ export function roomArea(room) {
   return room.gw * room.gh;
 }
 
-export const WALL_T = 0.15;
-export const DOOR_W = 1.0;
-export const DOOR_H = 2.05;
-export const WIN_W = 0.9;
-export const WIN_SILL = 0.9;
+// Default dimensions (meters), grounded in common international building
+// code ranges (IBC/IRC, Eurocode) rather than arbitrary numbers — an
+// engineer can still override any of these per-room/opening, these are
+// just the sensible starting values the editor draws with.
+export const WALL_T = 0.15;    // interior partition wall: typically 0.10-0.15 m
+export const DOOR_W = 0.9;     // standard interior door: typically 0.8-0.9 m
+export const DOOR_H = 2.05;    // standard interior door: typically 2.0-2.1 m
+export const WIN_W = 0.9;      // standard window width: commonly ~0.9 m
+export const WIN_SILL = 0.9;   // standard window sill height off the floor
 const WIN_MARGIN = 0.4;
 const WIN_MIN_GAP = 0.6;
 export const ROOF_T = 0.18;

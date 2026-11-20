@@ -19,6 +19,9 @@ function nextId(prefix) {
   return prefix + '_' + Date.now().toString(36) + '_' + idCounter;
 }
 
+// Standard "comfortable" ceiling height per common building codes
+// (IBC/IRC's habitable-room minimum is 2.13 m; 2.7 m is the usual
+// residential default above that minimum) — editable per project.
 export const DEFAULT_WALL_HEIGHT = 2.7;
 export const DEFAULT_WALL_COLOR = '#e8e2d8';
 export const DEFAULT_WALL_MATERIAL = 'plaster';
