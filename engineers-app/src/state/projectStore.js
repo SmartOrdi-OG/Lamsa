@@ -41,10 +41,11 @@ export function createEmptyProject(name) {
   };
 }
 
-export function createRectRoom({ name, gx, gy, gw, gh, color, floor = 0 }) {
+export function createRectRoom({ name, gx, gy, gw, gh, color, floor = 0, room_type = 'other' }) {
   return {
     id: nextId('room'),
     name: name || 'Room',
+    room_type,
     gx, gy, gw, gh,
     color: color || '#cfd6cf',
     floor,
@@ -59,7 +60,7 @@ export function createRectRoom({ name, gx, gy, gw, gh, color, floor = 0 }) {
 // `points`) even though it's not used to draw the shape itself — build3d.js
 // and planGeometry.js both rely on that bounding box staying accurate for
 // centering/grid math, see lib/build3d.js's roomArea comment.
-export function createPolygonRoom({ name, points, color, floor = 0 }) {
+export function createPolygonRoom({ name, points, color, floor = 0, room_type = 'other' }) {
   const xs = points.map((p) => p.x);
   const ys = points.map((p) => p.y);
   const gx = Math.min(...xs), gy = Math.min(...ys);
@@ -67,6 +68,7 @@ export function createPolygonRoom({ name, points, color, floor = 0 }) {
   return {
     id: nextId('room'),
     name: name || 'Room',
+    room_type,
     points, gx, gy, gw, gh,
     color: color || '#cfd6cf',
     floor,

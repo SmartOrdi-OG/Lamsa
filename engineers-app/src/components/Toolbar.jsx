@@ -1,4 +1,5 @@
 import { FLOOR_CAP } from '../lib/planGeometry.js';
+import { ROOM_TYPES, getRoomType } from '../lib/roomTypes.js';
 
 const TOOLS = [
   { id: 'select', label: 'Select' },
@@ -30,6 +31,7 @@ export default function Toolbar({
   onModeChange,
   selectedRoom,
   onRenameRoom,
+  onChangeRoomType,
   onResizeRoomInputs,
   onDeleteRoom,
   selectedOpening,
@@ -71,44 +73,67 @@ export default function Toolbar({
           </button>
         ))}
 
-        {selectedRoom && (
-          <div style={{ display: 'flex', gap: 8, alignItems: 'center', marginInlineStart: 12 }}>
-            <input
-              value={selectedRoom.name}
-              onChange={(e) => onRenameRoom(selectedRoom.id, e.target.value)}
-              style={{ padding: '6px 10px', borderRadius: 6, border: '1px solid #d1d5db', fontSize: 13, width: 140 }}
-            />
-            {!selectedRoom.points && (
-              <>
-                <label style={{ fontSize: 12, color: '#6b7280' }}>
-                  {t('W')}
-                  <input
-                    type="number"
-                    step="0.1"
-                    min="1.5"
-                    value={selectedRoom.gw}
-                    onChange={(e) => onResizeRoomInputs(selectedRoom.id, parseFloat(e.target.value) || selectedRoom.gw, selectedRoom.gh)}
-                    style={{ width: 60, marginInlineStart: 4, padding: '4px 6px', borderRadius: 6, border: '1px solid #d1d5db' }}
-                  />
-                </label>
-                <label style={{ fontSize: 12, color: '#6b7280' }}>
-                  {t('H')}
-                  <input
-                    type="number"
-                    step="0.1"
-                    min="1.5"
-                    value={selectedRoom.gh}
-                    onChange={(e) => onResizeRoomInputs(selectedRoom.id, selectedRoom.gw, parseFloat(e.target.value) || selectedRoom.gh)}
-                    style={{ width: 60, marginInlineStart: 4, padding: '4px 6px', borderRadius: 6, border: '1px solid #d1d5db' }}
-                  />
-                </label>
-              </>
-            )}
-            <button type="button" style={btnStyle(false)} onClick={() => onDeleteRoom(selectedRoom.id)}>
-              {t('Delete Room')}
-            </button>
-          </div>
-        )}
+        {selectedRoom && (() => {
+          const roomType = getRoomType(selectedRoom.room_type);
+          return (
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, alignItems: 'center', marginInlineStart: 12 }}>
+              <select
+                value={roomType.id}
+                onChange={(e) => onChangeRoomType(selectedRoom.id, e.target.value)}
+                style={{ padding: '6px 8px', borderRadius: 6, border: '1px solid #d1d5db', fontSize: 13 }}
+              >
+                {ROOM_TYPES.map((rt) => (
+                  <option key={rt.id} value={rt.id}>{t(rt.label)}</option>
+                ))}
+              </select>
+              <input
+                value={selectedRoom.name}
+                onChange={(e) => onRenameRoom(selectedRoom.id, e.target.value)}
+                style={{ padding: '6px 10px', borderRadius: 6, border: '1px solid #d1d5db', fontSize: 13, width: 140 }}
+              />
+              {!selectedRoom.points && (
+                <>
+                  <label style={{ fontSize: 12, color: '#6b7280' }}>
+                    {t('W')}
+                    <input
+                      type="number"
+                      step="0.1"
+                      min={roomType.minW}
+                      value={selectedRoom.gw}
+                      onChange={(e) => {
+                        const parsed = parseFloat(e.target.value);
+                        const gw = Number.isFinite(parsed) ? Math.max(parsed, roomType.minW) : selectedRoom.gw;
+                        onResizeRoomInputs(selectedRoom.id, gw, selectedRoom.gh);
+                      }}
+                      style={{ width: 60, marginInlineStart: 4, padding: '4px 6px', borderRadius: 6, border: '1px solid #d1d5db' }}
+                    />
+                  </label>
+                  <label style={{ fontSize: 12, color: '#6b7280' }}>
+                    {t('H')}
+                    <input
+                      type="number"
+                      step="0.1"
+                      min={roomType.minH}
+                      value={selectedRoom.gh}
+                      onChange={(e) => {
+                        const parsed = parseFloat(e.target.value);
+                        const gh = Number.isFinite(parsed) ? Math.max(parsed, roomType.minH) : selectedRoom.gh;
+                        onResizeRoomInputs(selectedRoom.id, selectedRoom.gw, gh);
+                      }}
+                      style={{ width: 60, marginInlineStart: 4, padding: '4px 6px', borderRadius: 6, border: '1px solid #d1d5db' }}
+                    />
+                  </label>
+                  <span style={{ fontSize: 11, color: '#9ca3af' }}>
+                    {t('Min')} {roomType.minW}×{roomType.minH} m{roomType.codeBased ? ' (' + roomType.codeRef + ')' : ''}
+                  </span>
+                </>
+              )}
+              <button type="button" style={btnStyle(false)} onClick={() => onDeleteRoom(selectedRoom.id)}>
+                {t('Delete Room')}
+              </button>
+            </div>
+          );
+        })()}
 
         {selectedOpening && (
           <button type="button" style={btnStyle(false)} onClick={() => onDeleteOpening(selectedOpening.roomId, selectedOpening.openingId)}>

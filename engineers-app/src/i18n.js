@@ -73,7 +73,18 @@ export const AR = {
   'Weekly': 'أسبوعي',
   'Monthly': 'شهري',
   'credits': 'كريدت',
-  'Download': 'تحميل'
+  'Download': 'تحميل',
+  'Bedroom': 'غرفة نوم',
+  'Living Room': 'صالة',
+  'Dining Room': 'غرفة سفرة',
+  'Office': 'مكتب',
+  'Kitchen': 'مطبخ',
+  'Bathroom': 'حمام',
+  'Hallway': 'ممر',
+  'Closet': 'خزانة',
+  'Garage': 'كراج',
+  'Other': 'أخرى',
+  'Min': 'الحد الأدنى'
 };
 
 export const T = {
@@ -139,7 +150,18 @@ export const T = {
     'Weekly': 'Wöchentlich',
     'Monthly': 'Monatlich',
     'credits': 'Guthaben',
-    'Download': 'Herunterladen'
+    'Download': 'Herunterladen',
+    'Bedroom': 'Schlafzimmer',
+    'Living Room': 'Wohnzimmer',
+    'Dining Room': 'Esszimmer',
+    'Office': 'Büro',
+    'Kitchen': 'Küche',
+    'Bathroom': 'Badezimmer',
+    'Hallway': 'Flur',
+    'Closet': 'Abstellraum',
+    'Garage': 'Garage',
+    'Other': 'Sonstiges',
+    'Min': 'Min.'
   },
   es: {
     'Lamsa Engineers': 'Lamsa Ingenieros',
@@ -203,7 +225,18 @@ export const T = {
     'Weekly': 'Semanal',
     'Monthly': 'Mensual',
     'credits': 'créditos',
-    'Download': 'Descargar'
+    'Download': 'Descargar',
+    'Bedroom': 'Dormitorio',
+    'Living Room': 'Sala de estar',
+    'Dining Room': 'Comedor',
+    'Office': 'Oficina',
+    'Kitchen': 'Cocina',
+    'Bathroom': 'Baño',
+    'Hallway': 'Pasillo',
+    'Closet': 'Armario',
+    'Garage': 'Garaje',
+    'Other': 'Otro',
+    'Min': 'Mín.'
   },
   tr: {
     'Lamsa Engineers': 'Lamsa Muhendisler',
@@ -267,7 +300,18 @@ export const T = {
     'Weekly': 'Haftalik',
     'Monthly': 'Aylik',
     'credits': 'kredi',
-    'Download': 'Indir'
+    'Download': 'Indir',
+    'Bedroom': 'Yatak Odasi',
+    'Living Room': 'Oturma Odasi',
+    'Dining Room': 'Yemek Odasi',
+    'Office': 'Ofis',
+    'Kitchen': 'Mutfak',
+    'Bathroom': 'Banyo',
+    'Hallway': 'Koridor',
+    'Closet': 'Dolap Odasi',
+    'Garage': 'Garaj',
+    'Other': 'Diger',
+    'Min': 'Min.'
   },
   fr: {
     'Lamsa Engineers': 'Lamsa Ingénieurs',
@@ -331,7 +375,18 @@ export const T = {
     'Weekly': 'Hebdomadaire',
     'Monthly': 'Mensuel',
     'credits': 'crédits',
-    'Download': 'Télécharger'
+    'Download': 'Télécharger',
+    'Bedroom': 'Chambre',
+    'Living Room': 'Salon',
+    'Dining Room': 'Salle à manger',
+    'Office': 'Bureau',
+    'Kitchen': 'Cuisine',
+    'Bathroom': 'Salle de bain',
+    'Hallway': 'Couloir',
+    'Closet': 'Placard',
+    'Garage': 'Garage',
+    'Other': 'Autre',
+    'Min': 'Min.'
   },
   it: {
     'Lamsa Engineers': 'Lamsa Ingegneri',
@@ -395,7 +450,18 @@ export const T = {
     'Weekly': 'Settimanale',
     'Monthly': 'Mensile',
     'credits': 'crediti',
-    'Download': 'Scarica'
+    'Download': 'Scarica',
+    'Bedroom': 'Camera da letto',
+    'Living Room': 'Soggiorno',
+    'Dining Room': 'Sala da pranzo',
+    'Office': 'Ufficio',
+    'Kitchen': 'Cucina',
+    'Bathroom': 'Bagno',
+    'Hallway': 'Corridoio',
+    'Closet': 'Ripostiglio',
+    'Garage': 'Garage',
+    'Other': 'Altro',
+    'Min': 'Min.'
   },
   ru: {
     'Lamsa Engineers': 'Lamsa Inzhenery',
@@ -459,7 +525,18 @@ export const T = {
     'Weekly': 'Nedelnyy',
     'Monthly': 'Mesyachnyy',
     'credits': 'kreditov',
-    'Download': 'Skachat'
+    'Download': 'Skachat',
+    'Bedroom': 'Spalnya',
+    'Living Room': 'Gostinaya',
+    'Dining Room': 'Stolovaya',
+    'Office': 'Kabinet',
+    'Kitchen': 'Kukhnya',
+    'Bathroom': 'Vannaya',
+    'Hallway': 'Koridor',
+    'Closet': 'Kladovaya',
+    'Garage': 'Garazh',
+    'Other': 'Drugoe',
+    'Min': 'Min.'
   }
 };
 
