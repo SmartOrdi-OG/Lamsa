@@ -1,37 +1,87 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import {
   PPM, snap, clientToPlanMeters, hitTestWalls, hitTestOpenings, openingMarkPoints,
-  drawRoomDimensions, drawDoorSwing
+  drawRoomDimensions, drawDoorSwing, pointInPolygon, hitTestStairs, hitTestGridForStair,
+  floorToFloorHeight, stairEffectiveFootprint, drawStairSymbol
 } from '../lib/planGeometry.js';
-import { DOOR_W, WIN_W, WALL_T } from '../lib/build3d.js';
+import { DOOR_W, WIN_W, WALL_T, stairFootprint } from '../lib/build3d.js';
 
-// A fresh, intentionally simple 2D editor — Phase 1 scope is rectangular
-// rooms on a single floor, so this does NOT port architect-studio-360's
-// ArchitectStudio.jsx (which also handled polygon rooms, multi-floor,
-// furniture placement, and undo/redo all in one component). It reuses
-// that app's plan-geometry *math* (lib/planGeometry.js, lib/build3d.js's
-// constants) for snapping, wall hit-testing, dimension lines, and the
-// door-swing symbol, so the numbers/visuals match what the ported
-// lib/build3d.js will later render in 3D.
+// Phase 1 scope was rectangular rooms on a single floor. Phase 2 adds
+// multi-floor editing (one floor shown/edited at a time, via `activeFloor`),
+// free-form polygon rooms (click-to-add-vertices), and stairs — all three
+// reuse geometry/hit-testing already ported into lib/planGeometry.js and
+// lib/build3d.js (this file never had to invent new math for them).
 const MIN_ROOM_SIZE = 1.5;
 const ROOM_COLORS = ['#cfd6cf', '#d8cfc2', '#c9d3df', '#dccfd6', '#cfd8d3'];
+const CLOSE_VERTEX_TOLERANCE = 0.35; // meters — click near the first vertex to close the polygon
 
 export default function PlanEditor2D({
-  rooms,
+  rooms,       // ALL floors — height/stair calcs need the full list
+  stairs,      // ALL floors
+  wallHeight,
   gridW = 20,
   gridH = 16,
   mode,
+  activeFloor = 0,
   selectedRoomId,
   selectedOpening,
+  selectedStairId,
   onAddRoom,
+  onAddPolygonRoom,
   onMoveRoom,
   onResizeRoom,
+  onMovePolygonRoom,
   onSelectRoom,
   onAddOpening,
-  onSelectOpening
+  onSelectOpening,
+  onAddStair,
+  onMoveStair,
+  onSelectStair
 }) {
   const canvasRef = useRef(null);
-  const dragRef = useRef(null); // { kind: 'new-room'|'move'|'resize', startX, startY, roomId? }
+  const dragRef = useRef(null); // { kind: 'new-room'|'move'|'resize'|'move-polygon'|'move-stair', ... }
+  const [polyPoints, setPolyPoints] = useState(null); // vertices being placed in 'polygon' mode
+  const [cursor, setCursor] = useState(null);
+
+  const floorRooms = rooms.filter((r) => (r.floor ?? 0) === activeFloor);
+  const floorStairs = stairs.filter((s) => (s.floor ?? 0) === activeFloor);
+  const floorToFloorH = floorToFloorHeight(rooms, activeFloor, wallHeight);
+
+  // Leaving polygon-drawing mid-shape (switching tools) should not leave a
+  // half-drawn polygon lying around.
+  useEffect(() => {
+    if (mode !== 'polygon') setPolyPoints(null);
+  }, [mode]);
+
+  useEffect(() => {
+    function onKeyDown(e) {
+      if (e.key === 'Escape' && polyPoints) setPolyPoints(null);
+    }
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  }, [polyPoints]);
+
+  function drawRoomShape(ctx, room, isSelected, fillColor) {
+    if (room.points) {
+      ctx.beginPath();
+      room.points.forEach((p, i) => {
+        if (i === 0) ctx.moveTo(p.x * PPM, p.y * PPM);
+        else ctx.lineTo(p.x * PPM, p.y * PPM);
+      });
+      ctx.closePath();
+      ctx.fillStyle = fillColor;
+      ctx.fill();
+      ctx.strokeStyle = isSelected ? '#c9a96e' : '#4b5563';
+      ctx.lineWidth = Math.max(2, WALL_T * PPM);
+      ctx.stroke();
+    } else {
+      ctx.fillStyle = fillColor;
+      ctx.fillRect(room.gx * PPM, room.gy * PPM, room.gw * PPM, room.gh * PPM);
+      ctx.strokeStyle = isSelected ? '#c9a96e' : '#4b5563';
+      ctx.lineWidth = Math.max(2, WALL_T * PPM);
+      ctx.strokeRect(room.gx * PPM, room.gy * PPM, room.gw * PPM, room.gh * PPM);
+    }
+  }
 
   function draw() {
     const canvas = canvasRef.current;
@@ -55,18 +105,16 @@ export default function PlanEditor2D({
       ctx.stroke();
     }
 
-    rooms.forEach((room, i) => {
+    floorRooms.forEach((room, i) => {
       const isSelected = room.id === selectedRoomId;
-      ctx.fillStyle = room.color || ROOM_COLORS[i % ROOM_COLORS.length];
-      ctx.fillRect(room.gx * PPM, room.gy * PPM, room.gw * PPM, room.gh * PPM);
-      ctx.strokeStyle = isSelected ? '#c9a96e' : '#4b5563';
-      ctx.lineWidth = Math.max(2, WALL_T * PPM);
-      ctx.strokeRect(room.gx * PPM, room.gy * PPM, room.gw * PPM, room.gh * PPM);
+      drawRoomShape(ctx, room, isSelected, room.color || ROOM_COLORS[i % ROOM_COLORS.length]);
 
+      const cx = room.points ? room.points.reduce((s, p) => s + p.x, 0) / room.points.length : room.gx + room.gw / 2;
+      const cy = room.points ? room.points.reduce((s, p) => s + p.y, 0) / room.points.length : room.gy + room.gh / 2;
       ctx.fillStyle = '#1b1e22';
       ctx.font = '13px sans-serif';
       ctx.textAlign = 'center';
-      ctx.fillText(room.name, (room.gx + room.gw / 2) * PPM, (room.gy + room.gh / 2) * PPM);
+      ctx.fillText(room.name, cx * PPM, cy * PPM);
 
       drawRoomDimensions(ctx, room, { line: '#9ca3af', text: '#6b7280' });
 
@@ -85,13 +133,43 @@ export default function PlanEditor2D({
         if (o.kind === 'door') drawDoorSwing(ctx, room, o, isOpeningSelected ? '#c9a96e' : '#8b5e34');
       });
 
-      // Resize handle, bottom-right corner, only when selected.
-      if (isSelected) {
+      // Resize handle, bottom-right corner, only for rectangular rooms when selected.
+      if (isSelected && !room.points) {
         ctx.fillStyle = '#c9a96e';
         const hx = (room.gx + room.gw) * PPM, hy = (room.gy + room.gh) * PPM;
         ctx.fillRect(hx - 6, hy - 6, 12, 12);
       }
     });
+
+    floorStairs.forEach((s) => {
+      const rotation = s.rotation || 0;
+      const { w, d } = stairEffectiveFootprint(floorToFloorH, rotation);
+      const isSelected = s.id === selectedStairId;
+      const x0 = (s.x - w / 2) * PPM, y0 = (s.y - d / 2) * PPM;
+      ctx.strokeStyle = isSelected ? '#c9a96e' : '#6b5e3a';
+      ctx.lineWidth = 2;
+      ctx.strokeRect(x0, y0, w * PPM, d * PPM);
+      drawStairSymbol(ctx, x0, y0, w, d, rotation, stairFootprint(floorToFloorH).numSteps, isSelected ? '#c9a96e' : '#6b5e3a');
+    });
+
+    // Live preview while placing a polygon room.
+    if (polyPoints && polyPoints.length) {
+      ctx.strokeStyle = '#c9a96e';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      polyPoints.forEach((p, i) => {
+        if (i === 0) ctx.moveTo(p.x * PPM, p.y * PPM);
+        else ctx.lineTo(p.x * PPM, p.y * PPM);
+      });
+      if (cursor) ctx.lineTo(cursor.x * PPM, cursor.y * PPM);
+      ctx.stroke();
+      ctx.fillStyle = '#c9a96e';
+      polyPoints.forEach((p) => {
+        ctx.beginPath();
+        ctx.arc(p.x * PPM, p.y * PPM, 4, 0, Math.PI * 2);
+        ctx.fill();
+      });
+    }
 
     const drag = dragRef.current;
     if (drag && drag.kind === 'new-room') {
@@ -113,7 +191,9 @@ export default function PlanEditor2D({
   }
 
   function roomAt(cx, cy) {
-    return rooms.find((r) => cx >= r.gx && cx <= r.gx + r.gw && cy >= r.gy && cy <= r.gy + r.gh);
+    return floorRooms.find((r) =>
+      r.points ? pointInPolygon(r.points, cx, cy) : (cx >= r.gx && cx <= r.gx + r.gw && cy >= r.gy && cy <= r.gy + r.gh)
+    );
   }
 
   function handlePointerDown(e) {
@@ -125,20 +205,50 @@ export default function PlanEditor2D({
       return;
     }
 
-    if (mode === 'door' || mode === 'window') {
-      const width = mode === 'door' ? DOOR_W : WIN_W;
-      const hit = hitTestWalls(rooms, cx, cy, width, mode);
-      if (hit) onAddOpening(hit.roomId, mode, hit.wall, hit.position);
+    if (mode === 'polygon') {
+      const pt = { x: snap(cx), y: snap(cy) };
+      if (polyPoints && polyPoints.length >= 3) {
+        const first = polyPoints[0];
+        if (Math.hypot(pt.x - first.x, pt.y - first.y) <= CLOSE_VERTEX_TOLERANCE) {
+          onAddPolygonRoom(polyPoints);
+          setPolyPoints(null);
+          return;
+        }
+      }
+      setPolyPoints((prev) => (prev ? [...prev, pt] : [pt]));
       return;
     }
 
-    // select mode: openings first (small targets), then room body/handle.
-    const openingHit = hitTestOpenings(rooms, cx, cy);
+    if (mode === 'door' || mode === 'window') {
+      const width = mode === 'door' ? DOOR_W : WIN_W;
+      const hit = hitTestWalls(floorRooms, cx, cy, width, mode);
+      if (hit) onAddOpening(hit.roomId, mode, hit.wall, hit.edgeIndex, hit.position);
+      return;
+    }
+
+    if (mode === 'stairs') {
+      const placed = hitTestGridForStair(gridW, gridH, snap(cx), snap(cy), floorToFloorH, 0);
+      if (placed) onAddStair({ floor: activeFloor, x: placed.x, y: placed.y, rotation: 0 });
+      return;
+    }
+
+    // select mode: openings, then stairs, then room body/handle.
+    const openingHit = hitTestOpenings(floorRooms, cx, cy);
     if (openingHit) {
       onSelectOpening({ roomId: openingHit.roomId, openingId: openingHit.id });
+      onSelectStair(null);
       return;
     }
     onSelectOpening(null);
+
+    const stairHit = hitTestStairs(floorStairs, rooms, wallHeight, cx, cy);
+    if (stairHit) {
+      onSelectStair(stairHit.id);
+      onSelectRoom(null);
+      dragRef.current = { kind: 'move-stair', stairId: stairHit.id, offsetX: cx - stairHit.x, offsetY: cy - stairHit.y, rotation: stairHit.rotation };
+      return;
+    }
+    onSelectStair(null);
 
     const room = roomAt(cx, cy);
     if (!room) {
@@ -146,6 +256,11 @@ export default function PlanEditor2D({
       return;
     }
     onSelectRoom(room.id);
+
+    if (room.points) {
+      dragRef.current = { kind: 'move-polygon', roomId: room.id, startPoints: room.points, offsetX: cx, offsetY: cy };
+      return;
+    }
 
     const handleX = room.gx + room.gw, handleY = room.gy + room.gh;
     const isHandle = Math.abs(cx - handleX) < 0.25 && Math.abs(cy - handleY) < 0.25;
@@ -155,6 +270,12 @@ export default function PlanEditor2D({
   }
 
   function handlePointerMove(e) {
+    if (mode === 'polygon' && polyPoints) {
+      const { x: cx, y: cy } = toPlan(e);
+      setCursor({ x: snap(cx), y: snap(cy) });
+      return;
+    }
+
     const drag = dragRef.current;
     if (!drag) return;
     const { x: cx, y: cy } = toPlan(e);
@@ -173,10 +294,22 @@ export default function PlanEditor2D({
       onMoveRoom(drag.roomId, gx, gy);
       return;
     }
+    if (drag.kind === 'move-polygon') {
+      const dx = snap(cx - drag.offsetX), dy = snap(cy - drag.offsetY);
+      if (dx === 0 && dy === 0) return;
+      const translated = drag.startPoints.map((p) => ({ x: p.x + dx, y: p.y + dy }));
+      onMovePolygonRoom(drag.roomId, translated);
+      return;
+    }
     if (drag.kind === 'resize') {
       const gw = snap(Math.max(MIN_ROOM_SIZE, cx - drag.startGx));
       const gh = snap(Math.max(MIN_ROOM_SIZE, cy - drag.startGy));
       onResizeRoom(drag.roomId, gw, gh);
+      return;
+    }
+    if (drag.kind === 'move-stair') {
+      const placed = hitTestGridForStair(gridW, gridH, snap(cx - drag.offsetX), snap(cy - drag.offsetY), floorToFloorH, drag.rotation);
+      if (placed) onMoveStair(drag.stairId, placed.x, placed.y, drag.rotation);
     }
   }
 
@@ -187,7 +320,7 @@ export default function PlanEditor2D({
       const y = snap(Math.min(drag.startY, drag.curY));
       const w = Math.max(MIN_ROOM_SIZE, snap(Math.abs(drag.curX - drag.startX)));
       const h = Math.max(MIN_ROOM_SIZE, snap(Math.abs(drag.curY - drag.startY)));
-      onAddRoom({ gx: x, gy: y, gw: w, gh: h });
+      onAddRoom({ gx: x, gy: y, gw: w, gh: h, floor: activeFloor });
     }
     dragRef.current = null;
     draw();

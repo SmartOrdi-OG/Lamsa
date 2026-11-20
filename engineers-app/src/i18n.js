@@ -47,7 +47,15 @@ export const AR = {
   'W': 'عرض',
   'H': 'ارتفاع',
   'Reset camera': 'إعادة ضبط الكاميرا',
-  'Untitled Project': 'مشروع بدون اسم'
+  'Untitled Project': 'مشروع بدون اسم',
+  'Add Polygon Room': 'إضافة غرفة بشكل حر',
+  'Add Stairs': 'إضافة سلالم',
+  'Delete Stairs': 'حذف السلالم',
+  'Ground Floor': 'الطابق الأرضي',
+  'Floor': 'الطابق',
+  'Add Floor': 'إضافة طابق',
+  'Dollhouse view': 'عرض مقطعي',
+  'Export DXF': 'تصدير DXF'
 };
 
 export const T = {
@@ -87,7 +95,15 @@ export const T = {
     'W': 'B',
     'H': 'H',
     'Reset camera': 'Kamera zurücksetzen',
-    'Untitled Project': 'Unbenanntes Projekt'
+    'Untitled Project': 'Unbenanntes Projekt',
+    'Add Polygon Room': 'Freiform-Raum hinzufügen',
+    'Add Stairs': 'Treppe hinzufügen',
+    'Delete Stairs': 'Treppe löschen',
+    'Ground Floor': 'Erdgeschoss',
+    'Floor': 'Stockwerk',
+    'Add Floor': 'Stockwerk hinzufügen',
+    'Dollhouse view': 'Schnittansicht',
+    'Export DXF': 'DXF exportieren'
   },
   es: {
     'Lamsa Engineers': 'Lamsa Ingenieros',
@@ -125,7 +141,15 @@ export const T = {
     'W': 'An',
     'H': 'Al',
     'Reset camera': 'Restablecer cámara',
-    'Untitled Project': 'Proyecto sin título'
+    'Untitled Project': 'Proyecto sin título',
+    'Add Polygon Room': 'Añadir Habitación de Forma Libre',
+    'Add Stairs': 'Añadir Escaleras',
+    'Delete Stairs': 'Eliminar Escaleras',
+    'Ground Floor': 'Planta Baja',
+    'Floor': 'Planta',
+    'Add Floor': 'Añadir Planta',
+    'Dollhouse view': 'Vista seccionada',
+    'Export DXF': 'Exportar DXF'
   },
   tr: {
     'Lamsa Engineers': 'Lamsa Muhendisler',
@@ -163,7 +187,15 @@ export const T = {
     'W': 'G',
     'H': 'Y',
     'Reset camera': 'Kamerayi sifirla',
-    'Untitled Project': 'Isimsiz Proje'
+    'Untitled Project': 'Isimsiz Proje',
+    'Add Polygon Room': 'Serbest Sekilli Oda Ekle',
+    'Add Stairs': 'Merdiven Ekle',
+    'Delete Stairs': 'Merdiveni Sil',
+    'Ground Floor': 'Zemin Kat',
+    'Floor': 'Kat',
+    'Add Floor': 'Kat Ekle',
+    'Dollhouse view': 'Kesit Gorunumu',
+    'Export DXF': 'DXF Disa Aktar'
   },
   fr: {
     'Lamsa Engineers': 'Lamsa Ingénieurs',
@@ -201,7 +233,15 @@ export const T = {
     'W': 'L',
     'H': 'H',
     'Reset camera': 'Réinitialiser la caméra',
-    'Untitled Project': 'Projet sans titre'
+    'Untitled Project': 'Projet sans titre',
+    'Add Polygon Room': 'Ajouter une pièce de forme libre',
+    'Add Stairs': 'Ajouter un escalier',
+    'Delete Stairs': "Supprimer l'escalier",
+    'Ground Floor': 'Rez-de-chaussée',
+    'Floor': 'Étage',
+    'Add Floor': 'Ajouter un étage',
+    'Dollhouse view': 'Vue en coupe',
+    'Export DXF': 'Exporter en DXF'
   },
   it: {
     'Lamsa Engineers': 'Lamsa Ingegneri',
@@ -239,7 +279,15 @@ export const T = {
     'W': 'L',
     'H': 'A',
     'Reset camera': 'Reimposta fotocamera',
-    'Untitled Project': 'Progetto senza titolo'
+    'Untitled Project': 'Progetto senza titolo',
+    'Add Polygon Room': 'Aggiungi Stanza a Forma Libera',
+    'Add Stairs': 'Aggiungi Scale',
+    'Delete Stairs': 'Elimina Scale',
+    'Ground Floor': 'Piano Terra',
+    'Floor': 'Piano',
+    'Add Floor': 'Aggiungi Piano',
+    'Dollhouse view': 'Vista in sezione',
+    'Export DXF': 'Esporta DXF'
   },
   ru: {
     'Lamsa Engineers': 'Lamsa Inzhenery',
@@ -277,7 +325,15 @@ export const T = {
     'W': 'Sh',
     'H': 'V',
     'Reset camera': 'Sbrosit kameru',
-    'Untitled Project': 'Proekt bez nazvaniya'
+    'Untitled Project': 'Proekt bez nazvaniya',
+    'Add Polygon Room': 'Dobavit Komnatu Svobodnoy Formy',
+    'Add Stairs': 'Dobavit Lestnitsu',
+    'Delete Stairs': 'Udalit Lestnitsu',
+    'Ground Floor': 'Pervyy Etazh',
+    'Floor': 'Etazh',
+    'Add Floor': 'Dobavit Etazh',
+    'Dollhouse view': 'Razrez doma',
+    'Export DXF': 'Eksportirovat DXF'
   }
 };
 
