@@ -4,6 +4,7 @@ import PlanEditor2D from './PlanEditor2D.jsx';
 import Toolbar from './Toolbar.jsx';
 import PhotoRealModal from './PhotoRealModal.jsx';
 import { useProjectStore, createStair, createColumn } from '../state/projectStore.js';
+import { getRoomType } from '../lib/roomTypes.js';
 import { exportPlanImage } from '../lib/exportPlan.js';
 import { exportFloorsToDxf } from '../lib/dxfExport.js';
 import { floorLabel } from '../lib/planGeometry.js';
@@ -150,6 +151,23 @@ export default function EditorView({ initialProject, projectId, onBack, onSave, 
         onModeChange={setMode}
         selectedRoom={selectedRoom}
         onRenameRoom={(id, name) => actions.updateRoom(id, { name })}
+        onChangeRoomType={(id, roomTypeId) => {
+          const room = rooms.find((r) => r.id === id);
+          if (!room) return;
+          const roomType = getRoomType(roomTypeId);
+          // Naming the room by its type is the common case — free text is
+          // still editable right after via the name field for a custom
+          // name like "Master Bedroom". Dimensions are only ever bumped
+          // UP to the new type's code/practical minimum, never shrunk, so
+          // switching type never destroys a larger room the user already
+          // drew.
+          const patch = { room_type: roomTypeId, name: t(roomType.label) };
+          if (!room.points) {
+            patch.gw = Math.max(room.gw, roomType.minW);
+            patch.gh = Math.max(room.gh, roomType.minH);
+          }
+          actions.updateRoom(id, patch);
+        }}
         onResizeRoomInputs={(id, gw, gh) => actions.updateRoom(id, { gw, gh })}
         onDeleteRoom={(id) => { actions.removeRoom(id); setSelectedRoomId(null); }}
         selectedOpening={selectedOpening}

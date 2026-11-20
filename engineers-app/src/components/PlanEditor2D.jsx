@@ -5,6 +5,7 @@ import {
   floorToFloorHeight, stairEffectiveFootprint, drawStairSymbol
 } from '../lib/planGeometry.js';
 import { DOOR_W, WIN_W, WALL_T, stairFootprint, COLUMN_SIZE } from '../lib/build3d.js';
+import { getRoomType } from '../lib/roomTypes.js';
 
 // A fixed meters-based hit tolerance shrinks to almost nothing in actual
 // screen pixels once the canvas is scaled down to fit a phone-width
@@ -351,8 +352,10 @@ export default function PlanEditor2D({
       return;
     }
     if (drag.kind === 'resize') {
-      const gw = snap(Math.max(MIN_ROOM_SIZE, cx - drag.startGx));
-      const gh = snap(Math.max(MIN_ROOM_SIZE, cy - drag.startGy));
+      const room = rooms.find((r) => r.id === drag.roomId);
+      const roomType = getRoomType(room && room.room_type);
+      const gw = snap(Math.max(roomType.minW, cx - drag.startGx));
+      const gh = snap(Math.max(roomType.minH, cy - drag.startGy));
       onResizeRoom(drag.roomId, gw, gh);
       return;
     }
