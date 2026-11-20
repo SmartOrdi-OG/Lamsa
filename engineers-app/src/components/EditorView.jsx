@@ -1,7 +1,8 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import Viewport3D from './Viewport3D.jsx';
 import PlanEditor2D from './PlanEditor2D.jsx';
 import Toolbar from './Toolbar.jsx';
+import PhotoRealModal from './PhotoRealModal.jsx';
 import { useProjectStore, createStair, createColumn } from '../state/projectStore.js';
 import { exportPlanImage } from '../lib/exportPlan.js';
 import { exportFloorsToDxf } from '../lib/dxfExport.js';
@@ -19,6 +20,8 @@ export default function EditorView({ initialProject, projectId, onBack, onSave, 
   const [saveMsg, setSaveMsg] = useState('');
   const [dollhouse, setDollhouse] = useState(false);
   const [renderView, setRenderView] = useState(false);
+  const [showPhotoReal, setShowPhotoReal] = useState(false);
+  const viewportRef = useRef(null);
   // Side-by-side 2D/3D only works once there's room for both — below that,
   // stack them instead so neither gets squeezed into an unusable sliver
   // (the 2D canvas has a fixed pixel size, so splitting a phone-width
@@ -124,6 +127,14 @@ export default function EditorView({ initialProject, projectId, onBack, onSave, 
           </button>
           <button
             type="button"
+            onClick={() => setShowPhotoReal(true)}
+            title={t('Optional — uses 1 credit from your weekly/monthly plan')}
+            style={{ padding: '8px 14px', borderRadius: 8, border: '1px solid #d1d5db', background: '#fff', fontWeight: 700, fontSize: 13, cursor: 'pointer' }}
+          >
+            {t('Generate realistic image')}
+          </button>
+          <button
+            type="button"
             onClick={handleSave}
             disabled={saving}
             style={{ padding: '8px 16px', borderRadius: 8, border: 'none', background: '#c9a96e', color: '#1b1e22', fontWeight: 800, fontSize: 13, cursor: 'pointer', opacity: saving ? 0.6 : 1 }}
@@ -189,6 +200,7 @@ export default function EditorView({ initialProject, projectId, onBack, onSave, 
         </div>
         <div style={{ flex: 1, minHeight: 0 }}>
           <Viewport3D
+            ref={viewportRef}
             rooms={rooms}
             stairs={stairs}
             columns={columns}
@@ -202,6 +214,14 @@ export default function EditorView({ initialProject, projectId, onBack, onSave, 
           />
         </div>
       </div>
+
+      {showPhotoReal && (
+        <PhotoRealModal
+          captureImage={() => viewportRef.current && viewportRef.current.captureImage()}
+          onClose={() => setShowPhotoReal(false)}
+          t={t}
+        />
+      )}
     </div>
   );
 }
