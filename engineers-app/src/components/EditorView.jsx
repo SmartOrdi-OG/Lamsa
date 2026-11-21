@@ -155,6 +155,7 @@ export default function EditorView({ initialProject, projectId, onBack, onSave, 
             >
               <option value="irc">{t('IRC (US)')}</option>
               <option value="eu">{t('EU (DIN/EN)')}</option>
+              <option value="uae">{t('UAE (DBC)')}</option>
             </select>
           </label>
           <button type="button" onClick={handleExportPdf} style={{ padding: '8px 14px', borderRadius: 8, border: '1px solid #d1d5db', background: '#fff', fontWeight: 700, fontSize: 13, cursor: 'pointer' }}>

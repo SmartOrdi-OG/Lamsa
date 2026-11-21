@@ -609,7 +609,7 @@ function drawTitleBlock(ctx, canvasWidth, gridBottomY, meta) {
   ctx.fillText(meta.projectName || t("Untitled Project"), 10, y0 + 20);
   ctx.font = "11px 'IBM Plex Mono', monospace";
   ctx.fillStyle = "#68686E";
-  const standardLabel = meta.standard === "eu" ? "EU (DIN/EN)" : "IRC (US)";
+  const standardLabel = meta.standard === "eu" ? "EU (DIN/EN)" : meta.standard === "uae" ? "UAE (DBC)" : "IRC (US)";
   const dateStr = new Date().toLocaleDateString();
   ctx.fillText(`${meta.floorLabel || ""}  ·  ${dateStr}  ·  ${t("Standard")}: ${standardLabel}`, 10, y0 + 36);
   ctx.fillText("Lamsa Engineers", 10, y0 + TITLE_BLOCK_H - 12);

@@ -1069,18 +1069,28 @@ export function buildFurnitureItem(group, animState, textureCache, item, worldX,
 // European stair standard) sets 0.80 m for a private/secondary stair
 // (1.00 m for a shared/main stair in a multi-unit building, which this
 // tool doesn't distinguish, so the more permissive private-stair figure
-// is used). STAIR_WIDTH is the default a new stair is drawn with (a
-// comfortable residential width above either minimum); the applicable
-// minimum is overridable per stair (see stairFootprint's width param /
-// the Toolbar's Width field) down to whichever standard the project uses.
+// is used). Dubai Building Code 2021 (DBC), Part K (Villas), clause
+// K.5.5.2.2 sets 1.00 m (1000 mm) as the minimum clear stairway width in
+// a villa — verified against the code's own text (DBC 2021 Part K, p.
+// K40) via a code-compliance report that reproduces that page, not just
+// a secondary paraphrase. STAIR_WIDTH is the default a new stair is
+// drawn with (a comfortable residential width above any of the three
+// minimums); the applicable minimum is overridable per stair (see
+// stairFootprint's width param / the Toolbar's Width field) down to
+// whichever standard the project uses.
 export const STAIR_WIDTH = 1.0;
 export const STAIR_MIN_WIDTH_IRC = 0.914;
 export const STAIR_MIN_WIDTH_EU = 0.80;
+export const STAIR_MIN_WIDTH_UAE = 1.00;
 export function stairMinWidth(standard) {
-  return standard === 'eu' ? STAIR_MIN_WIDTH_EU : STAIR_MIN_WIDTH_IRC;
+  if (standard === 'eu') return STAIR_MIN_WIDTH_EU;
+  if (standard === 'uae') return STAIR_MIN_WIDTH_UAE;
+  return STAIR_MIN_WIDTH_IRC;
 }
 export function stairMinWidthCodeRef(standard) {
-  return standard === 'eu' ? 'DIN 18065' : 'IRC R311.7.1';
+  if (standard === 'eu') return 'DIN 18065';
+  if (standard === 'uae') return 'DBC K.5.5.2.2';
+  return 'IRC R311.7.1';
 }
 const STAIR_STEP_DEPTH = 0.28;
 const STAIR_RISER_TARGET = 0.18;
