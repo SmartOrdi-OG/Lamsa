@@ -1172,19 +1172,39 @@
     showToast(isAr ? ('تسجيل الدخول عبر ' + label + ' قريباً — يمكنك استخدام البريد الإلكتروني الآن') : ('Sign in with ' + label + ' is coming soon — use email for now'), 'info');
   }
 
+  // Google's own JS SDK refuses to run inside an embedded WebView (exactly
+  // what the Capacitor iOS app is), and there's no real Apple sign-in wired
+  // up yet either — so inside that app shell, only email/password is a
+  // working option. Hides both buttons and the "or" divider between them,
+  // leaving the primary email button as the only choice.
+  function hideSocialLoginInApp() {
+    if (!window.isCapacitorApp) return;
+    var google = document.getElementById('googleSignInBtn');
+    var divider = document.getElementById('methodDivider');
+    if (google) google.style.display = 'none';
+    if (google && google.nextElementSibling) google.nextElementSibling.style.display = 'none'; // #gsiButtonContainer
+    if (divider && divider.previousElementSibling) divider.previousElementSibling.style.display = 'none'; // Apple button
+    if (divider) divider.style.display = 'none';
+  }
+
   // GOOGLE SIGN-IN — fetches the Client ID from the server (not a secret,
   // but not worth hardcoding either) and initializes Google Identity
   // Services once both the config and the GIS script are ready. If the
   // server has no Client ID configured yet, the button falls back to the
   // "coming soon" toast instead of silently failing.
   var googleSignInReady = false;
-  fetch('/api/me?view=config', { credentials: 'include' })
-    .then(function(r) { return r.json(); })
-    .then(function(cfg) {
-      if (!cfg || !cfg.googleClientId) return;
-      initGoogleSignInWhenLoaded(cfg.googleClientId);
-    })
-    .catch(function(err) { console.error('[auth] config fetch failed:', err); });
+  // Skipped entirely inside the Capacitor iOS app shell (see
+  // hideSocialLoginInApp()) — Google's GIS SDK refuses to run in that
+  // embedded WebView anyway, so there's no point initializing it.
+  if (!window.isCapacitorApp) {
+    fetch('/api/me?view=config', { credentials: 'include' })
+      .then(function(r) { return r.json(); })
+      .then(function(cfg) {
+        if (!cfg || !cfg.googleClientId) return;
+        initGoogleSignInWhenLoaded(cfg.googleClientId);
+      })
+      .catch(function(err) { console.error('[auth] config fetch failed:', err); });
+  }
 
   function initGoogleSignInWhenLoaded(clientId) {
     if (window.google && google.accounts && google.accounts.id) {
@@ -1889,6 +1909,7 @@
   window.addEventListener('DOMContentLoaded', function() {
     setLang('en');
     initAuthBackground();
+    hideSocialLoginInApp();
     telegramAutoLogin();
     try {
       var resetToken = new URLSearchParams(window.location.search).get('reset');
