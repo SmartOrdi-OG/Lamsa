@@ -268,7 +268,7 @@ function drawTitleBlockDxf(entities, projectName, standard, t) {
   dxfLine(entities, "A-ANNO-TTLB", flip({ x: x0, y: yTop - h / 2 }, 0), flip({ x: x0 + w, y: yTop - h / 2 }, 0));
 
   dxfText(entities, "A-ANNO-TTLB", flip({ x: x0 + 0.15, y: yTop - 0.55 }, 0), 0.32, projectName || "Untitled Project");
-  const standardLabel = standard === "eu" ? "EU (DIN/EN)" : "IRC (US)";
+  const standardLabel = standard === "eu" ? "EU (DIN/EN)" : standard === "uae" ? "UAE (DBC)" : "IRC (US)";
   dxfText(
     entities, "A-ANNO-TTLB", flip({ x: x0 + 0.15, y: yTop - h / 2 - 0.5 }, 0), 0.16,
     `${t("Standard")}: ${standardLabel}   |   ${new Date().toLocaleDateString()}`
