@@ -22,6 +22,17 @@ workflows:
       # app-store-connect/keychain script steps below), which is a
       # separate, mutually exclusive path — combining both made Codemagic
       # fail on the unused identities check before the real scripts ran.
+      #
+      # `fetch-signing-files ... --create` has to generate a brand-new
+      # distribution certificate, and that needs a private key supplied
+      # up front (the cert is only the public half — without a key to
+      # pair it with, Codemagic can't save it, which is exactly the
+      # "Cannot save Signing Certificates without certificate private
+      # key" build failure). The `ios_signing` group below holds a
+      # `CERTIFICATE_PRIVATE_KEY` secret set in Codemagic's Environment
+      # variables (never committed here) that supplies that key.
+      groups:
+        - ios_signing
       vars:
         # This Capacitor project uses Swift Package Manager, not
         # CocoaPods (see ios/App/CapApp-SPM) — there's no Podfile and no
