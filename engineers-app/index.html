@@ -5,6 +5,12 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Lamsa Engineers</title>
     <link rel="icon" href="data:," />
+    <!-- window.isCapacitorApp (and, inside the Capacitor iOS app only,
+         window.LamsaIAP for Apple In-App Purchase) — loaded unconditionally
+         like every other Lamsa page; both are harmless no-ops on the
+         regular website. -->
+    <script src="/js/platform.js"></script>
+    <script src="/js/capacitor-iap-bridge.js"></script>
   </head>
   <body>
     <div id="root"></div>

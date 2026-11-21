@@ -44,3 +44,21 @@ export function startEngineerCheckout() {
     body: JSON.stringify({ kind: 'engineer', plan: 'annual', return_page: 'engineers/index.html' })
   });
 }
+
+// Apple's own App Store product id for the Engineers plan — must match the
+// APPLE_IAP_PLANS key in api/_stripe.js and the product id actually created
+// in App Store Connect exactly.
+export const APPLE_ENGINEER_PRODUCT_ID = 'com.lamsaai.app.engineers.annual';
+
+// Wires up RevenueCat with this session's email so a purchase below can be
+// tied to the same identity Stripe subscriptions already use. No-op outside
+// the Capacitor iOS app (js/capacitor-iap-bridge.js checks
+// window.isCapacitorApp itself) and on a config-fetch failure — never
+// blocks the caller.
+export async function initAppleIAP(email) {
+  if (!window.isCapacitorApp || !window.LamsaIAP || !email) return;
+  const result = await request('/api/me?view=config');
+  if (result.ok && result.data && result.data.revenueCatPublicSdkKey) {
+    await window.LamsaIAP.init(email, result.data.revenueCatPublicSdkKey);
+  }
+}

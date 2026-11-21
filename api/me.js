@@ -1,9 +1,10 @@
 import crypto from 'crypto';
 import {
-  redis, addRating, getGenerationCount, getUserSubscription, getDesignHistory, logError,
-  getEngineerEntitlement, listEngineerProjects, getEngineerProject, saveEngineerProject, deleteEngineerProject
+  redis, addRating, getGenerationCount, getUserSubscription, setUserSubscription, getDesignHistory, logError,
+  getEngineerEntitlement, setEngineerEntitlement, listEngineerProjects, getEngineerProject, saveEngineerProject, deleteEngineerProject
 } from './_db.js';
 import { requireSessionEmail, getUser, deleteUser, getSessionTokenFromRequest, destroySession, clearSessionCookie } from './_auth.js';
+import { APPLE_IAP_PLANS } from './_stripe.js';
 
 // A project blob is user-authored JSON (rooms/openings/furniture/stairs) —
 // unlike every other value this file writes, its size isn't fixed, so it
@@ -12,6 +13,43 @@ const MAX_ENGINEER_PROJECT_BYTES = 500 * 1024;
 
 function hasEngineerAccess(entitlement) {
   return !!entitlement && (entitlement.status === 'active' || entitlement.status === 'trialing');
+}
+
+// Reads the authoritative post-purchase state straight from RevenueCat
+// right after the iOS app's native purchase sheet closes, rather than
+// waiting on its webhook — closes the race between "the SDK says this
+// succeeded" and "our DB has been updated yet". app_user_id is always our
+// own session email (see ios-app's capacitor-iap-bridge, which calls
+// Purchases.logIn(email) right after login), the same identity Stripe
+// purchases are already keyed by.
+async function fetchRevenueCatSubscriber(appUserId) {
+  const apiKey = (process.env.REVENUECAT_SECRET_API_KEY || '').trim();
+  if (!apiKey) throw new Error('REVENUECAT_SECRET_API_KEY not configured');
+
+  const resp = await fetch('https://api.revenuecat.com/v1/subscribers/' + encodeURIComponent(appUserId), {
+    headers: { Authorization: 'Bearer ' + apiKey }
+  });
+  if (!resp.ok) throw new Error('RevenueCat subscriber lookup failed: ' + resp.status);
+  const data = await resp.json();
+  return (data && data.subscriber) || null;
+}
+
+// Maps one RevenueCat `subscriptions[productId]` entry to the same record
+// shape stripe-webhook.js writes (status/plan/currentPeriodEnd/trialEnd),
+// so every existing `hasEngineerAccess`/`hasAccess`-style check elsewhere
+// keeps working unchanged regardless of which payment platform granted it.
+function revenueCatSubToRecord(email, plan, sub) {
+  const expiresAt = sub.expires_date ? new Date(sub.expires_date).getTime() : null;
+  const isExpired = expiresAt !== null && expiresAt < Date.now();
+  return {
+    email,
+    plan,
+    status: isExpired ? 'canceled' : (sub.period_type === 'trial' ? 'trialing' : 'active'),
+    platform: 'apple',
+    appleProductId: sub.product_identifier || null,
+    currentPeriodEnd: expiresAt ? Math.floor(expiresAt / 1000) : null,
+    trialEnd: (!isExpired && sub.period_type === 'trial' && expiresAt) ? Math.floor(expiresAt / 1000) : null
+  };
 }
 
 // Shown only to the team account — this is a site-wide number, not
@@ -32,7 +70,8 @@ export default async function handler(req, res) {
   if (req.method === 'GET' && req.query.view === 'config') {
     return res.status(200).json({
       googleClientId: process.env.GOOGLE_CLIENT_ID || null,
-      appleClientId: process.env.APPLE_CLIENT_ID || null
+      appleClientId: process.env.APPLE_CLIENT_ID || null,
+      revenueCatPublicSdkKey: process.env.REVENUECAT_PUBLIC_SDK_KEY || null
     });
   }
 
@@ -62,6 +101,40 @@ export default async function handler(req, res) {
         }
         await addRating(email, ratingNum, comment);
         return res.status(200).json({ ok: true });
+      }
+
+      // Called by ios-app's capacitor-iap-bridge right after a native
+      // StoreKit purchase/restore completes — see fetchRevenueCatSubscriber
+      // above for why this exists instead of relying on the async webhook
+      // alone (that still runs, as a backstop for renewals/cancellations
+      // the app isn't open to witness).
+      if (action === 'sync_apple_entitlement') {
+        let subscriber;
+        try {
+          subscriber = await fetchRevenueCatSubscriber(email);
+        } catch (err) {
+          console.error('[me] sync_apple_entitlement failed:', err.message);
+          await logError('me:sync_apple_entitlement', err.message, err.stack);
+          return res.status(502).json({ error: 'Could not verify the purchase with Apple right now — it will sync automatically shortly.' });
+        }
+
+        const subscriptions = (subscriber && subscriber.subscriptions) || {};
+        let granted = null;
+        for (const [productId, sub] of Object.entries(subscriptions)) {
+          const planInfo = APPLE_IAP_PLANS[productId];
+          if (!planInfo) continue; // not a product this app recognizes (yet)
+
+          const record = revenueCatSubToRecord(email, planInfo.plan, sub);
+          if (planInfo.kind === 'engineer') {
+            await setEngineerEntitlement(email, record);
+          } else {
+            await setUserSubscription(email, record);
+          }
+          granted = record;
+        }
+
+        if (!granted) return res.status(404).json({ error: 'No matching Apple purchase found yet — try again in a moment' });
+        return res.status(200).json({ ok: true, entitlement: granted });
       }
 
       // Engineers section project save/delete — gated server-side on the

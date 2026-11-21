@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { startEngineerCheckout } from '../api/client.js';
+import { startEngineerCheckout, APPLE_ENGINEER_PRODUCT_ID } from '../api/client.js';
 
 export default function PaywallScreen({ status, t }) {
   const [loading, setLoading] = useState(false);
@@ -8,6 +8,22 @@ export default function PaywallScreen({ status, t }) {
   async function handleStart() {
     setLoading(true);
     setError(null);
+
+    // Apple's guideline 3.1.1 requires in-app digital purchases to go
+    // through StoreKit on iOS — window.LamsaIAP (js/capacitor-iap-bridge.js)
+    // wraps that; everywhere else (web, Android) keeps using Stripe below.
+    if (window.isCapacitorApp) {
+      const result = await window.LamsaIAP.purchase(APPLE_ENGINEER_PRODUCT_ID);
+      setLoading(false);
+      if (result.cancelled) return; // user backed out of the native sheet — not an error
+      if (!result.ok) {
+        setError(result.error || t('Something went wrong, please try again'));
+        return;
+      }
+      window.location.reload(); // re-runs App.jsx's entitlement check, now entitled
+      return;
+    }
+
     const result = await startEngineerCheckout();
     if (result.status === 401) {
       window.location.href = '/lamsa-auth.html';
@@ -19,6 +35,18 @@ export default function PaywallScreen({ status, t }) {
       return;
     }
     window.location.href = result.data.url;
+  }
+
+  async function handleRestore() {
+    setLoading(true);
+    setError(null);
+    const result = await window.LamsaIAP.restorePurchases();
+    setLoading(false);
+    if (!result.ok) {
+      setError(result.error || t('Nothing to restore'));
+      return;
+    }
+    window.location.reload();
   }
 
   const lapsed = status === 'canceled' || status === 'past_due' || status === 'unpaid';
@@ -52,6 +80,16 @@ export default function PaywallScreen({ status, t }) {
         {loading ? t('Starting…') : t('Start free trial')}
       </button>
       {error && <div style={{ color: '#e05555', fontSize: 13, marginTop: 10 }}>{error}</div>}
+      {window.isCapacitorApp && (
+        <button
+          type="button"
+          onClick={handleRestore}
+          disabled={loading}
+          style={{ background: 'none', border: 'none', color: '#6b7280', fontSize: 13, marginTop: 14, cursor: 'pointer', textDecoration: 'underline' }}
+        >
+          {t('Restore Purchases')}
+        </button>
+      )}
     </div>
   );
 }

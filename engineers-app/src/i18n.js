@@ -27,6 +27,7 @@ export const AR = {
   '14-day free trial, cancel anytime': 'تجربة مجانية لمدة 14 يوم، إلغاء بأي وقت',
   'Starting…': 'جارٍ البدء…',
   'Start free trial': 'ابدأ التجربة المجانية',
+  'Restore Purchases': 'استعادة المشتريات',
   'Something went wrong, please try again': 'حدث خطأ ما، حاول مرة أخرى',
   'Your Projects': 'مشاريعك',
   'New Project': 'مشروع جديد',

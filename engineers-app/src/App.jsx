@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import PaywallScreen from './components/PaywallScreen.jsx';
 import ProjectList from './components/ProjectList.jsx';
 import EditorView from './components/EditorView.jsx';
-import { getMe, listProjects, getProject, saveProject, deleteProject } from './api/client.js';
+import { getMe, listProjects, getProject, saveProject, deleteProject, initAppleIAP } from './api/client.js';
 import { createEmptyProject } from './state/projectStore.js';
 import { useLang } from './i18n.js';
 
@@ -28,6 +28,11 @@ export default function App() {
         setView('signin');
         return;
       }
+      // Fire-and-forget: configures RevenueCat for this session's email so
+      // PaywallScreen's purchase button works once tapped. A no-op outside
+      // the Capacitor iOS app or if it fails — never blocks this view.
+      initAppleIAP(result.data.email);
+
       const entitlement = result.data.engineerSubscription;
       setEntitlementStatus(entitlement ? entitlement.status : null);
       if (!hasAccess(entitlement)) {

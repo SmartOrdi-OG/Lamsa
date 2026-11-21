@@ -1,9 +1,13 @@
-import { stripe } from './_stripe.js';
+import { stripe, APPLE_IAP_PLANS } from './_stripe.js';
 import { addCredits, markEventProcessed, logError, setUserSubscription, setEngineerEntitlement } from './_db.js';
 
 // Stripe signature verification needs the exact raw request bytes — Vercel's
 // default JSON body parser would re-serialize the body and break the
 // signature check, so it's disabled here and the body is read manually.
+// RevenueCat's webhook (handled in the same file below — see
+// handleRevenueCatEvent — there's no serverless function slot free for a
+// separate file, the Hobby-plan 12-function cap is exactly full) doesn't
+// need raw bytes, but reads the body the same way for simplicity.
 export const config = {
   api: {
     bodyParser: false
@@ -18,8 +22,83 @@ async function readRawBody(readable) {
   return Buffer.concat(chunks);
 }
 
+// RevenueCat's own webhook, forwarding Apple IAP subscription lifecycle
+// events — kept in this same file/URL as Stripe's webhook (see the comment
+// on `config` above). Auth here is a plain shared-secret compare (the exact
+// string configured as RevenueCat's "Authorization header" value), not
+// Stripe-style HMAC, so it needs none of the raw-body signature machinery
+// above — just the already-read rawBody, JSON-parsed.
+async function handleRevenueCatEvent(rawBody, req, res) {
+  const REVENUECAT_WEBHOOK_SECRET = (process.env.REVENUECAT_WEBHOOK_SECRET || '').trim();
+  if (!REVENUECAT_WEBHOOK_SECRET) {
+    console.error('[stripe-webhook] REVENUECAT_WEBHOOK_SECRET not configured');
+    return res.status(500).send('RevenueCat webhook not configured');
+  }
+  if ((req.headers['authorization'] || '') !== REVENUECAT_WEBHOOK_SECRET) {
+    console.error('[stripe-webhook] RevenueCat webhook auth mismatch');
+    return res.status(401).send('Unauthorized');
+  }
+
+  let payload;
+  try {
+    payload = JSON.parse(rawBody.toString('utf8'));
+  } catch (err) {
+    return res.status(400).send('Invalid JSON');
+  }
+
+  const event = payload && payload.event;
+  if (!event) return res.status(200).json({ received: true, skipped: 'no event' });
+
+  console.log('[stripe-webhook] received RevenueCat event:', event.type, event.id);
+
+  // app_user_id is always our own session email — see ios-app's
+  // capacitor-iap-bridge, which calls Purchases.logIn(email) right after
+  // login, the same identity Stripe subscriptions are already keyed by.
+  const email = (event.app_user_id || '').trim().toLowerCase();
+  const planInfo = APPLE_IAP_PLANS[event.product_id];
+  if (!email || !planInfo) {
+    return res.status(200).json({ received: true, skipped: 'unknown email or product' });
+  }
+
+  const isNewEvent = await markEventProcessed('revenuecat:' + event.id);
+  if (!isNewEvent) {
+    console.log('[stripe-webhook] duplicate delivery of RevenueCat event', event.id, '- skipping');
+    return res.status(200).json({ received: true, duplicate: true });
+  }
+
+  // EXPIRATION is the definitive "access should end" signal — CANCELLATION
+  // alone just means auto-renew was turned off while the current paid
+  // period (or trial) continues, so it must NOT downgrade status early.
+  const status = event.type === 'EXPIRATION'
+    ? 'canceled'
+    : (String(event.period_type || '').toLowerCase() === 'trial' ? 'trialing' : 'active');
+
+  const record = {
+    email, plan: planInfo.plan, status,
+    platform: 'apple', appleProductId: event.product_id,
+    currentPeriodEnd: event.expiration_at_ms ? Math.floor(event.expiration_at_ms / 1000) : null,
+    trialEnd: (status === 'trialing' && event.expiration_at_ms) ? Math.floor(event.expiration_at_ms / 1000) : null
+  };
+
+  if (planInfo.kind === 'engineer') {
+    await setEngineerEntitlement(email, record);
+  } else {
+    await setUserSubscription(email, record);
+  }
+  console.log('[stripe-webhook] RevenueCat', event.type, 'for', email, '-> status', status);
+  return res.status(200).json({ received: true });
+}
+
 export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).send('Method not allowed');
+
+  // Stripe always sends its HMAC signature on this header; RevenueCat never
+  // does, so this alone safely tells the two providers' requests apart
+  // without a separate URL/route for each.
+  if (!req.headers['stripe-signature']) {
+    const rawBody = await readRawBody(req);
+    return handleRevenueCatEvent(rawBody, req, res);
+  }
 
   const STRIPE_WEBHOOK_SECRET = (process.env.STRIPE_WEBHOOK_SECRET || '').trim();
   if (!stripe || !STRIPE_WEBHOOK_SECRET) {

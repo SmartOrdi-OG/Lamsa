@@ -8,8 +8,8 @@ for ordinary site updates.
 
 ## What's here
 
-- `ios/App/` — the generated Xcode project (App.xcworkspace once CocoaPods
-  has run).
+- `ios/App/` — the generated Xcode project (`App.xcodeproj` — Swift Package
+  Manager, not CocoaPods; there's no `.xcworkspace`).
 - `resources/` — the 1024×1024 source icon and splash screens
   `@capacitor/assets` generated the real asset catalogs from.
 - `../codemagic.yaml` (repo root — Codemagic only auto-detects it there,
@@ -32,22 +32,40 @@ for ordinary site updates.
    (`submit_to_testflight: true` in `codemagic.yaml`; flip
    `submit_to_app_store` to `true` once you're ready for a real release
    instead of just a TestFlight build).
-5. Start a build. Codemagic runs `pod install`, builds the `.ipa`, signs
-   it, and uploads it — all in the cloud.
+5. Start a build. Codemagic runs `npm ci && npx cap sync ios`, builds the
+   `.ipa`, signs it, and uploads it — all in the cloud.
 
 ## Before you submit for review — known risks to settle first
 
 These aren't code bugs; they're Apple App Store policy questions that
 need a decision before (or the app risks rejection after) submission:
 
-1. **Payments.** The app currently links out to Stripe for the Engineers
-   $300/year plan and credit packs, the same pattern already in use on
-   Google Play. Apple's guideline 3.1.1 requires in-app digital
-   purchases to go through Apple's own In-App Purchase (StoreKit) unless
-   you qualify for and have been granted the "External Purchase Link"
-   entitlement (US only today, and it still carries a fee). Submitting
-   with a bare external Stripe link is a real rejection risk — it may
-   simply get flagged, where Android enforcement has been looser.
+1. **Payments — Engineers plan fixed, credit packs still pending.** The
+   Engineers $300/year plan now goes through real Apple In-App Purchase on
+   iOS (via RevenueCat — see `iap-bridge/`, `api/_stripe.js`'s
+   `APPLE_IAP_PLANS`, and the `sync_apple_entitlement` action in
+   `api/me.js`), satisfying guideline 3.1.1 for that plan. The credits
+   packs (weekly/monthly) still link out to Stripe on iOS too — same
+   rejection risk as before for those specifically, until they get the same
+   treatment (tracked as a follow-up; the pattern is now proven end-to-end
+   on the Engineers plan, so it's mostly repetition from here). Web and
+   Android are unaffected either way — both keep using Stripe for
+   everything, gated by `window.isCapacitorApp` being false there.
+
+   **One-time manual setup needed before this actually works** (code alone
+   isn't enough):
+   - App Store Connect → Subscriptions: confirm the Paid Apps Agreement is
+     signed, then create subscription group "Lamsa Engineers" with product
+     `com.lamsaai.app.engineers.annual` ($300/year, 14-day free trial).
+   - A RevenueCat account/project connected to App Store Connect, with an
+     entitlement mapped to that product.
+   - Three Vercel environment variables: `REVENUECAT_PUBLIC_SDK_KEY`
+     (client-safe, served via `/api/me?view=config`),
+     `REVENUECAT_SECRET_API_KEY` (server-side REST calls),
+     `REVENUECAT_WEBHOOK_SECRET` (must match RevenueCat's configured
+     webhook Authorization header exactly — point RevenueCat's webhook at
+     the existing `/api/stripe-webhook` URL; it now handles both
+     providers, see that file's `handleRevenueCatEvent`).
 
 ~~2. Google Sign-In / 3. Missing "Sign in with Apple"~~ — **fixed**:
 confirmed via a real TestFlight install that Google's Identity Services
