@@ -1,6 +1,64 @@
+import { useEffect, useRef, useState } from 'react';
 import { FLOOR_CAP, floorLabel } from '../lib/planGeometry.js';
 import { ROOM_TYPES, getRoomType } from '../lib/roomTypes.js';
 import { STAIR_WIDTH, STAIR_MIN_WIDTH } from '../lib/build3d.js';
+
+// A plain `value={someNumber}` controlled input fights the user the
+// moment they clear it to type a new number: an empty field parses to
+// NaN, the old onChange fell back to the previous value, and React
+// immediately re-renders the input back to showing that old value —
+// so backspacing visibly did nothing ("the number won't clear/won't
+// change"). This keeps its own local text so the field can sit empty
+// (or mid-edit, e.g. "6.") while the user types, only pushing a
+// clamped number upstream once it actually parses, and only
+// re-syncing its text from the outside (switching to a different
+// room/stair, or an external change like a room-type bump) rather
+// than after every keystroke of its own.
+function DimensionField({ entityId, value, min, step = 0.1, onCommit, style }) {
+  const [text, setText] = useState(() => String(value));
+  const pushedRef = useRef(value);
+  const entityRef = useRef(entityId);
+
+  useEffect(() => {
+    const entityChanged = entityId !== entityRef.current;
+    const externallyChanged = value !== pushedRef.current;
+    if (entityChanged || externallyChanged) {
+      setText(String(value));
+      pushedRef.current = value;
+      entityRef.current = entityId;
+    }
+  }, [entityId, value]);
+
+  function handleChange(e) {
+    const raw = e.target.value;
+    setText(raw);
+    const parsed = parseFloat(raw);
+    if (!Number.isFinite(parsed)) return; // mid-edit (empty, "-", "6.") — wait for more input
+    const clamped = Math.max(parsed, min);
+    pushedRef.current = clamped;
+    if (clamped !== value) onCommit(clamped);
+  }
+
+  function handleBlur() {
+    const parsed = parseFloat(text);
+    const resolved = Number.isFinite(parsed) ? Math.max(parsed, min) : value;
+    setText(String(resolved));
+    pushedRef.current = resolved;
+    if (resolved !== value) onCommit(resolved);
+  }
+
+  return (
+    <input
+      type="number"
+      step={step}
+      min={min}
+      value={text}
+      onChange={handleChange}
+      onBlur={handleBlur}
+      style={style}
+    />
+  );
+}
 
 const TOOLS = [
   { id: 'select', label: 'Select' },
@@ -93,31 +151,21 @@ export default function Toolbar({
                 <>
                   <label style={{ fontSize: 12, color: '#6b7280' }}>
                     {t('W')}
-                    <input
-                      type="number"
-                      step="0.1"
-                      min={roomType.minW}
+                    <DimensionField
+                      entityId={selectedRoom.id}
                       value={selectedRoom.gw}
-                      onChange={(e) => {
-                        const parsed = parseFloat(e.target.value);
-                        const gw = Number.isFinite(parsed) ? Math.max(parsed, roomType.minW) : selectedRoom.gw;
-                        onResizeRoomInputs(selectedRoom.id, gw, selectedRoom.gh);
-                      }}
+                      min={roomType.minW}
+                      onCommit={(gw) => onResizeRoomInputs(selectedRoom.id, gw, selectedRoom.gh)}
                       style={{ width: 60, marginInlineStart: 4, padding: '4px 6px', borderRadius: 6, border: '1px solid #d1d5db' }}
                     />
                   </label>
                   <label style={{ fontSize: 12, color: '#6b7280' }}>
                     {t('H')}
-                    <input
-                      type="number"
-                      step="0.1"
-                      min={roomType.minH}
+                    <DimensionField
+                      entityId={selectedRoom.id}
                       value={selectedRoom.gh}
-                      onChange={(e) => {
-                        const parsed = parseFloat(e.target.value);
-                        const gh = Number.isFinite(parsed) ? Math.max(parsed, roomType.minH) : selectedRoom.gh;
-                        onResizeRoomInputs(selectedRoom.id, selectedRoom.gw, gh);
-                      }}
+                      min={roomType.minH}
+                      onCommit={(gh) => onResizeRoomInputs(selectedRoom.id, selectedRoom.gw, gh)}
                       style={{ width: 60, marginInlineStart: 4, padding: '4px 6px', borderRadius: 6, border: '1px solid #d1d5db' }}
                     />
                   </label>
@@ -143,16 +191,12 @@ export default function Toolbar({
           <div style={{ display: 'flex', gap: 8, alignItems: 'center', marginInlineStart: 12 }}>
             <label style={{ fontSize: 12, color: '#6b7280' }}>
               {t('Width')}
-              <input
-                type="number"
-                step="0.05"
-                min={STAIR_MIN_WIDTH}
+              <DimensionField
+                entityId={selectedStair.id}
                 value={selectedStair.width ?? STAIR_WIDTH}
-                onChange={(e) => {
-                  const parsed = parseFloat(e.target.value);
-                  const width = Number.isFinite(parsed) ? Math.max(parsed, STAIR_MIN_WIDTH) : (selectedStair.width ?? STAIR_WIDTH);
-                  onResizeStairWidth(selectedStair.id, width);
-                }}
+                min={STAIR_MIN_WIDTH}
+                step={0.05}
+                onCommit={(width) => onResizeStairWidth(selectedStair.id, width)}
                 style={{ width: 60, marginInlineStart: 4, padding: '4px 6px', borderRadius: 6, border: '1px solid #d1d5db' }}
               />
             </label>
