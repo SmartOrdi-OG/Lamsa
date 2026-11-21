@@ -182,6 +182,7 @@ export default function EditorView({ initialProject, projectId, onBack, onSave, 
         onSetActiveFloor={setActiveFloor}
         onAddFloor={handleAddFloor}
         selectedStair={selectedStair}
+        onResizeStairWidth={(id, width) => actions.updateStair(id, { width })}
         onDeleteStair={(id) => { actions.removeStair(id); setSelectedStairId(null); }}
         selectedColumn={selectedColumn}
         onDeleteColumn={(id) => { actions.removeColumn(id); setSelectedColumnId(null); }}

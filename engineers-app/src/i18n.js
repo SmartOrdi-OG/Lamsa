@@ -85,7 +85,8 @@ export const AR = {
   'Closet': 'خزانة',
   'Garage': 'كراج',
   'Other': 'أخرى',
-  'Min': 'الحد الأدنى'
+  'Min': 'الحد الأدنى',
+  'Width': 'العرض'
 };
 
 export const T = {
@@ -163,7 +164,8 @@ export const T = {
     'Closet': 'Abstellraum',
     'Garage': 'Garage',
     'Other': 'Sonstiges',
-    'Min': 'Min.'
+    'Min': 'Min.',
+    'Width': 'Breite'
   },
   es: {
     'Lamsa Engineers': 'Lamsa Ingenieros',
@@ -239,7 +241,8 @@ export const T = {
     'Closet': 'Armario',
     'Garage': 'Garaje',
     'Other': 'Otro',
-    'Min': 'Mín.'
+    'Min': 'Mín.',
+    'Width': 'Ancho'
   },
   tr: {
     'Lamsa Engineers': 'Lamsa Muhendisler',
@@ -315,7 +318,8 @@ export const T = {
     'Closet': 'Dolap Odasi',
     'Garage': 'Garaj',
     'Other': 'Diger',
-    'Min': 'Min.'
+    'Min': 'Min.',
+    'Width': 'Genislik'
   },
   fr: {
     'Lamsa Engineers': 'Lamsa Ingénieurs',
@@ -391,7 +395,8 @@ export const T = {
     'Closet': 'Placard',
     'Garage': 'Garage',
     'Other': 'Autre',
-    'Min': 'Min.'
+    'Min': 'Min.',
+    'Width': 'Largeur'
   },
   it: {
     'Lamsa Engineers': 'Lamsa Ingegneri',
@@ -467,7 +472,8 @@ export const T = {
     'Closet': 'Ripostiglio',
     'Garage': 'Garage',
     'Other': 'Altro',
-    'Min': 'Min.'
+    'Min': 'Min.',
+    'Width': 'Larghezza'
   },
   ru: {
     'Lamsa Engineers': 'Lamsa Inzhenery',
@@ -543,7 +549,8 @@ export const T = {
     'Closet': 'Kladovaya',
     'Garage': 'Garazh',
     'Other': 'Drugoe',
-    'Min': 'Min.'
+    'Min': 'Min.',
+    'Width': 'Shirina'
   }
 };
 

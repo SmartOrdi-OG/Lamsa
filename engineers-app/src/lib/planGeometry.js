@@ -526,10 +526,11 @@ export function floorToFloorHeight(rooms, floor, projectWallHeight) {
 /**
  * @param {number} floorToFloorH
  * @param {number} rotation
+ * @param {number} [width]
  * @returns {{ w: number, d: number }}
  */
-export function stairEffectiveFootprint(floorToFloorH, rotation) {
-  const { w, d } = stairFootprint(floorToFloorH);
+export function stairEffectiveFootprint(floorToFloorH, rotation, width) {
+  const { w, d } = stairFootprint(floorToFloorH, width);
   const swapped = rotation === 90 || rotation === 270;
   return { w: swapped ? d : w, d: swapped ? w : d };
 }
@@ -548,12 +549,12 @@ export function hitTestStairs(stairsForFloor, rooms, projectWallHeight, cx, cy) 
   stairsForFloor.forEach((s) => {
     const h = floorToFloorHeight(rooms, s.floor ?? 0, projectWallHeight);
     const rotation = s.rotation || 0;
-    const { w, d } = stairEffectiveFootprint(h, rotation);
+    const { w, d } = stairEffectiveFootprint(h, rotation, s.width);
     const ax0 = s.x - w / 2, ax1 = s.x + w / 2, ay0 = s.y - d / 2, ay1 = s.y + d / 2;
     const dx = Math.max(ax0 - cx, 0, cx - ax1);
     const dz = Math.max(ay0 - cy, 0, cy - ay1);
     const dist = Math.hypot(dx, dz);
-    if (!best || dist < best.dist) best = { dist, id: s.id, floor: s.floor ?? 0, x: s.x, y: s.y, rotation };
+    if (!best || dist < best.dist) best = { dist, id: s.id, floor: s.floor ?? 0, x: s.x, y: s.y, rotation, width: s.width };
   });
   if (!best || best.dist > STAIR_HIT_TOLERANCE) return null;
   return best;
@@ -567,10 +568,11 @@ export function hitTestStairs(stairsForFloor, rooms, projectWallHeight, cx, cy) 
  * @param {number} cy
  * @param {number} floorToFloorH
  * @param {number} rotation
+ * @param {number} [width]
  * @returns {{ x: number, y: number } | null}
  */
-export function hitTestGridForStair(gridW, gridH, cx, cy, floorToFloorH, rotation) {
-  const { w, d } = stairEffectiveFootprint(floorToFloorH, rotation);
+export function hitTestGridForStair(gridW, gridH, cx, cy, floorToFloorH, rotation, width) {
+  const { w, d } = stairEffectiveFootprint(floorToFloorH, rotation, width);
   if (gridW < w || gridH < d) return null;
   const half_w = w / 2, half_d = d / 2;
   const x = clamp(cx, half_w, gridW - half_w);

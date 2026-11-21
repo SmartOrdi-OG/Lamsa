@@ -183,7 +183,7 @@ function drawStairsDxf(entities, allRooms, stairsForFloor, projectWallHeight, xO
   stairsForFloor.forEach((s) => {
     const h = floorToFloorHeight(allRooms, s.floor ?? 0, projectWallHeight);
     const rotation = s.rotation || 0;
-    const { w, d } = stairEffectiveFootprint(h, rotation);
+    const { w, d } = stairEffectiveFootprint(h, rotation, s.width);
     const x0 = s.x - w / 2, x1 = s.x + w / 2, y0 = s.y - d / 2, y1 = s.y + d / 2;
     const corners = [{ x: x0, y: y0 }, { x: x1, y: y0 }, { x: x1, y: y1 }, { x: x0, y: y1 }].map((p) => flip(p, xOffset));
     dxfLwPolyline(entities, "STAIRS", corners, true);
