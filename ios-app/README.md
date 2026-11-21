@@ -12,12 +12,15 @@ for ordinary site updates.
   has run).
 - `resources/` — the 1024×1024 source icon and splash screens
   `@capacitor/assets` generated the real asset catalogs from.
-- `codemagic.yaml` — a cloud build pipeline (no Mac needed on your end).
+- `../codemagic.yaml` (repo root — Codemagic only auto-detects it there,
+  not inside a subfolder) — a cloud build pipeline (no Mac needed on your
+  end). It sets `working_directory: ios-app` so every build step still
+  runs from here.
 
 ## Building without a Mac: Codemagic
 
 1. Go to https://codemagic.io, sign up, and connect this GitHub repo.
-2. Codemagic will detect `ios-app/codemagic.yaml` and offer the
+2. Codemagic will detect the repo root's `codemagic.yaml` and offer the
    **ios-release** workflow.
 3. Under the app's **Code signing** settings in Codemagic, connect your
    Apple Developer account (Apple ID + an App Store Connect API key you
