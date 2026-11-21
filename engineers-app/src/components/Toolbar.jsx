@@ -1,4 +1,4 @@
-import { FLOOR_CAP } from '../lib/planGeometry.js';
+import { FLOOR_CAP, floorLabel } from '../lib/planGeometry.js';
 import { ROOM_TYPES, getRoomType } from '../lib/roomTypes.js';
 
 const TOOLS = [
@@ -20,10 +20,6 @@ const btnStyle = (active) => ({
   fontSize: 13,
   cursor: 'pointer'
 });
-
-function floorLabel(t, n) {
-  return n === 0 ? t('Ground Floor') : t('Floor') + ' ' + n;
-}
 
 export default function Toolbar({
   t,
@@ -54,9 +50,9 @@ export default function Toolbar({
             type="button"
             style={btnStyle(f === activeFloor)}
             onClick={() => onSetActiveFloor && onSetActiveFloor(f)}
-            title={floorLabel(t, f)}
+            title={floorLabel(f, t)}
           >
-            {floorLabel(t, f)}
+            {floorLabel(f, t)}
           </button>
         ))}
         {floorCount < FLOOR_CAP && (
