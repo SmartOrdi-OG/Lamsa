@@ -580,17 +580,76 @@ export function hitTestGridForStair(gridW, gridH, cx, cy, floorToFloorH, rotatio
   return { x, y };
 }
 
+// Footer strip height reserved below the grid for the ISO 7200-style
+// title block (project/sheet identification is a standard requirement
+// of real engineering drawings, not just this tool's own convention) and
+// a graphic scale bar. A *graphic* bar — not a printed "1:100" ratio —
+// stays accurate however the image is later resized or printed, since
+// it's measured directly against the drawing rather than asserting a
+// fixed reproduction scale this tool doesn't control.
+const TITLE_BLOCK_H = 90;
+
+// ISO 7200-style title block (project/drawing identification fields a
+// real engineering drawing needs) plus a graphic scale bar, drawn across
+// the footer strip TITLE_BLOCK_H reserves below the grid.
+function drawTitleBlock(ctx, canvasWidth, gridBottomY, meta) {
+  const t = meta.t || ((s) => s);
+  const y0 = gridBottomY;
+  ctx.strokeStyle = "#1A1A1D";
+  ctx.lineWidth = 1.5;
+  ctx.strokeRect(0.5, y0 + 0.5, canvasWidth - 1, TITLE_BLOCK_H - 1);
+  ctx.beginPath();
+  ctx.moveTo(0, y0 + TITLE_BLOCK_H / 2);
+  ctx.lineTo(canvasWidth, y0 + TITLE_BLOCK_H / 2);
+  ctx.stroke();
+
+  ctx.fillStyle = "#1A1A1D";
+  ctx.textAlign = "start";
+  ctx.font = "700 14px Tajawal, sans-serif";
+  ctx.fillText(meta.projectName || t("Untitled Project"), 10, y0 + 20);
+  ctx.font = "11px 'IBM Plex Mono', monospace";
+  ctx.fillStyle = "#68686E";
+  const standardLabel = meta.standard === "eu" ? "EU (DIN/EN)" : "IRC (US)";
+  const dateStr = new Date().toLocaleDateString();
+  ctx.fillText(`${meta.floorLabel || ""}  ·  ${dateStr}  ·  ${t("Standard")}: ${standardLabel}`, 10, y0 + 36);
+  ctx.fillText("Lamsa Engineers", 10, y0 + TITLE_BLOCK_H - 12);
+
+  // Graphic scale bar — alternating black/white 1 m segments, labeled in
+  // real-world meters, measured directly against the grid above it
+  // (PPM = pixels per plan-meter) so it stays correct regardless of how
+  // this image is later resized or printed.
+  const barX0 = canvasWidth - 230;
+  const barY = y0 + TITLE_BLOCK_H / 2 + 22;
+  const segments = 5;
+  for (let i = 0; i < segments; i++) {
+    ctx.fillStyle = i % 2 === 0 ? "#1A1A1D" : "#FFFFFF";
+    ctx.fillRect(barX0 + i * PPM, barY, PPM, 6);
+  }
+  ctx.strokeStyle = "#1A1A1D";
+  ctx.lineWidth = 1;
+  ctx.strokeRect(barX0, barY, segments * PPM, 6);
+  ctx.fillStyle = "#1A1A1D";
+  ctx.font = "10px 'IBM Plex Mono', monospace";
+  ctx.textAlign = "center";
+  for (let i = 0; i <= segments; i++) {
+    ctx.fillText(String(i), barX0 + i * PPM, barY - 4);
+  }
+  ctx.fillText("m", barX0 + segments * PPM + 14, barY + 5);
+  ctx.textAlign = "start";
+}
+
 // نسخة فاتحة (أبيض/رمادي) من رسم المخطط، مناسبة للطباعة/PDF بدل الثيم الغامق للتطبيق
 /**
  * @param {Room[]} floorRoomsList
  * @param {number} gridW
  * @param {number} gridH
+ * @param {{ projectName?: string, floorLabel?: string, standard?: string, t?: (s: string) => string }} [meta]
  * @returns {string} data URL (image/png)
  */
-export function drawFloorPlanImage(floorRoomsList, gridW, gridH) {
+export function drawFloorPlanImage(floorRoomsList, gridW, gridH, meta = {}) {
   const canvas = document.createElement("canvas");
   canvas.width = gridW * PPM;
-  canvas.height = gridH * PPM;
+  canvas.height = gridH * PPM + TITLE_BLOCK_H;
   const ctx = canvas.getContext("2d");
   ctx.fillStyle = "#FFFFFF";
   ctx.fillRect(0, 0, canvas.width, canvas.height);
@@ -675,6 +734,8 @@ export function drawFloorPlanImage(floorRoomsList, gridW, gridH) {
       ctx.textAlign = "start";
     });
   });
+
+  drawTitleBlock(ctx, canvas.width, gridH * PPM, meta);
 
   return canvas.toDataURL("image/png");
 }

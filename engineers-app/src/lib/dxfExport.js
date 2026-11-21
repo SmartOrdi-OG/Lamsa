@@ -12,15 +12,21 @@
 import { DOOR_W, WIN_W, WALL_T, COLUMN_SIZE, roomArea, foundationFootprint, FOUNDATION_OVERHANG } from "./build3d";
 import { openingMarkPoints, roomCentroid, DIM_OFFSET, DIM_EXT, stairEffectiveFootprint, floorToFloorHeight } from "./planGeometry";
 
+// ISO 13567 (CAD layer organization) / AIA CAD Layer Guidelines-style
+// discipline-element names (e.g. "A-WALL" = Architectural discipline,
+// Wall element; "S-FNDN" = Structural discipline, Foundation) instead of
+// plain short names, so the file opens with standard, recognizable
+// layers in any CAD program rather than this tool's own ad-hoc names.
 const LAYERS = {
-  WALLS: 7,
-  DOORS: 1,
-  WINDOWS: 5,
-  DIMENSIONS: 3,
-  TEXT: 7,
-  STAIRS: 8,
-  COLUMNS: 2,
-  FOUNDATION: 4,
+  "A-WALL": 7,
+  "A-DOOR": 1,
+  "A-GLAZ": 5,
+  "A-ANNO-DIMS": 3,
+  "A-ANNO-TEXT": 7,
+  "A-STAIR": 8,
+  "A-COLS": 2,
+  "S-FNDN": 4,
+  "A-ANNO-TTLB": 6,
 };
 
 function deg(rad) {
@@ -86,7 +92,7 @@ function drawWallEdge(entities, p1, p2, openings, xOffset) {
       { x: p1.x + ux * b + nx * half, y: p1.y + uy * b + ny * half },
       { x: p1.x + ux * a + nx * half, y: p1.y + uy * a + ny * half },
     ].map((p) => flip(p, xOffset));
-    dxfLwPolyline(entities, "WALLS", corners, true);
+    dxfLwPolyline(entities, "A-WALL", corners, true);
   });
 }
 
@@ -130,15 +136,15 @@ function drawDoorSwingDxf(entities, room, opening, xOffset) {
   // لو ccw (مسح متناقص بمصطلح canvas) لازم نعكس ترتيب البداية/النهاية لنغطي نفس القوس فعلياً
   const startAngle = ccw ? openAngle : closedAngle;
   const endAngle = ccw ? closedAngle : openAngle;
-  dxfArc(entities, "DOORS", p1.x, p1.y, len, deg(startAngle), deg(endAngle));
+  dxfArc(entities, "A-DOOR", p1.x, p1.y, len, deg(startAngle), deg(endAngle));
 
   const leafEnd = { x: p1.x + len * Math.cos(openAngle), y: p1.y + len * Math.sin(openAngle) };
-  dxfLine(entities, "DOORS", p1, leafEnd);
+  dxfLine(entities, "A-DOOR", p1, leafEnd);
 }
 
 function drawWindowMarkDxf(entities, room, opening, xOffset) {
   const m = openingMarkPoints(room, opening, WIN_W);
-  dxfLine(entities, "WINDOWS", flip({ x: m.x1, y: m.y1 }, xOffset), flip({ x: m.x2, y: m.y2 }, xOffset));
+  dxfLine(entities, "A-GLAZ", flip({ x: m.x1, y: m.y1 }, xOffset), flip({ x: m.x2, y: m.y2 }, xOffset));
 }
 
 // خطوط قياس بأسلوب CAD حوالين كل ضلع — نفس هندسة drawRoomDimensions (planGeometry.js) بس
@@ -146,37 +152,37 @@ function drawWindowMarkDxf(entities, room, opening, xOffset) {
 function drawRoomDimensionsDxf(entities, room, xOffset) {
   const { gx, gy, gw, gh } = room;
   const P = (x, y) => flip({ x, y }, xOffset);
-  const line = (x1, y1, x2, y2) => dxfLine(entities, "DIMENSIONS", P(x1, y1), P(x2, y2));
+  const line = (x1, y1, x2, y2) => dxfLine(entities, "A-ANNO-DIMS", P(x1, y1), P(x2, y2));
 
   const topY = gy - DIM_OFFSET;
   line(gx, gy, gx, topY - DIM_EXT);
   line(gx + gw, gy, gx + gw, topY - DIM_EXT);
   line(gx, topY, gx + gw, topY);
-  dxfText(entities, "DIMENSIONS", P(gx + gw / 2, topY - 0.1), 0.14, gw.toFixed(2));
+  dxfText(entities, "A-ANNO-DIMS", P(gx + gw / 2, topY - 0.1), 0.14, gw.toFixed(2));
 
   const bottomY = gy + gh + DIM_OFFSET;
   line(gx, gy + gh, gx, bottomY + DIM_EXT);
   line(gx + gw, gy + gh, gx + gw, bottomY + DIM_EXT);
   line(gx, bottomY, gx + gw, bottomY);
-  dxfText(entities, "DIMENSIONS", P(gx + gw / 2, bottomY + 0.15), 0.14, gw.toFixed(2));
+  dxfText(entities, "A-ANNO-DIMS", P(gx + gw / 2, bottomY + 0.15), 0.14, gw.toFixed(2));
 
   const leftX = gx - DIM_OFFSET;
   line(gx, gy, leftX - DIM_EXT, gy);
   line(gx, gy + gh, leftX - DIM_EXT, gy + gh);
   line(leftX, gy, leftX, gy + gh);
-  dxfText(entities, "DIMENSIONS", P(leftX - 0.1, gy + gh / 2), 0.14, gh.toFixed(2), 90);
+  dxfText(entities, "A-ANNO-DIMS", P(leftX - 0.1, gy + gh / 2), 0.14, gh.toFixed(2), 90);
 
   const rightX = gx + gw + DIM_OFFSET;
   line(gx + gw, gy, rightX + DIM_EXT, gy);
   line(gx + gw, gy + gh, rightX + DIM_EXT, gy + gh);
   line(rightX, gy, rightX, gy + gh);
-  dxfText(entities, "DIMENSIONS", P(rightX + 0.15, gy + gh / 2), 0.14, gh.toFixed(2), 90);
+  dxfText(entities, "A-ANNO-DIMS", P(rightX + 0.15, gy + gh / 2), 0.14, gh.toFixed(2), 90);
 }
 
 function drawRoomLabelDxf(entities, room, xOffset) {
   const anchor = room.points ? { x: Math.min(...room.points.map((p) => p.x)), y: Math.min(...room.points.map((p) => p.y)) } : { x: room.gx, y: room.gy };
-  dxfText(entities, "TEXT", flip({ x: anchor.x + 0.25, y: anchor.y + 0.5 }, xOffset), 0.22, room.name);
-  dxfText(entities, "TEXT", flip({ x: anchor.x + 0.25, y: anchor.y + 0.85 }, xOffset), 0.14, `${roomArea(room).toFixed(1)} m2`);
+  dxfText(entities, "A-ANNO-TEXT", flip({ x: anchor.x + 0.25, y: anchor.y + 0.5 }, xOffset), 0.22, room.name);
+  dxfText(entities, "A-ANNO-TEXT", flip({ x: anchor.x + 0.25, y: anchor.y + 0.85 }, xOffset), 0.14, `${roomArea(room).toFixed(1)} m2`);
 }
 
 function drawStairsDxf(entities, allRooms, stairsForFloor, projectWallHeight, xOffset) {
@@ -186,17 +192,17 @@ function drawStairsDxf(entities, allRooms, stairsForFloor, projectWallHeight, xO
     const { w, d } = stairEffectiveFootprint(h, rotation, s.width);
     const x0 = s.x - w / 2, x1 = s.x + w / 2, y0 = s.y - d / 2, y1 = s.y + d / 2;
     const corners = [{ x: x0, y: y0 }, { x: x1, y: y0 }, { x: x1, y: y1 }, { x: x0, y: y1 }].map((p) => flip(p, xOffset));
-    dxfLwPolyline(entities, "STAIRS", corners, true);
+    dxfLwPolyline(entities, "A-STAIR", corners, true);
 
     const swapped = rotation === 90 || rotation === 270;
     const steps = 10; // تقريب بعدد ثابت معقول للدرجات — تفاصيل حساب numSteps الدقيق مو مهمة بمخطط CAD
     for (let i = 1; i < steps; i++) {
       if (!swapped) {
         const ty = y0 + (d * i) / steps;
-        dxfLine(entities, "STAIRS", flip({ x: x0, y: ty }, xOffset), flip({ x: x1, y: ty }, xOffset));
+        dxfLine(entities, "A-STAIR", flip({ x: x0, y: ty }, xOffset), flip({ x: x1, y: ty }, xOffset));
       } else {
         const tx = x0 + (w * i) / steps;
-        dxfLine(entities, "STAIRS", flip({ x: tx, y: y0 }, xOffset), flip({ x: tx, y: y1 }, xOffset));
+        dxfLine(entities, "A-STAIR", flip({ x: tx, y: y0 }, xOffset), flip({ x: tx, y: y1 }, xOffset));
       }
     }
   });
@@ -208,11 +214,11 @@ function drawColumnsDxf(entities, columnsForFloor, xOffset) {
     const half = size / 2;
     const x0 = c.x - half, x1 = c.x + half, y0 = c.y - half, y1 = c.y + half;
     const corners = [{ x: x0, y: y0 }, { x: x1, y: y0 }, { x: x1, y: y1 }, { x: x0, y: y1 }].map((p) => flip(p, xOffset));
-    dxfLwPolyline(entities, "COLUMNS", corners, true);
+    dxfLwPolyline(entities, "A-COLS", corners, true);
     // Diagonal cross — the standard CAD convention marking a solid
     // structural column so it reads clearly at any zoom level.
-    dxfLine(entities, "COLUMNS", flip({ x: x0, y: y0 }, xOffset), flip({ x: x1, y: y1 }, xOffset));
-    dxfLine(entities, "COLUMNS", flip({ x: x0, y: y1 }, xOffset), flip({ x: x1, y: y0 }, xOffset));
+    dxfLine(entities, "A-COLS", flip({ x: x0, y: y0 }, xOffset), flip({ x: x1, y: y1 }, xOffset));
+    dxfLine(entities, "A-COLS", flip({ x: x0, y: y1 }, xOffset), flip({ x: x1, y: y0 }, xOffset));
   });
 }
 
@@ -230,7 +236,7 @@ function drawFoundationDxf(entities, allRooms, columnsForGroundFloor, xOffset) {
       { x: fp.maxX + FOUNDATION_OVERHANG, y: fp.maxY + FOUNDATION_OVERHANG },
       { x: fp.minX - FOUNDATION_OVERHANG, y: fp.maxY + FOUNDATION_OVERHANG },
     ].map((p) => flip(p, xOffset));
-    dxfLwPolyline(entities, "FOUNDATION", corners, true);
+    dxfLwPolyline(entities, "S-FNDN", corners, true);
   }
 
   // Pad footing under each ground-floor column — same overhang convention
@@ -244,13 +250,35 @@ function drawFoundationDxf(entities, allRooms, columnsForGroundFloor, xOffset) {
       { x: c.x + half, y: c.y + half },
       { x: c.x - half, y: c.y + half },
     ].map((p) => flip(p, xOffset));
-    dxfLwPolyline(entities, "FOUNDATION", padCorners, true);
+    dxfLwPolyline(entities, "S-FNDN", padCorners, true);
   });
+}
+
+// ISO 7200-style title block (standard drawing-identification fields —
+// title, standard/revision info, date, author) drawn once above the
+// first floor's content, in the same plan-space/flip() coordinate
+// system as everything else here — "above" in DXF's Y-up output means
+// a more negative plan Y, since flip() inverts Y.
+function drawTitleBlockDxf(entities, projectName, standard, t) {
+  const x0 = 0, yTop = -1.2, w = 7, h = 3.3;
+  const corners = [
+    { x: x0, y: yTop }, { x: x0 + w, y: yTop }, { x: x0 + w, y: yTop - h }, { x: x0, y: yTop - h },
+  ].map((p) => flip(p, 0));
+  dxfLwPolyline(entities, "A-ANNO-TTLB", corners, true);
+  dxfLine(entities, "A-ANNO-TTLB", flip({ x: x0, y: yTop - h / 2 }, 0), flip({ x: x0 + w, y: yTop - h / 2 }, 0));
+
+  dxfText(entities, "A-ANNO-TTLB", flip({ x: x0 + 0.15, y: yTop - 0.55 }, 0), 0.32, projectName || "Untitled Project");
+  const standardLabel = standard === "eu" ? "EU (DIN/EN)" : "IRC (US)";
+  dxfText(
+    entities, "A-ANNO-TTLB", flip({ x: x0 + 0.15, y: yTop - h / 2 - 0.5 }, 0), 0.16,
+    `${t("Standard")}: ${standardLabel}   |   ${new Date().toLocaleDateString()}`
+  );
+  dxfText(entities, "A-ANNO-TTLB", flip({ x: x0 + 0.15, y: yTop - h + 0.4 }, 0), 0.16, "Lamsa Engineers");
 }
 
 function buildFloorEntities(allRooms, floorRoomsList, stairsForFloor, columnsForFloor, wallHeight, xOffset, label, showDimensions, isGroundFloor) {
   const entities = [];
-  dxfText(entities, "TEXT", flip({ x: 0, y: -0.7 }, xOffset), 0.35, label);
+  dxfText(entities, "A-ANNO-TEXT", flip({ x: 0, y: -0.7 }, xOffset), 0.35, label);
 
   floorRoomsList.forEach((room) => {
     if (room.points && room.points.length >= 3) {
@@ -287,12 +315,13 @@ function buildFloorEntities(allRooms, floorRoomsList, stairsForFloor, columnsFor
 }
 
 // floorsMeta: [{floorNum, label, rooms}] — نفس شكل مصفوفة floors بدالة handlePrint بالضبط
-export function exportFloorsToDxf(allRooms, floorsMeta, stairsList, columnsList, wallHeight, showDimensions = true) {
+export function exportFloorsToDxf(project, allRooms, floorsMeta, stairsList, columnsList, wallHeight, showDimensions = true, standard = "irc", t = (s) => s) {
   const layerDefs = Object.entries(LAYERS)
     .map(([name, color]) => `0\nLAYER\n2\n${name}\n70\n0\n62\n${color}\n6\nCONTINUOUS`)
     .join("\n");
 
   const allEntities = [];
+  drawTitleBlockDxf(allEntities, project?.name, standard, t);
   let xOffset = 0;
   const GUTTER = 3;
   floorsMeta.forEach((f) => {
