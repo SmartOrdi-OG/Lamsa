@@ -10,15 +10,24 @@ import { speckleAmplitude, paintMaterialPattern, adjustRoughness } from "./mater
  * @param {number} [wallHeight]
  * @returns {{ x: number, z: number, radius: number, targetY: number }}
  */
-export function computeCenter(rooms, wallHeight = 2.7, floorGap = 0) {
-  if (!rooms.length) return { x: 10, z: 8, radius: 12, targetY: 1 };
+export function computeCenter(rooms, wallHeight = 2.7, floorGap = 0, walls = []) {
+  if (!rooms.length && !walls.length) return { x: 10, z: 8, radius: 12, targetY: 1 };
   let minX = Infinity, minZ = Infinity, maxX = -Infinity, maxZ = -Infinity, topFloor = 0;
   rooms.forEach((r) => {
     minX = Math.min(minX, r.gx); maxX = Math.max(maxX, r.gx + r.gw);
     minZ = Math.min(minZ, r.gy); maxZ = Math.max(maxZ, r.gy + r.gh);
     topFloor = Math.max(topFloor, r.floor ?? 0);
   });
-  const floorBaseYMap = computeFloorBaseYMap(rooms, wallHeight, 0, floorGap);
+  // A project with standalone walls but no rooms yet (or walls that extend
+  // past every room's bounding box) still needs those walls inside the
+  // framing box — otherwise the camera centers on an empty point and the
+  // wall itself can sit outside view.
+  walls.forEach((w) => {
+    minX = Math.min(minX, w.x1, w.x2); maxX = Math.max(maxX, w.x1, w.x2);
+    minZ = Math.min(minZ, w.y1, w.y2); maxZ = Math.max(maxZ, w.y1, w.y2);
+    topFloor = Math.max(topFloor, w.floor ?? 0);
+  });
+  const floorBaseYMap = computeFloorBaseYMap(rooms, wallHeight, topFloor, floorGap);
   const topFloorHeight = rooms.find((r) => (r.floor ?? 0) === topFloor)?.wall_height ?? wallHeight;
   const buildingHeight = floorBaseYMap.get(topFloor) + topFloorHeight + ROOF_T;
   const footprintSpan = Math.max(maxX - minX, maxZ - minZ);
@@ -1327,6 +1336,7 @@ export function rebuildGroup(group, rooms, stairs, wallHeight, wallColor, center
   const hideRoofs = !!options.hideRoofs;
   const floorGap = options.floorGap ?? 0;
   const columns = options.columns || [];
+  const walls = options.walls || [];
   const showFoundation = options.showFoundation !== false;
   while (group.children.length) {
     disposeDeep(group.children.pop());
@@ -1339,7 +1349,7 @@ export function rebuildGroup(group, rooms, stairs, wallHeight, wallColor, center
   // خريطة وحدة للمسارين — الجزء المستطيل من حد حر↔مستطيل بينخصم من جدار المستطيل عبر
   // نفس منطق complementRanges الموجود، بلا أي فرع إضافي بحلقة المستطيلات
   const sharedRanges = addPolygonSharedRanges(sharedWallRanges(boundaries), polyBoundaries);
-  const stairsMinTopFloor = Math.max(0, ...(stairs || []).map((s) => (s.floor ?? 0) + 1));
+  const stairsMinTopFloor = Math.max(0, ...(stairs || []).map((s) => (s.floor ?? 0) + 1), ...walls.map((w) => w.floor ?? 0));
   const floorBaseYMap = computeFloorBaseYMap(rooms, wallHeight, stairsMinTopFloor, floorGap);
 
   rooms.forEach((r) => {
@@ -1510,6 +1520,23 @@ export function rebuildGroup(group, rooms, stairs, wallHeight, wallColor, center
       const padMat = texturedMaterial(textureCache, "#8d8d8d", "wall", padSize, FOUNDATION_DEPTH, 0.9, "concrete");
       addGrowBox(group, animState, padSize, FOUNDATION_DEPTH, padSize, worldX, floorBaseY - FOUNDATION_DEPTH, worldZ, padMat, WALL_DELAY);
     }
+  });
+
+  // Standalone wall segments — not part of any room's own edges, drawn
+  // directly from their two endpoints the same way a free-form room's
+  // angled edges are (buildAngledWallSegment already handles any angle,
+  // not just axis-aligned walls).
+  walls.forEach((wseg) => {
+    const floorNum = wseg.floor ?? 0;
+    const floorBaseY = floorBaseYMap.get(floorNum);
+    if (floorBaseY == null) return;
+    const segWallHeight = wseg.height ?? wallHeight;
+    const segWallColor = wseg.color ?? wallColor;
+    const segWallMaterial = wseg.material ?? wallMaterialDefault;
+    buildAngledWallSegment(
+      group, animState, textureCache, segWallColor, segWallMaterial,
+      { x: wseg.x1, y: wseg.y1 }, { x: wseg.x2, y: wseg.y2 }, segWallHeight, floorBaseY, center, []
+    );
   });
 
   if (showFoundation) {

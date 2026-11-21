@@ -276,7 +276,17 @@ function drawTitleBlockDxf(entities, projectName, standard, t) {
   dxfText(entities, "A-ANNO-TTLB", flip({ x: x0 + 0.15, y: yTop - h + 0.4 }, 0), 0.16, "Lamsa Engineers");
 }
 
-function buildFloorEntities(allRooms, floorRoomsList, stairsForFloor, columnsForFloor, wallHeight, xOffset, label, showDimensions, isGroundFloor) {
+// Standalone wall segments (not a room's own edges) — same double-line/
+// thickness representation drawWallEdge already gives a room's wall, just
+// with no openings of its own (phase 1 scope: doors/windows still only
+// attach to a room's walls).
+function drawWallsDxf(entities, wallsForFloor, xOffset) {
+  wallsForFloor.forEach((w) => {
+    drawWallEdge(entities, { x: w.x1, y: w.y1 }, { x: w.x2, y: w.y2 }, [], xOffset);
+  });
+}
+
+function buildFloorEntities(allRooms, floorRoomsList, stairsForFloor, columnsForFloor, wallsForFloor, wallHeight, xOffset, label, showDimensions, isGroundFloor) {
   const entities = [];
   dxfText(entities, "A-ANNO-TEXT", flip({ x: 0, y: -0.7 }, xOffset), 0.35, label);
 
@@ -310,12 +320,13 @@ function buildFloorEntities(allRooms, floorRoomsList, stairsForFloor, columnsFor
 
   drawStairsDxf(entities, allRooms, stairsForFloor, wallHeight, xOffset);
   drawColumnsDxf(entities, columnsForFloor, xOffset);
+  drawWallsDxf(entities, wallsForFloor, xOffset);
   if (isGroundFloor) drawFoundationDxf(entities, allRooms, columnsForFloor, xOffset);
   return entities;
 }
 
 // floorsMeta: [{floorNum, label, rooms}] — نفس شكل مصفوفة floors بدالة handlePrint بالضبط
-export function exportFloorsToDxf(project, allRooms, floorsMeta, stairsList, columnsList, wallHeight, showDimensions = true, standard = "irc", t = (s) => s) {
+export function exportFloorsToDxf(project, allRooms, floorsMeta, stairsList, columnsList, wallsList, wallHeight, showDimensions = true, standard = "irc", t = (s) => s) {
   const layerDefs = Object.entries(LAYERS)
     .map(([name, color]) => `0\nLAYER\n2\n${name}\n70\n0\n62\n${color}\n6\nCONTINUOUS`)
     .join("\n");
@@ -327,10 +338,11 @@ export function exportFloorsToDxf(project, allRooms, floorsMeta, stairsList, col
   floorsMeta.forEach((f) => {
     const stairsForFloor = stairsList.filter((s) => (s.floor ?? 0) === f.floorNum);
     const columnsForFloor = (columnsList || []).filter((c) => (c.floor ?? 0) === f.floorNum);
-    allEntities.push(...buildFloorEntities(allRooms, f.rooms, stairsForFloor, columnsForFloor, wallHeight, xOffset, f.label, showDimensions, f.floorNum === 0));
-    const maxX = f.rooms.length
-      ? Math.max(...f.rooms.map((r) => (r.points ? Math.max(...r.points.map((p) => p.x)) : r.gx + r.gw)))
-      : 10;
+    const wallsForFloor = (wallsList || []).filter((w) => (w.floor ?? 0) === f.floorNum);
+    allEntities.push(...buildFloorEntities(allRooms, f.rooms, stairsForFloor, columnsForFloor, wallsForFloor, wallHeight, xOffset, f.label, showDimensions, f.floorNum === 0));
+    const roomMaxX = f.rooms.map((r) => (r.points ? Math.max(...r.points.map((p) => p.x)) : r.gx + r.gw));
+    const wallMaxX = wallsForFloor.map((w) => Math.max(w.x1, w.x2));
+    const maxX = roomMaxX.length || wallMaxX.length ? Math.max(...roomMaxX, ...wallMaxX) : 10;
     xOffset += maxX + GUTTER;
   });
 

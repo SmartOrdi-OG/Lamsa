@@ -54,7 +54,7 @@ const DOLLHOUSE_PHI = 0.62;
 const DOLLHOUSE_THETA = Math.PI / 4;
 
 const Viewport3D = forwardRef(function Viewport3D(
-  { rooms, stairs, columns = [], wallHeight, wallColor, wallMaterial, autoRotate, dollhouse = false, floorGap = 0, renderView = false, showFoundation = true, t = (s) => s },
+  { rooms, stairs, columns = [], walls = [], wallHeight, wallColor, wallMaterial, autoRotate, dollhouse = false, floorGap = 0, renderView = false, showFoundation = true, t = (s) => s },
   ref
 ) {
   const mountRef = useRef(null);
@@ -117,7 +117,7 @@ const Viewport3D = forwardRef(function Viewport3D(
     const group = new THREE.Group();
     scene.add(group);
 
-    const center0 = computeCenter(rooms, wallHeight);
+    const center0 = computeCenter(rooms, wallHeight, 0, walls);
     const orbit = {
       theta: DOLLHOUSE_THETA,
       phi: dollhouse ? DOLLHOUSE_PHI : 1.0,
@@ -261,7 +261,7 @@ const Viewport3D = forwardRef(function Viewport3D(
     const s = stateRef.current;
     if (!s.group) return;
     const effectiveWallMaterial = renderView ? 'brick' : wallMaterial;
-    rebuildGroup(s.group, rooms, stairs, wallHeight, wallColor, s.center, s.animState, textureCacheRef.current, effectiveWallMaterial, { hideRoofs: dollhouse, floorGap, columns, showFoundation });
+    rebuildGroup(s.group, rooms, stairs, wallHeight, wallColor, s.center, s.animState, textureCacheRef.current, effectiveWallMaterial, { hideRoofs: dollhouse, floorGap, columns, walls, showFoundation });
 
     if (renderView) {
       const floorBaseYMap = computeFloorBaseYMap(rooms, wallHeight, Math.max(0, ...(stairs || []).map((st) => (st.floor ?? 0) + 1)), floorGap);
@@ -290,12 +290,12 @@ const Viewport3D = forwardRef(function Viewport3D(
       cam.far = radius * 3 + maxWallHeight * 2;
       cam.updateProjectionMatrix();
     }
-  }, [rooms, stairs, columns, wallHeight, wallColor, wallMaterial, dollhouse, floorGap, renderView, showFoundation]);
+  }, [rooms, stairs, columns, walls, wallHeight, wallColor, wallMaterial, dollhouse, floorGap, renderView, showFoundation]);
 
   useEffect(() => {
     const s = stateRef.current;
     if (!s.orbit || !s.updateCamera) return;
-    const framing = computeCenter(rooms, wallHeight, floorGap);
+    const framing = computeCenter(rooms, wallHeight, floorGap, walls);
     s.defaultRadius = framing.radius;
     s.defaultTargetY = framing.targetY;
     s.orbit.target.y = framing.targetY;

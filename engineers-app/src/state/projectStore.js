@@ -37,7 +37,8 @@ export function createEmptyProject(name) {
     },
     rooms: [],
     stairs: [], // Phase 1 is single-floor; kept for shape-compatibility with build3d.js.
-    columns: []
+    columns: [],
+    walls: []
   };
 }
 
@@ -85,6 +86,16 @@ export function createStair({ floor = 0, x, y, rotation = 0 }) {
 
 export function createColumn({ floor = 0, x, y }) {
   return { id: nextId('column'), floor, x, y };
+}
+
+// A standalone wall segment — not a room's own edge (those are implicit in
+// rooms' gx/gy/gw/gh or points), just a freestanding line a user draws
+// directly: a garden/boundary wall, an interior partition that doesn't
+// close into a full room, an extension of an existing wall, etc. Phase 1
+// scope: no openings of its own yet (doors/windows still attach only to a
+// room's walls) — plain structural geometry only.
+export function createWall({ x1, y1, x2, y2, floor = 0, color, material, height }) {
+  return { id: nextId('wall'), floor, x1, y1, x2, y2, color, material, height };
 }
 
 function createOpening(kind, wall, edgeIndex, position) {
@@ -209,6 +220,20 @@ function reducer(state, action) {
     case 'REMOVE_COLUMN': {
       return { ...state, columns: (state.columns || []).filter((c) => c.id !== action.columnId) };
     }
+    case 'ADD_WALL': {
+      return { ...state, walls: [...(state.walls || []), action.wall] };
+    }
+    case 'MOVE_WALL': {
+      return {
+        ...state,
+        walls: (state.walls || []).map((w) =>
+          w.id === action.wallId ? { ...w, x1: action.x1, y1: action.y1, x2: action.x2, y2: action.y2 } : w
+        )
+      };
+    }
+    case 'REMOVE_WALL': {
+      return { ...state, walls: (state.walls || []).filter((w) => w.id !== action.wallId) };
+    }
     default:
       return state;
   }
@@ -239,7 +264,10 @@ export function useProjectStore(initialProject) {
       removeStair: (stairId) => dispatch({ type: 'REMOVE_STAIR', stairId }),
       addColumn: (column) => dispatch({ type: 'ADD_COLUMN', column }),
       moveColumn: (columnId, x, y) => dispatch({ type: 'MOVE_COLUMN', columnId, x, y }),
-      removeColumn: (columnId) => dispatch({ type: 'REMOVE_COLUMN', columnId })
+      removeColumn: (columnId) => dispatch({ type: 'REMOVE_COLUMN', columnId }),
+      addWall: (wall) => dispatch({ type: 'ADD_WALL', wall }),
+      moveWall: (wallId, x1, y1, x2, y2) => dispatch({ type: 'MOVE_WALL', wallId, x1, y1, x2, y2 }),
+      removeWall: (wallId) => dispatch({ type: 'REMOVE_WALL', wallId })
     }),
     []
   );
@@ -267,6 +295,7 @@ export function useProjectStore(initialProject) {
     rooms: state.rooms,
     stairs: state.stairs,
     columns: state.columns || [],
+    walls: state.walls || [],
     actions: { ...actions, addRectRoom, addPolygonRoom }
   };
 }

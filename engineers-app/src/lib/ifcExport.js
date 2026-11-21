@@ -248,6 +248,15 @@ function addColumn(w, ctx, c, floorBaseY, defaultWallHeight, ownerHistory, place
   elementIds.push(addBuildingElement(w, "IFCCOLUMN", ".COLUMN.", ownerHistory, "Column", placementId, shapeId));
 }
 
+// A standalone wall segment (not a room's own edge) — same addWallEdge
+// helper every room wall already uses, just called directly on the
+// segment's two endpoints with no openings of its own (phase 1 scope:
+// doors/windows still only attach to a room's walls).
+function addWall(w, ctx, wseg, defaultWallHeight, ownerHistory, placementId, elementIds) {
+  const height = wseg.height ?? defaultWallHeight;
+  addWallEdge(w, ctx, { x: wseg.x1, y: wseg.y1 }, { x: wseg.x2, y: wseg.y2 }, [], height, ownerHistory, placementId, elementIds);
+}
+
 function addGroundFloorFoundation(w, ctx, allRooms, columnsForGroundFloor, ownerHistory, placementId, elementIds) {
   const fp = foundationFootprint(allRooms, 0);
   if (fp) {
@@ -281,7 +290,7 @@ function addGroundFloorFoundation(w, ctx, allRooms, columnsForGroundFloor, owner
 // project data every other export (3D/DXF) already uses. `t` is this
 // app's i18n t() function — optional, defaults to identity so storey
 // names fall back to English rather than throwing.
-export function exportProjectToIfc(project, allRooms, stairsList, columnsList, t = (s) => s) {
+export function exportProjectToIfc(project, allRooms, stairsList, columnsList, wallsList, t = (s) => s) {
   const w = new IfcWriter();
   const wallHeight = project?.wall_height ?? 2.7;
   const projectName = project?.name || "Untitled Project";
@@ -317,9 +326,10 @@ export function exportProjectToIfc(project, allRooms, stairsList, columnsList, t
   const buildingId = w.add(`IFCBUILDING('${randomIfcGuid()}',#${ownerHistory},'${escapeStr(projectName)}',$,$,#${buildingPlacement},$,$,.ELEMENT.,$,$,$)`);
   w.add(`IFCRELAGGREGATES('${randomIfcGuid()}',#${ownerHistory},$,$,#${siteId},(#${buildingId}))`);
 
-  const floors = [...new Set(allRooms.map((r) => r.floor ?? 0))].sort((a, b) => a - b);
+  const floors = [...new Set([...allRooms.map((r) => r.floor ?? 0), ...(wallsList || []).map((wseg) => wseg.floor ?? 0)])].sort((a, b) => a - b);
   const floorsToExport = floors.length ? floors : [0];
-  const floorBaseYMap = computeFloorBaseYMap(allRooms, wallHeight);
+  const topFloor = Math.max(0, ...floors);
+  const floorBaseYMap = computeFloorBaseYMap(allRooms, wallHeight, topFloor);
   const storeyIds = [];
 
   floorsToExport.forEach((floorNum) => {
@@ -348,6 +358,10 @@ export function exportProjectToIfc(project, allRooms, stairsList, columnsList, t
     const floorColumns = (columnsList || []).filter((c) => (c.floor ?? 0) === floorNum);
     floorColumns.forEach((c) => {
       addColumn(w, ctx, c, elevation, wallHeight, ownerHistory, elementPlacement, elementIds);
+    });
+
+    (wallsList || []).filter((wseg) => (wseg.floor ?? 0) === floorNum).forEach((wseg) => {
+      addWall(w, ctx, wseg, wallHeight, ownerHistory, elementPlacement, elementIds);
     });
 
     if (floorNum === 0) {

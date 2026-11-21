@@ -24,12 +24,14 @@ const TOUCH_TOLERANCE_PX = 24;
 // reuse geometry/hit-testing already ported into lib/planGeometry.js and
 // lib/build3d.js (this file never had to invent new math for them).
 const MIN_ROOM_SIZE = 1.5;
+const MIN_WALL_LENGTH = 0.3;
 const ROOM_COLORS = ['#cfd6cf', '#d8cfc2', '#c9d3df', '#dccfd6', '#cfd8d3'];
 
 export default function PlanEditor2D({
   rooms,       // ALL floors — height/stair calcs need the full list
   stairs,      // ALL floors
   columns = [], // ALL floors
+  walls = [],  // ALL floors — standalone wall segments, not a room's own edges
   showFoundation = true,
   standard = 'irc',
   wallHeight,
@@ -41,6 +43,7 @@ export default function PlanEditor2D({
   selectedOpening,
   selectedStairId,
   selectedColumnId,
+  selectedWallId,
   onAddRoom,
   onAddPolygonRoom,
   onMoveRoom,
@@ -54,16 +57,20 @@ export default function PlanEditor2D({
   onSelectStair,
   onAddColumn,
   onMoveColumn,
-  onSelectColumn
+  onSelectColumn,
+  onAddWall,
+  onMoveWall,
+  onSelectWall
 }) {
   const canvasRef = useRef(null);
-  const dragRef = useRef(null); // { kind: 'new-room'|'move'|'resize'|'move-polygon'|'move-stair', ... }
+  const dragRef = useRef(null); // { kind: 'new-room'|'move'|'resize'|'move-polygon'|'move-stair'|'new-wall'|'move-wall'|'resize-wall-end', ... }
   const [polyPoints, setPolyPoints] = useState(null); // vertices being placed in 'polygon' mode
   const [cursor, setCursor] = useState(null);
 
   const floorRooms = rooms.filter((r) => (r.floor ?? 0) === activeFloor);
   const floorStairs = stairs.filter((s) => (s.floor ?? 0) === activeFloor);
   const floorColumns = columns.filter((c) => (c.floor ?? 0) === activeFloor);
+  const floorWalls = walls.filter((w) => (w.floor ?? 0) === activeFloor);
   const floorToFloorH = floorToFloorHeight(rooms, activeFloor, wallHeight);
 
   // Switching tools away from 'polygon' used to silently throw away whatever
@@ -86,6 +93,17 @@ export default function PlanEditor2D({
     window.addEventListener('keydown', onKeyDown);
     return () => window.removeEventListener('keydown', onKeyDown);
   }, [polyPoints]);
+
+  // Shortest distance from a point to a finite line segment — used to hit-
+  // test a standalone wall (a thin line, unlike a room's filled body) and
+  // to find where along it a click landed.
+  function distToSegment(px, py, x1, y1, x2, y2) {
+    const dx = x2 - x1, dy = y2 - y1;
+    const lenSq = dx * dx + dy * dy;
+    const t = lenSq < 1e-9 ? 0 : Math.max(0, Math.min(1, ((px - x1) * dx + (py - y1) * dy) / lenSq));
+    const cx = x1 + t * dx, cy = y1 + t * dy;
+    return Math.hypot(px - cx, py - cy);
+  }
 
   function drawRoomShape(ctx, room, isSelected, fillColor) {
     if (room.points) {
@@ -223,6 +241,38 @@ export default function PlanEditor2D({
       ctx.strokeRect((c.x - half) * PPM, (c.y - half) * PPM, COLUMN_SIZE * PPM, COLUMN_SIZE * PPM);
     });
 
+    // Standalone wall segments — drawn as a thick line (same visual weight
+    // as a room's own walls) with small square handles at each endpoint
+    // once selected, so a single endpoint can be dragged to stretch/angle
+    // the wall without having to redraw the whole thing.
+    floorWalls.forEach((w) => {
+      const isSelected = w.id === selectedWallId;
+      ctx.strokeStyle = isSelected ? '#c9a96e' : '#4b5563';
+      ctx.lineWidth = Math.max(3, WALL_T * PPM);
+      ctx.beginPath();
+      ctx.moveTo(w.x1 * PPM, w.y1 * PPM);
+      ctx.lineTo(w.x2 * PPM, w.y2 * PPM);
+      ctx.stroke();
+      if (isSelected) {
+        ctx.fillStyle = '#c9a96e';
+        [[w.x1, w.y1], [w.x2, w.y2]].forEach(([ex, ey]) => {
+          ctx.fillRect(ex * PPM - 6, ey * PPM - 6, 12, 12);
+        });
+      }
+    });
+
+    const wallDrag = dragRef.current;
+    if (wallDrag && wallDrag.kind === 'new-wall') {
+      ctx.strokeStyle = '#c9a96e';
+      ctx.setLineDash([6, 4]);
+      ctx.lineWidth = Math.max(3, WALL_T * PPM);
+      ctx.beginPath();
+      ctx.moveTo(wallDrag.startX * PPM, wallDrag.startY * PPM);
+      ctx.lineTo(wallDrag.curX * PPM, wallDrag.curY * PPM);
+      ctx.stroke();
+      ctx.setLineDash([]);
+    }
+
     // Live preview while placing a polygon room. The first vertex is drawn
     // larger/highlighted once the shape is closable (>=3 points) — it's the
     // "click here to close" target, and a double-click/double-tap anywhere
@@ -291,6 +341,12 @@ export default function PlanEditor2D({
       return;
     }
 
+    if (mode === 'wall') {
+      dragRef.current = { kind: 'new-wall', startX: snap(cx), startY: snap(cy), curX: cx, curY: cy };
+      draw();
+      return;
+    }
+
     if (mode === 'polygon') {
       const pt = { x: snap(cx), y: snap(cy) };
       if (polyPoints && polyPoints.length >= 3) {
@@ -329,6 +385,7 @@ export default function PlanEditor2D({
       onSelectOpening({ roomId: openingHit.roomId, openingId: openingHit.id });
       onSelectStair(null);
       onSelectColumn(null);
+      onSelectWall(null);
       return;
     }
     onSelectOpening(null);
@@ -338,6 +395,7 @@ export default function PlanEditor2D({
       onSelectStair(stairHit.id);
       onSelectColumn(null);
       onSelectRoom(null);
+      onSelectWall(null);
       dragRef.current = { kind: 'move-stair', stairId: stairHit.id, offsetX: cx - stairHit.x, offsetY: cy - stairHit.y, rotation: stairHit.rotation, width: stairHit.width };
       return;
     }
@@ -348,10 +406,35 @@ export default function PlanEditor2D({
     if (columnHit) {
       onSelectColumn(columnHit.id);
       onSelectRoom(null);
+      onSelectWall(null);
       dragRef.current = { kind: 'move-column', columnId: columnHit.id, offsetX: cx - columnHit.x, offsetY: cy - columnHit.y };
       return;
     }
     onSelectColumn(null);
+
+    // Standalone walls: an endpoint handle (only shown once selected) takes
+    // priority over grabbing the body, same pattern as a room's own resize
+    // handle — stretch one end, or drag the whole segment by its line.
+    const wallTolerance = touchToleranceMeters();
+    if (selectedWallId) {
+      const selectedWall = floorWalls.find((w) => w.id === selectedWallId);
+      if (selectedWall) {
+        const nearStart = Math.hypot(cx - selectedWall.x1, cy - selectedWall.y1) <= wallTolerance;
+        const nearEnd = Math.hypot(cx - selectedWall.x2, cy - selectedWall.y2) <= wallTolerance;
+        if (nearStart || nearEnd) {
+          dragRef.current = { kind: 'resize-wall-end', wallId: selectedWall.id, end: nearStart ? 1 : 2, fixed: nearStart ? { x: selectedWall.x2, y: selectedWall.y2 } : { x: selectedWall.x1, y: selectedWall.y1 } };
+          return;
+        }
+      }
+    }
+    const wallHit = floorWalls.find((w) => distToSegment(cx, cy, w.x1, w.y1, w.x2, w.y2) <= wallTolerance);
+    if (wallHit) {
+      onSelectWall(wallHit.id);
+      onSelectRoom(null);
+      dragRef.current = { kind: 'move-wall', wallId: wallHit.id, startX1: wallHit.x1, startY1: wallHit.y1, startX2: wallHit.x2, startY2: wallHit.y2, offsetX: cx, offsetY: cy };
+      return;
+    }
+    onSelectWall(null);
 
     const room = roomAt(cx, cy);
     if (!room) {
@@ -387,6 +470,26 @@ export default function PlanEditor2D({
       drag.curX = cx;
       drag.curY = cy;
       draw();
+      return;
+    }
+    if (drag.kind === 'new-wall') {
+      drag.curX = snap(cx);
+      drag.curY = snap(cy);
+      draw();
+      return;
+    }
+    if (drag.kind === 'move-wall') {
+      const dx = snap(cx - drag.offsetX), dy = snap(cy - drag.offsetY);
+      if (dx === 0 && dy === 0) return;
+      onMoveWall(drag.wallId, drag.startX1 + dx, drag.startY1 + dy, drag.startX2 + dx, drag.startY2 + dy);
+      return;
+    }
+    if (drag.kind === 'resize-wall-end') {
+      const x = snap(cx), y = snap(cy);
+      const wall = drag.end === 1
+        ? { x1: x, y1: y, x2: drag.fixed.x, y2: drag.fixed.y }
+        : { x1: drag.fixed.x, y1: drag.fixed.y, x2: x, y2: y };
+      onMoveWall(drag.wallId, wall.x1, wall.y1, wall.x2, wall.y2);
       return;
     }
     if (drag.kind === 'move') {
@@ -442,6 +545,12 @@ export default function PlanEditor2D({
       const w = Math.max(MIN_ROOM_SIZE, snap(Math.abs(drag.curX - drag.startX)));
       const h = Math.max(MIN_ROOM_SIZE, snap(Math.abs(drag.curY - drag.startY)));
       onAddRoom({ gx: x, gy: y, gw: w, gh: h, floor: activeFloor });
+    }
+    if (drag && drag.kind === 'new-wall') {
+      const length = Math.hypot(drag.curX - drag.startX, drag.curY - drag.startY);
+      if (length >= MIN_WALL_LENGTH) {
+        onAddWall({ x1: drag.startX, y1: drag.startY, x2: drag.curX, y2: drag.curY, floor: activeFloor });
+      }
     }
     dragRef.current = null;
     draw();
