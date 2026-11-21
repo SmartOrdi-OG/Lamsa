@@ -1,0 +1,46 @@
+definitions:
+  app: &app
+    name: Lamsa
+    bundle_id: com.lamsaai.app
+
+workflows:
+  ios-release:
+    name: Lamsa iOS — TestFlight / App Store
+    max_build_duration: 60
+    environment:
+      ios_signing:
+        # Connect this in Codemagic's UI (Teams > Code signing identities /
+        # App Store Connect) — do NOT put certificates or keys in this file.
+        distribution_type: app_store
+        bundle_identifier: com.lamsaai.app
+      vars:
+        XCODE_WORKSPACE: "ios/App/App.xcworkspace"
+        XCODE_SCHEME: "App"
+      node: latest
+      xcode: latest
+      cocoapods: default
+    working_directory: ios-app
+    scripts:
+      - name: Install CocoaPods dependencies
+        script: |
+          cd ios/App
+          pod install
+      - name: Set up code signing (App Store Connect)
+        script: |
+          xcode-project use-profiles
+      - name: Build .ipa
+        script: |
+          xcode-project build-ipa \
+            --workspace "$XCODE_WORKSPACE" \
+            --scheme "$XCODE_SCHEME"
+    artifacts:
+      - build/ios/ipa/*.ipa
+      - /tmp/xcodebuild_logs/*.log
+    publishing:
+      # Fill in app_store_connect under Codemagic's Teams > Integrations,
+      # or set these as encrypted environment variables there — never
+      # commit an API key to this file.
+      app_store_connect:
+        auth: integration
+        submit_to_testflight: true
+        submit_to_app_store: false

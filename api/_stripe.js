@@ -18,5 +18,5 @@ export const SUBSCRIPTION_PLANS = {
 // than given a credits:0 field there, to avoid a webhook bug that reads
 // `credits` from the wrong map and silently no-ops a real purchase.
 export const ENGINEER_PLANS = {
-  annual: { amountCents: 25000, label: 'Engineers Annual', interval: 'year', intervalCount: 1, trialDays: 14 }
+  annual: { amountCents: 30000, label: 'Engineers Annual', interval: 'year', intervalCount: 1, trialDays: 14 }
 };

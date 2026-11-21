@@ -1,0 +1,12 @@
+{
+  "appId": "com.lamsaai.app",
+  "appName": "Lamsa",
+  "webDir": "www",
+  "server": {
+    "url": "https://lamsa-ai.com",
+    "cleartext": false
+  },
+  "ios": {
+    "contentInset": "automatic"
+  }
+}
