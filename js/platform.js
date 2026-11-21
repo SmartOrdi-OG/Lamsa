@@ -21,6 +21,14 @@
   window.isAndroidTWA = isTwa;
 })();
 
+// Detects "running inside the Capacitor iOS app shell" (window.Capacitor is
+// injected by Capacitor's native runtime before any page script runs, so
+// this is reliable with no referrer/sessionStorage trick needed). Used to
+// hide Google/Apple sign-in on iOS: Google's own JS SDK refuses to run
+// inside an embedded WebView like this one, and there's no real Apple
+// sign-in wired up either — email/password still works fine there.
+window.isCapacitorApp = typeof window.Capacitor !== 'undefined';
+
 // Opens a URL in Chrome itself, outside the TWA. A plain link or
 // window.location to lamsa-ten.vercel.app would be caught by Android App
 // Links and land straight back in this app; an intent addressed to Chrome by

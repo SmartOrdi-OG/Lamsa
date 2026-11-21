@@ -48,22 +48,16 @@ need a decision before (or the app risks rejection after) submission:
    entitlement (US only today, and it still carries a fee). Submitting
    with a bare external Stripe link is a real rejection risk — it may
    simply get flagged, where Android enforcement has been looser.
-2. **Google Sign-In may not work at all.** The login page uses Google's
-   own Identity Services JS library, which Google explicitly blocks
-   inside embedded WebViews (exactly what this Capacitor wrapper uses) —
-   it's not a Capacitor-specific bug, it's enforced on Google's end
-   based on the user agent. If this matters, the fix is a native
-   Capacitor Google Sign-In plugin (opens the system browser/native
-   flow instead of the in-page JS widget), not something this wrapper
-   does by default.
-3. **Missing "Sign in with Apple."** Apple's guideline 4.8 requires
-   offering Sign in with Apple as an equivalent option on any app that
-   offers a third-party social login (Google qualifies). Right now
-   Google is wired up for real but Apple's button is a visual
-   placeholder only ("coming soon") — this alone is a common, very
-   likely rejection reason that will need the real Sign in with Apple
-   flow implemented first.
 
-None of these are addressed by this scaffold — they need an explicit
-decision (accept the risk and see what Apple's review says, same as the
-Android approach, or fix them first) before submitting for review.
+~~2. Google Sign-In / 3. Missing "Sign in with Apple"~~ — **fixed**:
+confirmed via a real TestFlight install that Google's Identity Services
+JS library does refuse to run inside this Capacitor WebView (blank
+`accounts.google.com` page). Rather than building native plugins for
+both, `js/platform.js`'s `window.isCapacitorApp` flag (mirrors the
+existing `window.isAndroidTWA` pattern) now hides the Google and Apple
+buttons entirely inside the iOS app shell — only email/password shows,
+which already works end-to-end. This also resolves guideline 4.8 (it
+only applies when a third-party social login is actually offered).
+Google Sign-In is untouched on the regular website. A native
+Capacitor Google/Apple Sign-In plugin remains a possible follow-up if
+social login on iOS is wanted later.
