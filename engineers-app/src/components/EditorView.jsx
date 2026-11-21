@@ -78,7 +78,7 @@ export default function EditorView({ initialProject, projectId, onBack, onSave, 
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = (project.name || 'floor-plan') + '-' + floorLabel(activeFloor) + '.png';
+    a.download = (project.name || 'floor-plan') + '-' + floorLabel(activeFloor, t) + '.png';
     a.click();
     URL.revokeObjectURL(url);
   }
@@ -86,7 +86,7 @@ export default function EditorView({ initialProject, projectId, onBack, onSave, 
   function handleExportDxf() {
     const floorsMeta = Array.from({ length: floorCount }, (_, floorNum) => ({
       floorNum,
-      label: floorLabel(floorNum),
+      label: floorLabel(floorNum, t),
       rooms: rooms.filter((r) => (r.floor ?? 0) === floorNum)
     })).filter((f) => f.rooms.length > 0);
     if (!floorsMeta.length) return;

@@ -84,17 +84,19 @@ export function clientToPlanMeters(clientX, clientY, rect, gridW, gridH) {
   };
 }
 
-export const FLOOR_ORDINALS = [
-  "الطابق الأرضي", "الطابق الأول", "الطابق الثاني", "الطابق الثالث", "الطابق الرابع",
-  "الطابق الخامس", "الطابق السادس", "الطابق السابع", "الطابق الثامن", "الطابق التاسع",
-  "الطابق العاشر", "الطابق الحادي عشر", "الطابق الثاني عشر",
-];
+// Single shared floor-label function (also used by Toolbar.jsx's floor
+// tabs, which used to keep its own near-identical copy) so the UI tabs,
+// the exported PNG's filename, and the DXF floor-section labels always
+// agree — `t` defaults to the identity function so a caller with no
+// i18n context (none currently) still gets a sensible English label
+// instead of throwing.
 /**
  * @param {number} n
+ * @param {(s: string) => string} [t]
  * @returns {string}
  */
-export function floorLabel(n) {
-  return FLOOR_ORDINALS[n] || `الطابق ${n}`;
+export function floorLabel(n, t = (s) => s) {
+  return n === 0 ? t('Ground Floor') : t('Floor') + ' ' + n;
 }
 export const FLOOR_CAP = 12;
 
