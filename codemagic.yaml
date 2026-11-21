@@ -13,11 +13,15 @@ workflows:
       # match that name exactly.
       app_store_connect: Lamsa
     environment:
-      ios_signing:
-        # Connect this in Codemagic's UI (Teams > Code signing identities /
-        # App Store Connect) — do NOT put certificates or keys in this file.
-        distribution_type: app_store
-        bundle_identifier: com.lamsaai.app
+      # No `ios_signing` block here on purpose — that key triggers
+      # Codemagic's OTHER signing path ("Code Signing Identities": a
+      # certificate/profile pre-uploaded under Team settings), which runs
+      # its own pre-build check and fails immediately if nothing was
+      # uploaded there. This workflow signs via the App Store Connect API
+      # integration instead (see `integrations` above + the
+      # app-store-connect/keychain script steps below), which is a
+      # separate, mutually exclusive path — combining both made Codemagic
+      # fail on the unused identities check before the real scripts ran.
       vars:
         XCODE_WORKSPACE: "ios/App/App.xcworkspace"
         XCODE_SCHEME: "App"
