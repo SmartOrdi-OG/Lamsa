@@ -23,18 +23,16 @@ workflows:
       # separate, mutually exclusive path — combining both made Codemagic
       # fail on the unused identities check before the real scripts ran.
       vars:
-        XCODE_WORKSPACE: "ios/App/App.xcworkspace"
+        # This Capacitor project uses Swift Package Manager, not
+        # CocoaPods (see ios/App/CapApp-SPM) — there's no Podfile and no
+        # .xcworkspace, just the plain .xcodeproj.
+        XCODE_PROJECT: "ios/App/App.xcodeproj"
         XCODE_SCHEME: "App"
         BUNDLE_ID: "com.lamsaai.app"
       node: latest
       xcode: latest
-      cocoapods: default
     working_directory: ios-app
     scripts:
-      - name: Install CocoaPods dependencies
-        script: |
-          cd ios/App
-          pod install
       - name: Set up local keychain for code signing
         script: |
           keychain initialize
@@ -52,7 +50,7 @@ workflows:
       - name: Build .ipa
         script: |
           xcode-project build-ipa \
-            --workspace "$XCODE_WORKSPACE" \
+            --project "$XCODE_PROJECT" \
             --scheme "$XCODE_SCHEME"
     artifacts:
       - ios-app/build/ios/ipa/*.ipa
