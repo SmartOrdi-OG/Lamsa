@@ -195,8 +195,23 @@ export default function EditorView({ initialProject, projectId, onBack, onSave, 
             selectedOpening={selectedOpening}
             selectedStairId={selectedStairId}
             selectedColumnId={selectedColumnId}
-            onAddRoom={(rect) => actions.addRectRoom(rect)}
-            onAddPolygonRoom={(points) => actions.addPolygonRoom({ points, floor: activeFloor })}
+            onAddRoom={(rect) => {
+              // Drawing a room used to leave the tool in "Add Room" mode
+              // with nothing selected, so the naming/sizing panel (which
+              // only shows for a selected room, in Select mode) never
+              // appeared until the user manually switched tools and
+              // tapped the room again — looking like those options had
+              // simply gone missing. Auto-selecting the room just drawn
+              // and switching back to Select fixes that.
+              const room = actions.addRectRoom(rect);
+              setSelectedRoomId(room.id);
+              setMode('select');
+            }}
+            onAddPolygonRoom={(points) => {
+              const room = actions.addPolygonRoom({ points, floor: activeFloor });
+              setSelectedRoomId(room.id);
+              setMode('select');
+            }}
             onMoveRoom={(id, gx, gy) => actions.updateRoom(id, { gx, gy })}
             onResizeRoom={(id, gw, gh) => actions.updateRoom(id, { gw, gh })}
             onMovePolygonRoom={(id, points) => {
