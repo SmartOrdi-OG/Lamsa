@@ -5,7 +5,10 @@ node_modules/
 *.log
 .DS_Store
 
-# engineers-app/ is a self-contained source sub-project built locally/in CI;
-# only its build OUTPUT (committed at /engineers/) is deployed.
+# engineers-app/ and iap-bridge/ are self-contained source sub-projects
+# built locally/in CI; only their build OUTPUT (committed at /engineers/
+# and /js/capacitor-iap-bridge.js respectively) is deployed.
 engineers-app/node_modules/
 engineers-app/dist/
+iap-bridge/node_modules/
+iap-bridge/dist/
