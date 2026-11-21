@@ -64,6 +64,7 @@ const TOOLS = [
   { id: 'select', label: 'Select' },
   { id: 'room', label: 'Add Room' },
   { id: 'polygon', label: 'Add Polygon Room' },
+  { id: 'wall', label: 'Add Wall' },
   { id: 'door', label: 'Add Door' },
   { id: 'window', label: 'Add Window' },
   { id: 'stairs', label: 'Add Stairs' },
@@ -100,7 +101,9 @@ export default function Toolbar({
   onResizeStairWidth,
   onDeleteStair,
   selectedColumn,
-  onDeleteColumn
+  onDeleteColumn,
+  selectedWall,
+  onDeleteWall
 }) {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', borderBottom: '1px solid #e5e7eb' }}>
@@ -129,6 +132,12 @@ export default function Toolbar({
             {t(tool.label)}
           </button>
         ))}
+
+        {mode === 'polygon' && (
+          <span style={{ fontSize: 12, color: '#6b7280' }}>
+            {t('Tap to place each corner, then double-tap (or tap the first corner again) to finish')}
+          </span>
+        )}
 
         {selectedRoom && (() => {
           const roomType = getRoomType(selectedRoom.room_type, standard);
@@ -216,6 +225,12 @@ export default function Toolbar({
         {selectedColumn && (
           <button type="button" style={btnStyle(false)} onClick={() => onDeleteColumn(selectedColumn.id)}>
             {t('Delete Column')}
+          </button>
+        )}
+
+        {selectedWall && (
+          <button type="button" style={btnStyle(false)} onClick={() => onDeleteWall(selectedWall.id)}>
+            {t('Delete Wall')}
           </button>
         )}
       </div>

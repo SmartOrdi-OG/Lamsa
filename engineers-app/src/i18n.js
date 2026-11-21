@@ -49,6 +49,8 @@ export const AR = {
   'Reset camera': 'إعادة ضبط الكاميرا',
   'Untitled Project': 'مشروع بدون اسم',
   'Add Polygon Room': 'إضافة غرفة بشكل حر',
+  'Add Wall': 'إضافة جدار',
+  'Delete Wall': 'حذف الجدار',
   'Add Stairs': 'إضافة سلالم',
   'Delete Stairs': 'حذف السلالم',
   'Add Column': 'إضافة عمود',
@@ -91,7 +93,9 @@ export const AR = {
   'Garage': 'كراج',
   'Other': 'أخرى',
   'Min': 'الحد الأدنى',
-  'Width': 'العرض'
+  'Width': 'العرض',
+  'Tap to place each corner, then double-tap (or tap the first corner again) to finish':
+    'اضغط لوضع كل زاوية، ثم اضغط مرتين (أو اضغط على أول زاوية مجدداً) للإنهاء'
 };
 
 export const T = {
@@ -133,6 +137,8 @@ export const T = {
     'Reset camera': 'Kamera zurücksetzen',
     'Untitled Project': 'Unbenanntes Projekt',
     'Add Polygon Room': 'Freiform-Raum hinzufügen',
+    'Add Wall': 'Wand hinzufügen',
+    'Delete Wall': 'Wand löschen',
     'Add Stairs': 'Treppe hinzufügen',
     'Delete Stairs': 'Treppe löschen',
     'Add Column': 'Säule hinzufügen',
@@ -175,7 +181,9 @@ export const T = {
     'Garage': 'Garage',
     'Other': 'Sonstiges',
     'Min': 'Min.',
-    'Width': 'Breite'
+    'Width': 'Breite',
+    'Tap to place each corner, then double-tap (or tap the first corner again) to finish':
+      'Tippen, um jede Ecke zu setzen, dann doppelt tippen (oder erneut auf die erste Ecke tippen), um abzuschließen'
   },
   es: {
     'Lamsa Engineers': 'Lamsa Ingenieros',
@@ -215,6 +223,8 @@ export const T = {
     'Reset camera': 'Restablecer cámara',
     'Untitled Project': 'Proyecto sin título',
     'Add Polygon Room': 'Añadir Habitación de Forma Libre',
+    'Add Wall': 'Añadir Pared',
+    'Delete Wall': 'Eliminar Pared',
     'Add Stairs': 'Añadir Escaleras',
     'Delete Stairs': 'Eliminar Escaleras',
     'Add Column': 'Añadir Columna',
@@ -257,7 +267,9 @@ export const T = {
     'Garage': 'Garaje',
     'Other': 'Otro',
     'Min': 'Mín.',
-    'Width': 'Ancho'
+    'Width': 'Ancho',
+    'Tap to place each corner, then double-tap (or tap the first corner again) to finish':
+      'Toca para colocar cada esquina, luego toca dos veces (o toca de nuevo la primera esquina) para terminar'
   },
   tr: {
     'Lamsa Engineers': 'Lamsa Muhendisler',
@@ -297,6 +309,8 @@ export const T = {
     'Reset camera': 'Kamerayi sifirla',
     'Untitled Project': 'Isimsiz Proje',
     'Add Polygon Room': 'Serbest Sekilli Oda Ekle',
+    'Add Wall': 'Duvar Ekle',
+    'Delete Wall': 'Duvari Sil',
     'Add Stairs': 'Merdiven Ekle',
     'Delete Stairs': 'Merdiveni Sil',
     'Add Column': 'Kolon Ekle',
@@ -339,7 +353,9 @@ export const T = {
     'Garage': 'Garaj',
     'Other': 'Diger',
     'Min': 'Min.',
-    'Width': 'Genislik'
+    'Width': 'Genislik',
+    'Tap to place each corner, then double-tap (or tap the first corner again) to finish':
+      'Her koseyi yerlestirmek icin dokun, bitirmek icin cift dokun (veya ilk koseye tekrar dokun)'
   },
   fr: {
     'Lamsa Engineers': 'Lamsa Ingénieurs',
@@ -379,6 +395,8 @@ export const T = {
     'Reset camera': 'Réinitialiser la caméra',
     'Untitled Project': 'Projet sans titre',
     'Add Polygon Room': 'Ajouter une pièce de forme libre',
+    'Add Wall': 'Ajouter un mur',
+    'Delete Wall': 'Supprimer le mur',
     'Add Stairs': 'Ajouter un escalier',
     'Delete Stairs': "Supprimer l'escalier",
     'Add Column': 'Ajouter un poteau',
@@ -421,7 +439,9 @@ export const T = {
     'Garage': 'Garage',
     'Other': 'Autre',
     'Min': 'Min.',
-    'Width': 'Largeur'
+    'Width': 'Largeur',
+    'Tap to place each corner, then double-tap (or tap the first corner again) to finish':
+      'Appuyez pour placer chaque coin, puis appuyez deux fois (ou appuyez à nouveau sur le premier coin) pour terminer'
   },
   it: {
     'Lamsa Engineers': 'Lamsa Ingegneri',
@@ -461,6 +481,8 @@ export const T = {
     'Reset camera': 'Reimposta fotocamera',
     'Untitled Project': 'Progetto senza titolo',
     'Add Polygon Room': 'Aggiungi Stanza a Forma Libera',
+    'Add Wall': 'Aggiungi Muro',
+    'Delete Wall': 'Elimina Muro',
     'Add Stairs': 'Aggiungi Scale',
     'Delete Stairs': 'Elimina Scale',
     'Add Column': 'Aggiungi Pilastro',
@@ -503,7 +525,9 @@ export const T = {
     'Garage': 'Garage',
     'Other': 'Altro',
     'Min': 'Min.',
-    'Width': 'Larghezza'
+    'Width': 'Larghezza',
+    'Tap to place each corner, then double-tap (or tap the first corner again) to finish':
+      'Tocca per posizionare ogni angolo, poi tocca due volte (o tocca di nuovo il primo angolo) per terminare'
   },
   ru: {
     'Lamsa Engineers': 'Lamsa Inzhenery',
@@ -543,6 +567,8 @@ export const T = {
     'Reset camera': 'Sbrosit kameru',
     'Untitled Project': 'Proekt bez nazvaniya',
     'Add Polygon Room': 'Dobavit Komnatu Svobodnoy Formy',
+    'Add Wall': 'Dobavit Stenu',
+    'Delete Wall': 'Udalit Stenu',
     'Add Stairs': 'Dobavit Lestnitsu',
     'Delete Stairs': 'Udalit Lestnitsu',
     'Add Column': 'Dobavit Kolonnu',
@@ -585,7 +611,9 @@ export const T = {
     'Garage': 'Garazh',
     'Other': 'Drugoe',
     'Min': 'Min.',
-    'Width': 'Shirina'
+    'Width': 'Shirina',
+    'Tap to place each corner, then double-tap (or tap the first corner again) to finish':
+      'Nazhimayte, chtoby postavit kazhdyy ugol, zatem nazhmite dvazhdy (ili snova nazhmite na pervyy ugol), chtoby zavershit'
   }
 };
 
