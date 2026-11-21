@@ -91,7 +91,9 @@ export const AR = {
   'Garage': 'كراج',
   'Other': 'أخرى',
   'Min': 'الحد الأدنى',
-  'Width': 'العرض'
+  'Width': 'العرض',
+  'Tap to place each corner, then double-tap (or tap the first corner again) to finish':
+    'اضغط لوضع كل زاوية، ثم اضغط مرتين (أو اضغط على أول زاوية مجدداً) للإنهاء'
 };
 
 export const T = {
@@ -175,7 +177,9 @@ export const T = {
     'Garage': 'Garage',
     'Other': 'Sonstiges',
     'Min': 'Min.',
-    'Width': 'Breite'
+    'Width': 'Breite',
+    'Tap to place each corner, then double-tap (or tap the first corner again) to finish':
+      'Tippen, um jede Ecke zu setzen, dann doppelt tippen (oder erneut auf die erste Ecke tippen), um abzuschließen'
   },
   es: {
     'Lamsa Engineers': 'Lamsa Ingenieros',
@@ -257,7 +261,9 @@ export const T = {
     'Garage': 'Garaje',
     'Other': 'Otro',
     'Min': 'Mín.',
-    'Width': 'Ancho'
+    'Width': 'Ancho',
+    'Tap to place each corner, then double-tap (or tap the first corner again) to finish':
+      'Toca para colocar cada esquina, luego toca dos veces (o toca de nuevo la primera esquina) para terminar'
   },
   tr: {
     'Lamsa Engineers': 'Lamsa Muhendisler',
@@ -339,7 +345,9 @@ export const T = {
     'Garage': 'Garaj',
     'Other': 'Diger',
     'Min': 'Min.',
-    'Width': 'Genislik'
+    'Width': 'Genislik',
+    'Tap to place each corner, then double-tap (or tap the first corner again) to finish':
+      'Her koseyi yerlestirmek icin dokun, bitirmek icin cift dokun (veya ilk koseye tekrar dokun)'
   },
   fr: {
     'Lamsa Engineers': 'Lamsa Ingénieurs',
@@ -421,7 +429,9 @@ export const T = {
     'Garage': 'Garage',
     'Other': 'Autre',
     'Min': 'Min.',
-    'Width': 'Largeur'
+    'Width': 'Largeur',
+    'Tap to place each corner, then double-tap (or tap the first corner again) to finish':
+      'Appuyez pour placer chaque coin, puis appuyez deux fois (ou appuyez à nouveau sur le premier coin) pour terminer'
   },
   it: {
     'Lamsa Engineers': 'Lamsa Ingegneri',
@@ -503,7 +513,9 @@ export const T = {
     'Garage': 'Garage',
     'Other': 'Altro',
     'Min': 'Min.',
-    'Width': 'Larghezza'
+    'Width': 'Larghezza',
+    'Tap to place each corner, then double-tap (or tap the first corner again) to finish':
+      'Tocca per posizionare ogni angolo, poi tocca due volte (o tocca di nuovo il primo angolo) per terminare'
   },
   ru: {
     'Lamsa Engineers': 'Lamsa Inzhenery',
@@ -585,7 +597,9 @@ export const T = {
     'Garage': 'Garazh',
     'Other': 'Drugoe',
     'Min': 'Min.',
-    'Width': 'Shirina'
+    'Width': 'Shirina',
+    'Tap to place each corner, then double-tap (or tap the first corner again) to finish':
+      'Nazhimayte, chtoby postavit kazhdyy ugol, zatem nazhmite dvazhdy (ili snova nazhmite na pervyy ugol), chtoby zavershit'
   }
 };
 

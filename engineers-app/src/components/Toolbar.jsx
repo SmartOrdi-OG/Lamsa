@@ -130,6 +130,12 @@ export default function Toolbar({
           </button>
         ))}
 
+        {mode === 'polygon' && (
+          <span style={{ fontSize: 12, color: '#6b7280' }}>
+            {t('Tap to place each corner, then double-tap (or tap the first corner again) to finish')}
+          </span>
+        )}
+
         {selectedRoom && (() => {
           const roomType = getRoomType(selectedRoom.room_type, standard);
           return (

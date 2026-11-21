@@ -66,10 +66,17 @@ export default function PlanEditor2D({
   const floorColumns = columns.filter((c) => (c.floor ?? 0) === activeFloor);
   const floorToFloorH = floorToFloorHeight(rooms, activeFloor, wallHeight);
 
-  // Leaving polygon-drawing mid-shape (switching tools) should not leave a
-  // half-drawn polygon lying around.
+  // Switching tools away from 'polygon' used to silently throw away whatever
+  // vertices had been placed — closing a shape required a precise click back
+  // on the very first point, so anyone who instead just tapped another tool
+  // (e.g. "Select") when they felt done saw their room vanish. A real,
+  // already-a-triangle-or-more shape is finished instead of discarded; only
+  // a too-short, genuinely unusable scribble (<3 points) is dropped.
   useEffect(() => {
-    if (mode !== 'polygon') setPolyPoints(null);
+    if (mode !== 'polygon' && polyPoints) {
+      if (polyPoints.length >= 3) onAddPolygonRoom(polyPoints);
+      setPolyPoints(null);
+    }
   }, [mode]);
 
   useEffect(() => {
@@ -216,8 +223,12 @@ export default function PlanEditor2D({
       ctx.strokeRect((c.x - half) * PPM, (c.y - half) * PPM, COLUMN_SIZE * PPM, COLUMN_SIZE * PPM);
     });
 
-    // Live preview while placing a polygon room.
+    // Live preview while placing a polygon room. The first vertex is drawn
+    // larger/highlighted once the shape is closable (>=3 points) — it's the
+    // "click here to close" target, and a double-click/double-tap anywhere
+    // finishes the shape too, so this marker is a hint, not the only way.
     if (polyPoints && polyPoints.length) {
+      const closable = polyPoints.length >= 3;
       ctx.strokeStyle = '#c9a96e';
       ctx.lineWidth = 2;
       ctx.beginPath();
@@ -228,10 +239,15 @@ export default function PlanEditor2D({
       if (cursor) ctx.lineTo(cursor.x * PPM, cursor.y * PPM);
       ctx.stroke();
       ctx.fillStyle = '#c9a96e';
-      polyPoints.forEach((p) => {
+      polyPoints.forEach((p, i) => {
         ctx.beginPath();
-        ctx.arc(p.x * PPM, p.y * PPM, 4, 0, Math.PI * 2);
+        ctx.arc(p.x * PPM, p.y * PPM, i === 0 && closable ? 8 : 4, 0, Math.PI * 2);
         ctx.fill();
+        if (i === 0 && closable) {
+          ctx.strokeStyle = '#1b1e22';
+          ctx.lineWidth = 1.5;
+          ctx.stroke();
+        }
       });
     }
 
@@ -408,6 +424,16 @@ export default function PlanEditor2D({
     }
   }
 
+  // A second way to close a free-form shape, alongside clicking back on the
+  // first point: double-click/double-tap finishes it from anywhere, which
+  // doesn't require landing precisely on that first vertex.
+  function handleDoubleClick() {
+    if (mode === 'polygon' && polyPoints && polyPoints.length >= 3) {
+      onAddPolygonRoom(polyPoints);
+      setPolyPoints(null);
+    }
+  }
+
   function handlePointerUp() {
     const drag = dragRef.current;
     if (drag && drag.kind === 'new-room') {
@@ -439,6 +465,7 @@ export default function PlanEditor2D({
       onPointerMove={handlePointerMove}
       onPointerUp={handlePointerUp}
       onPointerLeave={handlePointerUp}
+      onDoubleClick={handleDoubleClick}
     />
   );
 }
