@@ -72,7 +72,12 @@ workflows:
             --project "$XCODE_PROJECT" \
             --scheme "$XCODE_SCHEME"
     artifacts:
-      - ios-app/build/ios/ipa/*.ipa
+      # `xcode-project build-ipa` writes to a fixed build-directory path
+      # (not relative to `working_directory: ios-app`), so this must NOT
+      # be prefixed with `ios-app/` — that prefix is why publishing
+      # skipped with "No IPA or PKG files found" despite the export
+      # itself succeeding (log: "exported to build/ios/ipa/App.ipa").
+      - build/ios/ipa/*.ipa
       - /tmp/xcodebuild_logs/*.log
     publishing:
       # Fill in app_store_connect under Codemagic's Teams > Integrations,
