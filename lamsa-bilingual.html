@@ -464,6 +464,19 @@
 
   .home-tool-row { display: flex; gap: 14px; overflow-x: auto; padding-bottom: 6px; margin-bottom: 26px; scroll-snap-type: x proximity; -webkit-overflow-scrolling: touch; }
   .home-tool-row::-webkit-scrollbar { display: none; }
+
+  .home-engineers-banner {
+    display: flex; align-items: center; gap: 14px; text-decoration: none;
+    background: linear-gradient(135deg, #1b1e22, #2b2f33);
+    border: 1px solid #c9a96e; border-radius: 16px; padding: 16px 18px; margin-bottom: 22px;
+  }
+  .home-eng-icon { width: 48px; height: 48px; border-radius: 12px; background: rgba(201,169,110,0.15); display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+  .home-eng-icon .icon-svg { width: 26px; height: 26px; color: #c9a96e; }
+  .home-eng-text { flex: 1; min-width: 0; }
+  .home-eng-title { font-size: 19px; font-weight: 900; color: #c9a96e; }
+  .home-eng-sub { font-size: 12px; color: #aeb4bd; margin-top: 2px; }
+  .home-eng-arrow { color: #c9a96e; font-size: 18px; flex-shrink: 0; }
+  [dir="rtl"] .home-eng-arrow { transform: scaleX(-1); }
   .home-tool-tile {
     flex: 0 0 76px; display: flex; flex-direction: column; align-items: center; gap: 8px;
     text-decoration: none; color: var(--white); cursor: pointer; scroll-snap-align: start;
@@ -1281,14 +1294,19 @@
 <section id="homeScreen">
   <div class="home-credits" id="homeCreditsBadge"></div>
 
+  <a class="home-engineers-banner" href="engineers/index.html">
+    <div class="home-eng-icon" id="homeEngBannerIcon"></div>
+    <div class="home-eng-text">
+      <div class="home-eng-title" data-ar="قسم المهندسين" data-en="Engineers">Engineers</div>
+      <div class="home-eng-sub" data-ar="صمم مخططات هندسية كاملة بالذكاء الاصطناعي" data-en="Design complete floor plans with AI">Design complete floor plans with AI</div>
+    </div>
+    <div class="home-eng-arrow">→</div>
+  </a>
+
   <div class="home-section-head">
     <h2 data-ar="كل الأدوات" data-en="All Tools">All Tools</h2>
   </div>
   <div class="home-tool-row">
-    <a class="home-tool-tile" href="engineers/index.html">
-      <div class="home-tool-icon"></div>
-      <span data-ar="قسم المهندسين" data-en="Engineers">Engineers</span>
-    </a>
     <div class="home-tool-tile" onclick="openInteriorDesignTool()">
       <div class="home-tool-icon"></div>
       <span data-ar="تصميم داخلي" data-en="Interior Design">Interior Design</span>
@@ -2643,19 +2661,20 @@
   // data-ar, so setLang()'s generic pass never touches them) and mounts
   // the shared bottom tab bar.
   function initHomeScreen() {
-    var icons = ['ruler', 'sparkles', 'refresh', 'cube', 'palette'];
+    var icons = ['sparkles', 'refresh', 'cube', 'palette'];
     document.querySelectorAll('.home-tool-icon').forEach(function (el, i) {
       el.innerHTML = window.icon ? window.icon(icons[i] || 'sparkle') : '';
     });
+    var bannerIcon = document.getElementById('homeEngBannerIcon');
+    if (bannerIcon) bannerIcon.innerHTML = window.icon ? window.icon('ruler') : '';
     if (window.AppShell) AppShell.renderTabBar('home');
 
     // In a dir="rtl" document, Safari/WebKit (unlike Chrome/Firefox) keeps
     // treating scrollLeft as if the row were still LTR, so an
-    // overflow-x:auto row can load already scrolled past its first
-    // (rightmost, "most important") tile — Engineers — instead of
-    // starting flush on it. scrollIntoView sidesteps the sign/zero-point
-    // quirk entirely instead of trying to compute the right scrollLeft
-    // per browser.
+    // overflow-x:auto row can load already scrolled past its first tile
+    // instead of starting flush on it. scrollIntoView sidesteps the
+    // sign/zero-point quirk entirely instead of trying to compute the
+    // right scrollLeft per browser.
     var row = document.querySelector('.home-tool-row');
     var firstTile = row && row.querySelector('.home-tool-tile');
     if (firstTile) firstTile.scrollIntoView({ inline: 'start', block: 'nearest' });
