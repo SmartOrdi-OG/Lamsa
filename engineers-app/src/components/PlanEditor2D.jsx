@@ -190,6 +190,21 @@ export default function PlanEditor2D({
       drawStairSymbol(ctx, x0, y0, w, d, rotation, stairFootprint(floorToFloorH).numSteps, isSelected ? '#c9a96e' : '#6b5e3a');
     });
 
+    // Pad footings under ground-floor columns — same dashed convention as
+    // the wall footing outline above, drawn behind the column symbols.
+    if (showFoundation && activeFloor === 0) {
+      floorColumns.forEach((c) => {
+        const size = c.size ?? COLUMN_SIZE;
+        const padHalf = (size + FOUNDATION_OVERHANG * 2) / 2;
+        ctx.save();
+        ctx.strokeStyle = '#9ca3af';
+        ctx.lineWidth = 1.5;
+        ctx.setLineDash([6, 4]);
+        ctx.strokeRect((c.x - padHalf) * PPM, (c.y - padHalf) * PPM, padHalf * 2 * PPM, padHalf * 2 * PPM);
+        ctx.restore();
+      });
+    }
+
     floorColumns.forEach((c) => {
       const isSelected = c.id === selectedColumnId;
       const half = COLUMN_SIZE / 2;

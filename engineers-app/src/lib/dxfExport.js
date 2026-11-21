@@ -221,16 +221,31 @@ function drawColumnsDxf(entities, columnsForFloor, xOffset) {
 // an honest approximation for anything more irregular), drawn as a
 // dashed outline outside the ground-floor wall line, the standard CAD
 // convention for a footing shown on a foundation plan.
-function drawFoundationDxf(entities, allRooms, xOffset) {
+function drawFoundationDxf(entities, allRooms, columnsForGroundFloor, xOffset) {
   const fp = foundationFootprint(allRooms, 0);
-  if (!fp) return;
-  const corners = [
-    { x: fp.minX - FOUNDATION_OVERHANG, y: fp.minY - FOUNDATION_OVERHANG },
-    { x: fp.maxX + FOUNDATION_OVERHANG, y: fp.minY - FOUNDATION_OVERHANG },
-    { x: fp.maxX + FOUNDATION_OVERHANG, y: fp.maxY + FOUNDATION_OVERHANG },
-    { x: fp.minX - FOUNDATION_OVERHANG, y: fp.maxY + FOUNDATION_OVERHANG },
-  ].map((p) => flip(p, xOffset));
-  dxfLwPolyline(entities, "FOUNDATION", corners, true);
+  if (fp) {
+    const corners = [
+      { x: fp.minX - FOUNDATION_OVERHANG, y: fp.minY - FOUNDATION_OVERHANG },
+      { x: fp.maxX + FOUNDATION_OVERHANG, y: fp.minY - FOUNDATION_OVERHANG },
+      { x: fp.maxX + FOUNDATION_OVERHANG, y: fp.maxY + FOUNDATION_OVERHANG },
+      { x: fp.minX - FOUNDATION_OVERHANG, y: fp.maxY + FOUNDATION_OVERHANG },
+    ].map((p) => flip(p, xOffset));
+    dxfLwPolyline(entities, "FOUNDATION", corners, true);
+  }
+
+  // Pad footing under each ground-floor column — same overhang convention
+  // as the wall strip footing above.
+  (columnsForGroundFloor || []).forEach((c) => {
+    const size = c.size ?? COLUMN_SIZE;
+    const half = size / 2 + FOUNDATION_OVERHANG;
+    const padCorners = [
+      { x: c.x - half, y: c.y - half },
+      { x: c.x + half, y: c.y - half },
+      { x: c.x + half, y: c.y + half },
+      { x: c.x - half, y: c.y + half },
+    ].map((p) => flip(p, xOffset));
+    dxfLwPolyline(entities, "FOUNDATION", padCorners, true);
+  });
 }
 
 function buildFloorEntities(allRooms, floorRoomsList, stairsForFloor, columnsForFloor, wallHeight, xOffset, label, showDimensions, isGroundFloor) {
@@ -267,7 +282,7 @@ function buildFloorEntities(allRooms, floorRoomsList, stairsForFloor, columnsFor
 
   drawStairsDxf(entities, allRooms, stairsForFloor, wallHeight, xOffset);
   drawColumnsDxf(entities, columnsForFloor, xOffset);
-  if (isGroundFloor) drawFoundationDxf(entities, allRooms, xOffset);
+  if (isGroundFloor) drawFoundationDxf(entities, allRooms, columnsForFloor, xOffset);
   return entities;
 }
 

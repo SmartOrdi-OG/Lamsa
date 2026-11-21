@@ -1478,6 +1478,19 @@ export function rebuildGroup(group, rooms, stairs, wallHeight, wallColor, center
     const worldX = Number(c.x) - center.x, worldZ = Number(c.y) - center.z;
     const mat = texturedMaterial(textureCache, "#9a9a9a", "wall", size, columnHeight, 0.85, "concrete");
     addGrowBox(group, animState, size, columnHeight, size, worldX, floorBaseY, worldZ, mat, WALL_DELAY);
+
+    // Isolated/pad footing — the wider concrete base a ground-floor column
+    // actually bears on, same sizing convention as the strip footing under
+    // the exterior walls (FOUNDATION_OVERHANG/DEPTH): the real dimension is
+    // a structural calculation from the column's load and the soil's
+    // bearing capacity, so this is a representative visual pad, not that
+    // calculation. Upper floors' columns already rest on the floor slab
+    // below them, not directly on soil, so this only applies at floor 0.
+    if (showFoundation && floorNum === 0) {
+      const padSize = size + FOUNDATION_OVERHANG * 2;
+      const padMat = texturedMaterial(textureCache, "#8d8d8d", "wall", padSize, FOUNDATION_DEPTH, 0.9, "concrete");
+      addGrowBox(group, animState, padSize, FOUNDATION_DEPTH, padSize, worldX, floorBaseY - FOUNDATION_DEPTH, worldZ, padMat, WALL_DELAY);
+    }
   });
 
   if (showFoundation) {
