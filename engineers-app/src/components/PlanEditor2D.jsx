@@ -31,6 +31,7 @@ export default function PlanEditor2D({
   stairs,      // ALL floors
   columns = [], // ALL floors
   showFoundation = true,
+  standard = 'irc',
   wallHeight,
   gridW = 20,
   gridH = 16,
@@ -389,7 +390,7 @@ export default function PlanEditor2D({
     }
     if (drag.kind === 'resize') {
       const room = rooms.find((r) => r.id === drag.roomId);
-      const roomType = getRoomType(room && room.room_type);
+      const roomType = getRoomType(room && room.room_type, standard);
       const gw = snap(Math.max(roomType.minW, cx - drag.startGx));
       const gh = snap(Math.max(roomType.minH, cy - drag.startGy));
       onResizeRoom(drag.roomId, gw, gh);

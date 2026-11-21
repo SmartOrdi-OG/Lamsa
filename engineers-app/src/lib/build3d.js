@@ -1055,13 +1055,24 @@ export function buildFurnitureItem(group, animState, textureCache, item, worldX,
   }
 }
 
-// IRC R311.7.1 sets 0.914 m (36 in) as the minimum clear width for a
-// dwelling's egress stair — STAIR_WIDTH is the default a new stair is
-// drawn with (a comfortable residential width above that minimum), but
-// it's overridable per stair (see stairFootprint's width param / the
-// Toolbar's Width field) down to that code minimum.
+// IRC R311.7.1 sets 0.914 m (36 in) as the minimum clear width for a US
+// dwelling's egress stair; DIN 18065 (the German/widely-referenced
+// European stair standard) sets 0.80 m for a private/secondary stair
+// (1.00 m for a shared/main stair in a multi-unit building, which this
+// tool doesn't distinguish, so the more permissive private-stair figure
+// is used). STAIR_WIDTH is the default a new stair is drawn with (a
+// comfortable residential width above either minimum); the applicable
+// minimum is overridable per stair (see stairFootprint's width param /
+// the Toolbar's Width field) down to whichever standard the project uses.
 export const STAIR_WIDTH = 1.0;
-export const STAIR_MIN_WIDTH = 0.914;
+export const STAIR_MIN_WIDTH_IRC = 0.914;
+export const STAIR_MIN_WIDTH_EU = 0.80;
+export function stairMinWidth(standard) {
+  return standard === 'eu' ? STAIR_MIN_WIDTH_EU : STAIR_MIN_WIDTH_IRC;
+}
+export function stairMinWidthCodeRef(standard) {
+  return standard === 'eu' ? 'DIN 18065' : 'IRC R311.7.1';
+}
 const STAIR_STEP_DEPTH = 0.28;
 const STAIR_RISER_TARGET = 0.18;
 const STAIRS_DELAY = 0.85;

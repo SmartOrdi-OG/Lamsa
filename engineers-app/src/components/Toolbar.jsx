@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { FLOOR_CAP, floorLabel } from '../lib/planGeometry.js';
 import { ROOM_TYPES, getRoomType } from '../lib/roomTypes.js';
-import { STAIR_WIDTH, STAIR_MIN_WIDTH } from '../lib/build3d.js';
+import { STAIR_WIDTH, stairMinWidth, stairMinWidthCodeRef } from '../lib/build3d.js';
 
 // A plain `value={someNumber}` controlled input fights the user the
 // moment they clear it to type a new number: an empty field parses to
@@ -83,6 +83,7 @@ const btnStyle = (active) => ({
 export default function Toolbar({
   t,
   mode,
+  standard = 'irc',
   onModeChange,
   selectedRoom,
   onRenameRoom,
@@ -130,7 +131,7 @@ export default function Toolbar({
         ))}
 
         {selectedRoom && (() => {
-          const roomType = getRoomType(selectedRoom.room_type);
+          const roomType = getRoomType(selectedRoom.room_type, standard);
           return (
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, alignItems: 'center', marginInlineStart: 12 }}>
               <select
@@ -187,27 +188,30 @@ export default function Toolbar({
           </button>
         )}
 
-        {selectedStair && (
-          <div style={{ display: 'flex', gap: 8, alignItems: 'center', marginInlineStart: 12 }}>
-            <label style={{ fontSize: 12, color: '#6b7280' }}>
-              {t('Width')}
-              <DimensionField
-                entityId={selectedStair.id}
-                value={selectedStair.width ?? STAIR_WIDTH}
-                min={STAIR_MIN_WIDTH}
-                step={0.05}
-                onCommit={(width) => onResizeStairWidth(selectedStair.id, width)}
-                style={{ width: 60, marginInlineStart: 4, padding: '4px 6px', borderRadius: 6, border: '1px solid #d1d5db' }}
-              />
-            </label>
-            <span style={{ fontSize: 11, color: '#9ca3af' }}>
-              {t('Min')} {STAIR_MIN_WIDTH} m (IRC R311.7.1)
-            </span>
-            <button type="button" style={btnStyle(false)} onClick={() => onDeleteStair(selectedStair.id)}>
-              {t('Delete Stairs')}
-            </button>
-          </div>
-        )}
+        {selectedStair && (() => {
+          const minWidth = stairMinWidth(standard);
+          return (
+            <div style={{ display: 'flex', gap: 8, alignItems: 'center', marginInlineStart: 12 }}>
+              <label style={{ fontSize: 12, color: '#6b7280' }}>
+                {t('Width')}
+                <DimensionField
+                  entityId={selectedStair.id}
+                  value={selectedStair.width ?? STAIR_WIDTH}
+                  min={minWidth}
+                  step={0.05}
+                  onCommit={(width) => onResizeStairWidth(selectedStair.id, width)}
+                  style={{ width: 60, marginInlineStart: 4, padding: '4px 6px', borderRadius: 6, border: '1px solid #d1d5db' }}
+                />
+              </label>
+              <span style={{ fontSize: 11, color: '#9ca3af' }}>
+                {t('Min')} {minWidth} m ({stairMinWidthCodeRef(standard)})
+              </span>
+              <button type="button" style={btnStyle(false)} onClick={() => onDeleteStair(selectedStair.id)}>
+                {t('Delete Stairs')}
+              </button>
+            </div>
+          );
+        })()}
 
         {selectedColumn && (
           <button type="button" style={btnStyle(false)} onClick={() => onDeleteColumn(selectedColumn.id)}>

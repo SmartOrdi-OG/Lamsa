@@ -12,6 +12,7 @@ import { floorLabel } from '../lib/planGeometry.js';
 
 export default function EditorView({ initialProject, projectId, onBack, onSave, t }) {
   const { project, rooms, stairs, columns, actions } = useProjectStore(initialProject);
+  const standard = project.code_standard || 'irc';
   const [mode, setMode] = useState('select');
   const [activeFloor, setActiveFloor] = useState(0);
   const [selectedRoomId, setSelectedRoomId] = useState(null);
@@ -66,7 +67,12 @@ export default function EditorView({ initialProject, projectId, onBack, onSave, 
 
   function handleExportPdf() {
     const floorRooms = rooms.filter((r) => (r.floor ?? 0) === activeFloor);
-    const dataUrl = exportPlanImage(floorRooms, 20, 16);
+    const dataUrl = exportPlanImage(floorRooms, 20, 16, {
+      projectName: project.name,
+      floorLabel: floorLabel(activeFloor, t),
+      standard,
+      t
+    });
     // iOS Safari doesn't honor the `download` attribute on a data: URI — it
     // just navigates/opens it instead of saving, so the export silently
     // appeared to do nothing there. A blob: URL (same approach the DXF
@@ -91,7 +97,7 @@ export default function EditorView({ initialProject, projectId, onBack, onSave, 
       rooms: rooms.filter((r) => (r.floor ?? 0) === floorNum)
     })).filter((f) => f.rooms.length > 0);
     if (!floorsMeta.length) return;
-    const dxfText = exportFloorsToDxf(rooms, floorsMeta, stairs, columns, project.wall_height);
+    const dxfText = exportFloorsToDxf(project, rooms, floorsMeta, stairs, columns, project.wall_height, true, standard, t);
     const blob = new Blob([dxfText], { type: 'application/dxf' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
@@ -138,6 +144,17 @@ export default function EditorView({ initialProject, projectId, onBack, onSave, 
             <input type="checkbox" checked={showFoundation} onChange={(e) => setShowFoundation(e.target.checked)} />
             {t('Show Foundation')}
           </label>
+          <label style={{ fontSize: 12, color: '#6b7280', display: 'flex', alignItems: 'center', gap: 4 }}>
+            {t('Code Standard')}
+            <select
+              value={standard}
+              onChange={(e) => actions.setMeta({ code_standard: e.target.value })}
+              style={{ padding: '4px 6px', borderRadius: 6, border: '1px solid #d1d5db', fontSize: 12 }}
+            >
+              <option value="irc">{t('IRC (US)')}</option>
+              <option value="eu">{t('EU (DIN/EN)')}</option>
+            </select>
+          </label>
           <button type="button" onClick={handleExportPdf} style={{ padding: '8px 14px', borderRadius: 8, border: '1px solid #d1d5db', background: '#fff', fontWeight: 700, fontSize: 13, cursor: 'pointer' }}>
             {t('Export plan')}
           </button>
@@ -168,6 +185,7 @@ export default function EditorView({ initialProject, projectId, onBack, onSave, 
 
       <Toolbar
         t={t}
+        standard={standard}
         mode={mode}
         onModeChange={setMode}
         selectedRoom={selectedRoom}
@@ -175,7 +193,7 @@ export default function EditorView({ initialProject, projectId, onBack, onSave, 
         onChangeRoomType={(id, roomTypeId) => {
           const room = rooms.find((r) => r.id === id);
           if (!room) return;
-          const roomType = getRoomType(roomTypeId);
+          const roomType = getRoomType(roomTypeId, standard);
           // Naming the room by its type is the common case — free text is
           // still editable right after via the name field for a custom
           // name like "Master Bedroom". Dimensions are only ever bumped
@@ -211,6 +229,7 @@ export default function EditorView({ initialProject, projectId, onBack, onSave, 
             stairs={stairs}
             columns={columns}
             showFoundation={showFoundation}
+            standard={standard}
             wallHeight={project.wall_height}
             mode={mode}
             activeFloor={activeFloor}
