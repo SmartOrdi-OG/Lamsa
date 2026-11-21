@@ -181,7 +181,7 @@ export default function PlanEditor2D({
 
     floorStairs.forEach((s) => {
       const rotation = s.rotation || 0;
-      const { w, d } = stairEffectiveFootprint(floorToFloorH, rotation);
+      const { w, d } = stairEffectiveFootprint(floorToFloorH, rotation, s.width);
       const isSelected = s.id === selectedStairId;
       const x0 = (s.x - w / 2) * PPM, y0 = (s.y - d / 2) * PPM;
       ctx.strokeStyle = isSelected ? '#c9a96e' : '#6b5e3a';
@@ -321,7 +321,7 @@ export default function PlanEditor2D({
       onSelectStair(stairHit.id);
       onSelectColumn(null);
       onSelectRoom(null);
-      dragRef.current = { kind: 'move-stair', stairId: stairHit.id, offsetX: cx - stairHit.x, offsetY: cy - stairHit.y, rotation: stairHit.rotation };
+      dragRef.current = { kind: 'move-stair', stairId: stairHit.id, offsetX: cx - stairHit.x, offsetY: cy - stairHit.y, rotation: stairHit.rotation, width: stairHit.width };
       return;
     }
     onSelectStair(null);
@@ -396,7 +396,7 @@ export default function PlanEditor2D({
       return;
     }
     if (drag.kind === 'move-stair') {
-      const placed = hitTestGridForStair(gridW, gridH, snap(cx - drag.offsetX), snap(cy - drag.offsetY), floorToFloorH, drag.rotation);
+      const placed = hitTestGridForStair(gridW, gridH, snap(cx - drag.offsetX), snap(cy - drag.offsetY), floorToFloorH, drag.rotation, drag.width);
       if (placed) onMoveStair(drag.stairId, placed.x, placed.y, drag.rotation);
       return;
     }

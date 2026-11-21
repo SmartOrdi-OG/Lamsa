@@ -1055,7 +1055,13 @@ export function buildFurnitureItem(group, animState, textureCache, item, worldX,
   }
 }
 
-const STAIR_WIDTH = 1.0;
+// IRC R311.7.1 sets 0.914 m (36 in) as the minimum clear width for a
+// dwelling's egress stair — STAIR_WIDTH is the default a new stair is
+// drawn with (a comfortable residential width above that minimum), but
+// it's overridable per stair (see stairFootprint's width param / the
+// Toolbar's Width field) down to that code minimum.
+export const STAIR_WIDTH = 1.0;
+export const STAIR_MIN_WIDTH = 0.914;
 const STAIR_STEP_DEPTH = 0.28;
 const STAIR_RISER_TARGET = 0.18;
 const STAIRS_DELAY = 0.85;
@@ -1065,11 +1071,12 @@ const STAIRS_DELAY = 0.85;
 // التالي مهما كان ارتفاعه. مصدر وحيد يشترك فيه البناء ثلاثي الأبعاد وتفاعل المخطط 2D
 /**
  * @param {number} floorToFloorHeight
+ * @param {number} [width]
  * @returns {{ w: number, d: number, numSteps: number }}
  */
-export function stairFootprint(floorToFloorHeight) {
+export function stairFootprint(floorToFloorHeight, width = STAIR_WIDTH) {
   const numSteps = Math.max(4, Math.round(floorToFloorHeight / STAIR_RISER_TARGET));
-  return { w: STAIR_WIDTH, d: numSteps * STAIR_STEP_DEPTH, numSteps };
+  return { w: width, d: numSteps * STAIR_STEP_DEPTH, numSteps };
 }
 
 // سلم صلب كلاسيكي: كل درجة صندوق قاعدته دايماً عند مستوى أرضية الطابق السفلي وارتفاعه يزيد
@@ -1087,7 +1094,8 @@ export function stairFootprint(floorToFloorHeight) {
  * @param {string} wallColorHex - قيمة لون CSS (متوافقة مباشرة مع THREE.Color)، مو رقم hex فعلي
  */
 export function buildStaircase(group, animState, textureCache, stair, floorToFloorHeight, worldX, worldZ, floorBaseY, wallColorHex) {
-  const { d: totalRun, numSteps } = stairFootprint(floorToFloorHeight);
+  const width = stair.width ?? STAIR_WIDTH;
+  const { d: totalRun, numSteps } = stairFootprint(floorToFloorHeight, width);
   const riserHeight = floorToFloorHeight / numSteps;
   const rotation = stair.rotation || 0;
   const stepColor = new THREE.Color(wallColorHex).multiplyScalar(0.85);
@@ -1098,8 +1106,8 @@ export function buildStaircase(group, animState, textureCache, stair, floorToFlo
     const cz = -totalRun / 2 + (i + 0.5) * STAIR_STEP_DEPTH;
     const h = (i + 1) * riserHeight;
     const { x: lx, z: lz } = rotateLocal(0, cz, rotation);
-    const w = swapped ? STAIR_STEP_DEPTH : STAIR_WIDTH;
-    const d = swapped ? STAIR_WIDTH : STAIR_STEP_DEPTH;
+    const w = swapped ? STAIR_STEP_DEPTH : width;
+    const d = swapped ? width : STAIR_STEP_DEPTH;
     const mat = texturedMaterial(textureCache, stepHex, "wall", w, h, 0.8);
     addGrowBox(group, animState, w, h, d, worldX + lx, floorBaseY, worldZ + lz, mat, STAIRS_DELAY);
   }

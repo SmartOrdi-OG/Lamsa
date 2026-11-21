@@ -1,5 +1,6 @@
 import { FLOOR_CAP, floorLabel } from '../lib/planGeometry.js';
 import { ROOM_TYPES, getRoomType } from '../lib/roomTypes.js';
+import { STAIR_WIDTH, STAIR_MIN_WIDTH } from '../lib/build3d.js';
 
 const TOOLS = [
   { id: 'select', label: 'Select' },
@@ -37,6 +38,7 @@ export default function Toolbar({
   onSetActiveFloor,
   onAddFloor,
   selectedStair,
+  onResizeStairWidth,
   onDeleteStair,
   selectedColumn,
   onDeleteColumn
@@ -138,9 +140,29 @@ export default function Toolbar({
         )}
 
         {selectedStair && (
-          <button type="button" style={btnStyle(false)} onClick={() => onDeleteStair(selectedStair.id)}>
-            {t('Delete Stairs')}
-          </button>
+          <div style={{ display: 'flex', gap: 8, alignItems: 'center', marginInlineStart: 12 }}>
+            <label style={{ fontSize: 12, color: '#6b7280' }}>
+              {t('Width')}
+              <input
+                type="number"
+                step="0.05"
+                min={STAIR_MIN_WIDTH}
+                value={selectedStair.width ?? STAIR_WIDTH}
+                onChange={(e) => {
+                  const parsed = parseFloat(e.target.value);
+                  const width = Number.isFinite(parsed) ? Math.max(parsed, STAIR_MIN_WIDTH) : (selectedStair.width ?? STAIR_WIDTH);
+                  onResizeStairWidth(selectedStair.id, width);
+                }}
+                style={{ width: 60, marginInlineStart: 4, padding: '4px 6px', borderRadius: 6, border: '1px solid #d1d5db' }}
+              />
+            </label>
+            <span style={{ fontSize: 11, color: '#9ca3af' }}>
+              {t('Min')} {STAIR_MIN_WIDTH} m (IRC R311.7.1)
+            </span>
+            <button type="button" style={btnStyle(false)} onClick={() => onDeleteStair(selectedStair.id)}>
+              {t('Delete Stairs')}
+            </button>
+          </div>
         )}
 
         {selectedColumn && (

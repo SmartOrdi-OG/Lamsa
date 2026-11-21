@@ -188,6 +188,12 @@ function reducer(state, action) {
         )
       };
     }
+    case 'UPDATE_STAIR': {
+      return {
+        ...state,
+        stairs: state.stairs.map((s) => (s.id === action.stairId ? { ...s, ...action.patch } : s))
+      };
+    }
     case 'REMOVE_STAIR': {
       return { ...state, stairs: state.stairs.filter((s) => s.id !== action.stairId) };
     }
@@ -229,6 +235,7 @@ export function useProjectStore(initialProject) {
       removeFurniture: (roomId, furnitureId) => dispatch({ type: 'REMOVE_FURNITURE', roomId, furnitureId }),
       addStair: (stair) => dispatch({ type: 'ADD_STAIR', stair }),
       moveStair: (stairId, x, y, rotation) => dispatch({ type: 'MOVE_STAIR', stairId, x, y, rotation }),
+      updateStair: (stairId, patch) => dispatch({ type: 'UPDATE_STAIR', stairId, patch }),
       removeStair: (stairId) => dispatch({ type: 'REMOVE_STAIR', stairId }),
       addColumn: (column) => dispatch({ type: 'ADD_COLUMN', column }),
       moveColumn: (columnId, x, y) => dispatch({ type: 'MOVE_COLUMN', columnId, x, y }),
