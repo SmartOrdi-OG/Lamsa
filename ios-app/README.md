@@ -38,7 +38,7 @@ These aren't code bugs; they're Apple App Store policy questions that
 need a decision before (or the app risks rejection after) submission:
 
 1. **Payments.** The app currently links out to Stripe for the Engineers
-   $250/year plan and credit packs, the same pattern already in use on
+   $300/year plan and credit packs, the same pattern already in use on
    Google Play. Apple's guideline 3.1.1 requires in-app digital
    purchases to go through Apple's own In-App Purchase (StoreKit) unless
    you qualify for and have been granted the "External Purchase Link"

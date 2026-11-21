@@ -37,7 +37,7 @@ export default function PaywallScreen({ status, t }) {
         <li>— {t('Printable floor plan export')}</li>
         <li>— {t("Use Lamsa's existing furniture-styling tools per room")}</li>
       </ul>
-      <div style={{ fontSize: 28, fontWeight: 900, marginBottom: 4 }}>$250<span style={{ fontSize: 14, fontWeight: 600, color: '#6b7280' }}> {t('/ year')}</span></div>
+      <div style={{ fontSize: 28, fontWeight: 900, marginBottom: 4 }}>$300<span style={{ fontSize: 14, fontWeight: 600, color: '#6b7280' }}> {t('/ year')}</span></div>
       <div style={{ fontSize: 13, color: '#6b7280', marginBottom: 20 }}>{t('14-day free trial, cancel anytime')}</div>
       <button
         type="button"
