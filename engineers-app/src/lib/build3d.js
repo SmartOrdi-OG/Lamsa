@@ -82,6 +82,32 @@ export function roomArea(room) {
   return room.gw * room.gh;
 }
 
+// Bounding box of every room on one floor (both rect and free-form rooms'
+// own gx/gy/gw/gh bounding box, which createRectRoom/createPolygonRoom
+// always keep accurate — see projectStore.js). Used as the building's
+// ground-floor footprint for the foundation slab: a true footing would
+// trace the actual exterior wall outline, but for an L-shaped or
+// otherwise non-rectangular footprint that's a polygon-union problem this
+// tool doesn't solve — the bounding box is an honest, simple
+// approximation that's exact for the common rectangular-footprint case.
+/**
+ * @param {Room[]} rooms
+ * @param {number} floorNum
+ * @returns {{minX:number,minY:number,maxX:number,maxY:number}|null}
+ */
+export function foundationFootprint(rooms, floorNum) {
+  const floorRooms = rooms.filter((r) => (r.floor ?? 0) === floorNum);
+  if (!floorRooms.length) return null;
+  let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+  floorRooms.forEach((r) => {
+    minX = Math.min(minX, r.gx);
+    minY = Math.min(minY, r.gy);
+    maxX = Math.max(maxX, r.gx + r.gw);
+    maxY = Math.max(maxY, r.gy + r.gh);
+  });
+  return { minX, minY, maxX, maxY };
+}
+
 // Default dimensions (meters), grounded in common international building
 // code ranges (IBC/IRC, Eurocode) rather than arbitrary numbers — an
 // engineer can still override any of these per-room/opening, these are
@@ -96,6 +122,15 @@ export const WIN_SILL = 0.9;   // standard window sill height off the floor
 // reasonable residential default in the common 0.2-0.4 m range — always
 // overridable per column.
 export const COLUMN_SIZE = 0.3;
+// Foundation footing: IRC Table R403.1 sets minimum footing WIDTH by
+// soil bearing capacity and number of stories (e.g. 12 in / 0.3 m for a
+// 1-story light-frame house on 2000 psf soil) rather than one fixed
+// number — this is a representative visual default for a typical
+// residential footing, not a load calculation, and the footing is drawn
+// as a simple slab projecting beyond the building's ground-floor
+// footprint rather than a true geotechnical section.
+export const FOUNDATION_OVERHANG = 0.3; // m, how far the footing extends beyond the exterior wall line
+export const FOUNDATION_DEPTH = 0.4;    // m, visual slab thickness below the ground floor
 const WIN_MARGIN = 0.4;
 const WIN_MIN_GAP = 0.6;
 export const ROOF_T = 0.18;
@@ -1263,15 +1298,17 @@ function roomHasOverlapAbove(room, rooms) {
  * @param {any} animState
  * @param {Map<string, THREE.Texture>} textureCache
  * @param {string} [wallMaterialDefault]
- * @param {{ hideRoofs?: boolean, floorGap?: number, columns?: Column[] }} [options] وضع "بيت الدمية": بلا أسقف
+ * @param {{ hideRoofs?: boolean, floorGap?: number, columns?: Column[], showFoundation?: boolean }} [options] وضع "بيت الدمية": بلا أسقف
  *   (بتشوف جوا كل غرفة من فوق) وبفراغ بين الطوابق. القيم الافتراضية = البناء الطبيعي تماماً،
  *   فكل نداء قديم بيضل يعطي نفس النتيجة حرفياً. columns اختياري بالمثل (مصفوفة فارغة
- *   افتراضياً) فمافي تغيير بالسلوك القديم إذا ما انمرر
+ *   افتراضياً) فمافي تغيير بالسلوك القديم إذا ما انمرر. showFoundation افتراضياً true
+ *   (القواعد ظاهرة تلقائياً إذا ما انمرر هاد الخيار أصلاً)
  */
 export function rebuildGroup(group, rooms, stairs, wallHeight, wallColor, center, animState, textureCache, wallMaterialDefault = "plaster", options = {}) {
   const hideRoofs = !!options.hideRoofs;
   const floorGap = options.floorGap ?? 0;
   const columns = options.columns || [];
+  const showFoundation = options.showFoundation !== false;
   while (group.children.length) {
     disposeDeep(group.children.pop());
   }
@@ -1442,6 +1479,19 @@ export function rebuildGroup(group, rooms, stairs, wallHeight, wallColor, center
     const mat = texturedMaterial(textureCache, "#9a9a9a", "wall", size, columnHeight, 0.85, "concrete");
     addGrowBox(group, animState, size, columnHeight, size, worldX, floorBaseY, worldZ, mat, WALL_DELAY);
   });
+
+  if (showFoundation) {
+    const fp = foundationFootprint(rooms, 0);
+    const groundFloorBaseY = floorBaseYMap.get(0);
+    if (fp && groundFloorBaseY != null) {
+      const w = (fp.maxX - fp.minX) + FOUNDATION_OVERHANG * 2;
+      const d = (fp.maxY - fp.minY) + FOUNDATION_OVERHANG * 2;
+      const cx = (fp.minX + fp.maxX) / 2 - center.x;
+      const cz = (fp.minY + fp.maxY) / 2 - center.z;
+      const mat = texturedMaterial(textureCache, "#8d8d8d", "wall", w, FOUNDATION_DEPTH, 0.9, "concrete");
+      addGrowBox(group, animState, w, FOUNDATION_DEPTH, d, cx, groundFloorBaseY - FOUNDATION_DEPTH, cz, mat, WALL_DELAY);
+    }
+  }
 
   animState.progress = 0;
   animState.playing = true;

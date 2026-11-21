@@ -21,6 +21,7 @@ export default function EditorView({ initialProject, projectId, onBack, onSave, 
   const [saveMsg, setSaveMsg] = useState('');
   const [dollhouse, setDollhouse] = useState(false);
   const [renderView, setRenderView] = useState(false);
+  const [showFoundation, setShowFoundation] = useState(true);
   const [showPhotoReal, setShowPhotoReal] = useState(false);
   const viewportRef = useRef(null);
   // Side-by-side 2D/3D only works once there's room for both — below that,
@@ -120,6 +121,10 @@ export default function EditorView({ initialProject, projectId, onBack, onSave, 
             <input type="checkbox" checked={renderView} onChange={(e) => setRenderView(e.target.checked)} />
             {t('Render view')}
           </label>
+          <label style={{ fontSize: 12, color: '#6b7280', display: 'flex', alignItems: 'center', gap: 4 }}>
+            <input type="checkbox" checked={showFoundation} onChange={(e) => setShowFoundation(e.target.checked)} />
+            {t('Show Foundation')}
+          </label>
           <button type="button" onClick={handleExportPdf} style={{ padding: '8px 14px', borderRadius: 8, border: '1px solid #d1d5db', background: '#fff', fontWeight: 700, fontSize: 13, cursor: 'pointer' }}>
             {t('Export plan')}
           </button>
@@ -188,6 +193,7 @@ export default function EditorView({ initialProject, projectId, onBack, onSave, 
             rooms={rooms}
             stairs={stairs}
             columns={columns}
+            showFoundation={showFoundation}
             wallHeight={project.wall_height}
             mode={mode}
             activeFloor={activeFloor}
@@ -244,6 +250,7 @@ export default function EditorView({ initialProject, projectId, onBack, onSave, 
             dollhouse={dollhouse}
             floorGap={dollhouse ? 1.2 : 0}
             renderView={renderView}
+            showFoundation={showFoundation}
           />
         </div>
       </div>
