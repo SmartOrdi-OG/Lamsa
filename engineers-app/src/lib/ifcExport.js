@@ -1,29 +1,37 @@
-// تصدير IFC4 (Industry Foundation Classes) — تقدير أولي حقيقي لنموذج BIM ثلاثي الأبعاد،
-// بديل مفتوح المصدر لتنسيقات BIM الاحتكارية (Revit .rvt وغيره). يبني ملف STEP نصي
-// (ISO-10303-21) وفق مخطط IFC4 القياسي، بهرمية مكانية كاملة: IfcProject → IfcSite →
-// IfcBuilding → IfcBuildingStorey لكل طابق، وعناصر إنشائية حقيقية (IfcWall/IfcSlab/
-// IfcDoor/IfcWindow/IfcStair) بهندسة صلبة فعلية (IfcExtrudedAreaSolid) قابلة للفتح
-// بأي برنامج BIM حقيقي (Revit, ArchiCAD, Solibri, FreeCAD, BIMcollab...).
+// IFC4 (Industry Foundation Classes) export — a real first-pass BIM model,
+// an open alternative to proprietary formats like Revit's .rvt. Builds a
+// plain-text STEP file (ISO-10303-21) following the IFC4 schema, with a
+// full spatial hierarchy (IfcProject -> IfcSite -> IfcBuilding ->
+// IfcBuildingStorey per floor) and real solid geometry
+// (IfcExtrudedAreaSolid) for walls/slabs/doors/windows/stairs/columns/
+// footings — openable in any real BIM tool (Revit, ArchiCAD, Solibri,
+// FreeCAD, BIMcollab...).
 //
-// تحقّق الصيغة صار عبر مكتبة web-ifc (نفس محرّك التفسير يلي بيستخدمه IFC.js/That Open
-// Company) بمثال يدوي بسيط قبل بناء المولّد الكامل — تأكيد إنه بنية STEP وهرمية
-// IFCLOCALPLACEMENT وIFCEXTRUDEDAREASOLID المستخدمة هون صحيحة فعلاً وبتولّد هندسة حقيقية
-// (Vertex/Index buffers)، مو بس نص "يشبه" IFC.
+// Ported from architect-studio-360's lib/ifcExport.js (verified there
+// against the web-ifc parser — the same engine IFC.js/That Open Company
+// use — to confirm the STEP structure and IFCLOCALPLACEMENT/
+// IFCEXTRUDEDAREASOLID hierarchy produce real geometry, not just
+// IFC-shaped text), adapted for this app's per-stair width and its
+// columns/foundation entities, which didn't exist in the ported source.
 //
-// **حدود واضحة للإصدار الأول** (موثّقة بقصد، مو نقص مخفي):
-// - جدران كل غرفة تُبنى لحالها (نفس فلسفة تصدير DXF الموجود أصلاً) — بلا دمج جدار مشترك
-//   بين غرفتين متلاصقتين، فممكن يصير تراكب هندسي بسيط بالجدار المشترك (clash) لو فتحته
-//   ببرنامج تدقيق تصادم صارم
-// - السقوف المائلة (جملوني/أربعة ميول) تُصدَّر كبلاطة مسطحة بمستوى ذروة الجدران (نفس
-//   مساحة الغرفة) — مو الشكل المائل الفعلي؛ تمثيل الميل الحقيقي بـ IFC يحتاج هندسة
-//   IfcShapeRepresentation أعقد بكتير (خارج نطاق الإصدار الأول)
-// - الأبواب/النوافذ صناديق مبسّطة بمكان الفتحة (نفس أبعاد العرض/الارتفاع الحقيقية) —
-//   بلا علاقة IfcRelVoidsElement/IfcOpeningElement الصورية الكاملة يلي برامج BIM
-//   الاحترافية بتستخدمها لتمثيل "الفتحة" هندسياً؛ التمثيل هون فراغ فعلي بالجدار (نفس
-//   منطق buildWall بالعرض ثلاثي الأبعاد) مع صندوق الباب/النافذة فوقه — نتيجة بصرية/حجمية
-//   صحيحة، بس بلا العلاقة الدلالية الكاملة يلي بعض أدوات فحص BIM بتفحص عنها تحديداً
-// - الأثاث غير مُصدَّر (نموذج BIM للمبنى نفسه، مو للمحتويات)
-import { WALL_T, ROOF_T, computeFloorBaseYMap, openingRowToShape } from "./build3d";
+// **Documented v1 limits** (intentional, not a hidden gap):
+// - Each room's walls are built on their own (same approach as this
+//   app's DXF export) — no shared-wall merge between touching rooms, so
+//   a strict collision checker can flag a small overlap at a shared wall.
+// - A sloped roof is exported as a flat slab at wall-top height (same
+//   footprint as the room) — the actual slope needs a more involved
+//   IfcShapeRepresentation this v1 doesn't build.
+// - Doors/windows are simplified boxes at the opening (real width/height)
+//   — without the full IfcRelVoidsElement/IfcOpeningElement relationship
+//   some strict BIM checkers look for specifically; visually/volumetrically
+//   correct, just not that full semantic relationship.
+// - Furniture isn't exported (this is a model of the building itself, not
+//   its contents) — matches the DXF/3D exports' own scope.
+// - The foundation/footing footprint is the same bounding-box
+//   approximation build3d.js's 3D foundation and DXF export use (exact
+//   for a rectangular footprint, an honest approximation for an
+//   irregular one).
+import { WALL_T, ROOF_T, COLUMN_SIZE, FOUNDATION_OVERHANG, FOUNDATION_DEPTH, computeFloorBaseYMap, openingRowToShape, foundationFootprint } from "./build3d";
 import { floorLabel, floorToFloorHeight, stairEffectiveFootprint } from "./planGeometry";
 
 const IFC_GUID_CHARS = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz_$";
@@ -63,9 +71,11 @@ function point3(w, x, y, z) {
   return w.add(`IFCCARTESIANPOINT((${fmt(x)},${fmt(y)},${fmt(z)}))`);
 }
 
-// مضلع مغلق (بأي عدد أضلاع، مستطيل أو حر) مبثوق (extruded) رأسياً — الارتفاع بمحور Z (أعلى)،
-// بدءاً من elevation. نقاط المضلع بإحداثيات العالم الحقيقية مباشرة (بلا حاجة لموضع محلي منفصل
-// لكل عنصر — نفس فلسفة drawWallEdge بتصدير DXF: الموضع مبني بالهندسة نفسها مباشرة)
+// Closed polygon (any number of sides, rectangular or free-form) extruded
+// vertically (height along Z), starting at elevation. Points are in real
+// world coordinates directly — same approach the DXF export uses: the
+// position is built into the geometry itself rather than a separate
+// per-element local placement.
 function extrudedSolid(w, points2d, height, elevation, zAxisId, xAxisId, extrudeDirId) {
   const ptIds = points2d.map((p) => point2(w, p.x, p.y));
   const polylineId = w.add(`IFCPOLYLINE((${[...ptIds, ptIds[0]].map((id) => `#${id}`).join(",")}))`);
@@ -80,19 +90,22 @@ function productShape(w, contextId, solidId) {
   return w.add(`IFCPRODUCTDEFINITIONSHAPE($,$,(#${shapeRepId}))`);
 }
 
-// IfcWall/IfcSlab/IfcStair: بنفس شكل الصفات (9: GlobalId..Tag + PredefinedType)
+// IfcWall/IfcSlab/IfcStair/IfcColumn/IfcFooting all share the same
+// attribute shape (9 fields: GlobalId..Tag + PredefinedType).
 function addBuildingElement(w, kind, predefinedType, ownerHistory, name, placementId, shapeId) {
   return w.add(`${kind}('${randomIfcGuid()}',#${ownerHistory},'${escapeStr(name)}',$,$,#${placementId},#${shapeId},$,${predefinedType})`);
 }
 
-// IfcDoor/IfcWindow: صفات إضافية (OverallHeight/OverallWidth/PredefinedType + حقلين اختياريين)
+// IfcDoor/IfcWindow: extra attributes (OverallHeight/OverallWidth/PredefinedType + 2 optional fields).
 function addFixtureElement(w, kind, predefinedType, ownerHistory, name, placementId, shapeId, height, width) {
   return w.add(`${kind}('${randomIfcGuid()}',#${ownerHistory},'${escapeStr(name)}',$,$,#${placementId},#${shapeId},$,${fmt(height)},${fmt(width)},${predefinedType},$,$)`);
 }
 
-// نفس خوارزمية "المشي بالمؤشر" المستخدمة بـ buildWall (lib/build3d.js) وwallPillars
-// (lib/dxfExport.js) لحساب الأعمدة الصلبة حوالين الفتحات — نسخة محلية هون بالإصدار الكامل
-// (start,width,sill,openH) عشان نبني الأعمدة + عتبات الفتحات فوق/تحت، مو بس الأعمدة
+// Same "walk the cursor" algorithm buildWall (lib/build3d.js) and
+// wallPillars (lib/dxfExport.js) use for the solid pillars around
+// openings — a local copy here (full version: start/width/sill/openH) to
+// also build the header/sill slabs above and below each opening, not
+// just the solid pillars.
 function wallSegments(resolvedOpenings, length) {
   const sorted = resolvedOpenings.slice().sort((a, b) => a.start - b.start);
   let cursor = 0;
@@ -114,8 +127,10 @@ function rectPoints(p1x, p1y, ux, uy, nx, ny, a, b, half) {
   ];
 }
 
-// جدار ضلع واحد (مستقيم) — أعمدة صلبة حوالين الفتحات + عتبات فوق/تحت كل فتحة + عنصر
-// الباب/النافذة نفسه بمكانه (نفس بنية buildWall بالعرض ثلاثي الأبعاد بالضبط، بس عناصر IFC)
+// One straight wall edge — solid pillars around openings + header/sill
+// slabs above/below each opening + the door/window element itself at its
+// opening (same structure as buildWall in the 3D viewport, just IFC
+// elements instead of THREE.Mesh).
 function addWallEdge(w, ctx, p1, p2, edgeOpenings, wallHeight, ownerHistory, placementId, elementIds) {
   const dx = p2.x - p1.x, dy = p2.y - p1.y;
   const length = Math.hypot(dx, dy);
@@ -138,14 +153,14 @@ function addWallEdge(w, ctx, p1, p2, edgeOpenings, wallHeight, ownerHistory, pla
     if (o.sill > 0.02) {
       const solidId = extrudedSolid(w, corners, o.sill, 0, ctx.zAxis, ctx.xAxis, ctx.zAxis);
       const shapeId = productShape(w, ctx.context, solidId);
-      elementIds.push(addBuildingElement(w, "IFCWALL", ".SOLIDWALL.", ownerHistory, "Wall (تحت الفتحة)", placementId, shapeId));
+      elementIds.push(addBuildingElement(w, "IFCWALL", ".SOLIDWALL.", ownerHistory, "Wall (below opening)", placementId, shapeId));
     }
     const headerBottom = o.sill + o.openH;
     const headerH = wallHeight - headerBottom;
     if (headerH > 0.02) {
       const solidId = extrudedSolid(w, corners, headerH, headerBottom, ctx.zAxis, ctx.xAxis, ctx.zAxis);
       const shapeId = productShape(w, ctx.context, solidId);
-      elementIds.push(addBuildingElement(w, "IFCWALL", ".SOLIDWALL.", ownerHistory, "Wall (فوق الفتحة)", placementId, shapeId));
+      elementIds.push(addBuildingElement(w, "IFCWALL", ".SOLIDWALL.", ownerHistory, "Wall (above opening)", placementId, shapeId));
     }
     const fixtureSolid = extrudedSolid(w, corners, o.openH, o.sill, ctx.zAxis, ctx.xAxis, ctx.zAxis);
     const fixtureShape = productShape(w, ctx.context, fixtureSolid);
@@ -207,7 +222,7 @@ function addStair(w, ctx, s, allRooms, projectWallHeight, ownerHistory, placemen
   const h = floorToFloorHeight(allRooms, s.floor ?? 0, projectWallHeight);
   if (!(h > 0)) return;
   const rotation = s.rotation || 0;
-  const { w: fw, d: fd } = stairEffectiveFootprint(h, rotation);
+  const { w: fw, d: fd } = stairEffectiveFootprint(h, rotation, s.width);
   const x0 = s.x - fw / 2, x1 = s.x + fw / 2, y0 = s.y - fd / 2, y1 = s.y + fd / 2;
   const rect = [{ x: x0, y: y0 }, { x: x1, y: y0 }, { x: x1, y: y1 }, { x: x0, y: y1 }];
   const solidId = extrudedSolid(w, rect, h, 0, ctx.zAxis, ctx.xAxis, ctx.zAxis);
@@ -215,12 +230,61 @@ function addStair(w, ctx, s, allRooms, projectWallHeight, ownerHistory, placemen
   elementIds.push(addBuildingElement(w, "IFCSTAIR", ".STRAIGHT_RUN_STAIR.", ownerHistory, "Stair", placementId, shapeId));
 }
 
-// project: صف المشروع (name, wall_height)؛ allRooms/stairsList: نفس بيانات المشروع
-// المستخدمة بباقي أنواع التصدير (3D/DXF/BOQ)
-export function exportProjectToIfc(project, allRooms, stairsList) {
+// Columns and footings don't exist in the ported source (architect-
+// studio-360 never had them) — added for this app's own column/
+// foundation entities, same geometry helpers as everything else above.
+function addColumn(w, ctx, c, floorBaseY, defaultWallHeight, ownerHistory, placementId, elementIds) {
+  const size = c.size ?? COLUMN_SIZE;
+  const height = c.height ?? defaultWallHeight;
+  const half = size / 2;
+  const rect = [
+    { x: c.x - half, y: c.y - half },
+    { x: c.x + half, y: c.y - half },
+    { x: c.x + half, y: c.y + half },
+    { x: c.x - half, y: c.y + half },
+  ];
+  const solidId = extrudedSolid(w, rect, height, 0, ctx.zAxis, ctx.xAxis, ctx.zAxis);
+  const shapeId = productShape(w, ctx.context, solidId);
+  elementIds.push(addBuildingElement(w, "IFCCOLUMN", ".COLUMN.", ownerHistory, "Column", placementId, shapeId));
+}
+
+function addGroundFloorFoundation(w, ctx, allRooms, columnsForGroundFloor, ownerHistory, placementId, elementIds) {
+  const fp = foundationFootprint(allRooms, 0);
+  if (fp) {
+    const rect = [
+      { x: fp.minX - FOUNDATION_OVERHANG, y: fp.minY - FOUNDATION_OVERHANG },
+      { x: fp.maxX + FOUNDATION_OVERHANG, y: fp.minY - FOUNDATION_OVERHANG },
+      { x: fp.maxX + FOUNDATION_OVERHANG, y: fp.maxY + FOUNDATION_OVERHANG },
+      { x: fp.minX - FOUNDATION_OVERHANG, y: fp.maxY + FOUNDATION_OVERHANG },
+    ];
+    const solidId = extrudedSolid(w, rect, FOUNDATION_DEPTH, -FOUNDATION_DEPTH, ctx.zAxis, ctx.xAxis, ctx.zAxis);
+    const shapeId = productShape(w, ctx.context, solidId);
+    elementIds.push(addBuildingElement(w, "IFCFOOTING", ".STRIP_FOOTING.", ownerHistory, "Foundation", placementId, shapeId));
+  }
+
+  (columnsForGroundFloor || []).forEach((c) => {
+    const size = c.size ?? COLUMN_SIZE;
+    const half = size / 2 + FOUNDATION_OVERHANG;
+    const rect = [
+      { x: c.x - half, y: c.y - half },
+      { x: c.x + half, y: c.y - half },
+      { x: c.x + half, y: c.y + half },
+      { x: c.x - half, y: c.y + half },
+    ];
+    const solidId = extrudedSolid(w, rect, FOUNDATION_DEPTH, -FOUNDATION_DEPTH, ctx.zAxis, ctx.xAxis, ctx.zAxis);
+    const shapeId = productShape(w, ctx.context, solidId);
+    elementIds.push(addBuildingElement(w, "IFCFOOTING", ".PAD_FOOTING.", ownerHistory, "Column Footing", placementId, shapeId));
+  });
+}
+
+// project: {name, wall_height}; allRooms/stairsList/columnsList: same
+// project data every other export (3D/DXF) already uses. `t` is this
+// app's i18n t() function — optional, defaults to identity so storey
+// names fall back to English rather than throwing.
+export function exportProjectToIfc(project, allRooms, stairsList, columnsList, t = (s) => s) {
   const w = new IfcWriter();
   const wallHeight = project?.wall_height ?? 2.7;
-  const projectName = project?.name || "مشروع بلا اسم";
+  const projectName = project?.name || "Untitled Project";
 
   const origin = point3(w, 0, 0, 0);
   const zAxis = w.add(`IFCDIRECTION((0.,0.,1.))`);
@@ -231,7 +295,7 @@ export function exportProjectToIfc(project, allRooms, stairsList) {
   const person = w.add(`IFCPERSON($,$,'User',$,$,$,$,$)`);
   const org = w.add(`IFCORGANIZATION($,'${escapeStr(projectName)}',$,$,$)`);
   const personOrg = w.add(`IFCPERSONANDORGANIZATION(#${person},#${org},$)`);
-  const app = w.add(`IFCAPPLICATION(#${org},'1.0','Architect Studio 360','AS360')`);
+  const app = w.add(`IFCAPPLICATION(#${org},'1.0','Lamsa Engineers','LAMSA')`);
   const ownerHistory = w.add(`IFCOWNERHISTORY(#${personOrg},#${app},$,.ADDED.,$,$,$,0)`);
 
   const lenUnit = w.add(`IFCSIUNIT(*,.LENGTHUNIT.,$,.METRE.)`);
@@ -265,7 +329,7 @@ export function exportProjectToIfc(project, allRooms, stairsList) {
     const elevAxis = w.add(`IFCAXIS2PLACEMENT3D(#${elevPt},#${zAxis},#${xAxis})`);
     const storeyPlacement = w.add(`IFCLOCALPLACEMENT(#${buildingPlacement},#${elevAxis})`);
     const storeyId = w.add(
-      `IFCBUILDINGSTOREY('${randomIfcGuid()}',#${ownerHistory},'${escapeStr(floorLabel(floorNum))}',$,$,#${storeyPlacement},$,$,.ELEMENT.,${fmt(elevation)})`
+      `IFCBUILDINGSTOREY('${randomIfcGuid()}',#${ownerHistory},'${escapeStr(floorLabel(floorNum, t))}',$,$,#${storeyPlacement},$,$,.ELEMENT.,${fmt(elevation)})`
     );
     storeyIds.push(storeyId);
 
@@ -281,6 +345,15 @@ export function exportProjectToIfc(project, allRooms, stairsList) {
       addStair(w, ctx, s, allRooms, wallHeight, ownerHistory, elementPlacement, elementIds);
     });
 
+    const floorColumns = (columnsList || []).filter((c) => (c.floor ?? 0) === floorNum);
+    floorColumns.forEach((c) => {
+      addColumn(w, ctx, c, elevation, wallHeight, ownerHistory, elementPlacement, elementIds);
+    });
+
+    if (floorNum === 0) {
+      addGroundFloorFoundation(w, ctx, allRooms, floorColumns, ownerHistory, elementPlacement, elementIds);
+    }
+
     if (elementIds.length) {
       w.add(
         `IFCRELCONTAINEDINSPATIALSTRUCTURE('${randomIfcGuid()}',#${ownerHistory},$,$,(${elementIds.map((id) => `#${id}`).join(",")}),#${storeyId})`
@@ -294,7 +367,7 @@ export function exportProjectToIfc(project, allRooms, stairsList) {
     "ISO-10303-21;",
     "HEADER;",
     "FILE_DESCRIPTION((''),'2;1');",
-    `FILE_NAME('${escapeStr(projectName)}.ifc','${new Date().toISOString()}',(''),(''),'Architect Studio 360','Architect Studio 360','');`,
+    `FILE_NAME('${escapeStr(projectName)}.ifc','${new Date().toISOString()}',(''),(''),'Lamsa Engineers','Lamsa Engineers','');`,
     "FILE_SCHEMA(('IFC4'));",
     "ENDSEC;",
     "",

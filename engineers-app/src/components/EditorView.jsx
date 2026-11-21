@@ -7,6 +7,7 @@ import { useProjectStore, createStair, createColumn } from '../state/projectStor
 import { getRoomType } from '../lib/roomTypes.js';
 import { exportPlanImage } from '../lib/exportPlan.js';
 import { exportFloorsToDxf } from '../lib/dxfExport.js';
+import { exportProjectToIfc } from '../lib/ifcExport.js';
 import { floorLabel } from '../lib/planGeometry.js';
 
 export default function EditorView({ initialProject, projectId, onBack, onSave, t }) {
@@ -100,6 +101,18 @@ export default function EditorView({ initialProject, projectId, onBack, onSave, 
     URL.revokeObjectURL(url);
   }
 
+  function handleExportIfc() {
+    if (!rooms.length) return;
+    const ifcText = exportProjectToIfc(project, rooms, stairs, columns, t);
+    const blob = new Blob([ifcText], { type: 'application/x-step' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = (project.name || 'floor-plan') + '.ifc';
+    a.click();
+    URL.revokeObjectURL(url);
+  }
+
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', fontFamily: 'sans-serif', overflowX: 'hidden' }}>
       <div style={{ display: 'flex', flexWrap: 'wrap', rowGap: 8, alignItems: 'center', justifyContent: 'space-between', padding: '10px 14px', borderBottom: '1px solid #e5e7eb' }}>
@@ -130,6 +143,9 @@ export default function EditorView({ initialProject, projectId, onBack, onSave, 
           </button>
           <button type="button" onClick={handleExportDxf} style={{ padding: '8px 14px', borderRadius: 8, border: '1px solid #d1d5db', background: '#fff', fontWeight: 700, fontSize: 13, cursor: 'pointer' }}>
             {t('Export DXF')}
+          </button>
+          <button type="button" onClick={handleExportIfc} style={{ padding: '8px 14px', borderRadius: 8, border: '1px solid #d1d5db', background: '#fff', fontWeight: 700, fontSize: 13, cursor: 'pointer' }}>
+            {t('Export IFC')}
           </button>
           <button
             type="button"
