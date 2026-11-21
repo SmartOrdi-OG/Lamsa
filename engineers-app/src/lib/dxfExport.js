@@ -9,7 +9,7 @@
 // القياسي بملفات CAD) بيصير بخطوة أخيرة صريحة (flip) على كل نقطة قبل كتابتها، وبعدين أي حساب
 // إضافي (زوايا فتح الباب، مضلعات الجدران) بيصير بفراغ DXF المُسطّح مباشرة — نفس المعادلات
 // بالضبط، بس بلا أي حاجة للقلق بخصوص كيف الانعكاس بيأثر على الزوايا حسابياً
-import { DOOR_W, WIN_W, WALL_T, COLUMN_SIZE, roomArea } from "./build3d";
+import { DOOR_W, WIN_W, WALL_T, COLUMN_SIZE, roomArea, foundationFootprint, FOUNDATION_OVERHANG } from "./build3d";
 import { openingMarkPoints, roomCentroid, DIM_OFFSET, DIM_EXT, stairEffectiveFootprint, floorToFloorHeight } from "./planGeometry";
 
 const LAYERS = {
@@ -20,6 +20,7 @@ const LAYERS = {
   TEXT: 7,
   STAIRS: 8,
   COLUMNS: 2,
+  FOUNDATION: 4,
 };
 
 function deg(rad) {
@@ -215,7 +216,39 @@ function drawColumnsDxf(entities, columnsForFloor, xOffset) {
   });
 }
 
-function buildFloorEntities(allRooms, floorRoomsList, stairsForFloor, columnsForFloor, wallHeight, xOffset, label, showDimensions) {
+// Same bounding-box footprint approximation build3d.js's 3D foundation
+// slab uses (see its own comment — exact for a rectangular footprint,
+// an honest approximation for anything more irregular), drawn as a
+// dashed outline outside the ground-floor wall line, the standard CAD
+// convention for a footing shown on a foundation plan.
+function drawFoundationDxf(entities, allRooms, columnsForGroundFloor, xOffset) {
+  const fp = foundationFootprint(allRooms, 0);
+  if (fp) {
+    const corners = [
+      { x: fp.minX - FOUNDATION_OVERHANG, y: fp.minY - FOUNDATION_OVERHANG },
+      { x: fp.maxX + FOUNDATION_OVERHANG, y: fp.minY - FOUNDATION_OVERHANG },
+      { x: fp.maxX + FOUNDATION_OVERHANG, y: fp.maxY + FOUNDATION_OVERHANG },
+      { x: fp.minX - FOUNDATION_OVERHANG, y: fp.maxY + FOUNDATION_OVERHANG },
+    ].map((p) => flip(p, xOffset));
+    dxfLwPolyline(entities, "FOUNDATION", corners, true);
+  }
+
+  // Pad footing under each ground-floor column — same overhang convention
+  // as the wall strip footing above.
+  (columnsForGroundFloor || []).forEach((c) => {
+    const size = c.size ?? COLUMN_SIZE;
+    const half = size / 2 + FOUNDATION_OVERHANG;
+    const padCorners = [
+      { x: c.x - half, y: c.y - half },
+      { x: c.x + half, y: c.y - half },
+      { x: c.x + half, y: c.y + half },
+      { x: c.x - half, y: c.y + half },
+    ].map((p) => flip(p, xOffset));
+    dxfLwPolyline(entities, "FOUNDATION", padCorners, true);
+  });
+}
+
+function buildFloorEntities(allRooms, floorRoomsList, stairsForFloor, columnsForFloor, wallHeight, xOffset, label, showDimensions, isGroundFloor) {
   const entities = [];
   dxfText(entities, "TEXT", flip({ x: 0, y: -0.7 }, xOffset), 0.35, label);
 
@@ -249,6 +282,7 @@ function buildFloorEntities(allRooms, floorRoomsList, stairsForFloor, columnsFor
 
   drawStairsDxf(entities, allRooms, stairsForFloor, wallHeight, xOffset);
   drawColumnsDxf(entities, columnsForFloor, xOffset);
+  if (isGroundFloor) drawFoundationDxf(entities, allRooms, columnsForFloor, xOffset);
   return entities;
 }
 
@@ -264,7 +298,7 @@ export function exportFloorsToDxf(allRooms, floorsMeta, stairsList, columnsList,
   floorsMeta.forEach((f) => {
     const stairsForFloor = stairsList.filter((s) => (s.floor ?? 0) === f.floorNum);
     const columnsForFloor = (columnsList || []).filter((c) => (c.floor ?? 0) === f.floorNum);
-    allEntities.push(...buildFloorEntities(allRooms, f.rooms, stairsForFloor, columnsForFloor, wallHeight, xOffset, f.label, showDimensions));
+    allEntities.push(...buildFloorEntities(allRooms, f.rooms, stairsForFloor, columnsForFloor, wallHeight, xOffset, f.label, showDimensions, f.floorNum === 0));
     const maxX = f.rooms.length
       ? Math.max(...f.rooms.map((r) => (r.points ? Math.max(...r.points.map((p) => p.x)) : r.gx + r.gw)))
       : 10;

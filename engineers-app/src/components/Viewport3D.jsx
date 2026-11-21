@@ -54,7 +54,7 @@ const DOLLHOUSE_PHI = 0.62;
 const DOLLHOUSE_THETA = Math.PI / 4;
 
 const Viewport3D = forwardRef(function Viewport3D(
-  { rooms, stairs, columns = [], wallHeight, wallColor, wallMaterial, autoRotate, dollhouse = false, floorGap = 0, renderView = false, t = (s) => s },
+  { rooms, stairs, columns = [], wallHeight, wallColor, wallMaterial, autoRotate, dollhouse = false, floorGap = 0, renderView = false, showFoundation = true, t = (s) => s },
   ref
 ) {
   const mountRef = useRef(null);
@@ -261,7 +261,7 @@ const Viewport3D = forwardRef(function Viewport3D(
     const s = stateRef.current;
     if (!s.group) return;
     const effectiveWallMaterial = renderView ? 'brick' : wallMaterial;
-    rebuildGroup(s.group, rooms, stairs, wallHeight, wallColor, s.center, s.animState, textureCacheRef.current, effectiveWallMaterial, { hideRoofs: dollhouse, floorGap, columns });
+    rebuildGroup(s.group, rooms, stairs, wallHeight, wallColor, s.center, s.animState, textureCacheRef.current, effectiveWallMaterial, { hideRoofs: dollhouse, floorGap, columns, showFoundation });
 
     if (renderView) {
       const floorBaseYMap = computeFloorBaseYMap(rooms, wallHeight, Math.max(0, ...(stairs || []).map((st) => (st.floor ?? 0) + 1)), floorGap);
@@ -290,7 +290,7 @@ const Viewport3D = forwardRef(function Viewport3D(
       cam.far = radius * 3 + maxWallHeight * 2;
       cam.updateProjectionMatrix();
     }
-  }, [rooms, stairs, columns, wallHeight, wallColor, wallMaterial, dollhouse, floorGap, renderView]);
+  }, [rooms, stairs, columns, wallHeight, wallColor, wallMaterial, dollhouse, floorGap, renderView, showFoundation]);
 
   useEffect(() => {
     const s = stateRef.current;

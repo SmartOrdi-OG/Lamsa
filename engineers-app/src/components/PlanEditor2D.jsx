@@ -4,7 +4,7 @@ import {
   drawRoomDimensions, drawDoorSwing, pointInPolygon, hitTestStairs, hitTestGridForStair,
   floorToFloorHeight, stairEffectiveFootprint, drawStairSymbol
 } from '../lib/planGeometry.js';
-import { DOOR_W, WIN_W, WALL_T, stairFootprint, COLUMN_SIZE } from '../lib/build3d.js';
+import { DOOR_W, WIN_W, WALL_T, stairFootprint, COLUMN_SIZE, foundationFootprint, FOUNDATION_OVERHANG } from '../lib/build3d.js';
 import { getRoomType } from '../lib/roomTypes.js';
 
 // A fixed meters-based hit tolerance shrinks to almost nothing in actual
@@ -30,6 +30,7 @@ export default function PlanEditor2D({
   rooms,       // ALL floors — height/stair calcs need the full list
   stairs,      // ALL floors
   columns = [], // ALL floors
+  showFoundation = true,
   wallHeight,
   gridW = 20,
   gridH = 16,
@@ -122,6 +123,26 @@ export default function PlanEditor2D({
       ctx.stroke();
     }
 
+    // Foundation/footing outline — only meaningful at the ground floor,
+    // drawn behind the rooms so it reads as a reference line (standard
+    // foundation-plan convention) rather than competing with the walls.
+    if (showFoundation && activeFloor === 0) {
+      const fp = foundationFootprint(rooms, 0);
+      if (fp) {
+        ctx.save();
+        ctx.strokeStyle = '#9ca3af';
+        ctx.lineWidth = 1.5;
+        ctx.setLineDash([6, 4]);
+        ctx.strokeRect(
+          (fp.minX - FOUNDATION_OVERHANG) * PPM,
+          (fp.minY - FOUNDATION_OVERHANG) * PPM,
+          (fp.maxX - fp.minX + FOUNDATION_OVERHANG * 2) * PPM,
+          (fp.maxY - fp.minY + FOUNDATION_OVERHANG * 2) * PPM
+        );
+        ctx.restore();
+      }
+    }
+
     floorRooms.forEach((room, i) => {
       const isSelected = room.id === selectedRoomId;
       drawRoomShape(ctx, room, isSelected, room.color || ROOM_COLORS[i % ROOM_COLORS.length]);
@@ -168,6 +189,21 @@ export default function PlanEditor2D({
       ctx.strokeRect(x0, y0, w * PPM, d * PPM);
       drawStairSymbol(ctx, x0, y0, w, d, rotation, stairFootprint(floorToFloorH).numSteps, isSelected ? '#c9a96e' : '#6b5e3a');
     });
+
+    // Pad footings under ground-floor columns — same dashed convention as
+    // the wall footing outline above, drawn behind the column symbols.
+    if (showFoundation && activeFloor === 0) {
+      floorColumns.forEach((c) => {
+        const size = c.size ?? COLUMN_SIZE;
+        const padHalf = (size + FOUNDATION_OVERHANG * 2) / 2;
+        ctx.save();
+        ctx.strokeStyle = '#9ca3af';
+        ctx.lineWidth = 1.5;
+        ctx.setLineDash([6, 4]);
+        ctx.strokeRect((c.x - padHalf) * PPM, (c.y - padHalf) * PPM, padHalf * 2 * PPM, padHalf * 2 * PPM);
+        ctx.restore();
+      });
+    }
 
     floorColumns.forEach((c) => {
       const isSelected = c.id === selectedColumnId;
