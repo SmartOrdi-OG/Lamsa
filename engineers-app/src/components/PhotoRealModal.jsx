@@ -10,15 +10,16 @@ const POLL_INTERVAL_MS = 3000;
 const POLL_TIMEOUT_MS = 2 * 60 * 1000;
 
 const PHOTOREAL_PROMPT =
-  'Transform this 3D render of an architectural floor plan into a professional, photorealistic architectural visualization of the exact same building.\n\n' +
+  'Transform this 3D render of an architectural floor plan into a professional, photorealistic architectural visualization of the exact same building, as if it were newly built and freshly finished.\n\n' +
   'CRITICAL — do not change anything structural: keep the exact same room layout, wall positions, door and window placement, staircases, columns, number of floors, and camera angle. Do not add, remove, move, or resize any structural element.\n\n' +
-  'Only improve: make every material look real and tactile (genuine paint, wood, stone, brick, metal and glass), add realistic, professional architectural-visualization lighting with soft natural shadows, and photorealistic rendering quality, like a real estate marketing render.';
+  'Only improve: make every material look real and tactile — clean new brick or painted walls, fresh paint, new wood, stone, metal and glass. Add realistic, professional architectural-visualization lighting with soft natural shadows, and photorealistic rendering quality, like a real estate marketing render.\n\n' +
+  'Do NOT make it look old, abandoned, weathered, cracked, mossy, or decayed — this is a brand-new construction, not a ruin.';
 
 // Apple product ids for the credits plans — must match APPLE_IAP_PLANS in api/_stripe.js.
 const APPLE_CREDITS_PRODUCT_ID = { weekly: 'com.lamsaai.app.credits.weekly', monthly: 'com.lamsaai.app.credits.monthly' };
 
 const PHOTOREAL_REFINE_PROMPT =
-  'This photo already shows a photorealistic architectural visualization. Your ONLY task is to further enhance photorealism, material detail, and lighting quality. Do NOT change the building layout, camera angle, or structural elements in any way — this is a quality-enhancement pass only.';
+  'This photo already shows a photorealistic architectural visualization of a brand-new building. Your ONLY task is to further enhance photorealism, material detail, and lighting quality, keeping materials looking clean and new (not aged, weathered, or decayed). Do NOT change the building layout, camera angle, or structural elements in any way — this is a quality-enhancement pass only.';
 
 function fetchJson(url, options) {
   return fetch(url, options).then((res) => res.json().then((data) => ({ ok: res.ok, status: res.status, data })));
@@ -190,7 +191,12 @@ export default function PhotoRealModal({ captureImage, onClose, t }) {
       if (resultUrl) window.open(resultUrl, '_blank');
       return;
     }
-    const file = new File([resultBlob], filename, { type: resultBlob.type || 'image/jpeg' });
+    // Forcing image/jpeg (rather than trusting whatever content-type the
+    // upstream render host sent) is what makes iOS recognize this as a
+    // photo and offer "Save Image" in the share sheet — a generic/wrong
+    // type gets treated as an opaque file, and only "Save to Files" (not
+    // the photo library) shows up instead.
+    const file = new File([resultBlob], filename, { type: 'image/jpeg' });
     if (navigator.canShare && navigator.canShare({ files: [file] })) {
       navigator.share({ files: [file] }).catch(() => {});
       return;
