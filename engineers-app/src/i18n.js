@@ -72,6 +72,7 @@ export const AR = {
   'Back to Home': 'الرئيسية',
   'Generate realistic image': 'توليد صورة واقعية',
   'Optional — uses 1 credit from your weekly/monthly plan': 'اختياري — يستهلك كريدت واحد من رصيدك الأسبوعي أو الشهري',
+  'Draw at least one room first — there is nothing for the AI to turn photoreal yet': 'ارسم غرفة واحدة على الأقل أولاً — لا يوجد شيء يحوّله الذكاء الاصطناعي لصورة واقعية بعد',
   'Turning your design into a photoreal render...': 'عم نحوّل تصميمك لصورة واقعية...',
   'Takes 20-40 seconds': 'بياخد 20-40 ثانية',
   'Close': 'إغلاق',
