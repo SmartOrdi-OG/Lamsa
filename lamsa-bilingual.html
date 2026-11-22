@@ -23,6 +23,7 @@
 <meta name="apple-mobile-web-app-title" content="Lamsa">
 <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;500;700;900&family=Playfair+Display:wght@400;700&display=swap" rel="stylesheet">
 <script src="js/platform.js"></script>
+<script src="js/capacitor-iap-bridge.js"></script>
 <script src="js/icons.js"></script>
 <script src="js/app-shell.js"></script>
 <script>
@@ -3361,12 +3362,34 @@
     }
   }
 
+  // Apple product ids for the credits plans — must match APPLE_IAP_PLANS in api/_stripe.js.
+  var APPLE_CREDITS_PRODUCT_ID = { weekly: 'com.lamsaai.app.credits.weekly', monthly: 'com.lamsaai.app.credits.monthly' };
+
   function startCheckout(planId, buttonEl, errorElId) {
     var isAr = currentLang === 'ar';
     var errorEl = document.getElementById(errorElId || 'creditsModalError');
 
     var buttons = buttonEl ? [buttonEl] : document.querySelectorAll('.credits-pkg-btn');
     Array.prototype.forEach.call(buttons, function(b) { b.disabled = true; b.style.opacity = '0.5'; });
+
+    // Apple's guideline 3.1.1 requires in-app digital purchases to go
+    // through StoreKit on iOS — window.LamsaIAP (js/capacitor-iap-bridge.js)
+    // wraps that; everywhere else (web, Android) keeps using Stripe below.
+    if (window.isCapacitorApp) {
+      window.LamsaIAP.purchase(APPLE_CREDITS_PRODUCT_ID[planId]).then(function(result) {
+        if (result.cancelled) {
+          Array.prototype.forEach.call(buttons, function(b) { b.disabled = false; b.style.opacity = '1'; });
+          return;
+        }
+        if (!result.ok) {
+          if (errorEl) errorEl.textContent = result.error || (isAr ? 'حدث خطأ، حاول مرة أخرى' : 'Something went wrong, please try again');
+          Array.prototype.forEach.call(buttons, function(b) { b.disabled = false; b.style.opacity = '1'; });
+          return;
+        }
+        window.location.reload();
+      });
+      return;
+    }
 
     fetch('/api/create-checkout-session', {
       method: 'POST',
