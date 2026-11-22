@@ -67,6 +67,28 @@ export default function EditorView({ initialProject, projectId, onBack, onSave, 
     return result;
   }
 
+  // `<a download>` off a blob: URL is silently ignored inside the iOS
+  // Capacitor WebView (same root cause as the photoreal-image download bug
+  // fixed in PhotoRealModal.jsx) — it just opens/does nothing instead of
+  // saving. Sharing the file via navigator.share() triggers the native
+  // "Save to Files"/share sheet there; elsewhere the blob <a download>
+  // click still works as before.
+  function saveOrShareBlob(blob, filename) {
+    const file = new File([blob], filename, { type: blob.type });
+    if (navigator.canShare && navigator.canShare({ files: [file] })) {
+      navigator.share({ files: [file] }).catch(() => {});
+      return;
+    }
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  }
+
   function handleExportPdf() {
     const floorRooms = rooms.filter((r) => (r.floor ?? 0) === activeFloor);
     const dataUrl = exportPlanImage(floorRooms, 20, 16, {
@@ -75,21 +97,12 @@ export default function EditorView({ initialProject, projectId, onBack, onSave, 
       standard,
       t
     });
-    // iOS Safari doesn't honor the `download` attribute on a data: URI — it
-    // just navigates/opens it instead of saving, so the export silently
-    // appeared to do nothing there. A blob: URL (same approach the DXF
-    // export already uses successfully) downloads correctly everywhere.
     const [, base64] = dataUrl.split(',');
     const binary = atob(base64);
     const bytes = new Uint8Array(binary.length);
     for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
     const blob = new Blob([bytes], { type: 'image/png' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = (project.name || 'floor-plan') + '-' + floorLabel(activeFloor, t) + '.png';
-    a.click();
-    URL.revokeObjectURL(url);
+    saveOrShareBlob(blob, (project.name || 'floor-plan') + '-' + floorLabel(activeFloor, t) + '.png');
   }
 
   function handleExportDxf() {
@@ -101,24 +114,14 @@ export default function EditorView({ initialProject, projectId, onBack, onSave, 
     if (!floorsMeta.length) return;
     const dxfText = exportFloorsToDxf(project, rooms, floorsMeta, stairs, columns, walls, project.wall_height, true, standard, t);
     const blob = new Blob([dxfText], { type: 'application/dxf' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = (project.name || 'floor-plan') + '.dxf';
-    a.click();
-    URL.revokeObjectURL(url);
+    saveOrShareBlob(blob, (project.name || 'floor-plan') + '.dxf');
   }
 
   function handleExportIfc() {
     if (!rooms.length && !walls.length) return;
     const ifcText = exportProjectToIfc(project, rooms, stairs, columns, walls, t);
     const blob = new Blob([ifcText], { type: 'application/x-step' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = (project.name || 'floor-plan') + '.ifc';
-    a.click();
-    URL.revokeObjectURL(url);
+    saveOrShareBlob(blob, (project.name || 'floor-plan') + '.ifc');
   }
 
   return (
