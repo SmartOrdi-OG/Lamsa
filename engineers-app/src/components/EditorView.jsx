@@ -124,21 +124,17 @@ export default function EditorView({ initialProject, projectId, onBack, onSave, 
     saveOrShareBlob(blob, (project.name || 'floor-plan') + '.ifc');
   }
 
-  // The photoreal render otherwise captures whatever angle the user last
-  // left the 3D view at — often an eye-level view that hides the room
-  // layout behind walls/roof. Switching to dollhouse mode (roof off, a
-  // steep near-overhead angle) first makes the capture actually show the
-  // interior room division, which is the whole point of this feature.
-  // Two rAFs give Viewport3D's own effect (dollhouse -> rebuildGroup +
-  // camera move) a full render to land before PhotoRealModal mounts and
-  // immediately grabs a frame.
+  // Forcing a fixed camera angle (e.g. dollhouse/top-down) here read as an
+  // aerial/drone shot once the AI preserved that exact framing — the user
+  // wants control of how close/far the shot is, same as they already
+  // control it with the orbit controls and the Dollhouse view checkbox.
+  // This just captures whatever angle they're currently looking at.
   function handleOpenPhotoReal() {
     if (!rooms.length && !walls.length) {
       alert(t('You must create a design first'));
       return;
     }
-    setDollhouse(true);
-    requestAnimationFrame(() => requestAnimationFrame(() => setShowPhotoReal(true)));
+    setShowPhotoReal(true);
   }
 
   return (
