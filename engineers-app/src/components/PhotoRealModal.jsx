@@ -94,6 +94,7 @@ const cardStyle = {
 export default function PhotoRealModal({ captureImage, onClose, t }) {
   const [phase, setPhase] = useState('loading'); // loading | result | error | no_credits
   const [resultUrl, setResultUrl] = useState(null);
+  const [resultBlob, setResultBlob] = useState(null);
   const [errorMsg, setErrorMsg] = useState('');
   const [checkoutLoading, setCheckoutLoading] = useState(null);
 
@@ -165,32 +166,43 @@ export default function PhotoRealModal({ captureImage, onClose, t }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  function handleDownload() {
+  // Pre-fetch the image bytes as soon as the result is ready, rather than
+  // waiting for the Download tap to start the fetch. WebKit only allows
+  // navigator.share() while it's still inside the "user activation" window
+  // of the click that triggered it — by the time a fetch()+blob() chain
+  // starting *from* the click resolved, that window had already closed
+  // inside the Capacitor WebView, so share() silently did nothing (the sole
+  // symptom reported: the button just didn't work). Having the blob already
+  // in hand means the click handler can call share() synchronously.
+  const filename = 'lamsa-engineers-render.jpg';
+  useEffect(() => {
     if (!resultUrl) return;
-    const filename = 'lamsa-engineers-render.jpg';
-    // `<a download>` is silently ignored inside the iOS Capacitor WebView
-    // (and for cross-origin URLs generally) — it just opens the image
-    // instead of saving it. Sharing the actual bytes as a File triggers the
-    // native "Save Image" share sheet on iOS/Android instead; this mirrors
-    // the fix already shipped for every other download button in the app
-    // (see lamsa-bilingual.html's createDownloadBtn).
+    let cancelled = false;
     fetch('/api/download-image?url=' + encodeURIComponent(resultUrl) + '&filename=' + encodeURIComponent(filename))
       .then((r) => r.blob())
-      .then((blob) => {
-        const file = new File([blob], filename, { type: blob.type || 'image/jpeg' });
-        if (navigator.canShare && navigator.canShare({ files: [file] })) {
-          return navigator.share({ files: [file] });
-        }
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = filename;
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        setTimeout(() => URL.revokeObjectURL(url), 5000);
-      })
-      .catch(() => window.open(resultUrl, '_blank'));
+      .then((blob) => { if (!cancelled) setResultBlob(blob); })
+      .catch(() => {});
+    return () => { cancelled = true; };
+  }, [resultUrl]);
+
+  function handleDownload() {
+    if (!resultBlob) {
+      if (resultUrl) window.open(resultUrl, '_blank');
+      return;
+    }
+    const file = new File([resultBlob], filename, { type: resultBlob.type || 'image/jpeg' });
+    if (navigator.canShare && navigator.canShare({ files: [file] })) {
+      navigator.share({ files: [file] }).catch(() => {});
+      return;
+    }
+    const url = URL.createObjectURL(resultBlob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    setTimeout(() => URL.revokeObjectURL(url), 5000);
   }
 
   function handleSubscribe(planId) {
