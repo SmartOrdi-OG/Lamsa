@@ -190,7 +190,12 @@ export default function PhotoRealModal({ captureImage, onClose, t }) {
       if (resultUrl) window.open(resultUrl, '_blank');
       return;
     }
-    const file = new File([resultBlob], filename, { type: resultBlob.type || 'image/jpeg' });
+    // Forcing image/jpeg (rather than trusting whatever content-type the
+    // upstream render host sent) is what makes iOS recognize this as a
+    // photo and offer "Save Image" in the share sheet — a generic/wrong
+    // type gets treated as an opaque file, and only "Save to Files" (not
+    // the photo library) shows up instead.
+    const file = new File([resultBlob], filename, { type: 'image/jpeg' });
     if (navigator.canShare && navigator.canShare({ files: [file] })) {
       navigator.share({ files: [file] }).catch(() => {});
       return;
