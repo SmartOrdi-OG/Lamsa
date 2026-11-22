@@ -1,4 +1,4 @@
-import { stripe, APPLE_IAP_PLANS } from './_stripe.js';
+import { stripe, APPLE_IAP_PLANS, grantAppleCreditsIfNewPeriod } from './_stripe.js';
 import { addCredits, markEventProcessed, logError, setUserSubscription, setEngineerEntitlement } from './_db.js';
 
 // Stripe signature verification needs the exact raw request bytes — Vercel's
@@ -83,7 +83,7 @@ async function handleRevenueCatEvent(rawBody, req, res) {
   if (planInfo.kind === 'engineer') {
     await setEngineerEntitlement(email, record);
   } else {
-    await setUserSubscription(email, record);
+    await grantAppleCreditsIfNewPeriod(email, record);
   }
   console.log('[stripe-webhook] RevenueCat', event.type, 'for', email, '-> status', status);
   return res.status(200).json({ received: true });

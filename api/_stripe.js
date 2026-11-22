@@ -1,4 +1,5 @@
 import Stripe from 'stripe';
+import { getUserSubscription, setUserSubscription, addCredits } from './_db.js';
 
 const STRIPE_SECRET_KEY = (process.env.STRIPE_SECRET_KEY || '').trim();
 
@@ -26,8 +27,30 @@ export const ENGINEER_PLANS = {
 // plan was this" the same way existing Stripe code does. `kind` picks which
 // entitlement record (`setEngineerEntitlement` vs `setUserSubscription`) and
 // `plan` is the ENGINEER_PLANS/SUBSCRIPTION_PLANS key to credit against.
-// Phase 1 only lists the Engineers product; weekly/monthly credits products
-// are added here once their App Store Connect subscriptions exist.
 export const APPLE_IAP_PLANS = {
-  'com.lamsaai.app.engineers.annual': { kind: 'engineer', plan: 'annual' }
+  'com.lamsaai.app.engineers.annual': { kind: 'engineer', plan: 'annual' },
+  'com.lamsaai.app.credits.weekly': { kind: 'credits', plan: 'weekly' },
+  'com.lamsaai.app.credits.monthly': { kind: 'credits', plan: 'monthly' }
 };
+
+// Grants this period's credits exactly once per billing period, then writes
+// the subscription record — shared by api/me.js's sync_apple_entitlement
+// (called right after a client-side purchase) and
+// api/stripe-webhook.js's RevenueCat branch (renewals/cancellations), which
+// can both observe the same period. Comparing against the stored
+// currentPeriodEnd is what keeps that from double-granting: once credited,
+// the record's currentPeriodEnd matches the new one and the second caller
+// just re-writes the (unchanged) record without crediting again.
+export async function grantAppleCreditsIfNewPeriod(email, record) {
+  const existing = await getUserSubscription(email);
+  const alreadyCredited = existing &&
+    existing.platform === 'apple' &&
+    existing.appleProductId === record.appleProductId &&
+    existing.currentPeriodEnd === record.currentPeriodEnd;
+
+  if (!alreadyCredited && (record.status === 'active' || record.status === 'trialing')) {
+    const planInfo = SUBSCRIPTION_PLANS[record.plan];
+    if (planInfo && planInfo.credits) await addCredits(email, planInfo.credits);
+  }
+  await setUserSubscription(email, record);
+}

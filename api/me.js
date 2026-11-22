@@ -1,10 +1,10 @@
 import crypto from 'crypto';
 import {
-  redis, addRating, getGenerationCount, getUserSubscription, setUserSubscription, getDesignHistory, logError,
+  redis, addRating, getGenerationCount, getUserSubscription, getDesignHistory, logError,
   getEngineerEntitlement, setEngineerEntitlement, listEngineerProjects, getEngineerProject, saveEngineerProject, deleteEngineerProject
 } from './_db.js';
 import { requireSessionEmail, getUser, deleteUser, getSessionTokenFromRequest, destroySession, clearSessionCookie } from './_auth.js';
-import { APPLE_IAP_PLANS } from './_stripe.js';
+import { APPLE_IAP_PLANS, grantAppleCreditsIfNewPeriod } from './_stripe.js';
 
 // A project blob is user-authored JSON (rooms/openings/furniture/stairs) —
 // unlike every other value this file writes, its size isn't fixed, so it
@@ -128,7 +128,7 @@ export default async function handler(req, res) {
           if (planInfo.kind === 'engineer') {
             await setEngineerEntitlement(email, record);
           } else {
-            await setUserSubscription(email, record);
+            await grantAppleCreditsIfNewPeriod(email, record);
           }
           granted = record;
         }
