@@ -167,14 +167,27 @@ export default function PhotoRealModal({ captureImage, onClose, t }) {
 
   function handleDownload() {
     if (!resultUrl) return;
-    fetch('/api/download-image?url=' + encodeURIComponent(resultUrl) + '&filename=' + encodeURIComponent('lamsa-engineers-render.jpg'))
+    const filename = 'lamsa-engineers-render.jpg';
+    // `<a download>` is silently ignored inside the iOS Capacitor WebView
+    // (and for cross-origin URLs generally) — it just opens the image
+    // instead of saving it. Sharing the actual bytes as a File triggers the
+    // native "Save Image" share sheet on iOS/Android instead; this mirrors
+    // the fix already shipped for every other download button in the app
+    // (see lamsa-bilingual.html's createDownloadBtn).
+    fetch('/api/download-image?url=' + encodeURIComponent(resultUrl) + '&filename=' + encodeURIComponent(filename))
       .then((r) => r.blob())
       .then((blob) => {
+        const file = new File([blob], filename, { type: blob.type || 'image/jpeg' });
+        if (navigator.canShare && navigator.canShare({ files: [file] })) {
+          return navigator.share({ files: [file] });
+        }
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
-        a.download = 'lamsa-engineers-render.jpg';
+        a.download = filename;
+        document.body.appendChild(a);
         a.click();
+        document.body.removeChild(a);
         setTimeout(() => URL.revokeObjectURL(url), 5000);
       })
       .catch(() => window.open(resultUrl, '_blank'));
