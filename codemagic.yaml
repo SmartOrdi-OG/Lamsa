@@ -66,6 +66,15 @@ workflows:
       - name: Apply the fetched profile to the Xcode project
         script: |
           xcode-project use-profiles
+      - name: Set the build number one past the latest TestFlight build
+        script: |
+          # App Store Connect rejects re-uploading a build number that's
+          # already been used (hit this exact failure once — "The bundle
+          # version must be higher than the previously uploaded version").
+          # Querying the latest build here means this never needs a manual
+          # bump in project.pbxproj again.
+          LATEST_BUILD_NUMBER=$(app-store-connect get-latest-build-number "$BUNDLE_ID")
+          agvtool new-version -all $(($LATEST_BUILD_NUMBER + 1))
       - name: Build .ipa
         script: |
           xcode-project build-ipa \
