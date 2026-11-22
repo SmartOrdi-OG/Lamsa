@@ -124,6 +124,19 @@ export default function EditorView({ initialProject, projectId, onBack, onSave, 
     saveOrShareBlob(blob, (project.name || 'floor-plan') + '.ifc');
   }
 
+  // The photoreal render otherwise captures whatever angle the user last
+  // left the 3D view at — often an eye-level view that hides the room
+  // layout behind walls/roof. Switching to dollhouse mode (roof off, a
+  // steep near-overhead angle) first makes the capture actually show the
+  // interior room division, which is the whole point of this feature.
+  // Two rAFs give Viewport3D's own effect (dollhouse -> rebuildGroup +
+  // camera move) a full render to land before PhotoRealModal mounts and
+  // immediately grabs a frame.
+  function handleOpenPhotoReal() {
+    setDollhouse(true);
+    requestAnimationFrame(() => requestAnimationFrame(() => setShowPhotoReal(true)));
+  }
+
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', fontFamily: 'sans-serif', overflowX: 'hidden' }}>
       <div style={{ display: 'flex', flexWrap: 'wrap', rowGap: 8, alignItems: 'center', justifyContent: 'space-between', padding: '10px 14px', borderBottom: '1px solid #e5e7eb' }}>
@@ -178,7 +191,7 @@ export default function EditorView({ initialProject, projectId, onBack, onSave, 
           </button>
           <button
             type="button"
-            onClick={() => setShowPhotoReal(true)}
+            onClick={handleOpenPhotoReal}
             title={t('Optional — uses 1 credit from your weekly/monthly plan')}
             style={{ padding: '8px 14px', borderRadius: 8, border: '1px solid #d1d5db', background: '#fff', fontWeight: 700, fontSize: 13, cursor: 'pointer' }}
           >
