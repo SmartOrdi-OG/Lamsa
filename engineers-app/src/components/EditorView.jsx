@@ -133,6 +133,10 @@ export default function EditorView({ initialProject, projectId, onBack, onSave, 
   // camera move) a full render to land before PhotoRealModal mounts and
   // immediately grabs a frame.
   function handleOpenPhotoReal() {
+    if (!rooms.length && !walls.length) {
+      alert(t('You must create a design first'));
+      return;
+    }
     setDollhouse(true);
     requestAnimationFrame(() => requestAnimationFrame(() => setShowPhotoReal(true)));
   }
@@ -192,11 +196,8 @@ export default function EditorView({ initialProject, projectId, onBack, onSave, 
           <button
             type="button"
             onClick={handleOpenPhotoReal}
-            disabled={!rooms.length && !walls.length}
-            title={!rooms.length && !walls.length
-              ? t('Draw at least one room first — there is nothing for the AI to turn photoreal yet')
-              : t('Optional — uses 1 credit from your weekly/monthly plan')}
-            style={{ padding: '8px 14px', borderRadius: 8, border: '1px solid #d1d5db', background: '#fff', fontWeight: 700, fontSize: 13, cursor: (!rooms.length && !walls.length) ? 'not-allowed' : 'pointer', opacity: (!rooms.length && !walls.length) ? 0.5 : 1 }}
+            title={t('Optional — uses 1 credit from your weekly/monthly plan')}
+            style={{ padding: '8px 14px', borderRadius: 8, border: '1px solid #d1d5db', background: '#fff', fontWeight: 700, fontSize: 13, cursor: 'pointer' }}
           >
             {t('Generate realistic image')}
           </button>
