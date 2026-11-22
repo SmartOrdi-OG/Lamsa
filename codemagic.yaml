@@ -40,6 +40,10 @@ workflows:
         XCODE_PROJECT: "ios/App/App.xcodeproj"
         XCODE_SCHEME: "App"
         BUNDLE_ID: "com.lamsaai.app"
+        # App Store Connect's numeric Apple ID for this app (App Information
+        # > Apple ID) — the build-number lookup command needs this, not the
+        # bundle identifier.
+        APP_APPLE_ID: "6837714856"
       node: latest
       xcode: latest
     working_directory: ios-app
@@ -72,8 +76,13 @@ workflows:
           # already been used (hit this exact failure once — "The bundle
           # version must be higher than the previously uploaded version").
           # Querying the latest build here means this never needs a manual
-          # bump in project.pbxproj again.
-          LATEST_BUILD_NUMBER=$(app-store-connect get-latest-build-number "$BUNDLE_ID")
+          # bump in project.pbxproj again. The command takes the app's
+          # numeric Apple ID (APP_APPLE_ID), not the bundle identifier —
+          # confirmed against the codemagic-ci-cd/cli-tools docs after the
+          # bundle-id form 404'd. agvtool also needs to run from the
+          # directory containing the .xcodeproj, not the repo root.
+          LATEST_BUILD_NUMBER=$(app-store-connect get-latest-testflight-build-number "$APP_APPLE_ID")
+          cd ios/App
           agvtool new-version -all $(($LATEST_BUILD_NUMBER + 1))
       - name: Build .ipa
         script: |
