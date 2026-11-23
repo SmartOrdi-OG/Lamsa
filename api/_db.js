@@ -255,7 +255,11 @@ export async function listEngineerProjects(email) {
     .map((id, i) => {
       const p = projects[i];
       if (!p) return null;
-      return { id, name: (p.project && p.project.name) || 'Untitled', updatedAt: p.updatedAt || null };
+      // p.project is the blob the client saves — itself shaped
+      // { project: {id, name, ...}, rooms, stairs, columns, walls } (see
+      // engineers-app's useProjectStore/createEmptyProject) — so the
+      // actual name is one level deeper, at p.project.project.name.
+      return { id, name: (p.project && p.project.project && p.project.project.name) || 'Untitled', updatedAt: p.updatedAt || null };
     })
     .filter(Boolean);
 }
