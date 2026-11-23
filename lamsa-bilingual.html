@@ -2702,6 +2702,47 @@
 
   function toggleChip(el) { el.classList.toggle('selected'); }
 
+  // The static "Add Furniture" chip list in the HTML (bookshelf, TV
+  // console, bar cart, etc.) doesn't fit a small toilet/WC — swap it for a
+  // toilet-appropriate list when that room type is picked, and restore the
+  // original list for every other room type. Furniture chips have no T[]
+  // translation today (de/es/tr/fr/it/ru fall back to the English label),
+  // so the new toilet chips follow that same precedent.
+  var defaultExtraFurnitureChipsHTML = null;
+  var toiletExtraFurnitureOptions = [
+    { en: 'Wall Shelf', ar: 'رف حائط' },
+    { en: 'Storage Cabinet', ar: 'خزانة تخزين' },
+    { en: 'Towel Ring', ar: 'حلقة مناشف' },
+    { en: 'Toilet Paper Holder', ar: 'حامل ورق التواليت' },
+    { en: 'Small Trash Bin', ar: 'سلة مهملات صغيرة' },
+    { en: 'Hand Dryer', ar: 'مجفف أيدي' },
+    { en: 'Bidet Spray', ar: 'دشاش بيديه' },
+    { en: 'Soap Dispenser', ar: 'موزع صابون' },
+    { en: 'Wall Art', ar: 'لوحة ديكور' },
+    { en: 'Air Freshener', ar: 'معطر جو' }
+  ];
+
+  function renderExtraFurnitureChips(roomType) {
+    var container = document.getElementById('extraFurnitureChips');
+    if (!container) return;
+    if (defaultExtraFurnitureChipsHTML === null) defaultExtraFurnitureChipsHTML = container.innerHTML;
+    if (roomType === 'toilet') {
+      container.innerHTML = toiletExtraFurnitureOptions.map(function(item) {
+        var label = (currentLang === 'ar') ? item.ar : item.en;
+        return '<div class="chip" onclick="toggleChip(this)" data-en="' + item.en + '" data-ar="' + item.ar + '">' + label + '</div>';
+      }).join('');
+    } else {
+      container.innerHTML = defaultExtraFurnitureChipsHTML;
+    }
+  }
+
+  window.addEventListener('DOMContentLoaded', function() {
+    var roomTypeSelectEl = document.getElementById('roomTypeSelect');
+    if (roomTypeSelectEl) {
+      roomTypeSelectEl.addEventListener('change', function() { renderExtraFurnitureChips(roomTypeSelectEl.value); });
+    }
+  });
+
   // BUG 1 fix: single place that guarantees the body is never left scroll-locked
   function resetBodyScrollLock() {
     document.body.style.position = '';
