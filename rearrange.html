@@ -814,8 +814,8 @@
 
       if (window.NearbyStores) {
         NearbyStores.render('nearbyStoresContainer', {
-          countryCode: NearbyStores.countryFromLocale(),
-          lang: 'en'
+          countryCode: NearbyStores.countryFromLocale(currentLang),
+          lang: currentLang
         });
       } else {
         console.error('[nearby-stores] window.NearbyStores is undefined — js/nearby-stores.js failed to load');

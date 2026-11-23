@@ -29,13 +29,21 @@
     return 'EU';
   }
 
-  // Fallback for pages with no currency selector — best-effort guess from the
-  // browser's own locale string, still no external API call.
-  function countryFromLocale() {
+  // Lamsa's pages have no currency selector, only the in-app language picker
+  // (flag dropdown) — the device/browser locale a phone reports often doesn't
+  // match the language the person actually chose in the app (e.g. an Arabic
+  // speaker whose phone's OS region is set to a European country), which was
+  // showing German/EU stores to Arabic-language users. So the device locale
+  // is only the first guess; when it doesn't resolve to a known country, fall
+  // back to the app's own selected language instead of a generic EU default.
+  var LANG_FALLBACK_COUNTRY = { ar: 'SA', en: 'GB', de: 'DE', es: 'ES', fr: 'FR', it: 'IT' };
+
+  function countryFromLocale(appLang) {
     var locale = navigator.language || navigator.userLanguage || 'en-US';
     var region = (locale.split('-')[1] || '').toUpperCase();
     var known = ['AE', 'SA', 'KW', 'QA', 'OM', 'BH', 'GB', 'DE', 'FR', 'ES', 'IT'];
-    return known.indexOf(region) !== -1 ? region : 'EU';
+    if (known.indexOf(region) !== -1) return region;
+    return LANG_FALLBACK_COUNTRY[appLang] || 'EU';
   }
 
   function mapsSearchUrl(storeName, place) {
