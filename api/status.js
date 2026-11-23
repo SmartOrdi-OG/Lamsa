@@ -1,4 +1,4 @@
-import { redis, getAllRatings, getRecentErrors, clearErrors, getGenerationCount, saveDesignToHistory, addCredits, setEngineerEntitlement, getEngineerEntitlement } from './_db.js';
+import { redis, getAllRatings, getRecentErrors, clearErrors, getGenerationCount, getTotalUserCount, saveDesignToHistory, addCredits, setEngineerEntitlement, getEngineerEntitlement } from './_db.js';
 import { requireSessionEmail, EMAIL_RE } from './_auth.js';
 import { stripe } from './_stripe.js';
 
@@ -211,6 +211,7 @@ async function handleAdmin(req, res) {
       ]);
       return res.status(200).json({
         totalGenerations: await getGenerationCount(),
+        totalUsers: await getTotalUserCount(),
         commit: (process.env.VERCEL_GIT_COMMIT_SHA || '').slice(0, 7) || null,
         allOk: checks.every((c) => c.ok),
         checks

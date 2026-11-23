@@ -379,6 +379,7 @@
     var html = '<div class="cfg-banner ' + (data.allOk ? 'ok' : 'bad') + '">' +
       (data.allOk ? 'Everything is configured correctly ✓' : 'Some checks need attention ✗') + '</div>';
     html += '<div class="stat-row">' +
+      '<div class="stat"><div class="num">' + (data.totalUsers || 0) + '</div><div class="label">Total users</div></div>' +
       '<div class="stat"><div class="num">' + (data.totalGenerations || 0) + '</div><div class="label">Total generations</div></div>' +
       '<div class="stat"><div class="num">' + (data.commit || '—') + '</div><div class="label">Deployed commit</div></div>' +
       '</div>';

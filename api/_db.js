@@ -13,6 +13,21 @@ function creditsKey(email) {
   return 'lamsa:credits:' + email.trim().toLowerCase();
 }
 
+// There's no index Set of every registered account (createUser just writes
+// lamsa:user:<email> directly), so this is the only way to count them —
+// SCAN is the non-blocking, production-safe alternative to KEYS, paging
+// through the keyspace with a cursor until it loops back to "0".
+export async function getTotalUserCount() {
+  let cursor = '0';
+  let count = 0;
+  do {
+    const [nextCursor, keys] = await redis.scan(cursor, { match: 'lamsa:user:*', count: 200 });
+    count += keys.length;
+    cursor = nextCursor;
+  } while (cursor !== '0');
+  return count;
+}
+
 export async function getCredits(email) {
   const val = await redis.get(creditsKey(email));
   if (val === null || val === undefined) return 0;
