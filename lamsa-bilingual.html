@@ -4323,7 +4323,7 @@
 
           if (window.NearbyStores) {
             NearbyStores.render('nearbyStoresContainer', {
-              countryCode: NearbyStores.countryFromLocale(),
+              countryCode: NearbyStores.countryFromLocale(currentLang),
               lang: currentLang
             });
           } else {
