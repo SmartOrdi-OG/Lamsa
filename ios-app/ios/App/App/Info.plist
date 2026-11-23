@@ -66,5 +66,11 @@
 	</array>
 	<key>UIViewControllerBasedStatusBarAppearance</key>
 	<true/>
+	<key>NSCameraUsageDescription</key>
+	<string>Lamsa uses your camera so you can take a photo of your room to generate an AI interior design.</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>Lamsa needs access to your photos so you can choose a photo of your room to generate an AI interior design.</string>
+	<key>NSPhotoLibraryAddUsageDescription</key>
+	<string>Lamsa needs permission to save your generated designs to your photo library.</string>
 </dict>
 </plist>
