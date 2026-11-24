@@ -1,6 +1,6 @@
 import crypto from 'crypto';
 import {
-  redis, addRating, getGenerationCount, getUserSubscription, getDesignHistory, logError,
+  redis, addRating, getGenerationCount, getUserSubscription, getDesignHistory, clearDesignHistory, logError,
   getEngineerEntitlement, setEngineerEntitlement, listEngineerProjects, getEngineerProject, saveEngineerProject, deleteEngineerProject
 } from './_db.js';
 import { requireSessionEmail, getUser, deleteUser, getSessionTokenFromRequest, destroySession, clearSessionCookie } from './_auth.js';
@@ -100,6 +100,14 @@ export default async function handler(req, res) {
           return res.status(400).json({ error: 'rating must be an integer from 1 to 5' });
         }
         await addRating(email, ratingNum, comment);
+        return res.status(200).json({ ok: true });
+      }
+
+      // Deletes the logged-in user's own generated-design history (the
+      // list history.html reads via view=history) — there was previously
+      // no way for a user to clear this themselves.
+      if (action === 'clear_history') {
+        await clearDesignHistory(email);
         return res.status(200).json({ ok: true });
       }
 
