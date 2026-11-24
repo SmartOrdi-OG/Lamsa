@@ -4020,10 +4020,14 @@
       // 0.85 was still coming back nearly unchanged specifically when the
       // source photo was already a nicely furnished, well-lit room (the
       // model treats an already-"finished"-looking input as needing less
-      // editing) — 0.93 leaves a smaller but deliberate margin below 1 to
-      // push harder on those cases while still trying to avoid the
-      // full-geometry-rewrite failure mode seen at 1.0.
-      if (imageUrl) requestBody.strength = 0.93;
+      // editing) — 0.93 was meant to push harder on those cases, but a real
+      // test on exactly that kind of photo (a tidy, well-lit dining room)
+      // still came back with only the wall color changed and every piece
+      // of furniture pixel-identical. Raised again to 0.97 — still a hair
+      // below 1.0 to keep some margin against the full-geometry-rewrite
+      // failure mode seen at 1.0, but with as little slack as possible
+      // given how far 0.93 still undershot in practice.
+      if (imageUrl) requestBody.strength = 0.97;
       console.log('[generate] sending to /api/generate:', requestBody);
 
       // Stage 1: Flux Kontext Pro does the first full redesign pass
