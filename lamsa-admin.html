@@ -167,6 +167,16 @@
         <div style="margin-top:10px; font-size:13px; color:var(--gray);">Grant gives free, permanent Engineers access (no Stripe subscription) — for support/QA/team testing.</div>
         <div id="engineerResult" style="margin-top:10px; font-size:14px; font-weight:700;"></div>
       </div>
+      <div class="list-item" style="margin-top:16px;">
+        <div style="font-weight:700; margin-bottom:10px;">Clear Design History</div>
+        <div style="display:flex; gap:10px; flex-wrap:wrap; align-items:center;">
+          <input id="clearHistoryEmail" type="email" placeholder="user@email.com" autocomplete="off"
+                 style="flex:1; min-width:200px; border:1.5px solid var(--border); border-radius:10px; padding:10px 12px; font-family:inherit; font-size:14px; background:var(--card-2); color:var(--white);">
+          <button class="btn secondary" id="clearHistoryBtn" onclick="clearUserHistory()">Clear</button>
+        </div>
+        <div style="margin-top:10px; font-size:13px; color:var(--gray);">Permanently deletes this account's generated-design history — e.g. wiping test generations from a shared demo/review account before handing it off.</div>
+        <div id="clearHistoryResult" style="margin-top:10px; font-size:14px; font-weight:700;"></div>
+      </div>
     </div>
   </div>
 </div>
@@ -265,6 +275,28 @@
     } finally {
       btn.disabled = false;
       btn.textContent = 'Revoke';
+    }
+  }
+
+  async function clearUserHistory() {
+    var email = document.getElementById('clearHistoryEmail').value.trim();
+    var btn = document.getElementById('clearHistoryBtn');
+    var resultEl = document.getElementById('clearHistoryResult');
+    resultEl.style.color = '';
+    resultEl.textContent = '';
+    if (!email) { resultEl.style.color = 'var(--error)'; resultEl.textContent = 'Enter an email.'; return; }
+    btn.disabled = true;
+    btn.textContent = 'Clearing…';
+    try {
+      var data = await callAdmin('clear_user_history', { targetEmail: email });
+      resultEl.style.color = 'var(--success)';
+      resultEl.textContent = 'Done — design history cleared for ' + data.email + '.';
+    } catch (e) {
+      resultEl.style.color = 'var(--error)';
+      resultEl.textContent = e.message || 'Failed';
+    } finally {
+      btn.disabled = false;
+      btn.textContent = 'Clear';
     }
   }
 

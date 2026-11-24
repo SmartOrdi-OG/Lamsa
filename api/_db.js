@@ -198,6 +198,10 @@ export async function getDesignHistory(email, limit = MAX_HISTORY_ITEMS) {
   return raw.map(parseListEntry).filter(Boolean);
 }
 
+export async function clearDesignHistory(email) {
+  return redis.del(historyKey(email));
+}
+
 // Idempotency guard for Stripe webhook retries — the first call for a given
 // event id succeeds (returns true), duplicate deliveries return false.
 export async function markEventProcessed(eventId) {

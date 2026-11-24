@@ -105,9 +105,12 @@
 </nav>
 
 <div class="wrap">
-  <div class="page-head">
-    <h1 data-ar="تصاميمي" data-en="My Designs">My Designs</h1>
-    <p data-ar="التصاميم التي ولّدتها عبر أدوات لمسة" data-en="Designs you've generated across Lamsa's tools">Designs you've generated across Lamsa's tools</p>
+  <div class="page-head" style="display:flex; justify-content:space-between; align-items:flex-start; gap:10px;">
+    <div>
+      <h1 data-ar="تصاميمي" data-en="My Designs">My Designs</h1>
+      <p data-ar="التصاميم التي ولّدتها عبر أدوات لمسة" data-en="Designs you've generated across Lamsa's tools">Designs you've generated across Lamsa's tools</p>
+    </div>
+    <button type="button" id="clearHistoryBtn" style="display:none; flex-shrink:0; background:transparent; border:1px solid var(--border); color:var(--gray); padding:8px 12px; border-radius:10px; font-size:12.5px; font-weight:700; font-family:inherit; cursor:pointer; white-space:nowrap;" data-ar="مسح السجل" data-en="Clear History">Clear History</button>
   </div>
 
   <div class="loading-wrap" id="loadingWrap" data-ar="جارٍ التحميل..." data-en="Loading...">Loading...</div>
@@ -143,37 +146,43 @@
       'My Designs': 'Meine Designs', "Designs you've generated across Lamsa's tools": 'Designs, die du mit Lamsas Tools erstellt hast',
       'Loading...': 'Wird geladen...', 'Your design history is empty': 'Dein Design-Verlauf ist leer',
       "Designs you generate across Lamsa's tools will show up here.": 'Designs, die du mit Lamsas Tools erstellst, erscheinen hier.',
-      'Start Designing': 'Jetzt gestalten', 'Save Image': 'Bild speichern', 'Share': 'Teilen', 'Close': 'Schließen'
+      'Start Designing': 'Jetzt gestalten', 'Save Image': 'Bild speichern', 'Share': 'Teilen', 'Close': 'Schließen',
+      'Clear History': 'Verlauf löschen', 'Delete all your design history? This cannot be undone.': 'Deinen gesamten Design-Verlauf löschen? Das kann nicht rückgängig gemacht werden.'
     },
     es: {
       'My Designs': 'Mis diseños', "Designs you've generated across Lamsa's tools": 'Diseños que has generado con las herramientas de Lamsa',
       'Loading...': 'Cargando...', 'Your design history is empty': 'Tu historial de diseños está vacío',
       "Designs you generate across Lamsa's tools will show up here.": 'Los diseños que generes con las herramientas de Lamsa aparecerán aquí.',
-      'Start Designing': 'Empezar a diseñar', 'Save Image': 'Guardar imagen', 'Share': 'Compartir', 'Close': 'Cerrar'
+      'Start Designing': 'Empezar a diseñar', 'Save Image': 'Guardar imagen', 'Share': 'Compartir', 'Close': 'Cerrar',
+      'Clear History': 'Borrar historial', 'Delete all your design history? This cannot be undone.': '¿Eliminar todo tu historial de diseños? Esto no se puede deshacer.'
     },
     tr: {
       'My Designs': 'Tasarımlarım', "Designs you've generated across Lamsa's tools": "Lamsa'nın araçlarıyla oluşturduğun tasarımlar",
       'Loading...': 'Yükleniyor...', 'Your design history is empty': 'Tasarım geçmişin boş',
       "Designs you generate across Lamsa's tools will show up here.": "Lamsa'nın araçlarıyla oluşturduğun tasarımlar burada görünecek.",
-      'Start Designing': 'Tasarlamaya Başla', 'Save Image': 'Resmi kaydet', 'Share': 'Paylaş', 'Close': 'Kapat'
+      'Start Designing': 'Tasarlamaya Başla', 'Save Image': 'Resmi kaydet', 'Share': 'Paylaş', 'Close': 'Kapat',
+      'Clear History': 'Geçmişi temizle', 'Delete all your design history? This cannot be undone.': 'Tüm tasarım geçmişin silinsin mi? Bu işlem geri alınamaz.'
     },
     fr: {
       'My Designs': 'Mes designs', "Designs you've generated across Lamsa's tools": 'Designs générés avec les outils de Lamsa',
       'Loading...': 'Chargement...', 'Your design history is empty': 'Votre historique de designs est vide',
       "Designs you generate across Lamsa's tools will show up here.": 'Les designs que vous générez avec les outils de Lamsa apparaîtront ici.',
-      'Start Designing': 'Commencer à concevoir', 'Save Image': "Enregistrer l'image", 'Share': 'Partager', 'Close': 'Fermer'
+      'Start Designing': 'Commencer à concevoir', 'Save Image': "Enregistrer l'image", 'Share': 'Partager', 'Close': 'Fermer',
+      'Clear History': "Effacer l'historique", 'Delete all your design history? This cannot be undone.': 'Supprimer tout votre historique de designs ? Cette action est irréversible.'
     },
     it: {
       'My Designs': 'I miei design', "Designs you've generated across Lamsa's tools": 'Design generati con gli strumenti di Lamsa',
       'Loading...': 'Caricamento...', 'Your design history is empty': 'La cronologia dei tuoi design è vuota',
       "Designs you generate across Lamsa's tools will show up here.": 'I design che generi con gli strumenti di Lamsa appariranno qui.',
-      'Start Designing': 'Inizia a progettare', 'Save Image': 'Salva immagine', 'Share': 'Condividi', 'Close': 'Chiudi'
+      'Start Designing': 'Inizia a progettare', 'Save Image': 'Salva immagine', 'Share': 'Condividi', 'Close': 'Chiudi',
+      'Clear History': 'Cancella cronologia', 'Delete all your design history? This cannot be undone.': 'Eliminare tutta la cronologia dei design? Questa azione non può essere annullata.'
     },
     ru: {
       'My Designs': 'Мои дизайны', "Designs you've generated across Lamsa's tools": 'Дизайны, созданные с помощью инструментов Lamsa',
       'Loading...': 'Загрузка...', 'Your design history is empty': 'Ваша история дизайнов пуста',
       "Designs you generate across Lamsa's tools will show up here.": 'Дизайны, которые вы создадите с помощью инструментов Lamsa, появятся здесь.',
-      'Start Designing': 'Начать создавать', 'Save Image': 'Сохранить изображение', 'Share': 'Поделиться', 'Close': 'Закрыть'
+      'Start Designing': 'Начать создавать', 'Save Image': 'Сохранить изображение', 'Share': 'Поделиться', 'Close': 'Закрыть',
+      'Clear History': 'Очистить историю', 'Delete all your design history? This cannot be undone.': 'Удалить всю историю дизайнов? Это действие нельзя отменить.'
     }
   };
 
@@ -208,14 +217,17 @@
     var grid = document.getElementById('historyGrid');
     var empty = document.getElementById('emptyWrap');
     var loading = document.getElementById('loadingWrap');
+    var clearBtn = document.getElementById('clearHistoryBtn');
     loading.style.display = 'none';
 
     if (!lastDesigns.length) {
       grid.style.display = 'none';
       empty.style.display = 'block';
+      clearBtn.style.display = 'none';
       return;
     }
     empty.style.display = 'none';
+    clearBtn.style.display = 'block';
     grid.style.display = 'grid';
     grid.innerHTML = '';
     lastDesigns.forEach(function (d, i) {
@@ -275,6 +287,33 @@
         window.open(url, '_blank');
       });
   }
+
+  document.getElementById('clearHistoryBtn').addEventListener('click', function () {
+    var confirmText = currentLang === 'ar'
+      ? 'حذف كل سجل تصاميمك؟ هذا الإجراء لا يمكن التراجع عنه.'
+      : (T[currentLang] && T[currentLang]['Delete all your design history? This cannot be undone.']) || 'Delete all your design history? This cannot be undone.';
+    if (!window.confirm(confirmText)) return;
+
+    var btn = this;
+    btn.disabled = true;
+    fetch('/api/me', {
+      method: 'POST',
+      credentials: 'include',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'clear_history' })
+    })
+      .then(function (r) { return r.json(); })
+      .then(function () {
+        lastDesigns = [];
+        renderDesigns();
+      })
+      .catch(function (err) {
+        console.error('[history] clear_history failed:', err);
+      })
+      .finally(function () {
+        btn.disabled = false;
+      });
+  });
 
   document.getElementById('lbCloseBtn').addEventListener('click', closeLightbox);
   document.getElementById('lightbox').addEventListener('click', function (e) {

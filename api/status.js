@@ -1,4 +1,4 @@
-import { redis, getAllRatings, getRecentErrors, clearErrors, getGenerationCount, getTotalUserCount, saveDesignToHistory, addCredits, setEngineerEntitlement, getEngineerEntitlement } from './_db.js';
+import { redis, getAllRatings, getRecentErrors, clearErrors, getGenerationCount, getTotalUserCount, saveDesignToHistory, addCredits, setEngineerEntitlement, getEngineerEntitlement, clearDesignHistory } from './_db.js';
 import { requireSessionEmail, EMAIL_RE } from './_auth.js';
 import { stripe } from './_stripe.js';
 
@@ -162,6 +162,20 @@ async function handleAdmin(req, res) {
       const newBalance = await addCredits(normalizedTarget, amt);
       console.log('[api/status admin] granted', amt, 'credit(s) to', normalizedTarget, '-> balance', newBalance);
       return res.status(200).json({ ok: true, email: normalizedTarget, newBalance });
+    }
+
+    // Manual history wipe for support/QA — e.g. clearing out test
+    // generations from a shared demo/review account before handing its
+    // credentials to someone else (App Store reviewer, a new team member).
+    if (view === 'clear_user_history') {
+      const { targetEmail } = req.body || {};
+      const normalizedTarget = (targetEmail || '').trim().toLowerCase();
+      if (!EMAIL_RE.test(normalizedTarget)) {
+        return res.status(400).json({ error: 'Valid targetEmail required' });
+      }
+      await clearDesignHistory(normalizedTarget);
+      console.log('[api/status admin] cleared design history for', normalizedTarget);
+      return res.status(200).json({ ok: true, email: normalizedTarget });
     }
 
     // Manual Engineers-access grant/revoke for support/QA — e.g. giving the
