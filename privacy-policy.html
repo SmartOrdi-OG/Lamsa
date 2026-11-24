@@ -11,6 +11,7 @@
 <link rel="manifest" href="manifest.json">
 <meta name="theme-color" content="#f6f7f8">
 <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;900&display=swap" rel="stylesheet">
+<script src="js/lang8.js"></script>
 <style>
   :root {
     color-scheme: light;
@@ -27,12 +28,12 @@
   .logo { display: flex; align-items: center; gap: 10px; text-decoration: none; color: var(--white); font-weight: 900; font-size: 18px; }
   .logo-icon { width: 32px; height: 32px; border: 1.5px solid var(--gold); border-radius: 8px; display: flex; align-items: center; justify-content: center; }
   .nav-right { display: flex; align-items: center; gap: 10px; }
-  .lang-toggle-btn, .back-btn {
+  .lang-select, .back-btn {
     background: transparent; border: 1px solid var(--border); color: var(--gray); text-decoration: none;
-    padding: 6px 12px; border-radius: 6px; font-size: 13px; font-weight: 700; font-family: 'Tajawal', sans-serif;
+    padding: 6px 10px; border-radius: 6px; font-size: 13px; font-weight: 700; font-family: 'Tajawal', sans-serif;
     cursor: pointer; white-space: nowrap;
   }
-  .lang-toggle-btn:hover, .back-btn:hover { border-color: var(--gold); color: var(--gold-deep); }
+  .back-btn:hover { border-color: var(--gold); color: var(--gold-deep); }
   .wrap { max-width: 680px; margin: 0 auto; padding: 40px 20px 80px; }
   h1 { font-size: 26px; font-weight: 900; margin-bottom: 6px; }
   .updated { color: var(--gray); font-size: 13px; margin-bottom: 32px; }
@@ -52,7 +53,7 @@
     <span>LAMSA</span>
   </a>
   <div class="nav-right">
-    <button type="button" class="lang-toggle-btn" id="langToggleBtn" onclick="toggleLang()">AR</button>
+    <select class="lang-select" id="langSelect" data-lang-select aria-label="Language"></select>
     <a class="back-btn" href="lamsa-bilingual.html" data-en="Back to Lamsa" data-ar="رجوع للموقع">Back to Lamsa</a>
   </div>
 </nav>
@@ -169,19 +170,317 @@
 </div>
 
 <script>
-  var currentLang = 'en';
-  function toggleLang() { setLang(currentLang === 'ar' ? 'en' : 'ar'); }
-  function setLang(lang) {
-    currentLang = lang;
-    try { localStorage.setItem('lamsa_lang', lang); } catch (e) {}
-    document.documentElement.setAttribute('lang', lang);
-    document.documentElement.setAttribute('dir', lang === 'ar' ? 'rtl' : 'ltr');
-    var btn = document.getElementById('langToggleBtn');
-    if (btn) btn.textContent = lang === 'ar' ? 'EN' : 'AR';
-    document.querySelectorAll('[data-en][data-ar]').forEach(function(el) {
-      el.innerHTML = lang === 'ar' ? el.getAttribute('data-ar') : el.getAttribute('data-en');
-    });
-  }
+  var T = {
+    de: {
+      'Back to Lamsa': 'Zurück zu Lamsa',
+      'Privacy Policy': 'Datenschutzerklärung',
+      'Last updated: October 2026': 'Zuletzt aktualisiert: Oktober 2026',
+      '1. Who We Are': '1. Wer wir sind',
+      'Lamsa ("we", "us") is an AI-powered interior design app. This policy explains what information we collect when you use Lamsa (on the web or as an installed app) and how we use it.':
+        'Lamsa ("wir", "uns") ist eine KI-gestützte App für Innenarchitektur. Diese Richtlinie erklärt, welche Informationen wir erfassen, wenn du Lamsa nutzt (im Web oder als installierte App), und wie wir sie verwenden.',
+      '2. Information We Collect': '2. Informationen, die wir erfassen',
+      'Account information: your email address and password (stored securely, never in plain text) when you register or log in.':
+        'Kontoinformationen: deine E-Mail-Adresse und dein Passwort (sicher gespeichert, niemals im Klartext), wenn du dich registrierst oder anmeldest.',
+      'Room photos and design details: photos you upload and the preferences you enter (room type, dimensions, style, budget) so we can generate your design.':
+        'Raumfotos und Designdetails: die Fotos, die du hochlädst, und die Angaben, die du machst (Raumtyp, Maße, Stil, Budget), damit wir dein Design erstellen können.',
+      'Payment information: when you buy credits, payment is processed directly by Stripe. We never see or store your card number — we only receive confirmation that a payment succeeded.':
+        'Zahlungsinformationen: Beim Kauf von Guthaben wird die Zahlung direkt von Stripe verarbeitet. Wir sehen oder speichern deine Kartennummer niemals — wir erhalten nur eine Bestätigung, dass die Zahlung erfolgreich war.',
+      'Telegram account info: if you open Lamsa inside Telegram, we receive your Telegram user ID to link it to your Lamsa account.':
+        'Telegram-Kontoinformationen: Wenn du Lamsa innerhalb von Telegram öffnest, erhalten wir deine Telegram-Benutzer-ID, um sie mit deinem Lamsa-Konto zu verknüpfen.',
+      '3. How We Use Your Information': '3. Wie wir deine Informationen verwenden',
+      'To generate your AI-powered room design — your photo and preferences are sent to our AI image-generation provider (fal.ai) solely to produce that design.':
+        'Um dein KI-gestütztes Raumdesign zu erstellen — dein Foto und deine Angaben werden ausschließlich zur Erstellung dieses Designs an unseren KI-Bildgenerierungsanbieter (fal.ai) gesendet.',
+      'To run your account: logging you in, tracking your credit balance, and showing your past designs.':
+        'Um dein Konto zu betreiben: dich anzumelden, deinen Guthabenstand zu verfolgen und dir deine bisherigen Designs anzuzeigen.',
+      'To process purchases of credits through Stripe.': 'Um Käufe von Guthaben über Stripe abzuwickeln.',
+      'We do not sell your information, and we do not use it for advertising.':
+        'Wir verkaufen deine Informationen nicht und verwenden sie nicht für Werbung.',
+      '4. Where Your Data Is Stored': '4. Wo deine Daten gespeichert werden',
+      'Account data and credit balances are stored in a secure cloud database (Upstash). Generated design images are stored so you can revisit your past designs, and can be deleted on request (see Section 6).':
+        'Kontodaten und Guthabenstände werden in einer sicheren Cloud-Datenbank (Upstash) gespeichert. Generierte Design-Bilder werden gespeichert, damit du deine bisherigen Designs erneut aufrufen kannst, und können auf Anfrage gelöscht werden (siehe Abschnitt 6).',
+      '5. Third Parties We Work With': '5. Drittanbieter, mit denen wir zusammenarbeiten',
+      'fal.ai — processes your photo to generate the AI design.': 'fal.ai — verarbeitet dein Foto, um das KI-Design zu erstellen.',
+      'Stripe — processes payments for credit purchases.': 'Stripe — verarbeitet Zahlungen für Guthabenkäufe.',
+      'Telegram — only if you choose to use Lamsa through Telegram.': 'Telegram — nur, wenn du dich entscheidest, Lamsa über Telegram zu nutzen.',
+      'Vercel — hosts the Lamsa app and its servers.': 'Vercel — hostet die Lamsa-App und ihre Server.',
+      'Each of these providers only receives the minimum information needed to do its specific job for you.':
+        'Jeder dieser Anbieter erhält nur die minimal notwendigen Informationen, um seine spezifische Aufgabe für dich zu erfüllen.',
+      '6. Your Rights': '6. Deine Rechte',
+      'You can ask us at any time to access, correct, or delete your account and the data linked to it. To do this, email us at':
+        'Du kannst uns jederzeit bitten, auf dein Konto und die damit verknüpften Daten zuzugreifen, sie zu korrigieren oder zu löschen. Schreibe uns dazu eine E-Mail an',
+      'You can also delete your account yourself at any time: log in and tap "Delete Account" at the top of the designer page. This permanently deletes your account, your login details and your remaining credits.':
+        'Du kannst dein Konto auch jederzeit selbst löschen: Melde dich an und tippe oben auf der Design-Seite auf „Konto löschen". Dadurch werden dein Konto, deine Anmeldedaten und dein verbleibendes Guthaben endgültig gelöscht.',
+      '7. Cookies & Local Storage': '7. Cookies und lokaler Speicher',
+      'We use local storage in your browser to keep you logged in and remember your language preference. We do not use advertising or tracking cookies.':
+        'Wir verwenden den lokalen Speicher in deinem Browser, um dich angemeldet zu halten und deine Sprachpräferenz zu merken. Wir verwenden keine Werbe- oder Tracking-Cookies.',
+      '8. Children': '8. Kinder',
+      'Lamsa is not directed at children under 13, and we do not knowingly collect information from them.':
+        'Lamsa richtet sich nicht an Kinder unter 13 Jahren, und wir erfassen wissentlich keine Informationen von ihnen.',
+      '9. Changes to This Policy': '9. Änderungen dieser Richtlinie',
+      "If we make meaningful changes to this policy, we'll update the date at the top of this page.":
+        'Wenn wir wesentliche Änderungen an dieser Richtlinie vornehmen, aktualisieren wir das Datum oben auf dieser Seite.',
+      '10. Contact Us': '10. Kontaktiere uns',
+      'Questions about this policy or your data? Email us at': 'Fragen zu dieser Richtlinie oder deinen Daten? Schreibe uns eine E-Mail an'
+    },
+    es: {
+      'Back to Lamsa': 'Volver a Lamsa',
+      'Privacy Policy': 'Política de privacidad',
+      'Last updated: October 2026': 'Última actualización: octubre de 2026',
+      '1. Who We Are': '1. Quiénes somos',
+      'Lamsa ("we", "us") is an AI-powered interior design app. This policy explains what information we collect when you use Lamsa (on the web or as an installed app) and how we use it.':
+        'Lamsa ("nosotros") es una aplicación de diseño de interiores impulsada por IA. Esta política explica qué información recopilamos cuando usas Lamsa (en la web o como aplicación instalada) y cómo la usamos.',
+      '2. Information We Collect': '2. Información que recopilamos',
+      'Account information: your email address and password (stored securely, never in plain text) when you register or log in.':
+        'Información de la cuenta: tu dirección de correo electrónico y contraseña (almacenadas de forma segura, nunca en texto plano) cuando te registras o inicias sesión.',
+      'Room photos and design details: photos you upload and the preferences you enter (room type, dimensions, style, budget) so we can generate your design.':
+        'Fotos de habitaciones y detalles de diseño: las fotos que subes y las preferencias que indicas (tipo de habitación, dimensiones, estilo, presupuesto) para poder generar tu diseño.',
+      'Payment information: when you buy credits, payment is processed directly by Stripe. We never see or store your card number — we only receive confirmation that a payment succeeded.':
+        'Información de pago: cuando compras créditos, el pago lo procesa directamente Stripe. Nunca vemos ni almacenamos el número de tu tarjeta — solo recibimos la confirmación de que el pago se realizó correctamente.',
+      'Telegram account info: if you open Lamsa inside Telegram, we receive your Telegram user ID to link it to your Lamsa account.':
+        'Información de la cuenta de Telegram: si abres Lamsa dentro de Telegram, recibimos tu ID de usuario de Telegram para vincularlo a tu cuenta de Lamsa.',
+      '3. How We Use Your Information': '3. Cómo usamos tu información',
+      'To generate your AI-powered room design — your photo and preferences are sent to our AI image-generation provider (fal.ai) solely to produce that design.':
+        'Para generar el diseño de tu habitación con IA: tu foto y tus preferencias se envían a nuestro proveedor de generación de imágenes con IA (fal.ai) únicamente para producir ese diseño.',
+      'To run your account: logging you in, tracking your credit balance, and showing your past designs.':
+        'Para gestionar tu cuenta: iniciar tu sesión, llevar el control de tu saldo de créditos y mostrarte tus diseños anteriores.',
+      'To process purchases of credits through Stripe.': 'Para procesar las compras de créditos a través de Stripe.',
+      'We do not sell your information, and we do not use it for advertising.':
+        'No vendemos tu información ni la usamos con fines publicitarios.',
+      '4. Where Your Data Is Stored': '4. Dónde se almacenan tus datos',
+      'Account data and credit balances are stored in a secure cloud database (Upstash). Generated design images are stored so you can revisit your past designs, and can be deleted on request (see Section 6).':
+        'Los datos de la cuenta y los saldos de créditos se almacenan en una base de datos en la nube segura (Upstash). Las imágenes de diseño generadas se almacenan para que puedas volver a ver tus diseños anteriores, y pueden eliminarse a petición (ver Sección 6).',
+      '5. Third Parties We Work With': '5. Terceros con los que trabajamos',
+      'fal.ai — processes your photo to generate the AI design.': 'fal.ai — procesa tu foto para generar el diseño con IA.',
+      'Stripe — processes payments for credit purchases.': 'Stripe — procesa los pagos de las compras de créditos.',
+      'Telegram — only if you choose to use Lamsa through Telegram.': 'Telegram — solo si decides usar Lamsa a través de Telegram.',
+      'Vercel — hosts the Lamsa app and its servers.': 'Vercel — aloja la aplicación Lamsa y sus servidores.',
+      'Each of these providers only receives the minimum information needed to do its specific job for you.':
+        'Cada uno de estos proveedores recibe únicamente la información mínima necesaria para realizar su función específica para ti.',
+      '6. Your Rights': '6. Tus derechos',
+      'You can ask us at any time to access, correct, or delete your account and the data linked to it. To do this, email us at':
+        'Puedes pedirnos en cualquier momento acceder a tu cuenta, corregirla o eliminarla, junto con los datos vinculados a ella. Para hacerlo, escríbenos a',
+      'You can also delete your account yourself at any time: log in and tap "Delete Account" at the top of the designer page. This permanently deletes your account, your login details and your remaining credits.':
+        'También puedes eliminar tu cuenta tú mismo en cualquier momento: inicia sesión y pulsa "Eliminar cuenta" en la parte superior de la página de diseño. Esto elimina permanentemente tu cuenta, tus datos de acceso y tus créditos restantes.',
+      '7. Cookies & Local Storage': '7. Cookies y almacenamiento local',
+      'We use local storage in your browser to keep you logged in and remember your language preference. We do not use advertising or tracking cookies.':
+        'Utilizamos el almacenamiento local de tu navegador para mantener tu sesión iniciada y recordar tu preferencia de idioma. No utilizamos cookies publicitarias ni de seguimiento.',
+      '8. Children': '8. Menores',
+      'Lamsa is not directed at children under 13, and we do not knowingly collect information from them.':
+        'Lamsa no está dirigida a menores de 13 años, y no recopilamos conscientemente información de ellos.',
+      '9. Changes to This Policy': '9. Cambios en esta política',
+      "If we make meaningful changes to this policy, we'll update the date at the top of this page.":
+        'Si realizamos cambios importantes en esta política, actualizaremos la fecha en la parte superior de esta página.',
+      '10. Contact Us': '10. Contáctanos',
+      'Questions about this policy or your data? Email us at': '¿Tienes preguntas sobre esta política o tus datos? Escríbenos a'
+    },
+    tr: {
+      'Back to Lamsa': "Lamsa'ya dön",
+      'Privacy Policy': 'Gizlilik Politikası',
+      'Last updated: October 2026': 'Son güncelleme: Ekim 2026',
+      '1. Who We Are': '1. Kimiz',
+      'Lamsa ("we", "us") is an AI-powered interior design app. This policy explains what information we collect when you use Lamsa (on the web or as an installed app) and how we use it.':
+        "Lamsa (\"biz\"), yapay zeka destekli bir iç mekan tasarım uygulamasıdır. Bu politika, Lamsa'yı kullandığınızda (web üzerinden veya yüklü uygulama olarak) hangi bilgileri topladığımızı ve bunları nasıl kullandığımızı açıklar.",
+      '2. Information We Collect': '2. Topladığımız Bilgiler',
+      'Account information: your email address and password (stored securely, never in plain text) when you register or log in.':
+        'Hesap bilgileri: kayıt olurken veya giriş yaparken e-posta adresiniz ve şifreniz (güvenli şekilde saklanır, asla düz metin olarak değil).',
+      'Room photos and design details: photos you upload and the preferences you enter (room type, dimensions, style, budget) so we can generate your design.':
+        'Oda fotoğrafları ve tasarım detayları: tasarımınızı oluşturabilmemiz için yüklediğiniz fotoğraflar ve girdiğiniz tercihler (oda tipi, ölçüler, stil, bütçe).',
+      'Payment information: when you buy credits, payment is processed directly by Stripe. We never see or store your card number — we only receive confirmation that a payment succeeded.':
+        'Ödeme bilgileri: kredi satın aldığınızda ödeme doğrudan Stripe tarafından işlenir. Kart numaranızı asla görmez veya saklamayız — yalnızca ödemenin başarılı olduğuna dair onay alırız.',
+      'Telegram account info: if you open Lamsa inside Telegram, we receive your Telegram user ID to link it to your Lamsa account.':
+        'Telegram hesap bilgisi: Lamsa\'yı Telegram içinde açarsanız, Lamsa hesabınızla ilişkilendirmek için Telegram kullanıcı kimliğinizi alırız.',
+      '3. How We Use Your Information': '3. Bilgilerinizi Nasıl Kullanıyoruz',
+      'To generate your AI-powered room design — your photo and preferences are sent to our AI image-generation provider (fal.ai) solely to produce that design.':
+        'Yapay zeka destekli oda tasarımınızı oluşturmak için — fotoğrafınız ve tercihleriniz, yalnızca o tasarımı üretmek amacıyla yapay zeka görsel üretim sağlayıcımıza (fal.ai) gönderilir.',
+      'To run your account: logging you in, tracking your credit balance, and showing your past designs.':
+        'Hesabınızı yürütmek için: giriş yapmanızı sağlamak, kredi bakiyenizi takip etmek ve geçmiş tasarımlarınızı göstermek.',
+      'To process purchases of credits through Stripe.': 'Stripe üzerinden kredi satın alımlarını işlemek için.',
+      'We do not sell your information, and we do not use it for advertising.':
+        'Bilgilerinizi satmıyoruz ve reklam amacıyla kullanmıyoruz.',
+      '4. Where Your Data Is Stored': '4. Verileriniz Nerede Saklanır',
+      'Account data and credit balances are stored in a secure cloud database (Upstash). Generated design images are stored so you can revisit your past designs, and can be deleted on request (see Section 6).':
+        'Hesap verileri ve kredi bakiyeleri güvenli bir bulut veritabanında (Upstash) saklanır. Geçmiş tasarımlarınızı tekrar görebilmeniz için oluşturulan tasarım görselleri saklanır ve talep üzerine silinebilir (bkz. Bölüm 6).',
+      '5. Third Parties We Work With': '5. Birlikte Çalıştığımız Üçüncü Taraflar',
+      'fal.ai — processes your photo to generate the AI design.': 'fal.ai — yapay zeka tasarımını oluşturmak için fotoğrafınızı işler.',
+      'Stripe — processes payments for credit purchases.': 'Stripe — kredi satın alımları için ödemeleri işler.',
+      'Telegram — only if you choose to use Lamsa through Telegram.': "Telegram — yalnızca Lamsa'yı Telegram üzerinden kullanmayı tercih ederseniz.",
+      'Vercel — hosts the Lamsa app and its servers.': 'Vercel — Lamsa uygulamasını ve sunucularını barındırır.',
+      'Each of these providers only receives the minimum information needed to do its specific job for you.':
+        'Bu sağlayıcıların her biri, sizin için belirli görevini yerine getirmek için yalnızca gerekli minimum bilgiyi alır.',
+      '6. Your Rights': '6. Haklarınız',
+      'You can ask us at any time to access, correct, or delete your account and the data linked to it. To do this, email us at':
+        'İstediğiniz zaman hesabınıza ve ona bağlı verilere erişmemizi, bunları düzeltmemizi veya silmemizi isteyebilirsiniz. Bunu yapmak için bize şu adresten e-posta gönderin:',
+      'You can also delete your account yourself at any time: log in and tap "Delete Account" at the top of the designer page. This permanently deletes your account, your login details and your remaining credits.':
+        'Hesabınızı istediğiniz zaman kendiniz de silebilirsiniz: giriş yapın ve tasarım sayfasının üst kısmındaki "Hesabı Sil" seçeneğine dokunun. Bu işlem hesabınızı, giriş bilgilerinizi ve kalan kredilerinizi kalıcı olarak siler.',
+      '7. Cookies & Local Storage': '7. Çerezler ve Yerel Depolama',
+      'We use local storage in your browser to keep you logged in and remember your language preference. We do not use advertising or tracking cookies.':
+        'Giriş yapmış kalmanızı sağlamak ve dil tercihinizi hatırlamak için tarayıcınızdaki yerel depolamayı kullanırız. Reklam veya takip çerezleri kullanmıyoruz.',
+      '8. Children': '8. Çocuklar',
+      'Lamsa is not directed at children under 13, and we do not knowingly collect information from them.':
+        'Lamsa, 13 yaşından küçük çocuklara yönelik değildir ve onlardan bilerek bilgi toplamayız.',
+      '9. Changes to This Policy': '9. Bu Politikadaki Değişiklikler',
+      "If we make meaningful changes to this policy, we'll update the date at the top of this page.":
+        'Bu politikada önemli değişiklikler yaparsak, bu sayfanın üst kısmındaki tarihi güncelleriz.',
+      '10. Contact Us': '10. Bize Ulaşın',
+      'Questions about this policy or your data? Email us at': 'Bu politika veya verileriniz hakkında sorularınız mı var? Bize şu adresten e-posta gönderin:'
+    },
+    fr: {
+      'Back to Lamsa': 'Retour à Lamsa',
+      'Privacy Policy': 'Politique de confidentialité',
+      'Last updated: October 2026': 'Dernière mise à jour : octobre 2026',
+      '1. Who We Are': '1. Qui sommes-nous',
+      'Lamsa ("we", "us") is an AI-powered interior design app. This policy explains what information we collect when you use Lamsa (on the web or as an installed app) and how we use it.':
+        "Lamsa (« nous ») est une application de design d'intérieur alimentée par l'IA. Cette politique explique quelles informations nous collectons lorsque vous utilisez Lamsa (sur le web ou en tant qu'application installée) et comment nous les utilisons.",
+      '2. Information We Collect': '2. Informations que nous collectons',
+      'Account information: your email address and password (stored securely, never in plain text) when you register or log in.':
+        'Informations de compte : votre adresse e-mail et votre mot de passe (stockés de manière sécurisée, jamais en texte brut) lors de votre inscription ou connexion.',
+      'Room photos and design details: photos you upload and the preferences you enter (room type, dimensions, style, budget) so we can generate your design.':
+        'Photos de pièces et détails de design : les photos que vous téléchargez et les préférences que vous indiquez (type de pièce, dimensions, style, budget) afin que nous puissions générer votre design.',
+      'Payment information: when you buy credits, payment is processed directly by Stripe. We never see or store your card number — we only receive confirmation that a payment succeeded.':
+        'Informations de paiement : lorsque vous achetez des crédits, le paiement est traité directement par Stripe. Nous ne voyons ni ne stockons jamais votre numéro de carte — nous recevons uniquement la confirmation que le paiement a réussi.',
+      'Telegram account info: if you open Lamsa inside Telegram, we receive your Telegram user ID to link it to your Lamsa account.':
+        'Informations de compte Telegram : si vous ouvrez Lamsa dans Telegram, nous recevons votre identifiant utilisateur Telegram afin de le relier à votre compte Lamsa.',
+      '3. How We Use Your Information': '3. Comment nous utilisons vos informations',
+      'To generate your AI-powered room design — your photo and preferences are sent to our AI image-generation provider (fal.ai) solely to produce that design.':
+        "Pour générer votre design de pièce assisté par IA — votre photo et vos préférences sont envoyées à notre fournisseur de génération d'images par IA (fal.ai) uniquement pour produire ce design.",
+      'To run your account: logging you in, tracking your credit balance, and showing your past designs.':
+        'Pour faire fonctionner votre compte : vous connecter, suivre votre solde de crédits et afficher vos designs précédents.',
+      'To process purchases of credits through Stripe.': 'Pour traiter les achats de crédits via Stripe.',
+      'We do not sell your information, and we do not use it for advertising.':
+        "Nous ne vendons pas vos informations et ne les utilisons pas à des fins publicitaires.",
+      '4. Where Your Data Is Stored': '4. Où vos données sont stockées',
+      'Account data and credit balances are stored in a secure cloud database (Upstash). Generated design images are stored so you can revisit your past designs, and can be deleted on request (see Section 6).':
+        'Les données de compte et les soldes de crédits sont stockés dans une base de données cloud sécurisée (Upstash). Les images de design générées sont stockées afin que vous puissiez revoir vos designs précédents, et peuvent être supprimées sur demande (voir Section 6).',
+      '5. Third Parties We Work With': '5. Tiers avec lesquels nous travaillons',
+      'fal.ai — processes your photo to generate the AI design.': "fal.ai — traite votre photo pour générer le design par IA.",
+      'Stripe — processes payments for credit purchases.': 'Stripe — traite les paiements pour les achats de crédits.',
+      'Telegram — only if you choose to use Lamsa through Telegram.': "Telegram — uniquement si vous choisissez d'utiliser Lamsa via Telegram.",
+      'Vercel — hosts the Lamsa app and its servers.': 'Vercel — héberge l\'application Lamsa et ses serveurs.',
+      'Each of these providers only receives the minimum information needed to do its specific job for you.':
+        'Chacun de ces prestataires ne reçoit que le minimum d\'informations nécessaires pour accomplir sa tâche spécifique pour vous.',
+      '6. Your Rights': '6. Vos droits',
+      'You can ask us at any time to access, correct, or delete your account and the data linked to it. To do this, email us at':
+        'Vous pouvez à tout moment nous demander d\'accéder à votre compte, de le corriger ou de le supprimer, ainsi que les données qui y sont liées. Pour cela, écrivez-nous à',
+      'You can also delete your account yourself at any time: log in and tap "Delete Account" at the top of the designer page. This permanently deletes your account, your login details and your remaining credits.':
+        'Vous pouvez également supprimer vous-même votre compte à tout moment : connectez-vous et appuyez sur « Supprimer le compte » en haut de la page de création. Cela supprime définitivement votre compte, vos identifiants de connexion et vos crédits restants.',
+      '7. Cookies & Local Storage': '7. Cookies et stockage local',
+      'We use local storage in your browser to keep you logged in and remember your language preference. We do not use advertising or tracking cookies.':
+        "Nous utilisons le stockage local de votre navigateur pour vous maintenir connecté et mémoriser votre préférence de langue. Nous n'utilisons pas de cookies publicitaires ou de suivi.",
+      '8. Children': '8. Enfants',
+      'Lamsa is not directed at children under 13, and we do not knowingly collect information from them.':
+        "Lamsa ne s'adresse pas aux enfants de moins de 13 ans, et nous ne collectons sciemment aucune information les concernant.",
+      '9. Changes to This Policy': '9. Modifications de cette politique',
+      "If we make meaningful changes to this policy, we'll update the date at the top of this page.":
+        'Si nous apportons des modifications importantes à cette politique, nous mettrons à jour la date en haut de cette page.',
+      '10. Contact Us': '10. Nous contacter',
+      'Questions about this policy or your data? Email us at': 'Des questions sur cette politique ou vos données ? Écrivez-nous à'
+    },
+    it: {
+      'Back to Lamsa': 'Torna a Lamsa',
+      'Privacy Policy': 'Informativa sulla privacy',
+      'Last updated: October 2026': 'Ultimo aggiornamento: ottobre 2026',
+      '1. Who We Are': '1. Chi siamo',
+      'Lamsa ("we", "us") is an AI-powered interior design app. This policy explains what information we collect when you use Lamsa (on the web or as an installed app) and how we use it.':
+        "Lamsa (\"noi\") è un'app di interior design basata sull'intelligenza artificiale. Questa informativa spiega quali informazioni raccogliamo quando usi Lamsa (sul web o come app installata) e come le utilizziamo.",
+      '2. Information We Collect': '2. Informazioni che raccogliamo',
+      'Account information: your email address and password (stored securely, never in plain text) when you register or log in.':
+        "Informazioni dell'account: il tuo indirizzo email e la password (memorizzati in modo sicuro, mai in chiaro) quando ti registri o accedi.",
+      'Room photos and design details: photos you upload and the preferences you enter (room type, dimensions, style, budget) so we can generate your design.':
+        'Foto delle stanze e dettagli del design: le foto che carichi e le preferenze che inserisci (tipo di stanza, dimensioni, stile, budget) per permetterci di generare il tuo design.',
+      'Payment information: when you buy credits, payment is processed directly by Stripe. We never see or store your card number — we only receive confirmation that a payment succeeded.':
+        'Informazioni di pagamento: quando acquisti crediti, il pagamento viene elaborato direttamente da Stripe. Non vediamo né memorizziamo mai il numero della tua carta — riceviamo solo la conferma che il pagamento è andato a buon fine.',
+      'Telegram account info: if you open Lamsa inside Telegram, we receive your Telegram user ID to link it to your Lamsa account.':
+        "Informazioni dell'account Telegram: se apri Lamsa all'interno di Telegram, riceviamo il tuo ID utente Telegram per collegarlo al tuo account Lamsa.",
+      '3. How We Use Your Information': '3. Come utilizziamo le tue informazioni',
+      'To generate your AI-powered room design — your photo and preferences are sent to our AI image-generation provider (fal.ai) solely to produce that design.':
+        "Per generare il tuo design della stanza basato sull'IA: la tua foto e le tue preferenze vengono inviate al nostro fornitore di generazione immagini IA (fal.ai) esclusivamente per produrre quel design.",
+      'To run your account: logging you in, tracking your credit balance, and showing your past designs.':
+        'Per gestire il tuo account: accedere, monitorare il tuo saldo crediti e mostrarti i design precedenti.',
+      'To process purchases of credits through Stripe.': 'Per elaborare gli acquisti di crediti tramite Stripe.',
+      'We do not sell your information, and we do not use it for advertising.':
+        'Non vendiamo le tue informazioni e non le utilizziamo per scopi pubblicitari.',
+      '4. Where Your Data Is Stored': '4. Dove vengono archiviati i tuoi dati',
+      'Account data and credit balances are stored in a secure cloud database (Upstash). Generated design images are stored so you can revisit your past designs, and can be deleted on request (see Section 6).':
+        'I dati dell\'account e i saldi dei crediti sono archiviati in un database cloud sicuro (Upstash). Le immagini di design generate vengono archiviate per permetterti di rivedere i tuoi design precedenti e possono essere eliminate su richiesta (vedi Sezione 6).',
+      '5. Third Parties We Work With': '5. Terze parti con cui collaboriamo',
+      'fal.ai — processes your photo to generate the AI design.': "fal.ai — elabora la tua foto per generare il design con l'IA.",
+      'Stripe — processes payments for credit purchases.': 'Stripe — elabora i pagamenti per gli acquisti di crediti.',
+      'Telegram — only if you choose to use Lamsa through Telegram.': 'Telegram — solo se scegli di usare Lamsa tramite Telegram.',
+      'Vercel — hosts the Lamsa app and its servers.': "Vercel — ospita l'app Lamsa e i suoi server.",
+      'Each of these providers only receives the minimum information needed to do its specific job for you.':
+        'Ciascuno di questi fornitori riceve solo le informazioni minime necessarie per svolgere il proprio compito specifico per te.',
+      '6. Your Rights': '6. I tuoi diritti',
+      'You can ask us at any time to access, correct, or delete your account and the data linked to it. To do this, email us at':
+        'Puoi chiederci in qualsiasi momento di accedere, correggere o eliminare il tuo account e i dati ad esso collegati. Per farlo, scrivici a',
+      'You can also delete your account yourself at any time: log in and tap "Delete Account" at the top of the designer page. This permanently deletes your account, your login details and your remaining credits.':
+        'Puoi anche eliminare tu stesso il tuo account in qualsiasi momento: accedi e tocca "Elimina account" nella parte superiore della pagina di progettazione. Questo elimina definitivamente il tuo account, i tuoi dati di accesso e i crediti rimanenti.',
+      '7. Cookies & Local Storage': '7. Cookie e archiviazione locale',
+      'We use local storage in your browser to keep you logged in and remember your language preference. We do not use advertising or tracking cookies.':
+        'Utilizziamo l\'archiviazione locale del tuo browser per mantenerti connesso e ricordare la tua preferenza linguistica. Non utilizziamo cookie pubblicitari o di tracciamento.',
+      '8. Children': '8. Minori',
+      'Lamsa is not directed at children under 13, and we do not knowingly collect information from them.':
+        'Lamsa non è rivolta a bambini di età inferiore a 13 anni e non raccogliamo consapevolmente informazioni da loro.',
+      '9. Changes to This Policy': '9. Modifiche a questa informativa',
+      "If we make meaningful changes to this policy, we'll update the date at the top of this page.":
+        'Se apportiamo modifiche significative a questa informativa, aggiorneremo la data in cima a questa pagina.',
+      '10. Contact Us': '10. Contattaci',
+      'Questions about this policy or your data? Email us at': 'Domande su questa informativa o sui tuoi dati? Scrivici a'
+    },
+    ru: {
+      'Back to Lamsa': 'Назад к Lamsa',
+      'Privacy Policy': 'Политика конфиденциальности',
+      'Last updated: October 2026': 'Последнее обновление: октябрь 2026',
+      '1. Who We Are': '1. Кто мы',
+      'Lamsa ("we", "us") is an AI-powered interior design app. This policy explains what information we collect when you use Lamsa (on the web or as an installed app) and how we use it.':
+        'Lamsa («мы») — это приложение для дизайна интерьера на основе искусственного интеллекта. Эта политика объясняет, какую информацию мы собираем при использовании Lamsa (через веб или как установленное приложение) и как мы её используем.',
+      '2. Information We Collect': '2. Информация, которую мы собираем',
+      'Account information: your email address and password (stored securely, never in plain text) when you register or log in.':
+        'Информация об аккаунте: ваш адрес электронной почты и пароль (хранятся в защищённом виде, никогда в открытом тексте) при регистрации или входе в систему.',
+      'Room photos and design details: photos you upload and the preferences you enter (room type, dimensions, style, budget) so we can generate your design.':
+        'Фотографии комнат и детали дизайна: загружаемые вами фото и указанные предпочтения (тип комнаты, размеры, стиль, бюджет), чтобы мы могли создать ваш дизайн.',
+      'Payment information: when you buy credits, payment is processed directly by Stripe. We never see or store your card number — we only receive confirmation that a payment succeeded.':
+        'Платёжная информация: при покупке кредитов оплата обрабатывается напрямую через Stripe. Мы никогда не видим и не храним номер вашей карты — мы получаем только подтверждение успешного платежа.',
+      'Telegram account info: if you open Lamsa inside Telegram, we receive your Telegram user ID to link it to your Lamsa account.':
+        'Информация об аккаунте Telegram: если вы открываете Lamsa внутри Telegram, мы получаем ваш идентификатор пользователя Telegram, чтобы связать его с вашим аккаунтом Lamsa.',
+      '3. How We Use Your Information': '3. Как мы используем вашу информацию',
+      'To generate your AI-powered room design — your photo and preferences are sent to our AI image-generation provider (fal.ai) solely to produce that design.':
+        'Для создания дизайна вашей комнаты с помощью ИИ — ваше фото и предпочтения отправляются нашему поставщику генерации изображений на основе ИИ (fal.ai) исключительно для создания этого дизайна.',
+      'To run your account: logging you in, tracking your credit balance, and showing your past designs.':
+        'Для работы вашего аккаунта: вход в систему, отслеживание баланса кредитов и отображение ваших прошлых дизайнов.',
+      'To process purchases of credits through Stripe.': 'Для обработки покупок кредитов через Stripe.',
+      'We do not sell your information, and we do not use it for advertising.':
+        'Мы не продаём вашу информацию и не используем её в рекламных целях.',
+      '4. Where Your Data Is Stored': '4. Где хранятся ваши данные',
+      'Account data and credit balances are stored in a secure cloud database (Upstash). Generated design images are stored so you can revisit your past designs, and can be deleted on request (see Section 6).':
+        'Данные аккаунта и баланс кредитов хранятся в защищённой облачной базе данных (Upstash). Сгенерированные изображения дизайна сохраняются, чтобы вы могли просматривать свои прошлые дизайны, и могут быть удалены по запросу (см. раздел 6).',
+      '5. Third Parties We Work With': '5. Третьи стороны, с которыми мы работаем',
+      'fal.ai — processes your photo to generate the AI design.': 'fal.ai — обрабатывает ваше фото для создания дизайна с помощью ИИ.',
+      'Stripe — processes payments for credit purchases.': 'Stripe — обрабатывает платежи за покупку кредитов.',
+      'Telegram — only if you choose to use Lamsa through Telegram.': 'Telegram — только если вы решите использовать Lamsa через Telegram.',
+      'Vercel — hosts the Lamsa app and its servers.': 'Vercel — размещает приложение Lamsa и его серверы.',
+      'Each of these providers only receives the minimum information needed to do its specific job for you.':
+        'Каждый из этих поставщиков получает только минимальную информацию, необходимую для выполнения своей конкретной задачи для вас.',
+      '6. Your Rights': '6. Ваши права',
+      'You can ask us at any time to access, correct, or delete your account and the data linked to it. To do this, email us at':
+        'Вы можете в любое время попросить нас получить доступ, исправить или удалить ваш аккаунт и связанные с ним данные. Для этого напишите нам на',
+      'You can also delete your account yourself at any time: log in and tap "Delete Account" at the top of the designer page. This permanently deletes your account, your login details and your remaining credits.':
+        'Вы также можете удалить свой аккаунт самостоятельно в любое время: войдите в систему и нажмите «Удалить аккаунт» вверху страницы дизайна. Это навсегда удалит ваш аккаунт, данные для входа и оставшиеся кредиты.',
+      '7. Cookies & Local Storage': '7. Файлы cookie и локальное хранилище',
+      'We use local storage in your browser to keep you logged in and remember your language preference. We do not use advertising or tracking cookies.':
+        'Мы используем локальное хранилище вашего браузера, чтобы сохранять вход в систему и запоминать языковые предпочтения. Мы не используем рекламные или отслеживающие файлы cookie.',
+      '8. Children': '8. Дети',
+      'Lamsa is not directed at children under 13, and we do not knowingly collect information from them.':
+        'Lamsa не предназначена для детей младше 13 лет, и мы сознательно не собираем информацию от них.',
+      '9. Changes to This Policy': '9. Изменения в этой политике',
+      "If we make meaningful changes to this policy, we'll update the date at the top of this page.":
+        'Если мы внесём существенные изменения в эту политику, мы обновим дату в верхней части этой страницы.',
+      '10. Contact Us': '10. Свяжитесь с нами',
+      'Questions about this policy or your data? Email us at': 'Есть вопросы об этой политике или ваших данных? Напишите нам на'
+    }
+  };
+
+  function setLang(lang) { Lang8.apply(lang, T); }
+  Lang8.buildSelect(document.getElementById('langSelect'), setLang);
   var savedLang = 'en';
   try { savedLang = localStorage.getItem('lamsa_lang') || 'en'; } catch (e) {}
   setLang(savedLang);
