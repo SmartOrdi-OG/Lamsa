@@ -1355,17 +1355,29 @@
       // room while leaving the room itself untouched — since that's a
       // narrower, more concrete task than generic "redesign", with a
       // pixel-identical-geometry constraint spelled out explicitly.
-      var prompt = 'This is a VIRTUAL STAGING task, not a room-generation task. The FIRST image is an ' +
-        'empty or unfinished real room that needs to be virtually furnished and decorated — exactly ' +
-        'like real-estate virtual staging software does. The room itself in your output — its walls, ' +
+      // That "empty or unfinished room" framing then caused the OPPOSITE
+      // failure on an already-furnished source photo (confirmed by a real
+      // test: a fully furnished dining room came back as an entirely
+      // different, unrelated bedroom matching the style reference's own
+      // room instead of the user's) — telling the model the room is
+      // "empty" when the photo clearly isn't seems to make it disregard
+      // the photo's actual geometry altogether. Rewritten to cover both
+      // cases explicitly instead of assuming either one.
+      var prompt = 'This is a VIRTUAL STAGING / RESTYLING task, not a room-generation task. The FIRST ' +
+        'image is the user\'s own real room, exactly as it is now — it may already be fully furnished, ' +
+        'partly furnished, or completely empty/unfinished. The room itself in your output — its walls, ' +
         'floor, ceiling, doors, windows, room shape, proportions, and camera angle — must be pixel-' +
-        'identical to the FIRST image. Do not change, replace, or regenerate the room. Only ADD ' +
-        'furniture, decor, plants, paint/material colors, and lighting into that exact same room. ' +
+        'identical to the FIRST image no matter what it currently contains. Do not change, replace, or ' +
+        'regenerate the room\'s architecture. If the FIRST image already has furniture, REPLACE that ' +
+        'existing furniture, decor, colors and materials with new ones inspired by the SECOND image\'s ' +
+        'style. If the FIRST image is empty or unfinished, ADD furniture, decor, plants, paint/material ' +
+        'colors, and lighting into that exact same room instead. Either way the output must still be a ' +
+        'photo of the user\'s own exact room, just restyled/furnished — never a different room entirely. ' +
         'Never add any new structure, building, room, wall, roof, or extension that is not already ' +
         'present in the FIRST image, even if the SECOND image shows one — if the second image\'s scene ' +
         'includes extra buildings, rooms, or structures beyond the first image, leave them out entirely. ' +
         'The SECOND image is a style reference ONLY, used purely to choose which colors, materials, ' +
-        'and furniture style to add — its own room, walls, structures, and camera angle must NEVER ' +
+        'and furniture style to apply — its own room, walls, structures, and camera angle must NEVER ' +
         'appear in your output. If the first image is empty, unfinished, or unusual, you must still ' +
         'stage THAT exact room — never substitute a different, more typical-looking room instead. If ' +
         'the first image contains people, keep them exactly as they are — same identity, pose, position, ' +
