@@ -90,6 +90,11 @@ export default function App() {
         >
           {t('Sign in')}
         </a>
+        <div style={{ marginTop: 16 }}>
+          <a href="/lamsa-bilingual.html" style={{ color: '#6b7280', fontSize: 14, textDecoration: 'none' }}>
+            {t('Back to Home')}
+          </a>
+        </div>
       </div>
     );
   }
