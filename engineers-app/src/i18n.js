@@ -15,6 +15,7 @@ export const AR = {
   'Lamsa Engineers': 'لمسة للمهندسين',
   'Please sign in to continue.': 'الرجاء تسجيل الدخول للمتابعة.',
   'Sign in': 'تسجيل الدخول',
+  'Back to Home': 'رجوع للرئيسية',
   'Design complete floor plans, preview them in 3D, and export real architectural deliverables.':
     'صمّم مخططات أرضية كاملة، عاينها ثلاثي الأبعاد، وصدّر مستندات هندسية حقيقية.',
   'Your Engineers access has ended. Subscribe again to continue designing full floor plans.':
@@ -107,6 +108,7 @@ export const T = {
     'Lamsa Engineers': 'Lamsa Ingenieure',
     'Please sign in to continue.': 'Bitte melde dich an, um fortzufahren.',
     'Sign in': 'Anmelden',
+    'Back to Home': 'Zurück zur Startseite',
     'Design complete floor plans, preview them in 3D, and export real architectural deliverables.':
       'Entwirf komplette Grundrisse, sieh sie in 3D in der Vorschau und exportiere echte Architekturunterlagen.',
     'Your Engineers access has ended. Subscribe again to continue designing full floor plans.':
@@ -196,6 +198,7 @@ export const T = {
     'Lamsa Engineers': 'Lamsa Ingenieros',
     'Please sign in to continue.': 'Inicia sesión para continuar.',
     'Sign in': 'Iniciar sesión',
+    'Back to Home': 'Volver al inicio',
     'Design complete floor plans, preview them in 3D, and export real architectural deliverables.':
       'Diseña planos completos, previsualízalos en 3D y exporta documentos arquitectónicos reales.',
     'Your Engineers access has ended. Subscribe again to continue designing full floor plans.':
@@ -285,6 +288,7 @@ export const T = {
     'Lamsa Engineers': 'Lamsa Muhendisler',
     'Please sign in to continue.': 'Devam etmek icin giris yapin.',
     'Sign in': 'Giris Yap',
+    'Back to Home': 'Ana sayfaya dön',
     'Design complete floor plans, preview them in 3D, and export real architectural deliverables.':
       'Tam kat planlari tasarlayin, 3D onizleme yapin ve gercek mimari belgeler disa aktarin.',
     'Your Engineers access has ended. Subscribe again to continue designing full floor plans.':
@@ -374,6 +378,7 @@ export const T = {
     'Lamsa Engineers': 'Lamsa Ingénieurs',
     'Please sign in to continue.': 'Veuillez vous connecter pour continuer.',
     'Sign in': 'Connexion',
+    'Back to Home': "Retour à l'accueil",
     'Design complete floor plans, preview them in 3D, and export real architectural deliverables.':
       'Concevez des plans complets, prévisualisez-les en 3D et exportez de vrais documents architecturaux.',
     'Your Engineers access has ended. Subscribe again to continue designing full floor plans.':
@@ -463,6 +468,7 @@ export const T = {
     'Lamsa Engineers': 'Lamsa Ingegneri',
     'Please sign in to continue.': 'Accedi per continuare.',
     'Sign in': 'Accedi',
+    'Back to Home': 'Torna alla home',
     'Design complete floor plans, preview them in 3D, and export real architectural deliverables.':
       'Progetta planimetrie complete, visualizzale in anteprima 3D ed esporta veri documenti architettonici.',
     'Your Engineers access has ended. Subscribe again to continue designing full floor plans.':
@@ -552,6 +558,7 @@ export const T = {
     'Lamsa Engineers': 'Lamsa Inzhenery',
     'Please sign in to continue.': 'Voydite, chtoby prodolzhit.',
     'Sign in': 'Vkhod',
+    'Back to Home': 'Nazad na glavnuyu',
     'Design complete floor plans, preview them in 3D, and export real architectural deliverables.':
       'Proektiruyte polnotsennye plany pomeshcheniy, prosmatrivayte ikh v 3D i eksportiruyte nastoyashchie arkhitekturnye dokumenty.',
     'Your Engineers access has ended. Subscribe again to continue designing full floor plans.':
