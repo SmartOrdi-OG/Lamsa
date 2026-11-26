@@ -5,6 +5,7 @@
 // and purchase()/restorePurchases() both short-circuit on it before ever
 // touching the native plugin bridge.
 import { Purchases } from '@revenuecat/purchases-capacitor';
+import { InAppReview } from '@capacitor-community/in-app-review';
 
 let configuredForEmail = null;
 let configuring = null;
@@ -97,4 +98,20 @@ async function restorePurchases() {
   }
 }
 
-window.LamsaIAP = { init, purchase, restorePurchases };
+// Wraps StoreKit's native "ask to rate" sheet (SKStoreReviewController).
+// Apple — not us — decides whether it actually shows (max 3 times per
+// device per 365 days, among other heuristics), so this is safe to call
+// after any good moment (e.g. a successful design generation) without
+// tracking our own frequency cap. Silently does nothing outside the
+// Capacitor iOS app, and swallows any native-side error since a missed
+// review prompt should never surface as a user-visible failure.
+async function requestReview() {
+  if (!window.isCapacitorApp) return;
+  try {
+    await InAppReview.requestReview();
+  } catch (err) {
+    /* no-op — never let this block the caller's own success flow */
+  }
+}
+
+window.LamsaIAP = { init, purchase, restorePurchases, requestReview };

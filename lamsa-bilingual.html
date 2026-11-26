@@ -4201,6 +4201,13 @@
         var images = extractResultImages(data);
 
         if (images && images.length > 0) {
+          // Ask iOS to show its native "rate this app" sheet right after a
+          // real successful design — a good moment, and a no-op everywhere
+          // else (window.LamsaIAP is only loaded/active inside the
+          // Capacitor app; Apple itself throttles how often it actually
+          // appears, so no need to track that here).
+          if (window.LamsaIAP && window.LamsaIAP.requestReview) window.LamsaIAP.requestReview();
+
           // "Why Lamsa" stays hidden pre-generation to keep the mobile scroll
           // short; reveal it now that there's an actual result to back up
           // the marketing copy (and for scroll-reveal cards, mark them
