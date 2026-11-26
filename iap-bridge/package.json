@@ -3,11 +3,12 @@
   "version": "0.1.0",
   "private": true,
   "type": "module",
-  "description": "Bundles @revenuecat/purchases-capacitor into a single window.LamsaIAP global for Lamsa's otherwise unbundled static pages to call from inside the Capacitor iOS app. Built locally/in CI; the output is committed to ../js/capacitor-iap-bridge.js. This sub-project's package.json is intentionally never the Vercel project's root, so it's never auto-built by Vercel.",
+  "description": "Bundles @revenuecat/purchases-capacitor and @capacitor-community/in-app-review into a single window.LamsaIAP global for Lamsa's otherwise unbundled static pages to call from inside the Capacitor iOS app. Built locally/in CI; the output is committed to ../js/capacitor-iap-bridge.js. This sub-project's package.json is intentionally never the Vercel project's root, so it's never auto-built by Vercel.",
   "scripts": {
     "build": "vite build"
   },
   "dependencies": {
+    "@capacitor-community/in-app-review": "^8.0.0",
     "@capacitor/core": "^8.6.2",
     "@revenuecat/purchases-capacitor": "^14.1.2"
   },
