@@ -2914,10 +2914,16 @@
   }
 
   function handleMultiUpload(input) {
-    var files = Array.from(input.files).slice(0, 5);
-    uploadedFiles = files;
+    // The <input> fires with only the files picked in THIS dialog (never
+    // cumulative with earlier picks), and this same input/handler backs
+    // both the first upload and the later "+ Add photo" tile — so this
+    // must append to uploadedFiles, not replace it, or every "add photo"
+    // click silently wipes out the photos already added.
+    var newFiles = Array.from(input.files);
+    uploadedFiles = uploadedFiles.concat(newFiles).slice(0, 5);
     renderPreviews();
-    if (files.length > 0) document.getElementById('uploadContent').style.display = 'none';
+    if (uploadedFiles.length > 0) document.getElementById('uploadContent').style.display = 'none';
+    input.value = '';
   }
 
   function handleUpload(input) { handleMultiUpload(input); }
@@ -2954,6 +2960,7 @@
 
   function removeThumb(i) {
     uploadedFiles.splice(i, 1);
+    fileAngles.splice(i, 1);
     if (uploadedFiles.length === 0) document.getElementById('uploadContent').style.display = 'block';
     renderPreviews();
   }
@@ -2961,6 +2968,7 @@
   function removeImage(e) {
     e.preventDefault(); e.stopPropagation();
     uploadedFiles = [];
+    fileAngles = [];
     document.getElementById('uploadContent').style.display = 'block';
     document.getElementById('multiPreview').innerHTML = '';
     document.getElementById('fileInput').value = '';
@@ -5281,11 +5289,11 @@
 
       var files = Array.from(e.dataTransfer.files).filter(function(f) {
         return f.type.startsWith('image/');
-      }).slice(0, 5);
+      });
 
       if (files.length === 0) return;
 
-      uploadedFiles = files;
+      uploadedFiles = uploadedFiles.concat(files).slice(0, 5);
       renderPreviews();
       document.getElementById('uploadContent').style.display = 'none';
     });
